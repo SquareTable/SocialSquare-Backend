@@ -1074,6 +1074,48 @@ class TempController {
         })
     }
 
+    static #upvotepoll = (userId, pollId) => {
+        return new Promise(resolve => {
+            if (typeof pollId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            }
+        
+            //Check Input fields
+            if (userId == "" || pollId == "") {
+                return resolve(HTTPWTHandler.badInput(`userId or pollId is an empty string. That is not allowed.`))
+            } else {
+                //Find User
+                User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                    if (result) {
+                        //User exists
+                        Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
+                            if (data) {
+                                pollPostHandler.upvote(data, result).then(successMessage => {
+                                    return resolve(HTTPWTHandler.OK(successMessage))
+                                }).catch(error => {
+                                    if (error.privateError) {
+                                        console.error('An error occured while upvoting poll post. The error was:', error.privateError)
+                                    }
+                                    return resolve(HTTPWTHandler.serverError(error.publicError))
+                                })
+                            } else {
+                                return resolve(HTTPWTHandler.notFound('Poll could not be found'))
+                            }
+                        }).catch(error => {
+                            console.error('An error occured while finding poll with id:', pollId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                        })
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('Could not find user with provided userId. Possible error with user details?'))
+                    }
+                }).catch(error => {
+                    console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
+                })
+            }
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1128,6 +1170,10 @@ class TempController {
 
     static searchforpollpostsbyid = async (userId, pollId) => {
         return await this.#searchforpollpostsbyid(userId, pollId)
+    }
+
+    static upvotepoll = async (userId, pollId) => {
+        return await this.#upvotepoll(userId, pollId)
     }
 }
 

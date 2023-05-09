@@ -113,15 +113,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/upvotepoll': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many polls in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/downvotepoll': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 45,
@@ -813,54 +804,6 @@ const rateLimiters = {
 
 
 //POLL AREA
-
-//UpVote Poll
-router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
-    const userId = req.tokenData;
-    let {pollId} = req.body;
-
-    if (typeof pollId !== 'string') {
-        return HTTPHandler.badInput(res, `pollId must be a string. Provided type: ${typeof pollId}`)
-    }
-
-    //Check Input fields
-    if (userId == "" || pollId == "") {
-        HTTPHandler.badInput(res, 'userId or pollId is an empty string. That is not allowed.')
-    } else {
-        //Find User
-        User.findOne({_id: {$eq: userId}}).lean().then(result => {
-            if (result) {
-                //User exists
-                Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
-                    if (data) {
-                        pollPostHandler.upvote(data, result).then(successMessage => {
-                            HTTPHandler.OK(res, successMessage)
-                        }).catch(error => {
-                            console.log('Poll Post Error Object:', error)
-                            if (error.privateError) {
-                                console.error('An error occured while upvoting poll post.')
-                                console.error('The error was:', error)
-                            }
-                            HTTPHandler.serverError(res, error.publicError)
-                        })
-                    } else {
-                        HTTPHandler.notFound(res, 'Poll could not be found')
-                    }
-                }).catch(error => {
-                    console.error('An error occured while finding poll with id:', pollId)
-                    console.error('The error was:', error)
-                    HTTPHandler.serverError(res, 'An error occured while finding poll. Please try again.')
-                })
-            } else {
-                HTTPHandler.notFound(res, 'Could not find your user. Possible error with user details?')
-            }
-        }).catch(error => {
-            console.error('An error occured while finding user with id:', userId)
-            console.error('The error was:', error)
-            HTTPHandler.serverError(res, 'An error occured while finding user. Please try again later.')
-        })
-    }
-})
 
 //DownVote Poll
 router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
