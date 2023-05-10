@@ -113,7 +113,7 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/searchforpollcommentreplies/:sentpollid/:sentcommentid': rateLimit({
+    '/searchforpollcommentreplies': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
         standardHeaders: false,
@@ -221,7 +221,7 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/searchforimagecommentreplies/:sentimagekey/:sentcommentid': rateLimit({
+    '/searchforimagecommentreplies': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
         standardHeaders: false,
@@ -392,7 +392,7 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/searchforthreadcommentreplies/:sentthreadid/:sentcommentid': rateLimit({
+    '/searchforthreadcommentreplies': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
         standardHeaders: false,
@@ -788,10 +788,10 @@ const rateLimiters = {
 //POLL AREA
 
 //search for thread comments
-router.get('/searchforpollcommentreplies/:sentpollid/:sentcommentid', rateLimiters['/searchforpollcommentreplies/:sentpollid/:sentcommentid'], (req, res) => {
-    let sentPollId = req.params.sentpollid
+router.post('/searchforpollcommentreplies', rateLimiters['/searchforpollcommentreplies'], (req, res) => {
     const sentUserId = req.tokenData;
-    let sentCommentId = req.params.sentcommentid
+    const sentPollId = req.body.postId;
+    const sentCommentId = req.body.commentId;
 
     if (typeof sentPollId !== 'string') {
         return HTTPHandler.badInput(res, `sentPollId must be a string. Provided type: ${typeof sentPollId}`)
@@ -1682,10 +1682,10 @@ router.post('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (r
 })
 
 //search for thread comments
-router.get('/searchforimagecommentreplies/:sentimagekey/:sentcommentid', rateLimiters['/searchforimagecommentreplies/:sentimagekey/:sentcommentid'], (req, res) => {
-    let sentImageKey = req.params.sentimagekey
+router.post('/searchforimagecommentreplies', rateLimiters['/searchforimagecommentreplies'], (req, res) => {
     const sentUserId = req.tokenData;
-    let sentCommentId = req.params.sentcommentid
+    const sentImageKey = req.body.postId;
+    const sentCommentId = req.body.commentId;
 
     if (typeof sentImageKey !== 'string') {
         return HTTPHandler.badInput(res, `sentImageKey must be a string. Provided type: ${typeof sentImageKey}`)
@@ -3192,10 +3192,10 @@ router.post('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], 
 })
 
 //search for thread comments
-router.get('/searchforthreadcommentreplies/:sentthreadid/:sentcommentid', rateLimiters['/searchforthreadcommentreplies/:sentthreadid/:sentcommentid'], (req, res) => {
-    let sentThreadId = req.params.sentthreadid
+router.post('/searchforthreadcommentreplies', rateLimiters['/searchforthreadcommentreplies'], (req, res) => {
     const sentUserId = req.tokenData;
-    let sentCommentId = req.params.sentcommentid
+    const sentThreadId = req.body.postId;
+    const sentCommentId = req.body.commentId;
 
     if (typeof sentThreadId !== 'string') {
         return HTTPHandler.badInput(res, `sentThreadId must be a string. Provided type: ${typeof sentThreadId}`)
