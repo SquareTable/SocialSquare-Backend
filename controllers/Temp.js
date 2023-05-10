@@ -1158,6 +1158,101 @@ class TempController {
         })
     }
 
+    static #getsinglepollcomment = (userId, postId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof postId}`))
+            }
+        
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`sentCommentId must be a string. Provided type: ${typeof commentId}`))
+            }
+
+            if (postId.length == 0) {
+                return resolve(HTTPWTHandler.badInput(`postId must not be an empty string`))
+            }
+
+            if (commentId.length == 0) {
+                return resolve(HTTPWTHandler.badInput(`commentId must not be an empty string`))
+            }
+        
+            function sendResponse(nameSendBackObject) {
+                console.log("Params Recieved")
+                console.log(nameSendBackObject)
+                HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
+                }
+
+                Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
+                    if (data) {
+                        const comments = data.comments
+                        const nameSendBackObject = [];
+
+                        if (comments.length == 0) {
+                            return resolve(HTTPWTHandler.notFound('No comments found on poll'))
+                        } else {
+                            function forAwaits(index) {
+                                User.findOne({_id: comments[index].commenterId}).lean().then(result => {
+                                    if (result) {
+                                        var commentUpVotes = (comments[index].commentUpVotes.length - comments[index].commentDownVotes.length)
+                                        var commentUpVoted = false
+                                        if (comments[index].commentUpVotes.includes(userId)) {
+                                            commentUpVoted = true
+                                        }
+                                        var commentDownVoted = false
+                                        if (comments[index].commentDownVotes.includes(userId)) {
+                                            commentDownVoted = true
+                                        }
+                                        nameSendBackObject.push({
+                                            commentId: String(comments[index].commentId),
+                                            commenterName: result.name,
+                                            commenterDisplayName: result.displayName,
+                                            commentText: comments[index].commentsText,
+                                            commentUpVotes: commentUpVotes,
+                                            commentDownVotes: comments[index].commentDownVotes,
+                                            commentReplies: comments[index].commentReplies.length,
+                                            datePosted: comments[index].datePosted,
+                                            profileImageKey: result.profileImageKey,
+                                            commentUpVoted: commentUpVoted,
+                                            commentDownVoted: commentDownVoted
+                                        })
+                                        sendResponse(nameSendBackObject)
+                                    } else {
+                                        console.error('There is a comment with id:', commentId, "and it's owner is not found in the database. This comment should be deleted immediately.")
+                                    }
+                                }).catch(error => {
+                                    console.error('An error occurred while finding one user with id:', comments[index].commenterId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
+                                })
+                            }
+                            var itemsProcessed  = 0
+                            const index = comments.findIndex(comment => comment.commentId == commentId)
+
+                            if (index === -1) {
+                                return resolve(HTTPWTHandler.notFound('Comment could not be found'))
+                            }
+
+                            forAwaits(index)
+                        }
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('Poll could not be found'))
+                    }
+                })
+                .catch(err => {
+                    console.error('An error occured while finding poll with id:', postId, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                });
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1220,6 +1315,10 @@ class TempController {
 
     static downvotepoll = async (userId, pollId) => {
         return await this.#downvotepoll(userId, pollId)
+    }
+
+    static getsinglepollcomment = async (userId, postId, commentId) => {
+        return await this.#getsinglepollcomment(userId, postId, commentId)
     }
 }
 
