@@ -797,7 +797,7 @@ const rateLimiters = {
 //POLL AREA
 
 //search for thread comments
-router.get('/getsinglepollcomment', rateLimiters['/getsinglepollcomment'], (req, res) => {
+router.post('/getsinglepollcomment', rateLimiters['/getsinglepollcomment'], (req, res) => {
     const sentUserId = req.tokenData;
     const sentPollId = req.body.postId;
     const sentCommentId = req.body.commentId;
@@ -1697,7 +1697,7 @@ router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
 })
 
 //search for thread comments
-router.get('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (req, res) => {
+router.post('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (req, res) => {
     const sentUserId = req.tokenData;
 
     const sentImageKey = req.body.postId;
@@ -3197,7 +3197,7 @@ router.get('/searchforthreadcomments/:sentthreadid', rateLimiters['/searchforthr
 })
 
 //search for thread comments
-router.get('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], (req, res) => {
+router.post('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], (req, res) => {
     const sentUserId = req.tokenData;
     const sentThreadId = req.body.postId;
     const sentCommentId = req.body.commentId;
