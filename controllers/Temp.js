@@ -1254,109 +1254,161 @@ class TempController {
     }
 
     static #searchforpollcommentreplies = (userId, postId, commentId) => {
-        if (typeof postId !== 'string') {
-            return HTTPHandler.badInput(res, `postId must be a string. Provided type: ${typeof postId}`)
-        }
+        return new Promise(resolve => {
+            if (typeof postId !== 'string') {
+                return HTTPHandler.badInput(res, `postId must be a string. Provided type: ${typeof postId}`)
+            }
+        
+            if (typeof commentId !== 'string') {
+                return HTTPHandler.badInput(res, `commentId must be a string. Provided type: ${typeof commentId}`)
+            }
+        
+            if (postId.length == 0) {
+                return HTTPHandler.badInput(res, 'postId must not be an empty string.')
+            }
+        
+            if (commentId.length == 0) {
+                return HTTPHandler.badInput(res, 'commentId must not be an empty string.')
+            }
+        
+            function sendResponse(nameSendBackObject) {
+                console.log("Params Recieved")
+                console.log(nameSendBackObject)
+                HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
+            }
+        
+            Poll.findOne({_id: {$eq: postId}}).then(data => {
+                if (data) {
+                    var nameSendBackObject = [];
+                    var comments = data.comments;
+                    if (comments.length == 0) {
+                        return resolve(HTTPWTHandler.notFound('No comments'))
+                    } else {
+                        function forAwaits(index) {
+                            var itemsProcessed = 0;
+                            var commentReplies = comments[index].commentReplies;
+                            if (commentReplies.length == 0) {
+                                return resolve(HTTPWTHandler.notFound('No replies'))
+                            } else {
+                                console.log(commentReplies)
     
-        if (typeof commentId !== 'string') {
-            return HTTPHandler.badInput(res, `commentId must be a string. Provided type: ${typeof commentId}`)
-        }
+                                const uniqueUsers = Array.from(new Set(commentReplies.map(reply => reply.commenterId)))
     
-        if (postId.length == 0) {
-            return HTTPHandler.badInput(res, 'postId must not be an empty string.')
-        }
+                                User.find({_id: {$in: uniqueUsers}}).lean().then(usersFound => {
+                                    const users = {}
+                                    for (const user of usersFound) {
+                                        users[String(user._id)] = user;
+                                    }
     
-        if (commentId.length == 0) {
-            return HTTPHandler.badInput(res, 'commentId must not be an empty string.')
-        }
+                                    for (const item of commentReplies) {
+                                        const commentUpVotes = (item.commentUpVotes.length - item.commentDownVotes.length)
+                                        const commentUpVoted = item.commentUpVotes.includes(sentUserId)
+                                        const commentDownVoted = item.commentDownVotes.includes(sentUserId)
     
-        function sendResponse(nameSendBackObject) {
-            console.log("Params Recieved")
-            console.log(nameSendBackObject)
-            HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
-        }
+                                        const user = users[item.commenterId]
     
-        Poll.findOne({_id: {$eq: postId}}).then(data => {
-            if (data) {
-                var nameSendBackObject = [];
-                var comments = data.comments;
-                if (comments.length == 0) {
-                    return resolve(HTTPWTHandler.notFound('No comments'))
-                } else {
-                    function forAwaits(index) {
-                        var itemsProcessed = 0;
-                        var commentReplies = comments[index].commentReplies;
-                        if (commentReplies.length == 0) {
-                            return resolve(HTTPWTHandler.notFound('No replies'))
-                        } else {
-                            console.log(commentReplies)
-
-                            const uniqueUsers = Array.from(new Set(commentReplies.map(reply => reply.commenterId)))
-
-                            User.find({_id: {$in: uniqueUsers}}).lean().then(usersFound => {
-                                const users = {}
-                                for (const user of usersFound) {
-                                    users[String(user._id)] = user;
+                                        if (user) {
+                                            nameSendBackObject.push({
+                                                commentId: item.commentId,
+                                                commenterName: user.name,
+                                                commenterDisplayName: user.displayName,
+                                                commentText: item.commentsText,
+                                                commentUpVotes: commentUpVotes,
+                                                commentDownVotes: item.commentDownVotes,
+                                                datePosted: item.datePosted,
+                                                profileImageKey: user.profileImageKey,
+                                                commentUpVoted: commentUpVoted,
+                                                commentDownVoted: commentDownVoted
+                                            })
+                                        } else {
+                                            console.error("A comment exists but it's creator's account has been deleted. This comment must be deleted immediately. Comment id:", item._id, ' User Id:', item.commenterId)
+                                        }
+                                    }
+                                }).catch(error => {
+                                    console.error('An error occurred while finding users with an id inside of this array:', uniqueUsers, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creators. Please try again.'))
+                                })
+                            }
+                        }
+                        var itemsProcessed = 0
+                        comments.forEach(function (item, index) {
+                            console.log(comments[index].commentId)
+                            if (comments[index].commentId == sentCommentId) {
+                                if (itemsProcessed !== null) {
+                                    console.log("Found at index:")
+                                    console.log(index)
+                                    forAwaits(index)
+                                    itemsProcessed = null
                                 }
-
-                                for (const item of commentReplies) {
-                                    const commentUpVotes = (item.commentUpVotes.length - item.commentDownVotes.length)
-                                    const commentUpVoted = item.commentUpVotes.includes(sentUserId)
-                                    const commentDownVoted = item.commentDownVotes.includes(sentUserId)
-
-                                    const user = users[item.commenterId]
-
-                                    if (user) {
-                                        nameSendBackObject.push({
-                                            commentId: item.commentId,
-                                            commenterName: user.name,
-                                            commenterDisplayName: user.displayName,
-                                            commentText: item.commentsText,
-                                            commentUpVotes: commentUpVotes,
-                                            commentDownVotes: item.commentDownVotes,
-                                            datePosted: item.datePosted,
-                                            profileImageKey: user.profileImageKey,
-                                            commentUpVoted: commentUpVoted,
-                                            commentDownVoted: commentDownVoted
-                                        })
-                                    } else {
-                                        console.error("A comment exists but it's creator's account has been deleted. This comment must be deleted immediately. Comment id:", item._id, ' User Id:', item.commenterId)
+                            } else {
+                                if (itemsProcessed !== null) {
+                                    itemsProcessed++;
+                                    if(itemsProcessed == comments.length) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
                                 }
-                            }).catch(error => {
-                                console.error('An error occurred while finding users with an id inside of this array:', uniqueUsers, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creators. Please try again.'))
-                            })
-                        }
+                            }
+                        });
                     }
-                    var itemsProcessed = 0
-                    comments.forEach(function (item, index) {
-                        console.log(comments[index].commentId)
-                        if (comments[index].commentId == sentCommentId) {
-                            if (itemsProcessed !== null) {
-                                console.log("Found at index:")
-                                console.log(index)
-                                forAwaits(index)
-                                itemsProcessed = null
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Poll could not be found'))
+                }
+            })
+            .catch(err => {
+                console.error('An error occured while finding poll with id:', postId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+            });
+        })
+    }
+
+    static #deletepoll = (userId, pollId) => {
+        return new Promise(resolve => {
+            if (typeof pollId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            }
+        
+            if (pollId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('pollId must not be an empty string.'))
+            }
+        
+            //Find User
+            User.findOne({_id: {$eq: userId}}).lean().then(userDeletingPoll => {
+                if (userDeletingPoll) {
+                    Poll.findOne({_id: {$eq: pollId}}).lean().then(poll => {
+                        if (poll) {
+                            if (String(userId) === String(poll.creatorId)) {
+                                Poll.deleteOne({_id: {$eq: pollId}}).then(() => {
+                                    Promise.all([
+                                        Upvote.deleteMany({postId: poll._id, postFormat: "Poll"}),
+                                        Downvote.deleteMany({postId: poll._id, postFormat: "Poll"})
+                                    ]).then(() => {
+                                        return resolve(HTTPWTHandler.OK('Successfully deleted poll'))
+                                    }).catch(error => {
+                                        console.error('An error occured while deleting all upvotes and downvotes from poll post with id:', pollId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.OK('Post was deleted, but upvotes and downvotes failed to get deleted.'))
+                                    })
+                                }).catch(error => {
+                                    console.error('An error occured while deleting poll with id:', pollId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
+                                })
+                            } else {
+                                return resolve(HTTPWTHandler.forbidden('You are not authorised to delete this post.'))
                             }
                         } else {
-                            if (itemsProcessed !== null) {
-                                itemsProcessed++;
-                                if(itemsProcessed == comments.length) {
-                                    return resolve(HTTPWTHandler.notFound('Could not find comment'))
-                                }
-                            }
+                            return resolve(HTTPWTHandler.notFound('Could not find post.'))
                         }
-                    });
+                    }).catch(error => {
+                        console.error('An error occured while finding poll with id:', pollId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-            } else {
-                return resolve(HTTPWTHandler.notFound('Poll could not be found'))
-            }
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
+            })
         })
-        .catch(err => {
-            console.error('An error occured while finding poll with id:', postId, '. The error was:', err)
-            return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
-        });
     }
 
     static sendnotificationkey = async (userId, notificationKey) => {
@@ -1429,6 +1481,10 @@ class TempController {
 
     static searchforpollcommentreplies = async (userId, postId, commentId) => {
         return await this.#searchforpollcommentreplies(userId, postId, commentId)
+    }
+
+    static deletepoll = async (userId, pollId) => {
+        return await this.#deletepoll(userId, pollId)
     }
 }
 

@@ -113,15 +113,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/deletepoll': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have deleted too many polls in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/postImage': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 10,
@@ -777,70 +768,6 @@ const rateLimiters = {
 
 
 //POLL AREA
-
-//Delete Poll
-router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
-    const userId = req.tokenData;
-    let {pollId} = req.body;
-
-    if (typeof pollId !== 'string') {
-        return HTTPHandler.badInput(res, `pollId must be a string. Provided type: ${typeof pollId}`)
-    }
-
-    if (typeof userId !== 'string') {
-        return HTTPHandler.badInput(res, `userId must be a string. Provided type: ${typeof userId}`)
-    }
-
-    if (pollId.length == 0) {
-        return HTTPHandler.badInput(res, 'pollId must not be an empty string.')
-    }
-
-    if (userId.length == 0) {
-        return HTTPHandler.badInput(res, 'userId must not be an empty string')
-    }
-
-    //Find User
-    User.findOne({_id: {$eq: userId}}).lean().then(userDeletingPoll => {
-        if (userDeletingPoll) {
-            Poll.findOne({_id: {$eq: pollId}}).lean().then(poll => {
-                if (poll) {
-                    if (userId === poll.creatorId.toString()) {
-                        Poll.deleteOne({_id: {$eq: pollId}}).then(() => {
-                            HTTPHandler.OK(res, 'Successfully deleted poll')
-                            Promise.all([
-                                Upvote.deleteMany({postId: poll._id, postFormat: "Poll"}),
-                                Downvote.deleteMany({posstId: poll._id, postFormat: "Poll"})
-                            ]).then(() => {
-                                console.log('Upvotes and downvotes were successfully deleted for post with id:', pollId)
-                            }).catch(error => {
-                                console.error('An error occured while deleting all upvotes and downvotes from poll post with id:', pollId)
-                                console.error('The error was:', error)
-                            })
-                        }).catch(error => {
-                            console.error('An error occured while deleting poll with id:', pollId)
-                            console.error('The error was:', error)
-                            HTTPHandler.serverError(res, 'An error occurred while deleting poll. Please try again later.')
-                        })
-                    } else {
-                        HTTPHandler.forbidden(res, 'You are not authorised to delete this post.')
-                    }
-                } else {
-                    HTTPHandler.notFound(res, 'Could not find post.')
-                }
-            }).catch(error => {
-                console.error('An error occured while finding poll with id:', pollId)
-                console.error('The error was:', error)
-                HTTPHandler.serverError(res, 'An error occured while finding poll. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with your id.')
-        }
-    }).catch(error => {
-        console.error('An error occured while finding user with id:', userId)
-        console.error('The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 //Post Image
 router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), async (req, res) => {
