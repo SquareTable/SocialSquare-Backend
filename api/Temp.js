@@ -113,15 +113,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/searchforpollcommentreplies': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested too many poll comment replies in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/deletepoll': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -786,117 +777,6 @@ const rateLimiters = {
 
 
 //POLL AREA
-
-//search for thread comments
-router.post('/searchforpollcommentreplies', rateLimiters['/searchforpollcommentreplies'], (req, res) => {
-    const sentUserId = req.tokenData;
-    const sentPollId = req.body.postId;
-    const sentCommentId = req.body.commentId;
-
-    if (typeof sentPollId !== 'string') {
-        return HTTPHandler.badInput(res, `sentPollId must be a string. Provided type: ${typeof sentPollId}`)
-    }
-
-    if (typeof sentUserId !== 'string') {
-        return HTTPHandler.badInput(res, `sentUserId must be a string. Provided type: ${typeof sentUserId}`)
-    }
-
-    if (typeof sentCommentId !== 'string') {
-        return HTTPHandler.badInput(res, `sentCommentId must be a string. Provided type: ${typeof sentCommentId}`)
-    }
-
-    if (sentPollId.length == 0) {
-        return HTTPHandler.badInput(res, 'sentPollId must not be an empty string.')
-    }
-
-    if (sentUserId.length == 0) {
-        return HTTPHandler.badInput(res, 'sentUserId must not be an empty string.')
-    }
-
-    if (sentCommentId.length == 0) {
-        return HTTPHandler.badInput(res, 'sentCommentId must not be an empty string.')
-    }
-
-    function sendResponse(nameSendBackObject) {
-        console.log("Params Recieved")
-        console.log(nameSendBackObject)
-        HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
-    }
-
-    async function findPolls() {
-        await Poll.find({_id: {$eq: sentPollId}}).then(data => {
-            if (data.length) {
-                var nameSendBackObject = [];
-                var comments = data[0].comments;
-                if (comments.length == 0) {
-                    HTTPHandler.notFound(res, 'No comments')
-                } else {
-                    function forAwaits(index) {
-                        var itemsProcessed = 0;
-                        var commentReplies = data[0].comments[index].commentReplies;
-                        if (commentReplies.length == 0) {
-                            HTTPHandler.notFound(res, 'No replies')
-                        } else {
-                            console.log(commentReplies)
-                            commentReplies.forEach(function (item, index) {
-                                User.find({_id: commentReplies[index].commenterId}).then(result => {
-                                    if (result.length) {
-                                        console.log(data)
-                                        console.log(commentReplies[index].commentText)
-                                        var commentUpVotes = (commentReplies[index].commentUpVotes.length - commentReplies[index].commentDownVotes.length)
-                                        var commentUpVoted = false
-                                        if (commentReplies[index].commentUpVotes.includes(sentUserId)) {
-                                            commentUpVoted = true
-                                        }
-                                        var commentDownVoted = false
-                                        if (commentReplies[index].commentDownVotes.includes(sentUserId)) {
-                                            commentDownVoted = true
-                                        }
-                                        nameSendBackObject.push({commentId: commentReplies[index].commentId, commenterName: result[0].name, commenterDisplayName: result[0].displayName, commentText: commentReplies[index].commentsText, commentUpVotes: commentUpVotes, commentDownVotes: commentReplies[index].commentDownVotes, datePosted: commentReplies[index].datePosted, profileImageKey: result[0].profileImageKey, commentUpVoted: commentUpVoted, commentDownVoted: commentDownVoted})
-                                    } else {
-                                        HTTPHandler.notFound(res, 'Comment creator could not be found')
-                                    }
-                                    itemsProcessed++;
-                                    if(itemsProcessed === commentReplies.length) {
-                                        console.log("Before Function")
-                                        console.log(nameSendBackObject)
-                                        sendResponse(nameSendBackObject);
-                                    }
-                                })
-                            })
-                        }
-                    }
-                    var itemsProcessed = 0
-                    comments.forEach(function (item, index) {
-                        console.log(comments[index].commentId)
-                        if (comments[index].commentId == sentCommentId) {
-                            if (itemsProcessed !== null) {
-                                console.log("Found at index:")
-                                console.log(index)
-                                forAwaits(index)
-                                itemsProcessed = null
-                            }
-                        } else {
-                            if (itemsProcessed !== null) {
-                                itemsProcessed++;
-                                if(itemsProcessed == comments.length) {
-                                    HTTPHandler.notFound(res, 'Could not find comment')
-                                }
-                            }
-                        }
-                    });
-                }
-            } else {
-                HTTPHandler.notFound(res, 'Poll could not be found')
-            }
-        })
-        .catch(err => {
-            console.error('An error occured while finding poll with id:', sentPollId, '. The error was:', err)
-            HTTPHandler.serverError(res, 'An error occured while finding poll. Please try again later.')
-        });
-    }
-    findPolls()
-})
 
 //Delete Poll
 router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {

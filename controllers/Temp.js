@@ -1253,6 +1253,112 @@ class TempController {
         })
     }
 
+    static #searchforpollcommentreplies = (userId, postId, commentId) => {
+        if (typeof postId !== 'string') {
+            return HTTPHandler.badInput(res, `postId must be a string. Provided type: ${typeof postId}`)
+        }
+    
+        if (typeof commentId !== 'string') {
+            return HTTPHandler.badInput(res, `commentId must be a string. Provided type: ${typeof commentId}`)
+        }
+    
+        if (postId.length == 0) {
+            return HTTPHandler.badInput(res, 'postId must not be an empty string.')
+        }
+    
+        if (commentId.length == 0) {
+            return HTTPHandler.badInput(res, 'commentId must not be an empty string.')
+        }
+    
+        function sendResponse(nameSendBackObject) {
+            console.log("Params Recieved")
+            console.log(nameSendBackObject)
+            HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
+        }
+    
+        Poll.findOne({_id: {$eq: postId}}).then(data => {
+            if (data) {
+                var nameSendBackObject = [];
+                var comments = data.comments;
+                if (comments.length == 0) {
+                    return resolve(HTTPWTHandler.notFound('No comments'))
+                } else {
+                    function forAwaits(index) {
+                        var itemsProcessed = 0;
+                        var commentReplies = comments[index].commentReplies;
+                        if (commentReplies.length == 0) {
+                            return resolve(HTTPWTHandler.notFound('No replies'))
+                        } else {
+                            console.log(commentReplies)
+
+                            const uniqueUsers = Array.from(new Set(commentReplies.map(reply => reply.commenterId)))
+
+                            User.find({_id: {$in: uniqueUsers}}).lean().then(usersFound => {
+                                const users = {}
+                                for (const user of usersFound) {
+                                    users[String(user._id)] = user;
+                                }
+
+                                for (const item of commentReplies) {
+                                    const commentUpVotes = (item.commentUpVotes.length - item.commentDownVotes.length)
+                                    const commentUpVoted = item.commentUpVotes.includes(sentUserId)
+                                    const commentDownVoted = item.commentDownVotes.includes(sentUserId)
+
+                                    const user = users[item.commenterId]
+
+                                    if (user) {
+                                        nameSendBackObject.push({
+                                            commentId: item.commentId,
+                                            commenterName: user.name,
+                                            commenterDisplayName: user.displayName,
+                                            commentText: item.commentsText,
+                                            commentUpVotes: commentUpVotes,
+                                            commentDownVotes: item.commentDownVotes,
+                                            datePosted: item.datePosted,
+                                            profileImageKey: user.profileImageKey,
+                                            commentUpVoted: commentUpVoted,
+                                            commentDownVoted: commentDownVoted
+                                        })
+                                    } else {
+                                        console.error("A comment exists but it's creator's account has been deleted. This comment must be deleted immediately. Comment id:", item._id, ' User Id:', item.commenterId)
+                                    }
+                                }
+                            }).catch(error => {
+                                console.error('An error occurred while finding users with an id inside of this array:', uniqueUsers, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creators. Please try again.'))
+                            })
+                        }
+                    }
+                    var itemsProcessed = 0
+                    comments.forEach(function (item, index) {
+                        console.log(comments[index].commentId)
+                        if (comments[index].commentId == sentCommentId) {
+                            if (itemsProcessed !== null) {
+                                console.log("Found at index:")
+                                console.log(index)
+                                forAwaits(index)
+                                itemsProcessed = null
+                            }
+                        } else {
+                            if (itemsProcessed !== null) {
+                                itemsProcessed++;
+                                if(itemsProcessed == comments.length) {
+                                    return resolve(HTTPWTHandler.notFound('Could not find comment'))
+                                }
+                            }
+                        }
+                    });
+                }
+            } else {
+                return resolve(HTTPWTHandler.notFound('Poll could not be found'))
+            }
+        })
+        .catch(err => {
+            console.error('An error occured while finding poll with id:', postId, '. The error was:', err)
+            return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+        });
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1319,6 +1425,10 @@ class TempController {
 
     static getsinglepollcomment = async (userId, postId, commentId) => {
         return await this.#getsinglepollcomment(userId, postId, commentId)
+    }
+
+    static searchforpollcommentreplies = async (userId, postId, commentId) => {
+        return await this.#searchforpollcommentreplies(userId, postId, commentId)
     }
 }
 
