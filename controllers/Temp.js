@@ -1538,6 +1538,71 @@ class TempController {
         })
     }
 
+    static #getImagesFromProfile = (userId, pubId) => {
+        return new Promise(resolve => {
+            if (typeof pubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pubId must be a string. Type provided: ${typeof pubId}`))
+            }
+        
+            if (pubId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
+            }
+        
+            const getImagesAndSendToUser = (postOwner, userRequesting) => {
+                ImagePost.find({creatorId: postOwner._id}).sort({datePosted: -1}).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
+                    if (result.length) {
+                        return resolve(HTTPWTHandler.OK('Posts found', result))
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('This user has no image posts!'))
+                    }
+                }).catch(error => {
+                    console.error('An error occured while getting user images from user with id:', postOwner._id, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while getting user image posts. Please try again.'))
+                })
+            }
+        
+            User.findOne({secondId: {$eq: pubId}}).lean().then(data => { 
+                User.findOne({_id: {$eq: userId}}).lean().then(secondData => {
+                    if (!data) {
+                        return resolve(HTTPWTHandler.notFound('User could not be found'))
+                    }
+
+                    if (!secondData) {
+                        return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                    }
+
+                    const userPublicID = secondData.secondId;
+                    const isOwner = userId == data._id.toString()
+                    if (isOwner === true) {
+                        getImagesAndSendToUser(data, secondData)
+                    } else if (data.blockedAccounts.includes(userPublicID)) {
+                        return resolve(HTTPWTHandler.notFound('User not found.'))
+                    } else {
+                        if (data.privateAccount != true) {
+                            getImagesAndSendToUser(data, secondData)
+                        } else {
+                            //ACCOUNT IS PRIVATE
+                            const isFollowingUser = data.followers.includes(userPublicID);
+                            if (isFollowingUser == true) {
+                                //User is following this account so send posts
+                                getImagesAndSendToUser(data, secondData)
+                            } else {
+                                //User is not following this account so DO NOT SEND POSTS
+                                return resolve(HTTPWTHandler.notFound('This user has no image posts!'))
+                            }
+                        }
+                    }
+                }).catch(error => {
+                    console.error('An error occurred while finding user with ID:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1620,6 +1685,10 @@ class TempController {
 
     static postProfileImage = async (userId, file) => {
         return await this.#postProfileImage(userId, file)
+    }
+
+    static getImagesFromProfile = async (userId, pubId) => {
+        return await this.#getImagesFromProfile(userId, pubId)
     }
 }
 

@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getImagesFromProfile': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many image posts in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getProfilePic/:pubId': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 90,
@@ -721,77 +712,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-//Get Images From Profile
-router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req, res) => {
-    const userId = req.tokenData;
-    let {pubId} = req.body;
-
-    if (typeof userId !== 'string') {
-        return HTTPHandler.badInput(res, `userId must be a string. Type provided: ${typeof userId}`)
-    }
-
-    if (typeof pubId !== 'string') {
-        return HTTPHandler.badInput(res, `pubId must be a string. Type provided: ${typeof pubId}`)
-    }
-
-    if (userId.length == 0) {
-        return HTTPHandler.badInput(res, 'userId cannot be an empty string.')
-    }
-
-    if (pubId.length == 0) {
-        return HTTPHandler.badInput(res, 'pubId cannot be an empty string.')
-    }
-
-    const getImagesAndSendToUser = (postOwner, userRequesting) => {
-        ImagePost.find({creatorId: postOwner._id}).sort({datePosted: -1}).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
-            if (result.length) {
-                HTTPHandler.OK(res, "Posts found", result)
-            } else {
-                HTTPHandler.notFound(res, 'This user has no image posts!')
-            }
-        }).catch(error => {
-            console.error('An error occured while getting user images from user with id:', postOwner._id, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while getting user images. Please try again later.')
-        })
-    }
-
-    User.find({secondId: {$eq: pubId}}).then(data => { 
-        User.find({_id: {$eq: userId}}).then(secondData => {
-            if (data.length && secondData.length) {
-                const userPublicID = secondData[0].secondId;
-                const isOwner = userId == data[0]._id.toString()
-                if (isOwner === true) {
-                    getImagesAndSendToUser(data[0], secondData[0])
-                } else if (data[0].blockedAccounts.includes(userPublicID)) {
-                    HTTPHandler.notFound(res, 'User not found.')
-                } else {
-                    if (data[0].privateAccount != true) {
-                        getImagesAndSendToUser(data[0], secondData[0])
-                    } else {
-                        //ACCOUNT IS PRIVATE
-                        const isFollowingUser = data[0].followers.includes(userPublicID);
-                        if (isFollowingUser == true) {
-                            //User is following this account so send posts
-                            getImagesAndSendToUser(data[0], secondData[0])
-                        } else {
-                            //User is not following this account so DO NOT SEND POSTS
-                            HTTPHandler.notFound(res, 'This user has no image posts!')
-                        }
-                    }
-                }
-            } else {
-                HTTPHandler.notFound(res, 'User not found')
-            }
-        }).catch(error => {
-            console.error('An error occurred while finding user with ID:', userId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 //Get Profile Pic
 router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req, res) => {
