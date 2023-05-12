@@ -1496,6 +1496,48 @@ class TempController {
         })
     }
 
+    static #postProfileImage = (userId, file) => {
+        return new Promise(resolve => {
+            if (file) {
+                return resolve(HTTPWTHandler.badInput('No file was sent.'))
+            }
+        
+        
+            console.log('File has been recieved: ', file.filename)
+            //check if user exists
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    imageHandler.compressImage(file.filename).then(imageKey => {
+                        if (result.profileImageKey != "") {
+                            //Remove previous profile image if the user already has one
+                            imageHandler.deleteImageByKey(result.profileImageKey)
+                        }
+                        User.findOneAndUpdate({_id: {$eq: userId}}, { profileImageKey: imageKey }).then(function(){
+                            console.log("SUCCESS1")
+                            return resolve(HTTPWTHandler.OK('Profile Image Updated'))
+                        })
+                        .catch(err => {
+                            console.error('An error occurred while updating user with id:', userId, ' profileImageKey to:', imageKey, '. The error was:', err)
+                            imageHandler.deleteImageByKey(imageKey)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while updating profile picture. Please try again.'))
+                        });
+                    }).catch(error => {
+                        console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
+                        imageHandler.deleteMulterTempImage(file.filename)
+                        return resolve(HTTPWTHandler.serverError('Failed to compress image. Please try again.'))
+                    })
+                } else {
+                    imageHandler.deleteMulterTempImage(file.filename)
+                    return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
+                }
+            }).catch(err => { 
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                imageHandler.deleteMulterTempImage(file.filename)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1574,6 +1616,10 @@ class TempController {
 
     static postImage = async (userId, title, description, sentAllowScreenShots, file) => {
         return await this.#postImage(userId, title, description, sentAllowScreenShots, file)
+    }
+
+    static postProfileImage = async (userId, file) => {
+        return await this.#postProfileImage(userId, file)
     }
 }
 

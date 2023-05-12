@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/postProfileImage': rateLimit({
-        windowMs: 1000 * 60 * 60, //1 hour
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have changed your profile picture too many times in the last hour. Please try again in 60 minutes."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getImagesFromProfile': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -730,58 +721,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-//Post Profile Image
-router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.single('image'), async (req, res) => {
-    const userId = req.tokenData;
-    
-    if (!req.file) {
-        return HTTPHandler.badInput(res, 'No file was sent.')
-    }
-
-
-    console.log('File has been recieved: ', req.file.filename)
-    //check if user exists
-    User.find({_id: {$eq: userId}}).then(result => {
-        if (result.length) {
-            imageHandler.compressImage(req.file.filename).then(imageKey => {
-                if (result[0].profileImageKey != "") {
-                    //Remove previous profile image if the user already has one
-                    var filepath = path.resolve(process.env.UPLOADED_PATH, result[0].profileImageKey)
-                    fs.unlink(filepath, (err) => {
-                        if (err) {
-                            console.log('An error occured while deleting image with imageKey: ' + result[0].profileImageKey)
-                            console.log(err)
-                        } else {
-                            console.log("Previous profile image deleted")
-                        }
-                    })
-                }
-                User.findOneAndUpdate({_id: {$eq: userId}}, { profileImageKey: imageKey }).then(function(){
-                    console.log("SUCCESS1")
-                    HTTPHandler.OK(res, 'Profile Image Updated')
-                })
-                .catch(err => {
-                    console.error('An error occurred while updating user with id:', userId, ' profileImageKey to:', imageKey, '. The error was:', err)
-                    HTTPHandler.serverError(res, 'An error occurred while updating profile picture. Please try again later.')
-                    imageHandler.deleteImageByKey(imageKey)
-                });
-            }).catch(error => {
-                console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', req.file.filename)
-                console.error('The error was:', error)
-                imageHandler.deleteImage(req.file.path)
-                HTTPHandler.serverError(res, 'Failed to compress image. Please try again.')
-            })
-        } else {
-            imageHandler.deleteImage(req.file.path)
-            HTTPHandler.notFound(res, 'User with your id could not be found')
-        }
-    }).catch(err => { 
-        imageHandler.deleteImage(req.file.path)
-        console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    });
-})
 
 //Get Images From Profile
 router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req, res) => {

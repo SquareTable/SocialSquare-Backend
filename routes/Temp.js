@@ -213,6 +213,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/postProfileImage': rateLimit({
+        windowMs: 1000 * 60 * 60, //1 hour
+        max: 5,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have changed your profile picture too many times in the last hour. Please try again in 60 minutes."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -581,7 +590,7 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
 router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), async (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
-            functionName: 'deletepoll',
+            functionName: 'postImage',
             functionArgs: [req.tokenData, req.body.title, req.body.description, req.body.sentAllowScreenShots, req.file]
         }
     })
@@ -591,7 +600,25 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /deletepoll:', error)
+        console.error('An error occurred from TempWorker for POST /postImage:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.single('image'), async (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'postProfileImage',
+            functionArgs: [req.tokenData, req.file]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /postProfileImage:', error)
         HTTPHandler.serverError(res, error)
     })
 });
