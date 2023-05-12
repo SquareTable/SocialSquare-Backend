@@ -5,7 +5,6 @@ const CONSTANTS = {
     MAX_USER_USERNAME_LENGTH: 20,
     VALID_EMAIL_TEST: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
     VALID_USERNAME_TEST: /^[a-z0-9]*$/,
-    MULTER_UPLOAD_DIR: `.${process.env.UPLOAD_PATH}`,
     MAX_USER_DISPLAY_NAME_LENGTH: 20,
     MAX_USER_BIO_LENGTH: 250,
     VALID_BIO_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure bio has less than 10 lines,

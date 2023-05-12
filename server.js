@@ -52,7 +52,7 @@ const stream = require('stream')
 const storage = multer.diskStorage({
     // Destination to store image     
     destination: (req, file, cb) => {
-        cb(null, CONSTANTS.MULTER_UPLOAD_DIR)
+        cb(null, process.env.TEMP_IMAGES_PATH)
     },
     filename: (req, file, cb) => {
         let extName = path.extname(file.originalname)

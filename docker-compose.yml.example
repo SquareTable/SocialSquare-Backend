@@ -5,7 +5,7 @@ services:
             ports:
                   - "OUTSIDE-PORT-TO-USE:3000"
             environment:
-                  - UPLOAD_PATH=/Local-Images
+                  - TEMP_IMAGES_PATH=/Local-Images
                   - UPLOADED_PATH=/server/Local-Images
             volumes:
                   - DIRECTORY-TO-SAVE-IMAGES-TO:/server/Local-Images

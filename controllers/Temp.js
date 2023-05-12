@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Poll = require('../models/Poll');
+const ImagePost = require('../models/ImagePost');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -7,6 +8,9 @@ const HTTPWTHandler = new HTTPWTLibrary()
 
 const HTTPLibrary = require('../libraries/HTTP');
 const HTTPHandler = new HTTPLibrary();
+
+const ImageLibrary = require('../libraries/Image');
+const imageHandler = new ImageLibrary();
 
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
@@ -1411,6 +1415,87 @@ class TempController {
         })
     }
 
+    static #postImage = (creatorId, title, description, sentAllowScreenShots, file) => {
+        return new Promise(resolve => {
+            if (!file) {
+                return resolve(HTTPWTHandler.badInput('No file was sent.'))
+            }
+        
+            const deleteFile = () => {
+                imageHandler.deleteMulterTempImage(file.filename, false)
+            }
+        
+            if (typeof title !== 'string') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`title must be a string. Provided type: ${typeof title}`))
+            }
+        
+            if (typeof description !== 'string') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`description must be a string. Provided type: ${typeof description}`))
+            }
+            
+            title = title.trim()
+            description = description.trim()
+            //console.log(file)
+            console.log(title)
+            console.log(description)
+            console.log(creatorId)
+            User.findOne({_id: creatorId}).lean().then(result => {
+                if (result) {
+                    //allowScreenShots set up
+                    console.log(sentAllowScreenShots)
+                    var allowScreenShots = sentAllowScreenShots
+                    if (sentAllowScreenShots == true || allowScreenShots == "true") {
+                        console.log("sent allow ss was true")
+                        allowScreenShots = true
+                    } else if (sentAllowScreenShots == false || allowScreenShots == "false") {
+                        console.log("sent allow ss was false")
+                        allowScreenShots = false
+                    } else {    
+                        console.log("Sent allow ss wasnt true or false so set true")
+                        allowScreenShots = true
+                    }
+                    console.log(`allowScreenShots ${allowScreenShots}`)
+        
+                    imageHandler.compressImage(file.filename).then(imageKey => {
+                        const newImagePostObject = {
+                            imageKey,
+                            imageTitle: title, 
+                            imageDescription: description,
+                            creatorId: creatorId,
+                            comments: [],
+                            datePosted: Date.now(),
+                            allowScreenShots: allowScreenShots,
+                        }
+
+                        const newImage = new ImagePost(newImagePostObject);
+        
+                        newImage.save().then(result => {
+                            return resolve(HTTPWTHandler.OK('Post successful'))
+                        })
+                        .catch(err => {
+                            console.error('An error occured while saving post with newImagePostObject being:', newImagePostObject, '. The error was:', err)
+                            imageHandler.deleteImageByKey(imageKey)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while saving post!'))
+                        })
+                    }).catch(error => {
+                        console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
+                        imageHandler.deleteMulterTempImage(file.filename)
+                        return resolve(HTTPWTHandler.serverError('Failed to compress image'))
+                    })
+                } else {
+                    imageHandler.deleteMulterTempImage(file.filename)
+                    return resolve(HTTPWTHandler.notFound('Could not find user with your id'))
+                }
+            }).catch(err => {
+                imageHandler.deleteMulterTempImage(file.filename)
+                console.error('An error occurred while finding user with id:', creatorId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1485,6 +1570,10 @@ class TempController {
 
     static deletepoll = async (userId, pollId) => {
         return await this.#deletepoll(userId, pollId)
+    }
+
+    static postImage = async (userId, title, description, sentAllowScreenShots, file) => {
+        return await this.#postImage(userId, title, description, sentAllowScreenShots, file)
     }
 }
 

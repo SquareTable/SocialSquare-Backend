@@ -3,7 +3,6 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const mongodb = require('mongodb');
 mongoose.set('useFindAndModify', false);
-const { v4: uuidv4 } = require('uuid');
 const geoIPLite = require('geoip-lite')
 
 const sanitizeFilename = require('sanitize-filename');
@@ -45,30 +44,6 @@ const s3 = new S3 ({
 
 const util = require('util')
 const unlinkFile = util.promisify(fs.unlink)
-
-//Image post
-const multer  = require('multer')
-const path = require('path');
-const stream = require('stream')
-
-
-const storage = multer.diskStorage({
-    // Destination to store image     
-    destination: (req, file, cb) => {
-        cb(null, CONSTANTS.MULTER_UPLOAD_DIR)
-    },
-    filename: (req, file, cb) => {
-        let extName = path.extname(file.originalname)
-        if (extName == ".png" || extName == ".jpg" || extName == ".jpeg") {
-            var newUUID = uuidv4(); 
-            cb(null, newUUID + extName); 
-        } else {
-            cb("Invalid file format")
-        }      
-    }
-});
-
-const upload = multer({ storage: storage })
 
 const { uploadFile, getFileStream } = require('../s3')
 
@@ -113,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/postImage': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have created too many image posts in the last 24 hours. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/postProfileImage': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
         max: 5,
@@ -764,98 +730,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-
-
-//POLL AREA
-
-//Post Image
-router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), async (req, res) => {
-    const creatorId = req.tokenData;
-    let {title, description, sentAllowScreenShots} = req.body;
-
-    if (!req.file) {
-        return HTTPHandler.badInput(res, 'No file was sent.')
-    }
-
-    const deleteFile = () => {
-        const filepath = sanitizeFilename(req.file.path)
-        imageHandler.deleteImage(filepath)
-    }
-
-    if (typeof title !== 'string') {
-        deleteFile()
-        return HTTPHandler.badInput(res, `title must be a string. Provided type: ${typeof title}`)
-    }
-
-    if (typeof description !== 'string') {
-        deleteFile()
-        return HTTPHandler.badInput(res, `description must be a string. Provided type: ${typeof description}`)
-    }
-
-    if (creatorId == undefined) {
-        deleteFile()
-        return HTTPHandler.badInput(res, 'creatorId cannot be undefined.')
-    }
-    
-    title = title.trim()
-    description = description.trim()
-    //console.log(file)
-    console.log(title)
-    console.log(description)
-    console.log(creatorId)
-    User.find({_id: creatorId}).then(result => {
-        if (result.length) {
-            //allowScreenShots set up
-            console.log(sentAllowScreenShots)
-            var allowScreenShots = sentAllowScreenShots
-            if (sentAllowScreenShots == true || allowScreenShots == "true") {
-                console.log("sent allow ss was true")
-                allowScreenShots = true
-            } else if (sentAllowScreenShots == false || allowScreenShots == "false") {
-                console.log("sent allow ss was false")
-                allowScreenShots = false
-            } else {    
-                console.log("Sent allow ss wasnt true or false so set true")
-                allowScreenShots = true
-            }
-            console.log(`allowScreenShots ${allowScreenShots}`)
-
-            imageHandler.compressImage(req.file.filename).then(imageKey => {
-                const newImage = new ImagePost({
-                    imageKey,
-                    imageTitle: title, 
-                    imageDescription: description,
-                    creatorId: creatorId,
-                    comments: [],
-                    datePosted: Date.now(),
-                    allowScreenShots: allowScreenShots,
-                });
-
-                newImage.save().then(result => {
-                    HTTPHandler.OK(res, 'Post successful')
-                })
-                .catch(err => {
-                    console.error('An error occured while saving post:', err)
-                    imageHandler.deleteImageByKey(imageKey)
-                    HTTPHandler.serverError(res, 'An error occurred while saving post!')
-                })
-            }).catch(error => {
-                console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', req.file.filename)
-                console.error('The error was:', error)
-                imageHandler.deleteImage(req.file.path)
-                HTTPHandler.serverError(res, 'Failed to compress image')
-            })
-        } else {
-            imageHandler.deleteImage(req.file.path)
-            HTTPHandler.notFound(res, 'Could not find user with your id')
-        }
-    }).catch(err => {
-        imageHandler.deleteImage(req.file.path)
-        console.error('An error occurred while finding user with id:', creatorId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again.')
-    })
-})
 
 //Post Profile Image
 router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.single('image'), async (req, res) => {

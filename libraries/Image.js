@@ -11,7 +11,7 @@ class Image {
             if (typeof filename == 'string') {
 
                 const sanitizedFilename = sanitizeFilename(filename)
-                const sanitizedFilepath = path.resolve(CONSTANTS.MULTER_UPLOAD_DIR, sanitizedFilename)
+                const sanitizedFilepath = path.resolve(process.env.TEMP_IMAGES_PATH, sanitizedFilename)
 
                 const newUUID = uuidv4();
                 const newFileName = newUUID + '.jpg'
@@ -21,8 +21,7 @@ class Image {
                 sharp(sanitizedFilepath).rotate().resize({width: 1000, height: 1000}).toFormat('jpg').jpeg({ quality: 30, mozjpeg: true }).toFile(newPath).then(() => {
                     fs.unlink(sanitizedFilepath, (err) => {
                         if (err) {
-                            console.error('An error occured while deleting image with filepath:', filepath)
-                            console.error('The error was:', err)
+                            console.error('An error occured while deleting image with filepath:', filepath, '. The error was:', err)
                         }
                         console.log('Successfully compressed image')
                         resolve(newFileName)
@@ -37,48 +36,46 @@ class Image {
     }
 
     /*
-        The difference between deleteImage and deleteImagePromise is this:
+        The difference between deleteImageByKey and deleteImageByKeyPromise is this:
         deleteImage is to be used if you DO NOT care if the image was deleted successfully or not
         If you need to know if the image was actually deleted or not, use deleteImagePromise
     */
 
-    deleteImage(filepath) {
-        filepath = sanitizeFilename(filepath)
-        fs.unlink(filepath, (err) => {
-            if (err) {
-                console.error('An error occured while deleting image with filepath:', filepath)
-                console.error('The error was:', err)
-            }
-        })
-    }
-
-    deleteImagePromise(filepath) {
-        filepath = sanitizeFilename(filepath)
-        return new Promise((resolve, reject) => {
-            fs.unlink(filepath, (err) => {
-                if (err) reject(err)
-                else resolve()
-            })
-        })
-    }
-
     deleteImageByKey(key) {
-        const filepath = process.env.UPLOAD_PATH + '/' + sanitizeFilename(key)
+        const filepath = process.env.TEMP_IMAGES_PATH + '/' + sanitizeFilename(key)
         fs.unlink(filepath, (err) => {
             if (err) {
-                console.error('An error occured while deleting image with key:', key, ' and filepath:', filepath)
-                console.error('The error was:', err)
+                console.error('An error occured while deleting image with key:', key, ' and filepath:', filepath, '. The error was:', err)
             }
         })
     }
 
     deleteImagePromiseByKey(key) {
-        const filepath = process.env.UPLOAD_PATH + '/' + sanitizeFilename(key)
+        const filepath = process.env.TEMP_IMAGES_PATH + '/' + sanitizeFilename(key)
         return new Promise((resolve, reject) => {
             fs.unlink(filepath, (err) => {
                 if (err) reject(err)
                 else resolve()
             })
+        })
+    }
+
+
+    deleteMulterTempImage(filename, returnPromise = false) {
+        const sanitizedFilename = sanitizeFilename(filename)
+        const filepath = process.env.TEMP_IMAGES_PATH + sanitizedFilename
+
+        if (returnPromise === true) {
+            return new Promise((resolve, reject) => {
+                fs.unlink(filepath, (err) => {
+                    if (err) reject(err)
+                    else resolve()
+                })
+            })
+        }
+
+        fs.unlink(filepath, (err) => {
+            console.error('An error occurred while deleting MulterTempImage with filepath:', filepath, '. The error was:', error)
         })
     }
 }

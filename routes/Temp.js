@@ -7,6 +7,31 @@ const rateLimit = require('express-rate-limit');
 
 const workerPath = path.resolve('workers', 'TempWorker.js')
 
+//Image post
+const multer  = require('multer')
+const path = require('path');
+const CONSTANTS = require('../constants');
+const { v4: uuidv4 } = require('uuid');
+
+
+const storage = multer.diskStorage({
+    // Destination to store image     
+    destination: (req, file, cb) => {
+        cb(null, process.env.TEMP_IMAGES_PATH)
+    },
+    filename: (req, file, cb) => {
+        let extName = path.extname(file.originalname)
+        if (extName === ".png" || extName === ".jpg" || extName === ".jpeg") {
+            const newUUID = uuidv4(); 
+            cb(null, newUUID + extName); 
+        } else {
+            cb("Invalid file format")
+        }      
+    }
+});
+
+const upload = multer({ storage: storage })
+
 const rateLimiters = {
     '/sendnotificationkey': rateLimit({
         windowMs: 1000 * 60, // 1 minute
@@ -176,6 +201,15 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have deleted too many polls in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/postImage': rateLimit({
+        windowMs: 1000 * 60 * 60 * 24, //1 day
+        max: 10,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have created too many image posts in the last 24 hours. Please try again in 24 hours."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -531,6 +565,24 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
         workerData: {
             functionName: 'deletepoll',
             functionArgs: [req.tokenData, req.body.pollId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /deletepoll:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), async (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'deletepoll',
+            functionArgs: [req.tokenData, req.body.title, req.body.description, req.body.sentAllowScreenShots, req.file]
         }
     })
 
