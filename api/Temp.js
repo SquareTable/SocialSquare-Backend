@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getProfilePic/:pubId': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 90,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many profile pictures in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/imagepostcomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -712,32 +703,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-//Get Profile Pic
-router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req, res) => {
-    let pubId = req.params.pubId;
-    console.log("Before Find")
-    User.find({secondId: {$eq: pubId}}).then(data => { 
-        if (data.length) { 
-            console.log("After Find")
-            var userData = data[0]
-            console.log(userData)
-            var profileKey = userData.profileImageKey
-            console.log(profileKey)
-            if (profileKey !== "") {
-                HTTPHandler.OK(res, 'Profile image found.', profileKey)
-            } else {
-                HTTPHandler.notFound(res, 'No profile image.')
-            }
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with pubId provided.')
-        }
-    })
-    .catch(err => { 
-        console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    });
-})
 
 //Image comment Post
 router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) => {

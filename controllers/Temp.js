@@ -1603,6 +1603,27 @@ class TempController {
         })
     }
 
+    static #getProfilePic = (pubId) => {
+        return new Promise(resolve => {
+            User.findOne({secondId: {$eq: pubId}}).lean().then(data => { 
+                if (data) { 
+                    const profileKey = data.profileImageKey
+                    if (profileKey !== "") {
+                        return resolve(HTTPWTHandler.OK('Profile image found.', profileKey))
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('No profile image.'))
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with pubId provided.'))
+                }
+            })
+            .catch(err => { 
+                console.error('An error occurred while finding one user with secondId:', pubId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
+            });
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1689,6 +1710,10 @@ class TempController {
 
     static getImagesFromProfile = async (userId, pubId) => {
         return await this.#getImagesFromProfile(userId, pubId)
+    }
+
+    static getProfilePic = async (pubId) => {
+        return await this.#getProfilePic(pubId)
     }
 }
 
