@@ -1624,6 +1624,70 @@ class TempController {
         })
     }
 
+    static #imagepostcomment = (userId, comment, userName, imageId) => {
+        return new Promise(resolve => {
+            if (typeof comment !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
+            }
+        
+            if (typeof userName !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
+            }
+        
+            if (typeof imageId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof imageId}`))
+            }
+        
+            comment = comment.trim()
+        
+            if (comment.length == 0) {
+                return resolve(HTTPWTHandler.badInput('comment must not be an empty string.'))
+            }
+        
+            if (userName.length == 0) {
+                return resolve(HTTPWTHandler.badInput('userName must not be an empty string.'))
+            }
+        
+            if (imageId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('imageId must not be an empty string'))
+            }
+        
+            if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
+                return HTTPHandler.badInput(res, `comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`)
+            }
+        
+            //Find User
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    if (result.name == userName) {
+                        async function findImages() {
+                            const objectId = new mongodb.ObjectID()
+                            console.log(objectId)
+                            var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
+                            ImagePost.findOneAndUpdate({_id: {$eq: imageId}}, { $push: { comments: commentForPost } }).then(function(){
+                                console.log("SUCCESS1")
+                                return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                            })
+                            .catch(err => {
+                                console.error('An error occurred while pushing comment object:', commentForPost, 'to comments field for image with id:', imageId, '. The error was:', err)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again.'))
+                            });
+                        }
+                        findImages()
+                    } else {
+                        return resolve(HTTPWTHandler.badInput('userName provided is not the same username as in the database'))
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
+                } 
+            })
+            .catch(err => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1714,6 +1778,10 @@ class TempController {
 
     static getProfilePic = async (pubId) => {
         return await this.#getProfilePic(pubId)
+    }
+
+    static imagepostcomment = async (userId, comment, userName, imageId) => {
+        return await this.#imagepostcomment(userId, comment, userName, imageId)
     }
 }
 

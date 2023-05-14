@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/imagepostcomment': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have commented on image posts too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/imagepostcommentreply': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
@@ -703,72 +694,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-//Image comment Post
-router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) => {
-    const userId = req.tokenData;
-    let {comment, userName, imageKey} = req.body;
-
-    if (typeof comment !== 'string') {
-        return HTTPHandler.badInput(res, `comment must be a string. Provided type: ${typeof comment}`)
-    }
-
-    if (typeof userName !== 'string') {
-        return HTTPHandler.badInput(res, `userName must be a string. Provided type: ${typeof userName}`)
-    }
-
-    if (typeof imageKey !== 'string') {
-        return HTTPHandler.badInput(res, `imageKey must be a string. Provided type: ${typeof imageKey}`)
-    }
-
-    comment = comment.trim()
-
-    if (comment.length == 0) {
-        return HTTPHandler.badInput(res, 'comment must not be an empty string.')
-    }
-
-    if (userName.length == 0) {
-        return HTTPHandler.badInput(res, 'userName must not be an empty string.')
-    }
-
-    if (imageKey.length == 0) {
-        return HTTPHandler.badInput(res, 'imageKey must not be an empty string')
-    }
-
-    if (comment.length > 1000) {
-        return HTTPHandler.badInput(res, 'comment must not be more than 1000 characters long')
-    }
-
-    //Find User
-    User.find({_id: {$eq: userId}}).then(result => {
-        if (result.length) {
-            if (result[0].name == userName) {
-                async function findImages() {
-                    var objectId = new mongodb.ObjectID()
-                    console.log(objectId)
-                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                    ImagePost.findOneAndUpdate({imageKey: {$eq: imageKey}}, { $push: { comments: commentForPost } }).then(function(){
-                        console.log("SUCCESS1")
-                        HTTPHandler.OK(res, 'Comment upload successful')
-                    })
-                    .catch(err => {
-                        console.error('An error occurred while pushing comment object:', commentForPost, 'to comments field for image with imageKey:', imageKey, '. The error was:', err)
-                        HTTPHandler.serverError(res, 'An error occurred while adding comment. Please try again later.')
-                    });
-                }
-                findImages()
-            } else {
-                HTTPHandler.badInput(res, 'userName provided is not ther same username as in the database.')
-            }
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with your id')
-        } 
-    })
-    .catch(err => {
-        console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    });
-})
 
 //image Comment Reply Post
 router.post('/imagepostcommentreply', rateLimiters['/imagepostcommentreply'], (req, res) => {
