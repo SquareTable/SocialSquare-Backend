@@ -1688,6 +1688,107 @@ class TempController {
         })
     }
 
+    static #imagepostcommentreply = (userId, comment, userName, imageId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof comment !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
+            }
+        
+            if (typeof userName !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
+            }
+        
+            if (typeof imageId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof imageId}`))
+            }
+
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+        
+            comment = comment.trim();
+        
+            if (comment.length == 0) {
+                return resolve(HTTPWTHandler.badInput('comment cannot be an empty string.'))
+            }
+        
+            if (userName.length == 0) {
+                return resolve(HTTPWTHandler.badInput('userName cannot be an empty string.'))
+            }
+        
+            if (imageId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('imageId cannot be an empty string.'))
+            }
+
+            if (commentId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('commentId cannot be an empty string.'))
+            }
+        
+            if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
+                return HTTPHandler.badInput(res, `comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`)
+            }
+        
+            //Find User
+            User.findOne({_id: userId}).lean().then(result => {
+                if (result) {
+                    if (result.name == userName) {
+                        ImagePost.findOne({_id: {$eq: imageId}}).lean().then(data => {
+                            if (data) {
+                                var comments = data.comments
+                                async function findThreads(sentIndex) {
+                                    var objectId = new mongodb.ObjectID()
+                                    console.log(objectId)
+                                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
+                                    ImagePost.findOneAndUpdate({_id: {$eq: imageId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
+                                        console.log("SUCCESS1")
+                                        return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                                    })
+                                    .catch(err => {
+                                        console.error('An error occurred while adding comment:', commentForPost, 'to:', `"comments.${sentIndex}.commentReplies`, 'of image post with id:', imageId, '. The error was:', err)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again later.'))
+                                    });
+                                }
+                                var itemsProcessed = 0
+                                comments.forEach(function (item, index) {
+                                    console.log(comments[index].commentId)
+                                    console.log(commentId)
+                                    if (comments[index].commentId == commentId) {
+                                        if (itemsProcessed !== null) {
+                                            console.log("Found at index:")
+                                            console.log(index)
+                                            findThreads(index)
+                                            itemsProcessed = null
+                                        }
+                                    } else {
+                                        if (itemsProcessed !== null) {
+                                            itemsProcessed++;
+                                            if(itemsProcessed == comments.length) {
+                                                return resolve(HTTPWTHandler.notFound('Could not find comment.'))
+                                            }
+                                        }
+                                    }
+                                });
+                            } else {
+                                return resolve(HTTPWTHandler.notFound('The image post could not be found'))
+                            }
+                        }).catch(error => {
+                            console.error('An error occurred while finding one image post with id:', imageId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                        })
+                    } else {
+                        return resolve(HTTPWTHandler.badInput('userName provided does not match username in the database.'))
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
+                } 
+            })
+            .catch(err => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1782,6 +1883,10 @@ class TempController {
 
     static imagepostcomment = async (userId, comment, userName, imageId) => {
         return await this.#imagepostcomment(userId, comment, userName, imageId)
+    }
+
+    static imagepostcommentreply = async (userId, comment, userName, imageId, commentId) => {
+        return await this.#imagepostcommentreply(userId, comment, userName, imageId, commentId)
     }
 }
 

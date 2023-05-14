@@ -249,6 +249,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/imagepostcommentreply': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 20,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have replied to too many comments on image posts too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -700,6 +709,24 @@ router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /imagepostcomment:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/imagepostcommentreply', rateLimiters['/imagepostcommentreply'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'imagepostcommentreply',
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.imageId, req.body.commentId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /imagepostcommentreply:', error)
         HTTPHandler.serverError(res, error)
     })
 });
