@@ -1653,7 +1653,7 @@ class TempController {
             }
         
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
-                return HTTPHandler.badInput(res, `comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`)
+                return resolve(HTTPWTHandler.badInput(`comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`))
             }
         
             //Find User
