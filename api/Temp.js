@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/upvoteimage': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many images in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/downvoteimage': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 45,
@@ -676,86 +667,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-//UpVote Image
-router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
-    const userId = req.tokenData;
-    let {imageId} = req.body;
-
-    if (typeof imageId !== 'string') {
-        return HTTPHandler.badInput(res, `imageId must be a string. Provided type: ${typeof imageId}`)
-    }
-
-    if (imageId.length == 0) {
-        return HTTPHandler.badInput(res, 'imageId cannot be an empty string.')
-    }
-
-    //Find User
-    async function upVoteImage() {
-        //Confirm User
-        User.find({_id: {$eq: userId}}).then(result => {
-            if (result.length) {
-                ImagePost.findOne({_id: {$eq: imageId}}).then(post => {
-                    if (post) {
-                        User.findOne({_id: post.creatorId}).then(user => {
-                            if (user) {
-                                if (user._id.toString() === userId) {
-                                    HTTPHandler.forbidden(res, 'You cannot upvote your own post.')
-                                } else {
-                                    Upvote.findOne({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result[0].secondId}).then(upvoted => {
-                                        Downvote.deleteMany({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result[0].secondId}).then(function() {
-                                            if (upvoted) {
-                                                Upvote.deleteMany({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result[0].secondId}).then(function() {
-                                                    HTTPHandler.OK(res, 'Post UpVote removed')
-                                                }).catch(error => {
-                                                    console.error('An error occured while deleting all upvotes from user with public id:', result[0].secondId, ' for image post with id:', imageId, '. The error was:, error')
-                                                    HTTPHandler.serverError(res, 'An error occurred while upvoting image post. Please try again later.')
-                                                })
-                                            } else {
-                                                const upvote = new Upvote({
-                                                    postId: imageId,
-                                                    userPublicId: result[0].secondId,
-                                                    interactionDate: Date.now(),
-                                                    postFormat: "Image"
-                                                })
-                
-                                                upvote.save().then(() => {
-                                                    HTTPHandler.OK(res, 'Post UpVoted')
-                                                }).catch(error => {
-                                                    console.error('An error occurred while user with public id:', result[0].secondId, ' tried to upvote image post with id:', imageId, '. The error was:', error)
-                                                    HTTPHandler.serverError(res, 'An error occurred while upvoting image post. Please try again later.')
-                                                })
-                                            }
-                                        }).catch(error => {
-                                            console.error('An error occurred while removing all downvotes from user with public id:', result[0].secondId, ' for image post with id:', imageId, '. The error was:', error)
-                                            HTTPHandler.serverError(res, 'An error occurred while upvoting image post. Please try again later.')
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while finding upvotes from user with public id:', result[0].secondId, ' for image post with id:', imageId, '. The error was:', error)
-                                        HTTPHandler.serverError(res, 'An error occurred while upvoting image post. Please try again later.')
-                                    })
-                                }
-                            } else {
-                                HTTPHandler.notFound(res, 'Could not find post creator.')
-                            }
-                        })
-                    } else {
-                        HTTPHandler.notFound(res, 'Post not found')
-                    }
-                }).catch(error => {
-                    console.log('An error occurred while finding image post with id:', imageId, '. The error was:', error)
-                    HTTPHandler.serverError(res, 'An error occurred while upvoting image post. Please try again later.')
-                })
-            } else {
-                HTTPHandler.notFound(res, 'Could not find user with provided id.')
-            }
-        }).catch(error => {
-            console.error('Error getting user with id:', userId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-        })
-    }
-    upVoteImage()
-})
 
 //DownVote Image
 router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
