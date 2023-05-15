@@ -1789,6 +1789,87 @@ class TempController {
         })
     }
 
+    static #getimagepostcomments = (userId, postId) => {
+        return new Promise(resolve => {
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
+            }
+        
+            if (postId.length == 0) {
+                return HTTPHandler.badInput(res, 'imageKey cannot be an empty string.')
+            }
+        
+            function sendResponse(nameSendBackObject) {
+                console.log("Params Recieved")
+                console.log(nameSendBackObject)
+                const modifiedNameSendBackObject = nameSendBackObject.map(comment => ({...comment, commentId: String(comment.commentId)}))
+                return resolve(HTTPWTHandler.OK('Comment search successful', modifiedNameSendBackObject))
+            }
+        
+            ImagePost.findOne({_id: {$eq: postId}}).lean().then(data => {
+                if (data) {
+                    var nameSendBackObject = [];
+                    var comments = data.comments;
+                    var itemsProcessed = 0;
+                    if (comments.length == 0) {
+                        return resolve(HTTPWTHandler.notFound('No comments could not be found for image post'))
+                    } else {
+                        const uniqueCommenters = Array.from(new Set(comments.map(comment => comment.commenterId)))
+
+                        User.find({_id: {$in: uniqueCommenters}}).lean().then(users => {
+                            const usersObject = {};
+
+                            for (const user of users) {
+                                usersObject[String(user._id)] = user;
+                            }
+
+                            for (const comment of comments) {
+                                const commentCreator = usersObject[String(comment.commenterId)]
+                                if (commentCreator) {
+                                    //If user could be found
+                                    const commentUpVotes = (comment.commentUpVotes.length - comment.commentDownVotes.length)
+                                    let commentUpVoted = false
+                                    if (comment.commentUpVotes.includes(userId)) {
+                                        commentUpVoted = true
+                                    }
+                                    let commentDownVoted = false
+                                    if (comment.commentDownVotes.includes(userId)) {
+                                        commentDownVoted = true
+                                    }
+                                    nameSendBackObject.push({
+                                        commentId: comment.commentId,
+                                        commenterName: commentCreator.name,
+                                        commenterDisplayName: commentCreator.displayName,
+                                        commentText: comment.commentsText,
+                                        commentUpVotes: commentUpVotes,
+                                        commentReplies: comment.commentReplies.length,
+                                        datePosted: comment.datePosted,
+                                        profileImageKey: commentCreator.profileImageKey,
+                                        commentUpVoted: commentUpVoted,
+                                        commentDownVoted: commentDownVoted
+                                    })
+                                } else {
+                                    console.error('A comment was found from user with id:', comment.commenterId, ' but the user with that id could not be found. This comment should be deleted immediately.')
+                                }
+                            }
+
+                            sendResponse(nameSendBackObject)
+                        }).catch(error => {
+                            console.error('An error occurred while finding users in array:', uniqueCommenters, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creators.'))
+                        })
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Image post could not be found'))
+                }
+            })
+            .catch(err => {
+                console.error('An error occurred while finding image post with id:', postId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again later.'))
+            });
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -1887,6 +1968,10 @@ class TempController {
 
     static imagepostcommentreply = async (userId, comment, userName, imageId, commentId) => {
         return await this.#imagepostcommentreply(userId, comment, userName, imageId, commentId)
+    }
+
+    static getimagepostcomments = async (userId, postId) => {
+        return await this.#getimagepostcomments(userId, postId)
     }
 }
 

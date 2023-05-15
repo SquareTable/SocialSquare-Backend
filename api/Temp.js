@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getimagecommentswithkey/:imageKey': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many comments on image posts too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/upvoteimage': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 45,
@@ -685,77 +676,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-//search for image comments
-router.get('/getimagecommentswithkey/:imageKey', rateLimiters['/getimagecommentswithkey/:imageKey'], (req, res) => {
-    let imageKey = req.params.imageKey;
-    const sentUserId = req.tokenData;
-
-    if (typeof imageKey !== 'string') {
-        return HTTPHandler.badInput(res, `imageKey must be a string. Provided type: ${typeof imageKey}`)
-    }
-
-    if (typeof sentUserId !== 'string') {
-        return HTTPHandler.badInput(res, `sentUserId must be a string. Provided type: ${typeof sentUserId}`)
-    }
-
-    if (imageKey.length == 0) {
-        return HTTPHandler.badInput(res, 'imageKey cannot be an empty string.')
-    }
-
-    function sendResponse(nameSendBackObject) {
-        console.log("Params Recieved")
-        console.log(nameSendBackObject)
-        HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
-    }
-
-    async function findComments() {
-        await ImagePost.find({imageKey: {$eq: imageKey}}).then(data => {
-            if (data.length) {
-                var nameSendBackObject = [];
-                var comments = data[0].comments;
-                var itemsProcessed = 0;
-                if (comments.length == 0) {
-                    HTTPHandler.notFound(res, 'No comments could not be found for image post')
-                } else {
-                    comments.forEach(function (item, index) {
-                        User.find({_id: comments[index].commenterId}).then(result => {
-                            if (result.length) {
-                                console.log(data)
-                                console.log(data[0].comments[index].commentText)
-                                var commentUpVotes = (data[0].comments[index].commentUpVotes.length - data[0].comments[index].commentDownVotes.length)
-                                var commentUpVoted = false
-                                if (data[0].comments[index].commentUpVotes.includes(sentUserId)) {
-                                    commentUpVoted = true
-                                }
-                                var commentDownVoted = false
-                                if (data[0].comments[index].commentDownVotes.includes(sentUserId)) {
-                                    commentDownVoted = true
-                                }
-                                nameSendBackObject.push({commentId: data[0].comments[index].commentId, commenterName: result[0].name, commenterDisplayName: result[0].displayName, commentText: data[0].comments[index].commentsText, commentUpVotes: commentUpVotes, commentReplies: data[0].comments[index].commentReplies.length, datePosted: data[0].comments[index].datePosted, profileImageKey: result[0].profileImageKey, commentUpVoted: commentUpVoted, commentDownVoted: commentDownVoted})
-                            } else {
-                                HTTPHandler.notFound(res, 'An error occurred while checking for comment creator')
-                            }
-                            itemsProcessed++;
-                            if(itemsProcessed === comments.length) {
-                                console.log("Before Function")
-                                console.log(nameSendBackObject)
-                                sendResponse(nameSendBackObject);
-                            }
-                        })
-                    })
-                }
-            } else {
-                HTTPHandler.notFound(res, 'Image post could not be found')
-            }
-        })
-        .catch(err => {
-            console.error('An error occurred while finding image post with imageKey:', imageKey, '. The error was:', err)
-            HTTPHandler.serverError(res, 'An error occurred while finding image post. Please try again later.')
-        });
-    }
-    findComments()
-})
 
 //UpVote Image
 router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
