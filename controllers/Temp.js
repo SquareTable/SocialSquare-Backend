@@ -2037,6 +2037,118 @@ class TempController {
         })
     }
 
+    static #getsingleimagecomment = (userId, postId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
+            }
+
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+
+            if (postId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('postId cannot be an empty string'))
+            }
+
+            if (commentId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('commentId cannot be an empty string'))
+            }
+        
+            function sendResponse(nameSendBackObject) {
+                console.log("Params Recieved")
+                console.log(nameSendBackObject)
+                nameSendBackObject[0].commentId = String(nameSendBackObject.commentId)
+                HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(user => {
+                if (!user) {
+                    return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
+                }
+
+                ImagePost.findOne({_id: {$eq: postId}}).then(data => {
+                    if (data) {
+                        var comments = data.comments
+                        var nameSendBackObject = [];
+                        if (comments.length == 0) {
+                            return resolve(HTTPWTHandler.notFound('No comments'))
+                        } else {
+                            function forAwaits(index) {
+                                const comment = comments[index]
+                                User.findOne({_id: comment.commenterId}).lean().then(result => {
+                                    if (result) {
+                                        if (result.privateAccount === true && !result.followers.includes(user.secondId)) {
+                                            return resolve(HTTPWTHandler.forbidden('You cannot get this comment because you are not following the account that made the post that this comment belongs to'))
+                                        }
+                                        
+                                        var commentUpVotes = (comment.commentUpVotes.length - comment.commentDownVotes.length)
+                                        var commentUpVoted = false
+                                        if (comment.commentUpVotes.includes(sentUserId)) {
+                                            commentUpVoted = true
+                                        }
+                                        var commentDownVoted = false
+                                        if (comment.commentDownVotes.includes(sentUserId)) {
+                                            commentDownVoted = true
+                                        }
+                                        nameSendBackObject.push({
+                                            commentId: comment.commentId,
+                                            commenterName: result.name,
+                                            commenterDisplayName: result.displayName,
+                                            commentText: comment.commentsText,
+                                            commentUpVotes: commentUpVotes,
+                                            commentDownVotes: comment.commentDownVotes,
+                                            commentReplies: comment.commentReplies.length,
+                                            datePosted: comment.datePosted,
+                                            profileImageKey: result.profileImageKey,
+                                            commentUpVoted: commentUpVoted,
+                                            commentDownVoted: commentDownVoted
+                                        })
+                                        sendResponse(nameSendBackObject)
+                                    } else {
+                                        console.error('Found a comment from user with id:', comment.commenterId, 'but that user does not exist in the database. This comment with id:', comment.commentId, 'must be deleted from the database immediately.')
+                                        return resolve(HTTPWTHandler.notFound("Couldn't find comment creator."))
+                                    }
+                                }).catch(error => {
+                                    console.error('An error occurred while finding one user with id:', comment.commenterId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creator. Please try again.'))
+                                })
+                            }
+                            var itemsProcessed  = 0
+                            comments.forEach(function (item, index) {
+                                console.log(comments[index].commentId)
+                                if (comments[index].commentId == commentId) {
+                                    if (itemsProcessed !== null) {
+                                        console.log("Found at index:")
+                                        console.log(index)
+                                        forAwaits(index)
+                                        itemsProcessed = null
+                                    }
+                                } else {
+                                    if (itemsProcessed !== null) {
+                                        itemsProcessed++;
+                                        if(itemsProcessed == comments.length) {
+                                            return resolve(HTTPWTHandler.notFound("Couldn't find comment"))
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('Could not find image post'))
+                    }
+                })
+                .catch(err => {
+                    console.error('An error occurred while finding image post with id:', postId, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                });
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2147,6 +2259,10 @@ class TempController {
 
     static downvoteimage = async (userId, imageId) => {
         return await this.#downvoteimage(userId, imageId)
+    }
+
+    static getsingleimagecomment = async (userId, postId, commentId) => {
+        return await this.#getsingleimagecomment(userId, postId, commentId)
     }
 }
 
