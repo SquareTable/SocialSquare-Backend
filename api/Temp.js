@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/downvoteimage': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have downvoted too many images in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getsingleimagecomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -667,90 +658,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-//DownVote Image
-router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
-    const userId = req.tokenData;
-    let {imageId} = req.body;
-
-    if (typeof imageId !== 'string') {
-        return HTTPHandler.badInput(res, `imageId must be a string. Provided type: ${typeof imageId}`)
-    }
-
-    if (imageId.length == 0) {
-        return HTTPHandler.badInput(res, 'imageId cannot be an empty string.')
-    }
-
-    //Find User
-    async function downVoteImage() {
-        //Confirm User
-        User.find({_id: {$eq: userId}}).then(result => {
-            if (result.length) {
-                ImagePost.findOne({_id: {$eq: imageId}}).then(post => {
-                    if (post) {
-                        User.findOne({_id: post.creatorId}).then(user => {
-                            if (user) {
-                                if (user._id.toString() === userId) {
-                                    HTTPHandler.forbidden(res, 'You cannot downvote your own post')
-                                } else {
-                                    Downvote.findOne({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result[0].secondId}).then(downvoted => {
-                                        Upvote.deleteMany({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result[0].secondId}).then(function() {
-                                            if (downvoted) {
-                                                Downvote.deleteMany({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result[0].secondId}).then(function() {
-                                                    res.json({
-                                                        status: "SUCCESS",
-                                                        message: "Post DownVote removed",
-                                                    })
-                                                    HTTPHandler.OK(res, 'Post DownVote removed')
-                                                }).catch(error => {
-                                                    console.error('An error occurred while deleting all downvotes from user with public id:', result[0].secondId, ' for image post with id:', imageId, '. The error was:', error)
-                                                    HTTPHandler.serverError(res, 'An error occurred whole downvoting image post. Please try again later.')
-                                                })
-                                            } else {
-                                                const downvote = new Downvote({
-                                                    postId: imageId,
-                                                    userPublicId: result[0].secondId,
-                                                    interactionDate: Date.now(),
-                                                    postFormat: "Image"
-                                                })
-                
-                                                downvote.save().then(() => {
-                                                    HTTPHandler.OK(res, 'Post DownVoted')
-                                                }).catch(error => {
-                                                    console.error('An error occurred while user with public id:', result[0].secondId, ' tried to downvote image post with id:', imageId, '. The error was:', error)
-                                                    HTTPHandler.serverError(res, 'An error occurred while downvoting image post. Please try again later.')
-                                                })
-                                            }
-                                        }).catch(error => {
-                                            console.error('An error occurred while removing all upvotes from user with public id:', result[0].secondId, ' for image post with id:', imageId, '. The error was:', error)
-                                            HTTPHandler.serverError(res, 'An error occurred while downvoting image post. Please try again later.')
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while finding downvotes from user with public id:', result[0].secondId, ' for image post with id:', imageId, '. The error was:', error)
-                                        HTTPHandler.serverError(res, 'An error occurred while downvoting image post. Please try again later.')
-                                    })
-                                }
-                            } else {
-                                HTTPHandler.notFound(res, 'Could not find post creator')
-                            }
-                        })
-                    } else {
-                        HTTPHandler.notFound(res, 'Image post could not be found')
-                    }
-                }).catch(error => {
-                    console.log('An error occurred while finding image post with id:', imageId, '. The error was:', error)
-                    HTTPHandler.serverError(res, 'An error occurred while downvoting image post. Please try again later.')
-                })
-            } else {
-                HTTPHandler.notFound(res, 'Could not find user')
-            }
-        }).catch(error => {
-            console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while getting the user. Please try again later.')
-        })
-    }
-    downVoteImage()
-})
 
 //search for thread comments
 router.post('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (req, res) => {

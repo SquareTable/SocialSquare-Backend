@@ -1955,6 +1955,88 @@ class TempController {
         })
     }
 
+    static #downvoteimage = (userId, imageId) => {
+        return new Promise(resolve => {
+            if (typeof imageId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof imageId}`))
+            }
+        
+            if (imageId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('imageId cannot be an empty string.'))
+            }
+        
+
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    ImagePost.findOne({_id: {$eq: imageId}}).lean().then(post => {
+                        if (post) {
+                            User.findOne({_id: post.creatorId}).lean().then(user => {
+                                if (user) {
+                                    if (user._id.toString() === userId) {
+                                        return resolve(HTTPWTHandler.forbidden('You cannot downvote your own post'))
+                                    }
+
+                                    if (user.privateAccount === true && !user.followers.includes(result.secondId)) {
+                                        //If the post creator's account is private and if the user trying to downvote the post is not following the account
+                                        return resolve(HTTPWTHandler.forbidden('You must be following this account before you can downvote the post'))
+                                    }
+
+                                    Downvote.findOne({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result.secondId}).lean().then(downvoted => {
+                                        Upvote.deleteMany({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result.secondId}).then(function() {
+                                            if (downvoted) {
+                                                Downvote.deleteMany({postFormat: "Image", postId: {$eq: imageId}, userPublicId: result.secondId}).then(function() {
+                                                    return resolve(HTTPWTHandler.OK('Post DownVote removed'))
+                                                }).catch(error => {
+                                                    console.error('An error occurred while deleting all downvotes from user with public id:', result.secondId, ' for image post with id:', imageId, '. The error was:', error)
+                                                    return resolve(HTTPWTHandler.serverError('An error occurred while downvoting image post. Please try again.'))
+                                                })
+                                            } else {
+                                                const downvote = new Downvote({
+                                                    postId: imageId,
+                                                    userPublicId: result.secondId,
+                                                    interactionDate: Date.now(),
+                                                    postFormat: "Image"
+                                                })
+                
+                                                downvote.save().then(() => {
+                                                    return resolve(HTTPWTHandler.OK('Post DownVoted'))
+                                                }).catch(error => {
+                                                    console.error('An error occurred while user with public id:', result.secondId, ' tried to downvote image post with id:', imageId, '. The error was:', error)
+                                                    return resolve(HTTPWTHandler.serverError('An error occurred while downvoting image post. Please try again.'))
+                                                })
+                                            }
+                                        }).catch(error => {
+                                            console.error('An error occurred while removing all upvotes from user with public id:', result.secondId, ' for image post with id:', imageId, '. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while downvoting image post. Please try again.'))
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while finding downvotes from user with public id:', result.secondId, ' for image post with id:', imageId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while downvoting image post. Please try again.'))
+                                    })
+                                } else {
+                                    return resolve(HTTPWTHandler.notFound('Could not find post creator'))
+                                }
+                            }).catch(error => {
+                                console.error('An error occurred while finding user with id:', post.creatorId, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding post creator. Please try again.'))
+                            })
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Image post could not be found'))
+                        }
+                    }).catch(error => {
+                        console.log('An error occurred while finding image post with id:', imageId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while downvoting image post. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2061,6 +2143,10 @@ class TempController {
 
     static upvoteimage = async (userId, imageId) => {
         return await this.#upvoteimage(userId, imageId)
+    }
+
+    static downvoteimage = async (userId, imageId) => {
+        return await this.#downvoteimage(userId, imageId)
     }
 }
 
