@@ -2287,6 +2287,150 @@ class TempController {
         })
     }
 
+    static #postcategorywithimage = (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file) => {
+        return new Promise(resolve => {
+            if (!file) {
+                return resolve(HTTPWTHandler.badInput('No file sent.'))
+            }
+        
+            const deleteFile = () => {
+                imageHandler.deleteMulterTempImage(file.filename)
+            }
+        
+            if (typeof categoryTitle !== 'string') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`categoryTitle must be a string. Provided type: ${typeof categoryTitle}`))
+            }
+        
+            if (typeof categoryDescription !== 'string') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`categoryDescription must be a string. Provided type: ${typeof categoryDescription}`))
+            }
+        
+            if (typeof categoryTags !== 'string') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`categoryTags must be a string. Provided type: ${typeof categoryTags}`))
+            }
+        
+            if (typeof categoryNSFW !== 'boolean' && categoryNSFW !== 'false' && categoryNSFW !== 'true') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`categoryNSFW must be a boolean, "false", or "true"`))
+            }
+        
+            if (typeof categoryNSFL !== 'boolean' && categoryNSFL !== 'false' && categoryNSFW !== 'true') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`categoryNSFL must be a boolean, "false", or "true"`))
+            }
+        
+            if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== 'false' && sentAllowScreenShots !== 'true') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`sentAllowScreenShots must be a boolean, "false", or "true"`))
+            }
+        
+            if (categoryNSFW === "false") {
+                categoryNSFW = false;
+            }
+        
+            if (categoryNSFW === "true") {
+                categoryNSFW = true;
+            }
+        
+            if (categoryNSFL === "false") {
+                categoryNSFL = false;
+            }
+        
+            if (categoryNSFL === "true") {
+                categoryNSFL = true;
+            }
+        
+            if (sentAllowScreenShots === "false") {
+                sentAllowScreenShots = false;
+            }
+            
+            if (sentAllowScreenShots === "true") {
+                sentAllowScreenShots = true;
+            }
+        
+            categoryTitle = categoryTitle.trim()
+            categoryDescription = categoryDescription.trim()
+        
+            if (categoryTitle.length == 0) {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput('categoryTitle must not be an empty string.'))
+            }
+        
+            if (categoryDescription.length == 0) {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput('categoryDescription must not be an empty string.'))
+            }
+        
+            if (categoryTitle.length > CONSTANTS.MAX_CATEGORY_TITLE_LENGTH) {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`categoryTitle cannot be more than ${CONSTANTS.MAX_CATEGORY_TITLE_LENGTH} characters long.`))
+            }
+        
+            if (categoryDescription.length > CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH) {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`categoryDescription cannot be more than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH} characters long.`))
+            }
+        
+            console.log('File has been recieved: ', file.filename)
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    Category.findOne({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).lean().then(categoryFound => {
+                        if (!categoryFound) { // category title not already used so allow it
+                            imageHandler.compressImage(file.filename).then(imageKey => {
+                                const newCategoryObject = {
+                                    imageKey,
+                                    categoryTitle: categoryTitle, 
+                                    categoryDescription: categoryDescription,
+                                    categoryTags: categoryTags,
+                                    members: [userId],
+                                    NSFW: categoryNSFW,
+                                    NSFL: categoryNSFL,
+                                    categoryOwnerId: userId,
+                                    categoryOriginalCreator: userId,
+                                    categoryModeratorIds: [],
+                                    datePosted: Date.now(),
+                                    allowScreenShots: allowScreenShots
+                                };
+
+                                const newCategory = new Category(newCategoryObject);
+        
+                                newCategory.save().then(() => {
+                                    return resolve(HTTPWTHandler.OK('Creation successful'))
+                                })
+                                .catch(err => {
+                                    imageHandler.deleteImageByKey(imageKey)
+                                    console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
+                                deleteFile()
+                                return resolve(HTTPWTHandler.serverError('Failed to compress image. Please try again.'))
+                            })
+                        } else {
+                            deleteFile()
+                            return resolve(HTTPWTHandler.conflict('A category with the chosen title already exists.'))
+                        }   
+                    }).catch(error => {
+                        deleteFile()
+                        console.error('An error occured while seeing if a category title already exists or not. The title to be checked was:', categoryTitle, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError("An error occurred while checking if a category already has your desired category's title. Please try again."))
+                    })
+                } else {
+                    deleteFile()
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                deleteFile()
+                console.error('An error occured while finding user with id: ', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2405,6 +2549,10 @@ class TempController {
 
     static searchforimagecommentreplies = async (userId, postId, commentId) => {
         return await this.#searchforimagecommentreplies(userId, postId, commentId)
+    }
+
+    static postcategorywithimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file) => {
+        return await this.#postcategorywithimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file)
     }
 }
 

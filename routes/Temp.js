@@ -303,6 +303,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/postcategorywithimage': rateLimit({
+        windowMs: 1000 * 60 * 60 * 24, //1 day
+        max: 2,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have created too many categories with images today. Please try again in 24 hours."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -862,6 +871,25 @@ router.post('/searchforimagecommentreplies', rateLimiters['/searchforimagecommen
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforimagecommentreplies:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], upload.single('image'), async (req, res) => {
+    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'postcategorywithimage',
+            functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, req.file]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /postcategorywithimage:', error)
         HTTPHandler.serverError(res, error)
     })
 });
