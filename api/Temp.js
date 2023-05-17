@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/deleteimage': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have deleted too many image posts in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/postcategorywithoutimage': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 2,
@@ -634,66 +625,6 @@ const rateLimiters = {
 
 
 //CATEGORY AREA
-
-//Delete Thread
-router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
-    const userId = req.tokenData;
-    let {imageId} = req.body;
-
-    if (typeof imageId !== 'string') {
-        return HTTPHandler.badInput(res, `imageId must be a string. Provided type: ${typeof imageId}`)
-    }
-
-    if (imageId.length == 0) {
-        return HTTPHandler.badInput(res, 'imageId cannot be an empty string')
-    }
-
-    //Find User
-    async function deleteImage() {
-        //Confirm User
-        User.find({_id: {$eq: userId}}).then(result => {
-            if (result.length) {
-                //User exists
-                ImagePost.find({_id: {$eq: imageId}}).then(data => {
-                    var findUser = data[0]
-                    if (findUser.creatorId.toString() === userId) {
-                        ImagePost.deleteOne({_id: {$eq: imageId}}).then(function(){
-                            Upvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}).catch(error => {
-                                console.error('An error occured while deleting all upvotes for post with id:', imageId)
-                            })
-                            Downvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}).catch(error => {
-                                console.error('An error occured while deleting all downvotes for post with id:', imageId)
-                            })
-
-                            var filepath = path.resolve(process.env.UPLOADED_PATH, data[0].imageKey)
-
-                            fs.unlink(filepath, function(err){
-                                if (err) {
-                                    console.log(err)
-                                    HTTPHandler.serverError(res, 'An error occurred while deleting image post. Please try again later.')
-                                } else {
-                                    console.log("File deleted")
-                                    HTTPHandler.OK(res, 'Post was successfully deleted.')
-                                }
-                            })
-                        }).catch(err => {
-                            console.error('An error occurred while deleting image post with id:', imageId, '. The error was:', err)
-                            HTTPHandler.serverError(res, 'An error occurred while deleting image post. Please try again later.')
-                        });
-                    } else {
-                        HTTPHandler.forbidden(res, 'This is not your image post. You cannot delete it.')
-                    }
-                })
-            } else {
-                HTTPHandler.badInput(res, 'Could not find user with your id')
-            }
-        }).catch(error => {
-            console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-        })
-    }
-    deleteImage()
-})
 
 //Create Category
 router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage'], async (req, res) => {

@@ -2431,6 +2431,64 @@ class TempController {
         })
     }
 
+    static #deleteimage = (userId, imageId) => {
+        return new Promise(resolve => {
+            if (typeof imageId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof imageId}`))
+            }
+        
+            if (imageId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('imageId cannot be an empty string'))
+            }
+        
+            //Confirm User
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    //User exists
+                    ImagePost.findOne({_id: {$eq: imageId}}).lean().then(data => {
+                        var findUser = data
+                        if (findUser.creatorId.toString() === userId) {
+                            ImagePost.deleteOne({_id: {$eq: imageId}}).then(function(){
+                                Upvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}).catch(error => {
+                                    console.error('An error occured while deleting all upvotes for post with id:', imageId)
+                                })
+                                Downvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}).catch(error => {
+                                    console.error('An error occured while deleting all downvotes for post with id:', imageId)
+                                })
+
+                                imageHandler.deleteImageByKey(data.imageKey)
+
+                                Promise.all([
+                                    Upvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}),
+                                    Downvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"})
+                                ]).then(() => {
+                                    console.log('Upvotes and downvotes were successfully deleted for image post with id:', imageId)
+                                }).catch(error => {
+                                    console.error('An error occurred while removing upvotes and downvotes for image post with id:', imageId, '. The error was:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.OK('Post was successfully deleted.'))
+                                })
+                            }).catch(err => {
+                                console.error('An error occurred while deleting image post with id:', imageId, '. The error was:', err)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again later.'))
+                            });
+                        } else {
+                            return resolve(HTTPWTHandler.forbidden('This is not your image post. You cannot delete it.'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding image post with id:', imageId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.badInput('Could not find user with your id'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2553,6 +2611,10 @@ class TempController {
 
     static postcategorywithimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file) => {
         return await this.#postcategorywithimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file)
+    }
+
+    static deleteimage = async (userId, imageId) => {
+        return await this.#deleteimage(userId, imageId)
     }
 }
 
