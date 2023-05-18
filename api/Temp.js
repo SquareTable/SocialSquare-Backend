@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getcategoryimage/:val': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many categories' images in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/findcategorywithname/:val': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -607,38 +598,6 @@ const rateLimiters = {
 
 
 //CATEGORY AREA
-
-//category images
-router.get('/getcategoryimage/:val', rateLimiters['/getcategoryimage/:val'], (req, res) => {
-    let val = req.params.val
-
-    if (typeof val !== 'string') {
-        return HTTPHandler.badInput(res, `val must be a string. Provided type: ${typeof val}`)
-    }
-
-    if (val.length == 0) {
-        return HTTPHandler.badInput(res, 'val cannot be an empty string.')
-    }
-
-    Category.find({categoryTitle: {$eq: val}}).then(data =>{
-        if (data.length) {
-            var categoryData = data[0]
-            console.log(categoryData)
-            var categoryImageKey = categoryData.imageKey
-            console.log(categoryImageKey)
-            if (categoryImageKey !== "") {
-                HTTPHandler.OK(res, 'Category image found.', categoryImageKey)
-            } else {
-                HTTPHandler.notFound(res, 'No category image.')
-            }
-        } else {
-            HTTPHandler.notFound(res, 'Category could not be found')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding category with categoryTitle:', val, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding category. Please try again later.')
-    })
-})
 
 //search page categories
 router.get('/findcategorywithname/:val', rateLimiters['/findcategorywithname/:val'], (req, res) => {

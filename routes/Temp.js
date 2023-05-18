@@ -339,6 +339,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getcategoryimage': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 10,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have searched for too many categories' images in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -972,6 +981,24 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchpagesearchcategories:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getcategoryimage',
+            functionArgs: [req.body.val]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /getcategoryimage:', error)
         HTTPHandler.serverError(res, error)
     })
 });

@@ -2653,6 +2653,35 @@ class TempController {
         })
     }
 
+    static #getcategoryimage = (val) => {
+        return new Promise(resolve => {
+            if (typeof val !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
+            }
+        
+            if (val.length == 0) {
+                return resolve(HTTPWTHandler.badInput('val cannot be an empty string.'))
+            }
+        
+            Category.findOne({categoryTitle: {$eq: val}}).lean().then(data =>{
+                if (data) {
+                    var categoryImageKey = data.imageKey
+                    console.log(categoryImageKey)
+                    if (categoryImageKey !== "") {
+                        return resolve(HTTPWTHandler.OK('Category image found.', categoryImageKey))
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('No category image.'))
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Category could not be found'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding category with categoryTitle:', val, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2787,6 +2816,10 @@ class TempController {
 
     static searchpagesearchcategories = async (userId, val) => {
         return await this.#searchpagesearchcategories(userId, val)
+    }
+
+    static getcategoryimage = async (val) => {
+        return await this.#getcategoryimage(val)
     }
 }
 
