@@ -2604,6 +2604,55 @@ class TempController {
         })
     }
 
+    static #searchpagesearchcategories = (userId, val) => {
+        return new Promise(resolve => {
+            if (typeof val !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
+            }
+        
+            if (val.length == 0) {
+                return resolve(HTTPWTHandler.badInput('Search box cannot be empty!'))
+            }
+        
+            function sendResponse(foundArray) {
+                console.log("Params Recieved")
+                console.log(foundArray)
+                return resolve(HTTPWTHandler.OK('Search successful', foundArray))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+
+                var foundArray = []
+                Category.find({categoryTitle: {$regex: `^${val}`, $options: 'i'}}).lean().then(data =>{
+                    if (data.length) {
+                        var itemsProcessed = 0;
+                        data.forEach(function (item, index) {
+                            foundArray.push({categoryTitle: data[index].categoryTitle, categoryDescription: data[index].categoryDescription, members: data[index].members.length, categoryTags: data[index].categoryTags, imageKey: data[index].imageKey, NSFW: data[index].NSFW, NSFL: data[index].NSFL, datePosted: data[index].datePosted, allowScreenShots: data[index].allowScreenShots})
+                            itemsProcessed++;
+                            if(itemsProcessed === data.length) {
+                                console.log("Before Function")
+                                console.log(foundArray)
+                                sendResponse(foundArray);
+                            }
+                        });
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('No results'))
+                    }
+                })
+                .catch(err => {
+                    console.error('An error occurred while finding category with categoryTitle regex ^val and options: "i". val is:', val, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
+                });
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2734,6 +2783,10 @@ class TempController {
 
     static postcategorywithoutimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots) => {
         return await this.#postcategorywithoutimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots)
+    }
+
+    static searchpagesearchcategories = async (userId, val) => {
+        return await this.#searchpagesearchcategories(userId, val)
     }
 }
 

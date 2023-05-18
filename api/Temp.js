@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/searchpagesearchcategories/:val': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many categories in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getcategoryimage/:val': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -616,52 +607,6 @@ const rateLimiters = {
 
 
 //CATEGORY AREA
-
-//search page categories
-router.get('/searchpagesearchcategories/:val', rateLimiters['/searchpagesearchcategories/:val'], (req, res) => {
-    let val = req.params.val
-
-    if (typeof val !== 'string') {
-        return HTTPHandler.badInput(res, `val must be a string. Provided type: ${typeof val}`)
-    }
-
-    if (val.length == 0) {
-        return HTTPHandler.badInput(res, 'Search box empty!')
-    }
-
-    function sendResponse(foundArray) {
-        console.log("Params Recieved")
-        console.log(foundArray)
-        HTTPHandler.OK(res, 'Search successful', foundArray)
-    }
-
-    //Find Category
-    console.log(val)
-    async function findCategories() {
-        var foundArray = []
-        await Category.find({categoryTitle: {$regex: `^${val}`, $options: 'i'}}).then(data =>{
-            if (data.length) {
-                var itemsProcessed = 0;
-                data.forEach(function (item, index) {
-                    foundArray.push({categoryTitle: data[index].categoryTitle, categoryDescription: data[index].categoryDescription, members: data[index].members.length, categoryTags: data[index].categoryTags, imageKey: data[index].imageKey, NSFW: data[index].NSFW, NSFL: data[index].NSFL, datePosted: data[index].datePosted, allowScreenShots: data[index].allowScreenShots})
-                    itemsProcessed++;
-                    if(itemsProcessed === data.length) {
-                        console.log("Before Function")
-                        console.log(foundArray)
-                        sendResponse(foundArray);
-                    }
-                });
-            } else {
-                HTTPHandler.notFound(res, 'No results')
-            }
-        })
-        .catch(err => {
-            console.error('An error occurred while finding category with categoryTitle regex ^val and options: "i". val is:', val, '. The error was:', err)
-            HTTPHandler.serverError(res, 'An error occurred while finding categories. Please try again later.')
-        });
-    }
-    findCategories()
-})
 
 //category images
 router.get('/getcategoryimage/:val', rateLimiters['/getcategoryimage/:val'], (req, res) => {
