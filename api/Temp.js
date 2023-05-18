@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/postcategorywithoutimage': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 2,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have created too many categories without images today. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/searchpagesearchcategories/:val': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -625,121 +616,6 @@ const rateLimiters = {
 
 
 //CATEGORY AREA
-
-//Create Category
-router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage'], async (req, res) => {
-    const creatorId = req.tokenData;
-    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
-
-    if (typeof categoryTitle !== 'string') {
-        return HTTPHandler.badInput(res, `categoryTitle must be a string. Provided type: ${typeof categoryTitle}`)
-    }
-    
-    if (typeof categoryDescription !== 'string') {
-        return HTTPHandler.badInput(res, `categoryDescription must be a string. Provided type: ${typeof categoryDescription}`)
-    }
-
-    if (typeof categoryTags !== 'string') {
-        return HTTPHandler.badInput(res `categoryTags must be a string. Provided type: ${typeof categoryTags}`)
-    }
-
-    if (typeof categoryNSFW !== 'boolean' && categoryNSFW !== "false" && categoryNSFW !== "true") {
-        return HTTPHandler.badInput(res, `categoryNSFW must either be a boolean, or "false", or "true".`)
-    }
-    
-    if (typeof categoryNSFL !== 'boolean' && categoryNSFL !== "false" && categoryNSFL !== "true") {
-        return HTTPHandler.badInput(res, `categoryNSFL must either be a boolean, or "false", or "true".`)
-    }
-
-    if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
-        return HTTPHandler.badInput(res, `sentAllowScreenShots must either be a boolean, or "false", or "true".`)
-    }
-
-    if (categoryNSFW === "false") {
-        categoryNSFW = false;
-    }
-
-    if (categoryNSFW === "true") {
-        categoryNSFW = true;
-    }
-
-    if (categoryNSFL === "false") {
-        categoryNSFL = false;
-    }
-
-    if (categoryNSFL === "true") {
-        categoryNSFL = true;
-    }
-
-    if (sentAllowScreenShots === "false") {
-        sentAllowScreenShots = false;
-    }
-    
-    if (sentAllowScreenShots === "true") {
-        sentAllowScreenShots = true;
-    }
-
-    categoryTitle = categoryTitle.trim()
-    categoryDescription = categoryDescription.trim()
-
-    if (categoryTitle.length == 0) {
-        return HTTPHandler.badInput(res, 'categoryTitle must not be blank.')
-    }
-
-    if (categoryDescription.length == 0) {
-        return HTTPHandler.badInput(res, 'categoryDescription must not be blank')
-    }
-
-    if (categoryTitle.length > 20) {
-        return HTTPHandler.badInput(res, 'categoryTitle cannot be more than 20 characters long.')
-    }
-
-    if (categoryDescription.length > 150) {
-        return HTTPHandler.badInput(res, 'categoryDescription cannot be more than 150 characters long.')
-    }
-
-    User.find({_id: {$eq: creatorId}}).then(result => {
-        if (result.length) {
-            Category.find({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).then(categoryFound => {
-                if (!categoryFound.length) { // category title not already used so allow it
-
-                    const newCategory = new Category({
-                        imageKey: "",
-                        categoryTitle: categoryTitle, 
-                        categoryDescription: categoryDescription,
-                        categoryTags: categoryTags,
-                        members: [creatorId],
-                        NSFW: categoryNSFW,
-                        NSFL: categoryNSFL,
-                        categoryOwnerId: creatorId,
-                        categoryOriginalCreator: creatorId,
-                        categoryModeratorIds: [],
-                        datePosted: Date.now(),
-                        allowScreenShots: allowScreenShots
-                    });
-
-                    newCategory.save().then(result => {
-                        HTTPHandler.OK(res, 'Creation successful')
-                    })
-                    .catch(err => {
-                        console.error('An error occurred while saving new category. The error was:', err)
-                        HTTPHandler.serverError(res, 'An error occurred while saving category. Please try again later.')
-                    })
-                } else {
-                    HTTPHandler.conflict(res, 'A category with this name already exists.')
-                }   
-            }).catch(error => {
-                console.error("An error occurred while doing regex ^categoryTitle with $options: 'i'. Category title was:", categoryTitle, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while checking if a category already has the desired title. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with provided user id')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding user with id:', creatorId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 //search page categories
 router.get('/searchpagesearchcategories/:val', rateLimiters['/searchpagesearchcategories/:val'], (req, res) => {
