@@ -12,7 +12,11 @@ const CONSTANTS = {
     SEARCH_PAGE_USER_SEARCH_MAX_USERS_TO_RETURN: 20,
     MAX_USER_COMMENT_LENGTH: 1000,
     MAX_CATEGORY_TITLE_LENGTH: 20,
-    MAX_CATEGORY_DESCRIPTION_LENGTH: 150
+    MAX_CATEGORY_DESCRIPTION_LENGTH: 150,
+    VALID_CATEGORY_TITLE_TEST: /^[a-z]+$/, //Tests to make sure category titles only have lowercase a - z characters
+    CATEGORY_TITLE_FAILED_TEST_ERROR_MESSAGE: 'Category title must only contain lowercase a - z characters', //Update this value to reflect the VALID_CATEGORY_TITLE_TEST above
+    VALID_CATEGORY_DESCRIPTION_TEST: /^([^\n]*\n){0,2}[^\n]*$/, //Tests to make sure category description has less than 3 lines,
+    MAX_CATEGORY_DESCRIPTION_LINES: 3, //Update this value to reflect the VALID_BIO_TEST above
 }
 
 module.exports = CONSTANTS

@@ -2374,6 +2374,16 @@ class TempController {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryDescription cannot be more than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH} characters long.`))
             }
+
+            if (!CONSTANTS.VALID_CATEGORY_TITLE_TEST.test(categoryTitle)) {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.CATEGORY_TITLE_FAILED_TEST_ERROR_MESSAGE))
+            }
+
+            if (!CONSTANTS.VALID_CATEGORY_DESCRIPTION_TEST.test(categoryDescription)) {
+                deleteFile();
+                return resolve(HTTPWTHandler.badInput(`categoryDescription must have less than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LINES} lines.`))
+            }
         
             console.log('File has been recieved: ', file.filename)
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -2557,6 +2567,14 @@ class TempController {
         
             if (categoryDescription.length > CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`categoryDescription cannot be more than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH} characters long.`))
+            }
+
+            if (!CONSTANTS.VALID_CATEGORY_TITLE_TEST.test(categoryTitle)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.CATEGORY_TITLE_FAILED_TEST_ERROR_MESSAGE))
+            }
+
+            if (!CONSTANTS.VALID_CATEGORY_DESCRIPTION_TEST.test(categoryDescription)) {
+                return resolve(HTTPWTHandler.badInput(`categoryDescription must have less than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LINES} lines.`))
             }
         
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
