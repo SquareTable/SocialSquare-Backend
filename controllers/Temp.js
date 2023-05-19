@@ -2648,7 +2648,7 @@ class TempController {
                     if (data.length) {
                         var itemsProcessed = 0;
                         data.forEach(function (item, index) {
-                            foundArray.push({categoryTitle: data[index].categoryTitle, categoryDescription: data[index].categoryDescription, members: data[index].members.length, categoryTags: data[index].categoryTags, imageKey: data[index].imageKey, NSFW: data[index].NSFW, NSFL: data[index].NSFL, datePosted: data[index].datePosted, allowScreenShots: data[index].allowScreenShots})
+                            foundArray.push({categoryTitle: data[index].categoryTitle, categoryDescription: data[index].categoryDescription, members: data[index].members.length, categoryTags: data[index].categoryTags, imageKey: data[index].imageKey, NSFW: data[index].NSFW, NSFL: data[index].NSFL, datePosted: data[index].datePosted, allowScreenShots: data[index].allowScreenShots, categoryId: String(data[index]._id)})
                             itemsProcessed++;
                             if(itemsProcessed === data.length) {
                                 console.log("Before Function")
