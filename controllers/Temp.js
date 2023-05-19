@@ -2847,6 +2847,55 @@ class TempController {
         })
     }
 
+    static #joincategory = (userId, categoryId) => {
+        return new Promise(resolve => {
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
+            }
+        
+            if (categoryId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('categoryId must not be an empty string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    Category.findOne({_id: {$eq: categoryId}}).lean().then(data => {
+                        if (data) {
+                            if (data.members.includes(userId)) {
+                                Category.findOneAndUpdate({_id: {$eq: categoryId}}, { $pull: { members : userId }}).then(function(){
+                                    console.log("SUCCESS1")
+                                    return resolve(HTTPWTHandler.OK('Left Category'))
+                                }).catch(error => {
+                                    console.error('An error occurred while pulling:', userId, 'from members for category with id:', categoryId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while removing you from the category. Please try again.'))
+                                })
+                            } else {
+                                //Not in the category yet
+                                Category.findOneAndUpdate({_id: {$eq: categoryId}}, { $addToSet: { members : userId }}).then(function(){
+                                    console.log("SUCCESS1")
+                                    return resolve(HTTPWTHandler.OK('Joined Category'))
+                                }).catch(error => {
+                                    console.error('An error occurred while using $addToSet to add:', userId, 'to the members array for category with id:', categoryId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding you to the category. Please try again.'))
+                                })
+                            }
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Could not find category'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding category with categoryId:', categoryId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding cateogry. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2993,6 +3042,10 @@ class TempController {
 
     static findcategoryfromprofile = async (userId, pubId) => {
         return await this.#findcategoryfromprofile(userId, pubId)
+    }
+
+    static joincategory = async (userId, categoryId) => {
+        return await this.#joincategory(userId, categoryId)
     }
 }
 

@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/joincategory': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 6,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have joined / left too many categories in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/posttextthread': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 20,
@@ -577,53 +568,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-
-//CATEGORY AREA
-
-router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
-    const userId = req.tokenData;
-    let {categoryTitle} = req.body;
-
-    if (typeof categoryTitle !== 'string') {
-        return HTTPHandler.badInput(res, `categoryTitle must be a string. Provided type: ${typeof categoryTitle}`)
-    }
-
-    if (categoryTitle.length == 0) {
-        return HTTPHandler.badInput(res, 'categoryTitle must not be an empty string.')
-    }
-
-    User.find({_id: {$eq: userId}}).then(result => {
-        if (result.length) {
-            Category.find({categoryTitle: {$eq: categoryTitle}}).then(data => {
-                if (data.length) {
-                    if (data[0].members.includes(userId)) {
-                        Category.findOneAndUpdate({categoryTitle: {$eq: categoryTitle}}, { $pull: { members : userId }}).then(function(){
-                            console.log("SUCCESS1")
-                            HTTPHandler.OK(res, 'Left Category')
-                        })
-                    } else {
-                        //Not in the category yet
-                        Category.findOneAndUpdate({categoryTitle: {$eq: categoryTitle}}, { $push: { members : userId }}).then(function(){
-                            console.log("SUCCESS1")
-                            HTTPHandler.OK(res, 'Joined Category')
-                        })
-                    }
-                } else {
-                    HTTPHandler.notFound(res, 'Could not find category')
-                }
-            }).catch(error => {
-                console.error('An error occurred while finding category with categoryTitle:', categoryTitle, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding category. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with provided userId')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 //THREAD AREA
 
