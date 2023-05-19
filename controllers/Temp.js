@@ -2700,6 +2700,70 @@ class TempController {
         })
     }
 
+    static #findcategorybyid = (userId, categoryId) => {
+        return new Promise(resolve => {
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
+            }
+
+            if (categoryId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('categoryId cannot be an empty string'))
+            }
+        
+            //Find Category
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{
+                    if (data) {
+                        let modPerms = false
+                        let ownerPerms = false
+                        let inCategory = false
+                        if (data.categoryModeratorIds.includes(userId)) {
+                            modPerms = true
+                            ownerPerms = false
+                        }
+                        if (data.categoryOwnerId == userId) {
+                            modPerms = true
+                            ownerPerms = true
+                        }
+                        if (data.members.includes(userId)) {
+                            inCategory = true
+                        }
+                        
+                        const categoryData = {
+                            categoryTitle: data.categoryTitle,
+                            categoryDescription: data.categoryDescription,
+                            members: data.members.length,
+                            categoryTags: data.categoryTags,
+                            imageKey: data.imageKey,
+                            NSFW: data.NSFW,
+                            NSFL: data.NSFL,
+                            datePosted: data.datePosted,
+                            modPerms: modPerms,
+                            ownerPerms: ownerPerms,
+                            inCategory: inCategory,
+                            allowScreenShots: data.allowScreenShots,
+                            categoryId: String(data._id)
+                        }
+
+                        return resolve(HTTPWTHandler.OK('Search successful', categoryData))
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('Could not find category with that id.'))
+                    }
+                }).catch(err => {
+                    console.error('An error occurred while finding category with id:', categoryId, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category'))
+                });
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2838,6 +2902,10 @@ class TempController {
 
     static getcategoryimage = async (val) => {
         return await this.#getcategoryimage(val)
+    }
+
+    static findcategorybyid = async (userId, categoryId) => {
+        return await this.#findcategorybyid(userId, categoryId)
     }
 }
 

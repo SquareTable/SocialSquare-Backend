@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/findcategorywithname/:val': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many categories by name in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/findcategoryfromprofile': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -598,67 +589,6 @@ const rateLimiters = {
 
 
 //CATEGORY AREA
-
-//search page categories
-router.get('/findcategorywithname/:val', rateLimiters['/findcategorywithname/:val'], (req, res) => {
-    let val = req.params.val
-    const id = req.tokenData;
-
-    if (typeof val !== 'string') {
-        return HTTPHandler.badInput(res, `val must be a string. Provided type: ${typeof val}`)
-    }
-
-    if (val.length == 0) {
-        return HTTPHandler.badInput(res, 'val cannot be an empty string.')
-    }
-
-    //Find Category
-    console.log(val)
-    async function findCategories() {
-        await Category.find({categoryTitle: {$eq: val}}).then(data =>{
-            if (data.length) {
-                var modPerms = false
-                var ownerPerms = false
-                var inCategory = false
-                if (data[0].categoryModeratorIds.includes(id)) {
-                    modPerms = true
-                    ownerPerms = false
-                }
-                if (data[0].categoryOwnerId == id) {
-                    modPerms = true
-                    ownerPerms = true
-                }
-                if (data[0].members.includes(id)) {
-                    inCategory = true
-                }
-                
-                const categoryData = {
-                    categoryTitle: data[0].categoryTitle,
-                    categoryDescription: data[0].categoryDescription,
-                    members: data[0].members.length,
-                    categoryTags: data[0].categoryTags,
-                    imageKey: data[0].imageKey,
-                    NSFW: data[0].NSFW,
-                    NSFL: data[0].NSFL,
-                    datePosted: data[0].datePosted,
-                    modPerms: modPerms,
-                    ownerPerms: ownerPerms,
-                    inCategory: inCategory,
-                    allowScreenShots: data[0].allowScreenShots
-                }
-
-                HTTPHandler.OK(res, 'Search successful', categoryData)
-            } else {
-                HTTPHandler.notFound(res, 'Could not find category with that title.')
-            }
-        })
-        .catch(err => {
-            console.error('An error occurred while finding category with categoryTitle:', val, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding category')
-        });
-    }
-    findCategories()
-})
 
 //search page categories
 router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile'], (req, res) => {
