@@ -2764,6 +2764,89 @@ class TempController {
         })
     }
 
+    static #findcategoryfromprofile = (userId, pubId) => {
+        return new Promise(resolve => {
+            if (typeof pubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
+            }
+        
+            if (pubId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
+            }
+        
+            function sendResponse(foundCategories) {
+                console.log("Params Recieved")
+                console.log(foundCategories)
+                return resolve(HTTPWTHandler.OK('Categories search successful', foundCategories))
+            }
+
+            //Find Categories
+            var foundCategories = [];
+            var itemsProcessed = 0;
+            
+            User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
+                if (result) {
+                    User.findOne({_id: {$eq: userId}}).lean().then(userRequestingCategories => {
+                        if (!userRequestingCategories || result.blockedAccounts.includes(userRequestingCategories.secondId)) {
+                            return resolve(HTTPWTHandler.notFound('User could not be found.'))
+                        }
+
+                        if (result.privateAccount && result.secondId !== userRequestingCategories.secondId && !result.followers.includes(userRequestingCategories.secondId)) {
+                            return resolve(HTTPWTHandler.forbidden('You must be following this account to see what categories they belong too.'))
+                        }
+
+                        var profilesId = result._id
+                        console.log("profilesId:")
+                        console.log(profilesId)
+                        Category.find({members: profilesId}).lean().then(data =>{
+                            console.log("Found categories")
+                            console.log(data)
+                            if (data.length) {
+                                data.forEach(function (item, index) {
+                                    var inCategory = false
+                                    if (data[index].members.includes(userId)) {
+                                        inCategory = true
+                                    }
+                                    foundCategories.push({
+                                        categoryTitle: data[index].categoryTitle,
+                                        categoryDescription: data[index].categoryDescription,
+                                        members: data[index].members.length,
+                                        categoryTags: data[index].categoryTags,
+                                        imageKey: data[index].imageKey,
+                                        NSFW: data[index].NSFW,
+                                        NSFL: data[index].NSFL,
+                                        datePosted: data[index].datePosted,
+                                        inCategory: inCategory,
+                                        allowScreenShots: data[index].allowScreenShots,
+                                        categoryId: String(data[index]._id)
+                                    })
+                                    itemsProcessed++;
+                                    if(itemsProcessed === data.length) {
+                                        sendResponse(foundCategories);
+                                    }
+                                })
+                            } else {
+                                return resolve(HTTPWTHandler.notFound('No categories found'))
+                            }
+                        })
+                        .catch(err => {
+                            console.error('An error occurred while finding categories where:', profilesId, 'is in members. The error was:', err)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
+                        });
+                    }).catch(error => {
+                        console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An erorr occurred while finding user with secondId:', pubId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -2906,6 +2989,10 @@ class TempController {
 
     static findcategorybyid = async (userId, categoryId) => {
         return await this.#findcategorybyid(userId, categoryId)
+    }
+
+    static findcategoryfromprofile = async (userId, pubId) => {
+        return await this.#findcategoryfromprofile(userId, pubId)
     }
 }
 

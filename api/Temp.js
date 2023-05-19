@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/findcategoryfromprofile': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many categories from profiles in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/joincategory': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 6,
@@ -589,74 +580,6 @@ const rateLimiters = {
 
 
 //CATEGORY AREA
-
-//search page categories
-router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile'], (req, res) => {
-    const pubId = req.body.pubId;
-    const sentId = req.tokenData;
-
-    if (typeof pubId !== 'string') {
-        return HTTPHandler.badInput(res, `pubId must be a string. Provided type: ${typeof pubId}`)
-    }
-
-    if (pubId.length == 0) {
-        return HTTPHandler.badInput(res, 'pubId cannot be an empty string.')
-    }
-
-    function sendResponse(foundCategories) {
-        console.log("Params Recieved")
-        console.log(foundCategories)
-        HTTPHandler.OK(res, "Categories' search successful", foundCategories)
-    }
-    //Find Categories
-    var foundCategories = [];
-    var itemsProcessed = 0;
-    
-    User.find({secondId: {$eq: pubId}}).then(result => {
-        if (result.length) {
-            User.find({_id: {$eq: sentId}}).then(userRequestingCategories => {
-                if (userRequestingCategories.length && !result[0].blockedAccounts.includes(userRequestingCategories[0].secondId) && (!result[0].privateAccount || (result[0]._id.toString() === userRequestingCategories[0]._id.toString() || result[0].followers.includes(userRequestingCategories[0].secondId)))) {
-                    var profilesId = result[0]._id
-                    console.log("profilesId:")
-                    console.log(profilesId)
-                    Category.find( { "members": {$in: [`${profilesId}`]} } ).then(data =>{
-                        console.log("Found categories")
-                        console.log(data)
-                        if (data.length) {
-                            data.forEach(function (item, index) {
-                                var inCategory = false
-                                if (data[index].members.includes(sentId)) {
-                                    inCategory = true
-                                }
-                                foundCategories.push({categoryTitle: data[index].categoryTitle, categoryDescription: data[index].categoryDescription, members: data[index].members.length, categoryTags: data[index].categoryTags, imageKey: data[index].imageKey, NSFW: data[index].NSFW, NSFL: data[index].NSFL, datePosted: data[index].datePosted, inCategory: inCategory, allowScreenShots: data[index].allowScreenShots})
-                                itemsProcessed++;
-                                if(itemsProcessed === data.length) {
-                                    sendResponse(foundCategories);
-                                }
-                            })
-                        } else {
-                            HTTPHandler.notFound(res, 'No categories found')
-                        }
-                    })
-                    .catch(err => {
-                        console.error('An error occurred while finding categories where:', profilesId, 'is in members. The error was:', err)
-                        HTTPHandler.serverError(res, 'An error occurred while finding categories. Please try again later.')
-                    });
-                } else {
-                    HTTPHandler.notFound(res, 'User not found.')
-                }
-            }).catch(error => {
-                console.error('An error occurred while finding user with id:', sentId, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'User could not be found.')
-        }
-    }).catch(error => {
-        console.error('An erorr occurred while finding user with secondId:', pubId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
     const userId = req.tokenData;

@@ -357,6 +357,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/findcategoryfromprofile': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 10,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have searched for too many categories from profiles in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1026,6 +1035,24 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /findcategorybyid:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'findcategoryfromprofile',
+            functionArgs: [req.tokenData, req.body.pubId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /findcategoryfromprofile:', error)
         HTTPHandler.serverError(res, error)
     })
 });
