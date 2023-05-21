@@ -2896,6 +2896,163 @@ class TempController {
         })
     }
 
+    static #posttextthread = (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
+        return new Promise(resolve => {
+            if (typeof threadTitle !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadTitle must be a string. Provided type: ${typeof threadTitle}`))
+            }
+        
+            if (typeof threadSubtitle !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be a string. Provided type: ${typeof threadSubtitle}`))
+            }
+        
+            if (typeof threadTags !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadTags must be a string. Provided type: ${typeof threadTags}`))
+            }
+        
+            if (typeof threadCategory !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadCategory must be a string. Provided type: ${typeof threadCategory}`))
+            }
+        
+            if (typeof threadBody !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadBody must be a string. Provided type: ${typeof threadBody}`))
+            }
+        
+            if (typeof threadNSFW !== 'boolean' && threadNSFW !== "false" && threadNSFW !== "true") {
+                return resolve(HTTPWTHandler.badInput('threadNSFW must either be a boolean, "false", or "true"'))
+            }
+        
+            if (typeof threadNSFL !== 'boolean' && threadNSFL !== "false" && threadNSFL !== "true") {
+                return resolve(HTTPWTHandler.badInput('threadNSFL must either be a boolean, "false", or "true"'))
+            }
+        
+            if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
+                return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false", or "true"'))
+            }
+        
+            if (threadNSFW === "false") {
+                threadNSFW = false;
+            }
+        
+            if (threadNSFL === "true") {
+                threadNSFW = true;
+            }
+        
+            if (threadNSFL === "false") {
+                threadNSFL = false;
+            }
+        
+            if (threadNSFL === "true") {
+                threadNSFL = true;
+            }
+        
+            if (sentAllowScreenShots === "false") {
+                sentAllowScreenShots = false;
+            }
+        
+            if (sentAllowScreenShots === "true") {
+                sentAllowScreenShots = true;
+            }
+        
+            threadBody = threadBody.trim();
+            threadTitle = threadTitle.trim();
+            threadSubtitle = threadSubtitle.trim();
+            threadTags = threadTags.trim();
+        
+            if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
+                return resolve(HTTPWTHandler.badInput(`threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`))
+            }
+
+            if (!CONSTANTS.VALID_THREAD_TITLE_TEST.test(threadTitle)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
+            }
+        
+            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`))
+            }
+
+            if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_SUBTITLE_FAILED_TEST_ERROR_MESSAGE))
+            }
+        
+            if (threadBody.length > CONSTANTS.MAX_THREAD_BODY_LENGTH || threadBody.length == 0) {
+                return resolve(HTTPWTHandler.badInput(`threadBody must be between 1 and ${CONSTANTS.MAX_THREAD_BODY_LENGTH} characters long`))
+            }
+
+            if (!CONSTANTS.VALID_THREAD_BODY_TEST.test(threadBody)) {
+                return resolve(HTTPWTHandler.badInput(`threadBody must have less than ${CONSTANTS.MAX_THREAD_BODY_LINES} lines.`))
+            }
+        
+            if (threadTags.length > CONSTANTS.MAX_THREAD_TAGS_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`))
+            }
+
+            if (!CONSTANTS.VALID_THREAD_TAGS_TEST.test(threadTags)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    Category.findOne({categoryTitle: {$eq: threadCategory}}).then(data => {
+                        if (data) {
+                            const categoryNSFW = data.NSFW;
+                            const categoryNSFL = data.NSFL;
+        
+                            if (threadNSFW && !categoryNSFW && !categoryNSFL) {
+                                return resolve(HTTPWTHandler.forbidden('NSFW thread posts cannot be posted in non-NSFW categories.'))
+                            }
+        
+                            if (threadNSFL && !categoryNSFL) {
+                                return resolve(HTTPWTHandler.forbidden('NSFL thread posts cannot be posted in non-NSFL categories.'))
+                            }
+        
+                            //allowScreenShots set up
+                            const allowScreenShots = data.allowScreenShots ? sentAllowScreenShots : false;
+                            console.log(`allowScreenShots ${allowScreenShots}`)
+
+                            const newThreadObject = {
+                                threadType: "Text",
+                                comments: [],
+                                creatorId: userId,
+                                threadTitle: threadTitle,
+                                threadSubtitle: threadSubtitle,
+                                threadTags: threadTags,
+                                threadCategory: threadCategory,
+                                threadBody: threadBody,
+                                threadImageKey: "",
+                                threadImageDescription: "",
+                                threadNSFW: threadNSFW,
+                                threadNSFL: threadNSFL,
+                                datePosted: Date.now(),
+                                allowScreenShots: allowScreenShots
+                            };
+
+                            const newThread = new Thread(newThreadObject);
+        
+                            newThread.save().then(() => {
+                                return resolve(HTTPWTHandler.OK('Creation successful'))
+                            })
+                            .catch(err => {
+                                console.error('An error occurred while saving new thread with newThreadObject:', newThreadObject, '. The error was:', err)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while saving thread. Please try again.'))
+                            })
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('No category found!'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding category with categoryTitle:', threadCategory, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3046,6 +3203,10 @@ class TempController {
 
     static joincategory = async (userId, categoryId) => {
         return await this.#joincategory(userId, categoryId)
+    }
+
+    static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
+        return await this.#posttextthread(userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots)
     }
 }
 

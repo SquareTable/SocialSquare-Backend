@@ -375,6 +375,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/posttextthread': rateLimit({
+        windowMs: 1000 * 60 * 60 * 24, //1 day
+        max: 20,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have created too many text thread posts in the last 24 hours. Please try again in 24 hours."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1080,6 +1089,26 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /joincategory:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
+    let {threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
+
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'posttextthread',
+            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /posttextthread:', error)
         HTTPHandler.serverError(res, error)
     })
 });
