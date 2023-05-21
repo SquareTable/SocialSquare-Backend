@@ -384,6 +384,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/postimagethread': rateLimit({
+        windowMs: 1000 * 60 * 60 * 24, //1 day
+        max: 20,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have created too many image thread posts in the last 24 hours. Please try again in 24 hours."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1109,6 +1118,25 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /posttextthread:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single('image'), async (req, res) => {
+    let {threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'postimagethread',
+            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, req.file]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /postimagethread:', error)
         HTTPHandler.serverError(res, error)
     })
 });

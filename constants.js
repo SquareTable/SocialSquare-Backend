@@ -28,7 +28,10 @@ const CONSTANTS = {
     MAX_THREAD_BODY_LINES: 10, //Update this value to reflect the VALID_THREAD_BODY_TEST above
     MAX_THREAD_TAGS_LENGTH: 100,
     VALID_THREAD_TAGS_TEST: /^([^\n]*\n){0}[^\n]*$/, //Tests to make sure threadTags is single line only
-    THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE: 'threadTags must only have one line'
+    THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE: 'threadTags must only have one line', //Update this value to reflect the VALID_THREAD_TAGS_TEST above
+    MAX_THREAD_IMAGE_DESCRIPTION_LENGTH: 1000,
+    VALID_THREAD_IMAGE_DESCRIPTION_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure thread image description has less than 10 lines
+    THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE: 'threadImageDescription must have less than 10 lines' //Update this value to reflect the VALID_THREAD_IMAGE_DESCRIPTION_TEST above
 }
 
 module.exports = CONSTANTS

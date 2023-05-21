@@ -3053,6 +3053,194 @@ class TempController {
         })
     }
 
+    static #postimagethread = (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
+        return new Promise(resolve => {
+            if (!file) {
+                return resolve(HTTPWTHandler.badInput('No file sent.'))
+            }
+        
+            const deleteImage = () => {
+                imageHandler.deleteMulterTempImage(file.filename)
+            }
+        
+            if (typeof threadTitle !== 'string') {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput(`threadTitle must be a string. Provided type: ${typeof threadTitle}`))
+            }
+        
+            if (typeof threadSubtitle !== 'string') {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be a string. Provided type: ${typeof threadSubtitle}`))
+            }
+        
+            if (typeof threadTags !== 'string') {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput(`threadTags must be a string. Provided type: ${typeof threadTags}`))
+            }
+        
+            if (typeof threadCategory !== 'string') {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput(`threadCategory must be a string. Provided type: ${typeof threadCategory}`))
+            }
+        
+            if (typeof threadImageDescription !== 'string') {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput(`threadImageDescription must be a string. Provided type: ${typeof threadImageDescription}`))
+            }
+        
+            if (typeof threadNSFW !== 'boolean' && threadNSFW !== "false" && threadNSFW !== "true") {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput('threadNSFW must either be a boolean, "false", or "true"'))
+            }
+        
+            if (typeof threadNSFL !== 'boolean' && threadNSFL !== "false" && threadNSFL !== "true") {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput('threadNSFL must either be a boolean, "false", or "true"'))
+            }
+        
+            if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false", or "true"'))
+            }
+        
+            if (threadNSFW === "false") {
+                threadNSFW = false
+            }
+        
+            if (threadNSFW === "true") {
+                threadNSFW = true
+            }
+        
+            if (threadNSFL === "false") {
+                threadNSFL = false
+            }
+        
+            if (threadNSFL === "true") {
+                threadNSFL = true
+            }
+        
+            if (sentAllowScreenShots === "false") {
+                sentAllowScreenShots = false
+            }
+        
+            if (sentAllowScreenShots === "true") {
+                sentAllowScreenShots = true
+            }
+        
+            threadTitle = threadTitle.trim();
+            threadSubtitle = threadSubtitle.trim();
+            threadTags = threadTags.trim();
+            threadCategory = threadCategory.trim();
+            threadImageDescription = threadImageDescription.trim();
+        
+            if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
+                deleteImage()
+                return HTTPHandler.badInput(res, `threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`)
+            }
+
+            if (!CONSTANTS.VALID_THREAD_TITLE_TEST.test(threadTitle)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
+            }
+        
+            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
+                deleteImage()
+                return HTTPHandler.badInput(res, `threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`)
+            }
+
+            if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_SUBTITLE_FAILED_TEST_ERROR_MESSAGE))
+            }
+        
+            if (threadTags.length > CONSTANTS.MAX_THREAD_TAGS_LENGTH) {
+                deleteImage()
+                return HTTPHandler.badInput(res, `threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`)
+            }
+
+            if (!CONSTANTS.VALID_THREAD_TAGS_TEST.test(threadTags)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE))
+            }
+        
+            if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH || threadImageDescription.length == 0) {
+                deleteImage()
+                return HTTPHandler.badInput(res, `threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`)
+            }
+
+            if (!CONSTANTS.VALID_THREAD_IMAGE_DESCRIPTION_TEST.test(threadImageDescription)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE))
+            }
+        
+            console.log('File has been recieved: ', file.filename)
+            console.log(userId)
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    Category.findOne({categoryTitle: {$eq: threadCategory}}).lean().then(data => {
+                        if (data) {
+                            const categoryNSFW = data.NSFW;
+                            const categoryNSFL = data.NSFL;
+        
+                            if (threadNSFW && !categoryNSFW && !categoryNSFL) {
+                                deleteImage()
+                                return resolve(HTTPWTHandler.forbidden('NSFW thread posts cannot be posted in non-NSFW categories.'))
+                            }
+        
+                            if (threadNSFL && !categoryNSFL) {
+                                deleteImage()
+                                return resolve(HTTPWTHandler.forbidden('NSFL thread posts cannot be posted in non-NSFL categories.'))
+                            }
+        
+                            imageHandler.compressImage(file.filename).then(imageKey => {
+                                const newThreadObject = {
+                                    threadType: "Images",
+                                    comments: [],
+                                    creatorId: creatorId,
+                                    threadTitle: threadTitle,
+                                    threadSubtitle: threadSubtitle,
+                                    threadTags: threadTags,
+                                    threadCategory: threadCategory,
+                                    threadBody: "",
+                                    threadImageKey: imageKey,
+                                    threadImageDescription: threadImageDescription,
+                                    threadNSFW: threadNSFW,
+                                    threadNSFL: threadNSFL,
+                                    datePosted: Date.now(),
+                                    allowScreenShots: sentAllowScreenShots
+                                };
+
+                                const newThread = new Thread(newThreadObject);
+        
+                                newThread.save().then(() => {
+                                    return resolve(HTTPWTHandler.OK('Creation successful'))
+                                })
+                                .catch(err => {
+                                    imageHandler.deleteImageByKey(imageKey)
+                                    console.error('An error occurred while saving a new thread post with an image with newThreadObject:', newThreadObject, 'to the database:', err)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while saving image thread. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
+                                deleteImage()
+                                return resolve(HTTPWTHandler.serverError('Failed to compress image'))
+                            })
+                        } else {
+                            deleteImage()
+                            return resolve(HTTPWTHandler.notFound('Category could not be found'))
+                        }
+                    }).catch(error => {
+                        deleteImage()
+                        console.error('An error occured while finding category with title:', threadCategory, '. The error was:', error)
+                    })
+                } else {
+                    deleteImage()
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                deleteImage()
+                console.error('An error occurred while finding user with ID: ', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3207,6 +3395,10 @@ class TempController {
 
     static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
         return await this.#posttextthread(userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots)
+    }
+
+    static postimagethread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
+        return await this.#postimagethread(userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file)
     }
 }
 
