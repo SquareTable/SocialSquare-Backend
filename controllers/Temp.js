@@ -4,6 +4,7 @@ const ImagePost = require('../models/ImagePost');
 const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 const Category = require('../models/Category')
+const Thread = require('../models/Thread')
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -14,6 +15,9 @@ const HTTPHandler = new HTTPLibrary();
 
 const ImageLibrary = require('../libraries/Image');
 const imageHandler = new ImageLibrary();
+
+const ThreadPostLibrary = require('../libraries/ThreadPost');
+const threadPostHandler = new ThreadPostLibrary();
 
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
@@ -3241,6 +3245,72 @@ class TempController {
         })
     }
 
+    static #getthreadsfromcategory = (userId, categoryId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userRequesting => {
+                if (userRequesting) {
+                    Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{ 
+                        if (data) {
+                            Thread.find({threadCategory: {$eq: categoryId}}).lean().then(result => {
+                                if (result) {
+                                    const uniqueUsers = Array.from(new Set(result.map(item => item.creatorId)))
+
+                                    User.find({_id: {$in: uniqueUsers}}).lean().then(users => {
+                                        const usersFound = Array.from(new Set(users.map(user => String(user._id))))
+                                        const creatorPosts = {}
+
+                                        result.forEach(thread => {
+                                            if (usersFound.includes(String(thread.creatorId))) {
+                                                if (Array.isArray(creatorPosts[thread.creatorId])) {
+                                                    creatorPosts[thread.creatorId].push(thread)
+                                                } else {
+                                                    creatorPosts[thread.creatorId] = [thread]
+                                                }
+                                            } else {
+                                                console.error('A thread was found from user with id:', thread.creatorId, 'but that user does not exist in the database. The thread id is:', thread._id, '. This thread should be deleted immediately.')
+                                            }
+                                        })
+
+                                        Promise.all(
+                                            Object.entries(creatorPosts).map(([key, value]) => {
+                                                //key is the user id
+                                                //value is an array of the user's threads
+                                                return threadPostHandler.processMultiplePostDataFromOneOwner(value, users.find(user => String(user._id) === key), userRequesting)
+                                            })
+                                        ).then(posts => {
+                                            return resolve(HTTPWTHandler.OK('Posts found', posts))
+                                        }).catch(error => {
+                                            console.error('An error occurred while processing data for thread posts. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while processing data. Please try again.'))
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while finding users with ids in this array:', uniqueUsers, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creators. Please try again.'))
+                                    })
+                                } else {
+                                    return resolve(HTTPWTHandler.notFound('This category does not have any threads.'))
+                                }
+                            }).catch(error => {
+                                console.error('An error occurred while finding all threads from category with id:', categoryId, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding threads. Please try again.'))
+                            })
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Category could not be found'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding category with id', categoryId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('User could not be found'))
+                }
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3399,6 +3469,10 @@ class TempController {
 
     static postimagethread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
         return await this.#postimagethread(userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file)
+    }
+
+    static getthreadsfromcategory = async (userId, categoryId) => {
+        return await this.#getthreadsfromcategory(userId, categoryId)
     }
 }
 

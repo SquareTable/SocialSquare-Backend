@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getthreadsfromcategory/:categorytitle': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many threads from a certain category in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getthreadsfromprofile': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
@@ -552,67 +543,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//Get Threads From Category
-router.get('/getthreadsfromcategory/:categorytitle', rateLimiters['/getthreadsfromcategory/:categorytitle'], (req, res) => {
-    let categorytitle = req.params.categorytitle
-    const userid = req.tokenData;
-    console.log("yes")
-    console.log(userid)
-    User.findOne({_id: {$eq: userid}}).lean().then(userRequesting => {
-        if (userRequesting) {
-            Category.find({categoryTitle: {$eq: categorytitle}}).lean().then(data =>{ 
-                if (data.length) {
-                    Thread.find({threadCategory: {$eq: categorytitle}}).lean().then(result => {
-                        if (result.length) {
-                            Promise.all(
-                                result.map((item, index) => User.find({_id: result[index].creatorId})).lean()
-                            ).then(users => Promise.all(
-                                users.map((user, index) => {
-                                    return new Promise((resolve, reject) => {
-                                        if (user) {
-                                            threadPostHandler.processMultiplePostDataFromOneOwner(result[index], user, userRequesting).then(posts => posts[0]).then(post => {
-                                                resolve(post)
-                                            }).catch(error => {
-                                                console.error(error)
-                                                reject('Error occured (error log above)')
-                                            })
-                                        } else {
-                                            console.log("A user does not exist but the thread does.")
-                                            console.log('The expected user id:', result[index].creatorId)
-                                            resolve('USER_DOES_NOT_EXIST')
-                                        }
-                                    })
-                                })
-                            )).then(posts => {
-                                const filteredPosts = posts.filter(post => post !== 'USER_DOES_NOT_EXIST')
-                                HTTPHandler.OK(res, 'Posts found', filteredPosts)
-                            }).catch(error => {
-                                console.error('An error occured while finding users for threads from a category. The error was:', error)
-                                HTTPHandler.serverError(res, 'An error occurred while getting threads. Please try again later.')
-                            })
-                        } else {
-                            HTTPHandler.notFound(res, 'This category does not have any threads.')
-                        }
-                    }).catch(error => {
-                        console.error('An error occurred while finding all threads from category with title:', categorytitle, '. The error was:', error)
-                        HTTPHandler.serverError(res, 'An error occurred while finding threads. Please try again later.')
-                    })
-                } else {
-                    HTTPHandler.notFound(res, 'Category could not be found')
-                }
-            }).catch(error => {
-                console.error('An error occurred while finding category with category title:', categorytitle, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding category. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'User could not be found')
-        }
-    }).catch(error => {
-        console.error('An error occured while finding user with id:', userid, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 //Get Threads From profile
 router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (req, res) => {

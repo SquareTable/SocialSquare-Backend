@@ -393,6 +393,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getthreadsfromcategory': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 20,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have searched for too many threads from a certain category in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1137,6 +1146,26 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /postimagethread:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], (req, res) => {
+    let {categoryId} = req.body;
+
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getthreadsfromcategory',
+            functionArgs: [req.tokenData, categoryId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /getthreadsfromcategory:', error)
         HTTPHandler.serverError(res, error)
     })
 });
