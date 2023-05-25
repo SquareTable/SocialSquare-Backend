@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/threadpostcomment': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have commented on thread posts too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/threadpostcommentreply': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
@@ -516,64 +507,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//Poll Comment Post
-router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res) => {
-    const userId = req.tokenData;
-    let {comment, userName, threadId} = req.body;
-
-    if (typeof comment !== 'string') {
-        return HTTPHandler.badInput(res, `comment must be a string. Provided type: ${typeof comment}`)
-    }
-
-    if (typeof userName !== 'string') {
-        return HTTPHandler.badInput(res, `userName must be a string. Provided type: ${typeof userName}`)
-    }
-
-    if (typeof threadId !== 'string') {
-        return HTTPHandler.badInput(res, `threadId must be a string. Provided type: ${typeof threadId}`)
-    }
-
-    comment = comment.trim();
-
-    if (comment.length == 0) {
-        return HTTPHandler.badInput(res, 'comment cannot be blank')
-    }
-
-    if (comment.length > 1000) {
-        return HTTPHandler.badInput(res, 'comment must not be more than 1000 characters long')
-    }
-
-    //Find User
-    User.find({_id: {$eq: userId}}).then(result => {
-        if (result.length) {
-            if (result[0].name == userName) {
-                async function findThreads() {
-                    var objectId = new mongodb.ObjectID()
-                    console.log(objectId)
-                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                    Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { comments: commentForPost } }).then(function(){
-                        console.log("SUCCESS1")
-                        HTTPHandler.OK(res, 'Comment upload successful')
-                    })
-                    .catch(err => {
-                        console.error('An error occurred while adding comment object:', commentForPost, "to thread's comments with id:", threadId, '. The error was:', err)
-                        HTTPHandler.serverError(res, 'An error occurred while adding comment to post. Please try again later.')
-                    });
-                }
-                findThreads()
-            } else {
-                HTTPHandler.notFound(res, 'name in database does not match up with userName')
-            }
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with your userId')
-        } 
-    })
-    .catch(err => {
-        console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    });
-})
 
 //Thread Comment Reply Post
 router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], (req, res) => {

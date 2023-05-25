@@ -3427,6 +3427,59 @@ class TempController {
         })
     }
 
+    static #threadpostcomment = (userId, comment, userName, threadId) => {
+        return new Promise(resolve => {
+            if (typeof comment !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
+            }
+        
+            if (typeof userName !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
+            }
+        
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            comment = comment.trim();
+        
+            if (comment.length == 0) {
+                return resolve(HTTPWTHandler.badInput('comment cannot be blank'))
+            }
+        
+            if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`))
+            }
+        
+            //Find User
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    if (result.name == userName) {
+                        var objectId = new mongodb.ObjectID()
+                        console.log(objectId)
+                        var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
+                        Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { comments: commentForPost } }).then(function(){
+                            console.log("SUCCESS1")
+                            return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                        })
+                        .catch(err => {
+                            console.error('An error occurred while adding comment object:', commentForPost, "to thread's comments with id:", threadId, '. The error was:', err)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while adding comment to post. Please try again.'))
+                        });
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('name in database does not match up with provided userName'))
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                } 
+            })
+            .catch(err => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3601,6 +3654,10 @@ class TempController {
 
     static downvotethread = async (userId, threadId) => {
         return await this.#downvotethread(userId, threadId)
+    }
+
+    static threadpostcomment = async (userId, comment, userName, threadId) => {
+        return await this.#threadpostcomment(userId, comment, userName, threadId)
     }
 }
 
