@@ -447,6 +447,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/searchforthreadcomments/:sentthreadid': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 30,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have searched for too many comments on thread posts too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1301,6 +1310,24 @@ router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /threadpostcommentreply:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/searchforthreadcomments', rateLimiters['/searchforthreadcomments'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'searchforthreadcomments',
+            functionArgs: [req.tokenData, req.body.threadId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /searchforthreadcomments:', error)
         HTTPHandler.serverError(res, error)
     })
 });

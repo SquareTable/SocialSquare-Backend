@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/searchforthreadcomments/:sentthreadid': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many comments on thread posts too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getsinglethreadcomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -498,79 +489,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//search for thread comments
-router.get('/searchforthreadcomments/:sentthreadid', rateLimiters['/searchforthreadcomments/:sentthreadid'], (req, res) => {
-    let sentThreadId = req.params.sentthreadid
-    const sentUserId = req.tokenData;
-
-    if (typeof sentThreadId !== 'string') {
-        return HTTPHandler.badInput(res, `sentThreadId must be a string. Provided type: ${typeof sentThreadId}`)
-    }
-
-    if (sentThreadId.length == 0) {
-        return HTTPHandler.badInput(res, 'sentThreadId cannot be blank.')
-    }
-
-    //Find User
-    console.log(sentThreadId)
-    function sendResponse(nameSendBackObject) {
-        console.log("Params Recieved")
-        console.log(nameSendBackObject)
-        HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
-    }
-    async function findThreads() {
-        await Thread.find({_id: {$eq: sentThreadId}}).then(data => {
-            if (data.length) {
-                var nameSendBackObject = [];
-                var comments = data[0].comments;
-                if (comments.length == 0) {
-                    HTTPHandler.notFound(res, 'This thread post has no comments')
-                } else {
-                    var itemsProcessed = 0;
-                    console.log(comments)
-                    comments.forEach(function (item, index) {
-                        User.find({_id: comments[index].commenterId}).then(result => {
-                            if (result.length) {
-                                console.log(data)
-                                console.log(data[0].comments[index].commentText)
-                                var commentUpVotes = (data[0].comments[index].commentUpVotes.length - data[0].comments[index].commentDownVotes.length)
-                                var commentUpVoted = false
-                                if (data[0].comments[index].commentUpVotes.includes(sentUserId)) {
-                                    commentUpVoted = true
-                                }
-                                var commentDownVoted = false
-                                if (data[0].comments[index].commentDownVotes.includes(sentUserId)) {
-                                    commentDownVoted = true
-                                }
-                                nameSendBackObject.push({commentId: data[0].comments[index].commentId, commenterName: result[0].name, commenterDisplayName: result[0].displayName, commentText: data[0].comments[index].commentsText, commentUpVotes: commentUpVotes, commentDownVotes: data[0].comments[index].commentDownVotes, commentReplies: data[0].comments[index].commentReplies.length, datePosted: data[0].comments[index].datePosted, profileImageKey: result[0].profileImageKey, commentUpVoted: commentUpVoted, commentDownVoted: commentDownVoted})
-                            } else {
-                                console.error('A comment was found on thread post with id:', sentThreadId, " and the comment creator cannot be found. The comment creator's id is:", comments[index].commenterId)
-                                return HTTPHandler.serverError(res, 'An error occurred while checking for comment creator')
-                            }
-                            itemsProcessed++;
-                            if(itemsProcessed === comments.length) {
-                                console.log("Before Function")
-                                console.log(nameSendBackObject)
-                                sendResponse(nameSendBackObject);
-                            }
-                        }).catch(error => {
-                            console.error('An error occurred whole finding user with id:', comments[index].commenterId, '. The error was:', error)
-                            return HTTPHandler.serverError(res, 'An error occurred while finding comment creator. Please try again later.')
-                        })
-                    })
-                }
-            } else {
-                HTTPHandler.notFound(res, 'Thread could not be found')
-            }
-        })
-        .catch(err => {
-            console.error('An error occurred while finding thread with id:', sentThreadId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding thread. Please try again later.')
-        });
-    }
-    findThreads()
-})
 
 //search for thread comments
 router.post('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], (req, res) => {

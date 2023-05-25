@@ -655,6 +655,10 @@ class TempController {
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return HTTPHandler.badInput(res, `comment cannot be longer than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters.`)
             }
+
+            if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
+                return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
+            }
         
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -714,7 +718,10 @@ class TempController {
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} long`))
             }
-        
+
+            if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
+                return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
+            }
         
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -1662,6 +1669,10 @@ class TempController {
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`))
             }
+
+            if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
+                return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
+            }
         
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -1733,6 +1744,10 @@ class TempController {
         
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return HTTPHandler.badInput(res, `comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`)
+            }
+
+            if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
+                return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
             }
         
             //Find User
@@ -3450,6 +3465,10 @@ class TempController {
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`comment must not be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters long`))
             }
+
+            if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
+                return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
+            }
         
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -3507,6 +3526,10 @@ class TempController {
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`comment cannot be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters`))
             }
+
+            if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
+                return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
+            }
         
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -3550,6 +3573,73 @@ class TempController {
             .catch(err => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
+        })
+    }
+
+    static #searchforthreadcomments = (userId, threadId) => {
+        return new Promise(resolve => {
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            if (threadId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('threadId cannot be blank'))
+            }
+        
+            //Find User
+            function sendResponse(nameSendBackObject) {
+                console.log("Params Recieved")
+                console.log(nameSendBackObject)
+                HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
+            }
+            
+            Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+                if (data) {
+                    var nameSendBackObject = [];
+                    var comments = data.comments;
+                    if (comments.length == 0) {
+                        return resolve(HTTPWTHandler.notFound('This thread post has no comments'))
+                    } else {
+                        var itemsProcessed = 0;
+                        console.log(comments)
+                        comments.forEach(function (item, index) {
+                            User.findOne({_id: comments[index].commenterId}).lean().then(result => {
+                                if (result) {
+                                    console.log(data)
+                                    console.log(data.comments[index].commentText)
+                                    var commentUpVotes = (data.comments[index].commentUpVotes.length - data.comments[index].commentDownVotes.length)
+                                    var commentUpVoted = false
+                                    if (data.comments[index].commentUpVotes.includes(userId)) {
+                                        commentUpVoted = true
+                                    }
+                                    var commentDownVoted = false
+                                    if (data.comments[index].commentDownVotes.includes(userId)) {
+                                        commentDownVoted = true
+                                    }
+                                    nameSendBackObject.push({commentId: String(data.comments[index].commentId), commenterName: result.name, commenterDisplayName: result.displayName, commentText: data.comments[index].commentsText, commentUpVotes: commentUpVotes, commentDownVotes: data.comments[index].commentDownVotes, commentReplies: data.comments[index].commentReplies.length, datePosted: data.comments[index].datePosted, profileImageKey: result.profileImageKey, commentUpVoted: commentUpVoted, commentDownVoted: commentDownVoted})
+                                } else {
+                                    console.error('A comment was found on thread post with id:', threadId, " and the comment creator cannot be found. The comment creator's id is:", comments[index].commenterId)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while checking for comment creator'))
+                                }
+                                itemsProcessed++;
+                                if(itemsProcessed === comments.length) {
+                                    console.log("Before Function")
+                                    console.log(nameSendBackObject)
+                                    sendResponse(nameSendBackObject);
+                                }
+                            }).catch(error => {
+                                console.error('An error occurred whole finding user with id:', comments[index].commenterId, '. The error was:', error)
+                            })
+                        })
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Thread could not be found'))
+                }
+            })
+            .catch(err => {
+                console.error('An error occurred while finding thread with id:', threadId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
             });
         })
     }
@@ -3736,6 +3826,10 @@ class TempController {
 
     static threadpostcommentreply = async (userId, comment, userName, threadId, commentId) => {
         return await this.#threadpostcommentreply(userId, comment, userName, threadId, commentId)
+    }
+
+    static searchforthreadcomments = async (userId, threadId) => {
+        return await this.#searchforthreadcomments(userId, threadId)
     }
 }
 
