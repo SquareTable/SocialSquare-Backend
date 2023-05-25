@@ -88,24 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/upvotethread': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many threads in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/downvotethread': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have downvoted too many threads in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/threadpostcomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -534,86 +516,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//UpVote Thread
-router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
-    const userId = req.tokenData;
-    let {threadId} = req.body;
-
-    if (typeof threadId !== 'string') {
-        return HTTPHandler.badInput(res, `threadId must be a string. Provided type: ${typeof threadId}`)
-    }
-
-    //Find User
-    User.findOne({_id: {$eq: userId}}).lean().then(result => {
-        if (result) {
-            Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
-                if (data) {
-                    threadPostHandler.upvote(data, result).then(successMessage => {
-                        HTTPHandler.OK(res, successMessage)
-                    }).catch(error => {
-                        if (error.privateError) {
-                            console.error('An error occured while upvoting thread. The error was:', error)
-                        }
-                        res.json({
-                            status: "FAILED",
-                            message: error.publicError
-                        })
-                        HTTPHandler.serverError(res, error.publicError)
-                    })
-                } else {
-                    HTTPHandler.notFound(res, 'Thread not found')
-                }
-            }).catch(error => {
-                console.error('An error occured while finding thread with id:', threadId, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding thread. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'User not found')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding a user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
-
-//DownVote Thread
-router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
-    const userId = req.tokenData;
-    let {threadId} = req.body;
-
-    if (typeof threadId !== 'string') {
-        return HTTPHandler.badInput(res, `threadId must be a string. Provided type: ${typeof threadId}`)
-    }
-
-    //Find User
-    User.findOne({_id: {$eq: userId}}).lean().then(result => {
-        if (result) {
-            Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
-                if (data) {
-                    threadPostHandler.downvote(data, result).then(successMessage => {
-                        HTTPHandler.OK(res, successMessage)
-                    }).catch(error => {
-                        if (error.privateError) {
-                            console.error('An error occured while downvoting thread. The error was:', error)
-                        }
-                        HTTPHandler.serverError(res, error.publicError)
-                    })
-                } else {
-                    HTTPHandler.notFound(res, 'Thread not found')
-                }
-            }).catch(error => {
-                console.error('An error occured while finding thread with id:', threadId, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding thread. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'User not found')
-        }
-    }).catch(error => {
-        console.error('An error occured while finding a user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 //Poll Comment Post
 router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res) => {

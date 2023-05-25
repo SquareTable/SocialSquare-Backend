@@ -3355,6 +3355,78 @@ class TempController {
         })
     }
 
+    static #upvotethread = (userId, threadId) => {
+        return new Promise(resolve => {
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            //Find User
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+                        if (data) {
+                            threadPostHandler.upvote(data, result).then(successMessage => {
+                                return resolve(HTTPWTHandler.OK(successMessage))
+                            }).catch(error => {
+                                if (error.privateError) {
+                                    console.error('An error occured while upvoting thread. The error was:', error)
+                                }
+                                return resolve(HTTPWTHandler.serverError(error.publicError))
+                            })
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Thread not found'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occured while finding thread with id:', threadId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('User could not be found with userId provided'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding a user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #downvotethread = (userId, threadId) => {
+        return new Promise(resolve => {
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            //Find User
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+                        if (data) {
+                            threadPostHandler.downvote(data, result).then(successMessage => {
+                                return resolve(HTTPWTHandler.OK(successMessage))
+                            }).catch(error => {
+                                if (error.privateError) {
+                                    console.error('An error occured while downvoting thread. The error was:', error)
+                                }
+                                return resolve(HTTPWTHandler.serverError(error.publicError))
+                            })
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Thread not found'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occured while finding thread with id:', threadId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('User not found with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occured while finding a user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3521,6 +3593,14 @@ class TempController {
 
     static getthreadsfromprofile = async (userId, pubId) => {
         return await this.#getthreadsfromprofile(userId, pubId)
+    }
+
+    static upvotethread = async (userId, threadId) => {
+        return await this.#upvotethread(userId, threadId)
+    }
+
+    static downvotethread = async (userId, threadId) => {
+        return await this.#downvotethread(userId, threadId)
     }
 }
 
