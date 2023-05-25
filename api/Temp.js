@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/threadpostcommentreply': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have replied to comments on thread posts too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/searchforthreadcomments/:sentthreadid': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -507,97 +498,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//Thread Comment Reply Post
-router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], (req, res) => {
-    const userId = req.tokenData;
-    let {comment, userName, threadId, commentId} = req.body;
-
-    if (typeof comment !== 'string') {
-        return HTTPHandler.badInput(res, `comment must be a string. Provided type: ${typeof comment}`)
-    }
-
-    if (typeof userName !== 'string') {
-        return HTTPHandler.badInput(res, `userName must be a string. Provided type: ${typeof userName}`)
-    }
-
-    if (typeof threadId !== 'string') {
-        return HTTPHandler.badInput(res, `threadId must be a string. Provided type: ${typeof threadId}`)
-    }
-
-    if (typeof commentId !== 'string') {
-        return HTTPHandler.badInput(res, `commentId must be a string. Provided type: ${typeof commentId}`)
-    }
-
-    comment = comment.trim();
-
-    if (comment.length == 0) {
-        return HTTPHandler.badInput(res, 'comment cannot be blank')
-    }
-
-    if (comment.length > 1000) {
-        return HTTPHandler.badInput(res, 'comment cannot be more than 1000 characters')
-    }
-
-    //Find User
-    User.find({_id: {$eq: userId}}).then(result => {
-        if (result.length) {
-            if (result[0].name == userName) {
-                Thread.find({_id: {$eq: threadId}}).then(data => {
-                    if (data.length) {
-                        var comments = data[0].comments
-                        async function findThreads(sentIndex) {
-                            var objectId = new mongodb.ObjectID()
-                            console.log(objectId)
-                            var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                            Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
-                                console.log("SUCCESS1")
-                                HTTPHandler.OK(res, 'Comment upload successful')
-                            })
-                            .catch(err => {
-                                console.error('An error occurred while pushing:', commentForPost, 'to:', `comments.${sentIndex}.commentReplies`, ' for thread with id:', threadId, '. The error was:', err)
-                                HTTPHandler.serverError(res, 'An error occurred while adding comment. Please try again later.')
-                            });
-                        }
-                        var itemsProcessed = 0
-                        comments.forEach(function (item, index) {
-                            console.log(comments[index].commentId)
-                            console.log(commentId)
-                            if (comments[index].commentId == commentId) {
-                                if (itemsProcessed !== null) {
-                                    console.log("Found at index:")
-                                    console.log(index)
-                                    findThreads(index)
-                                    itemsProcessed = null
-                                }
-                            } else {
-                                if (itemsProcessed !== null) {
-                                    itemsProcessed++;
-                                    if(itemsProcessed == comments.length) {
-                                        HTTPHandler.notFound(res, "Couldn't find comment")
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        HTTPHandler.notFound(res, 'Could not find thread')
-                    }
-                }).catch(error => {
-                    console.error('An error occurred while finding thread with id:', threadId, '. The error was:', error)
-                    HTTPHandler.serverError(res, 'An error occurred while finding thread. Please try again later.')
-                })
-            } else {
-                HTTPHandler.badInput(res, 'name in database does not match up with userName provided')
-            }
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with provided user id')
-        } 
-    })
-    .catch(err => {
-        console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    });
-})
 
 //search for thread comments
 router.get('/searchforthreadcomments/:sentthreadid', rateLimiters['/searchforthreadcomments/:sentthreadid'], (req, res) => {

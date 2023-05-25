@@ -3480,6 +3480,80 @@ class TempController {
         })
     }
 
+    static #threadpostcommentreply = (userId, comment, userName, threadId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof comment !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
+            }
+        
+            if (typeof userName !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
+            }
+        
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+        
+            comment = comment.trim();
+        
+            if (comment.length == 0) {
+                return resolve(HTTPWTHandler.badInput('comment cannot be blank'))
+            }
+        
+            if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`comment cannot be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters`))
+            }
+        
+            //Find User
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    if (result.name == userName) {
+                        Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+                            if (data) {
+                                const comments = data.comments;
+
+                                const commentIndex = comment.findIndex(item => String(item.commentId) === commentId)
+
+                                if (commentIndex === -1) {
+                                    return resolve(HTTPWTHandler.badInput("Couldn't find comment"))
+                                }
+
+                                const objectId = new mongodb.ObjectID()
+                                console.log(objectId)
+                                var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
+                                Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
+                                    console.log("SUCCESS1")
+                                    return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                                })
+                                .catch(err => {
+                                    console.error('An error occurred while pushing:', commentForPost, 'to:', `comments.${sentIndex}.commentReplies`, ' for thread with id:', threadId, '. The error was:', err)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again.'))
+                                });
+                            } else {
+                                return resolve(HTTPWTHandler.notFound('Could not find thread'))
+                            }
+                        }).catch(error => {
+                            console.error('An error occurred while finding thread with id:', threadId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+                        })
+                    } else {
+                        return resolve(HTTPWTHandler.badInput('name in database does not match up with userName provided'))
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                } 
+            })
+            .catch(err => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3658,6 +3732,10 @@ class TempController {
 
     static threadpostcomment = async (userId, comment, userName, threadId) => {
         return await this.#threadpostcomment(userId, comment, userName, threadId)
+    }
+
+    static threadpostcommentreply = async (userId, comment, userName, threadId, commentId) => {
+        return await this.#threadpostcommentreply(userId, comment, userName, threadId, commentId)
     }
 }
 

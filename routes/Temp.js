@@ -438,6 +438,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/threadpostcommentreply': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 20,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have replied to comments on thread posts too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1274,6 +1283,24 @@ router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /threadpostcomment:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'threadpostcommentreply',
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.threadId, req.body.commentId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /threadpostcommentreply:', error)
         HTTPHandler.serverError(res, error)
     })
 });
