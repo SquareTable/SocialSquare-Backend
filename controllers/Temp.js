@@ -3644,6 +3644,90 @@ class TempController {
         })
     }
 
+    static #getsinglethreadcomment = (userId, threadId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+        
+            if (threadId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('threadId must not be blank'))
+            }
+        
+            if (commentId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('commentId must not be blank'))
+            }
+        
+            //Find User
+
+            function sendResponse(nameSendBackObject) {
+                console.log("Params Recieved")
+                console.log(nameSendBackObject)
+                return resolve(HTTPWTHandler.OK('Comment search successful', nameSendBackObject))
+            }
+
+            Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+                if (!data) {
+                    return resolve(HTTPWTHandler.notFound('Thread could not be found'))
+                }
+
+                const comments = data.comments;
+
+                if (comments.length == 0) {
+                    return resolve(HTTPWTHandler.notFound('No comments'))
+                }
+
+                const commentIndex = comments.findIndex(comment => String(commentId) === commentId)
+
+                if (commentIndex === -1) {
+                    return resolve(HTTPWTHandler.notFound('Comment could not be found'))
+                }
+
+                const comment = comments[commentIndex];
+
+                User.findOne({_id: {$eq: comment.commenterId}}).lean().then(creator => {
+                    if (!creator) {
+                        return resolve(HTTPWTHandler.notFound('Comment creator could not be found'))
+                    }
+
+                    var commentUpVotes = (comment.commentUpVotes.length - comment.commentDownVotes.length)
+                    var commentUpVoted = false
+                    if (comment.commentUpVotes.includes(userId)) {
+                        commentUpVoted = true
+                    }
+                    var commentDownVoted = false
+                    if (comment.commentDownVotes.includes(userId)) {
+                        commentDownVoted = true
+                    }
+                    nameSendBackObject.push({
+                        commentId: String(comment.commentId),
+                        commenterName: creator.name,
+                        commenterDisplayName: creator.displayName,
+                        commentText: comment.commentsText,
+                        commentUpVotes: commentUpVotes,
+                        commentDownVotes: comment.commentDownVotes,
+                        commentReplies:comment.commentReplies.length,
+                        datePosted: commentdatePosted,
+                        profileImageKey: creator.profileImageKey,
+                        commentUpVoted: commentUpVoted,
+                        commentDownVoted: commentDownVoted
+                    })
+                    sendResponse(nameSendBackObject)
+                }).catch(error => {
+                    console.error('An error occurred while finding one user with id:', comment.commenterId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creator. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one thread with id:', threadId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3830,6 +3914,10 @@ class TempController {
 
     static searchforthreadcomments = async (userId, threadId) => {
         return await this.#searchforthreadcomments(userId, threadId)
+    }
+
+    static getsinglethreadcomment = async (userId, threadId, commentId) => {
+        return await this.#getsinglethreadcomment(userId, threadId, commentId)
     }
 }
 
