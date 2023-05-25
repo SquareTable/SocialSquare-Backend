@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getthreadsfromprofile': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many threads from a certain user in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/upvotethread': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 45,
@@ -543,52 +534,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//Get Threads From profile
-router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (req, res) => {
-    const pubId = req.body.pubId;
-    const sentuserid = req.tokenData;
-    console.log(pubId)
-    User.find({secondId: {$eq: pubId}}).lean().then(userResult => {
-        if (userResult.length) {
-            User.find({_id: {$eq: sentuserid}}).lean().then(userRequestingThreads => {
-                if (userRequestingThreads.length && !userResult[0].blockedAccounts.includes(userRequestingThreads[0].secondId)) {
-                    if (userResult[0].privateAccount && !userResult[0].followers.includes(userRequestingThreads[0].secondId)) {
-                        return HTTPHandler.notFound(res, 'This user has no thread posts!')
-                    }
-                    var userid = userResult[0]._id
-                    console.log("user id:")
-                    console.log(userid)
-                    Thread.find({creatorId: {$eq: userid}}).sort({datePosted: -1}).lean().then(result => {
-                        if (result.length) {
-                            threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult[0], userRequestingThreads[0]).then(posts => {
-                                HTTPHandler.OK(res, 'Posts found', posts)
-                            }).catch(error => {
-                                console.error('An error occurred while processing thread posts. The error was:', error)
-                                HTTPHandler.serverError(res, 'An error occurred while getting thread posts. Please try again later.')
-                            })
-                        } else {
-                            HTTPHandler.notFound(res, 'This user has no thread posts!')
-                        }
-                    }).catch(error => {
-                        console.error('An error occurred while finding threads with creatorId:', userid, '. The error was:', error)
-                        HTTPHandler.serverError(res, 'An error occurred while finding threads. Please try again later.')
-                    })
-                } else {
-                    HTTPHandler.notFound(res, 'User not found.')
-                }
-            }).catch(error => {
-                console.error('An error occurred while finding user with id:', sentuserid, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user provided.')
-        }
-    }).catch(err => {
-        console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 //UpVote Thread
 router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {

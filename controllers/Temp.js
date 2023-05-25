@@ -3311,6 +3311,50 @@ class TempController {
         })
     }
 
+    static #getthreadsfromprofile = (userId, pubId) => {
+        return new Promise(resolve => {
+            User.findOne({secondId: {$eq: pubId}}).lean().then(userResult => {
+                if (userResult) {
+                    User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThreads => {
+                        if (userRequestingThreads && !userResult.blockedAccounts.includes(userRequestingThreads.secondId)) {
+                            if (userResult.privateAccount && !userResult.followers.includes(userRequestingThreads.secondId)) {
+                                return resolve(HTTPWTHandler.notFound('This user has no thread posts!'))
+                            }
+                            var userid = userResult._id
+                            console.log("user id:")
+                            console.log(userid)
+                            Thread.find({creatorId: {$eq: userid}}).sort({datePosted: -1}).lean().then(result => {
+                                if (result.length) {
+                                    threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
+                                        return resolve(HTTPWTHandler.OK('Posts found', posts))
+                                    }).catch(error => {
+                                        console.error('An error occurred while processing thread posts. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while getting thread posts. Please try again.'))
+                                    })
+                                } else {
+                                    return resolve(HTTPWTHandler.notFound('This user has no thread posts!'))
+                                }
+                            }).catch(error => {
+                                console.error('An error occurred while finding threads with creatorId:', userid, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding threads. Please try again.'))
+                            })
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('User not found.'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(err => {
+                console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -3473,6 +3517,10 @@ class TempController {
 
     static getthreadsfromcategory = async (userId, categoryId) => {
         return await this.#getthreadsfromcategory(userId, categoryId)
+    }
+
+    static getthreadsfromprofile = async (userId, pubId) => {
+        return await this.#getthreadsfromprofile(userId, pubId)
     }
 }
 
