@@ -3681,13 +3681,14 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('No comments'))
                 }
 
-                const commentIndex = comments.findIndex(comment => String(commentId) === commentId)
+                const commentIndex = comments.findIndex(comment => String(comment._id) === commentId)
 
                 if (commentIndex === -1) {
                     return resolve(HTTPWTHandler.notFound('Comment could not be found'))
                 }
 
                 const comment = comments[commentIndex];
+                const nameSendBackObject = [];
 
                 User.findOne({_id: {$eq: comment.commenterId}}).lean().then(creator => {
                     if (!creator) {
@@ -3725,6 +3726,100 @@ class TempController {
                 console.error('An error occurred while finding one thread with id:', threadId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
             })
+        })
+    }
+
+    static #searchforthreadcommentreplies = (userId, threadId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+        
+            if (threadId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('threadId cannot be blank'))
+            }
+        
+            if (commentId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            }
+        
+        
+            //Find User
+            function sendResponse(nameSendBackObject) {
+                console.log("Params Recieved")
+                console.log(nameSendBackObject)
+
+                if (nameSendBackObject.length == 0) {
+                    return resolve(HTTPWTHandler.notFound('No comment replies'))
+                }
+                return resolve(HTTPWTHandler.OK('Comment search successful', nameSendBackObject))
+            }
+
+            Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+                if (data) {
+                    const nameSendBackObject = [];
+                    const comments = data.comments;
+
+                    if (comments.length == 0) {
+                        return resolve(HTTPWTHandler.badInput('No comments'))
+                    }
+
+                    const commentIndex = comments.findIndex(comment => String(comment._id) === commentId)
+
+                    if (commentIndex === -1) {
+                        return resolve(HTTPWTHandler.notFound('Comment could not be found'))
+                    }
+
+                    const comment = comments[commentIndex]
+                    const commentReplies = comment.commentReplies;
+
+                    if (commentReplies.length == 0) {
+                        return resolve(HTTPWTHandler.notFound('No comment replies'))
+                    }
+
+                    const uniqueCreators = Array.from(new Set(commentReplies.map(comment => comment.commenterId)))
+
+                    User.find({_id: {$in: uniqueCreators}}).lean().then(creators => {
+                        const creatorObject = {};
+                        creators.forEach(creator => {
+                            creatorObject[String(creator._id)] = creator
+                        })
+
+                        commentReplies.forEach(comment => {
+                            const commentCreator = creatorObject[String(comment.commenterId)]
+                            
+                            if (commentCreator) {
+                                const commentUpVotes = (commentReplies[index].commentUpVotes.length - commentReplies[index].commentDownVotes.length)
+                                const commentUpVoted = comment.commentUpVotes.includes(userId)
+                                const commentDownVoted = comment.commentDownVotes.includes(userId)
+                                nameSendBackObject.push({
+                                    commentId: comment.commentId,
+                                    commenterName: commentCreator.name,
+                                    commenterDisplayName: commentCreator.displayName,
+                                    commentText: comment.commentsText,
+                                    commentUpVotes: commentUpVotes,
+                                    commentDownVotes: comment.commentDownVotes,
+                                    datePosted: comment.datePosted,
+                                    profileImageKey: commentCreator.profileImageKey,
+                                    commentUpVoted: commentUpVoted,
+                                    commentDownVoted: commentDownVoted
+                                })
+                            }
+                        })
+
+                        sendResponse(nameSendBackObject)
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find thread'))
+                }
+            }).catch(err => {
+                console.error('An error occurred while finding thread with id:', threadId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+            });
         })
     }
 
@@ -3918,6 +4013,10 @@ class TempController {
 
     static getsinglethreadcomment = async (userId, threadId, commentId) => {
         return await this.#getsinglethreadcomment(userId, threadId, commentId)
+    }
+
+    static searchforthreadcommentreplies = async (userId, threadId, commentId) => {
+        return await this.#searchforthreadcommentreplies(userId, threadId, commentId)
     }
 }
 
