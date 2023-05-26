@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/deletethread': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have deleted too many threads in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/upvotecomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -462,78 +453,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//Delete Thread
-router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
-    let {threadId} = req.body;
-    const userId = req.tokenData;
-
-    if (typeof threadId !== 'string') {
-        return HTTPHandler.badInput(res, `threadId must be a string. Provided type: ${typeof threadId}`)
-    }
-
-    if (threadId.length == 0) {
-        return HTTPHandler.badInput(res, 'threadId cannot be blank.')
-    }
-
-
-    //Find User
-    async function deleteThread() {
-        //Confirm User
-        User.find({_id: {$eq: userId}}).then(result => {
-            if (result.length) {
-                //User exists
-                Thread.find({_id: {$eq: threadId}}).then(data => {
-                    if (data.length) {
-                        var findUser = data[0]
-                        if (findUser.creatorId == userId) {
-                            if (findUser.threadType !== "Images") {
-                                Thread.deleteOne({_id: findUser._id}).then(function(){
-                                    HTTPHandler.OK(res, 'Deleted')
-                                    Promise.all([
-                                        Upvote.deleteMany({postId: findUser._id, postFormat: 'Thread'}),
-                                        Downvote.deleteMany({postId: findUser._id, postFormat: 'Thread'})
-                                    ]).catch(error => {
-                                        console.error('An error occured while deleting all votes from thread post with id:', findUser._id, '. The error was:', error)
-                                    })
-                                }).catch(err => {
-                                    console.error('An error occurred while deleting thread with id:', findUser._id, '. The error was:', err)
-                                    HTTPHandler.serverError(res, 'An error occurred while deleting thread. Please try again later.')
-                                });
-                            } else {
-                                Thread.deleteOne({_id: findUser._id}).then(function(){
-                                    imageHandler.deleteImageByKey(findUser.threadImageKey)
-                                    Promise.all([
-                                        Upvote.deleteMany({postId: findUser._id, postFormat: 'Thread'}),
-                                        Downvote.deleteMany({postId: findUser._id, postFormat: 'Thread'})
-                                    ]).catch(error => {
-                                        console.error('An error occured while deleting all votes from thread post with id:', findUser._id, '. The error was:', error)
-                                    })
-                                }).catch(err => {
-                                    console.error('An error occurred while deleting thread with id:', findUser._id, '. The error was:', err)
-                                    HTTPHandler.serverError(res, 'An error occurred while deleting thread. Please try again later.')
-                                });
-                            }
-                        } else {
-                            HTTPHandler.forbidden(res, "You cannot delete someone else's posts")
-                        }
-                    } else {
-                        HTTPHandler.notFound(res, 'Could not find thread')
-                    }
-                }).catch(error => {
-                    console.error('An error occurred while finding thread with id:', threadId, '. The error was:', error)
-                    HTTPHandler.serverError(res, 'An error occurred while finding thread. Please try again later.')
-                })
-            } else {
-                HTTPHandler.notFound(res, 'Could not find user with provided user id')
-            }
-        }).catch(error => {
-            console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-        })
-    }
-    deleteThread()
-})
 
 //UpVote Thread
 router.post('/upvotecomment', rateLimiters['/upvotecomment'], (req, res) => {

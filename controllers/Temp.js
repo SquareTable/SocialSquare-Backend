@@ -3895,6 +3895,60 @@ class TempController {
         })
     }
 
+    static #deletethread = (userId, threadId) => {
+        return new Promise(resolve => {
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            if (threadId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('threadId cannot be blank.'))
+            }
+        
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(user => {
+                if (user) {
+                    //User exists
+                    Thread.findOne({_id: {$eq: threadId}}).lean().then(thread => {
+                        if (thread) {
+                            if (String(thread.creatorId) === String(userId)) {
+                                if (thread.threadType === 'Images') {
+                                    imageHandler.deleteImageByKey(thread.threadImageKey)
+                                }
+
+                                Thread.deleteOne({_id: thread._id}).then(function(){
+                                    Promise.all([
+                                        Upvote.deleteMany({postId: thread._id, postFormat: 'Thread'}),
+                                        Downvote.deleteMany({postId: thread._id, postFormat: 'Thread'})
+                                    ]).catch(error => {
+                                        console.error('An error occured while deleting all votes from thread post with id:', thread._id, '. The error was:', error)
+                                    }).finally(() => {
+                                        return resolve(HTTPWTHandler.OK('Deleted'))
+                                    })
+                                }).catch(err => {
+                                    console.error('An error occurred while deleting thread with id:', thread._id, '. The error was:', err)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread. Please try again.'))
+                                });
+                            } else {
+                                return resolve(HTTPWTHandler.forbidden("You cannot delete someone else's posts"))
+                            }
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Could not find thread'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding thread with id:', threadId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -4093,6 +4147,10 @@ class TempController {
 
     static getthreadbyid = async (userId, threadId) => {
         return await this.#getthreadbyid(userId, threadId)
+    }
+
+    static deletethread = async (userId, threadId) => {
+        return await this.#deletethread(userId, threadId)
     }
 }
 
