@@ -474,6 +474,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getthreadbyid': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 30,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested too many threads in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1382,6 +1391,24 @@ router.post('/searchforthreadcommentreplies', rateLimiters['/searchforthreadcomm
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforthreadcommentreplies:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getthreadbyid',
+            functionArgs: [req.tokenData, req.body.threadId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /getthreadbyid:', error)
         HTTPHandler.serverError(res, error)
     })
 });

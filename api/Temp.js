@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getthreadbyid/:threadid': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested too many threads in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/deletethread': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -471,72 +462,6 @@ const rateLimiters = {
 }
 
 //THREAD AREA
-
-//Get Threads With Id
-router.get('/getthreadbyid/:threadid', rateLimiters['/getthreadbyid/:threadid'], (req, res) => {
-    let threadId = req.params.threadid
-    const userid = req.tokenData;
-
-    if (typeof threadId !== 'string') {
-        return HTTPHandler.badInput(res, `threadId must be a string. Provided type: ${typeof threadId}`)
-    }
-
-    if (threadId.length == 0) {
-        return HTTPHandler.badInput(res, 'threadId cannot be blank.')
-    }
-
-    console.log(userid)
-    Thread.find({_id: {$eq: threadId}}).lean().then(result => {
-        if (result.length) {
-            Category.find({categoryTitle: result[0].threadCategory}).lean().then(data =>{ 
-                if (data.length) {
-                    var categoryImageKey = data[0].imageKey
-                    if (data[0].imageKey == "") {
-                        categoryImageKey = null
-                    }
-                    User.find({_id: result[0].creatorId}).lean().then(data => {
-                        if (data.length) {
-                            User.findOne({_id: {$eq: userid}}).lean().then(userRequestingThread => {
-                                if (userRequestingThread) {
-                                    threadPostHandler.processMultiplePostDataFromOneOwner(result, data[0], userRequestingThread).then(posts => {
-                                        const post = {
-                                            ...posts[0],
-                                            categoryImageKey
-                                        }
-                                        HTTPHandler.OK(res, 'Posts found', post)
-                                    }).catch(error => {
-                                        console.error('An error occured while processing thread. The error was:', error)
-                                        HTTPHandler.serverError(res, 'An error occurred while getting thread. Please try again later.')
-                                    })
-                                } else {
-                                    HTTPHandler.notFound(res, 'Could not find user with your id')
-                                }
-                            }).catch(error => {
-                                console.error('An error occured while finding a user with id:', userid, '. The error was:', error)
-                                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-                            })
-                        } else {
-                            HTTPHandler.notFound(res, 'Could not find thread creator.')
-                        }
-                    }).catch(error => {
-                        console.error('An error occurred while finding user with id:', result[0].creatorId, '. The error was:', error)
-                        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-                    })
-                } else {
-                    HTTPHandler.notFound(res, 'Could not find category.')
-                }
-            }).catch(error => {
-                console.error('An error occurred while finding category with title:', result[0].threadCategory, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding category. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find thread')
-        }
-    }).catch(error => {
-        console.error('An error occured while trying to find thread with id:', threadId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding thread post. Please try again later.')
-    })
-})
 
 //Delete Thread
 router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {

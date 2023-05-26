@@ -3823,6 +3823,78 @@ class TempController {
         })
     }
 
+    static #getthreadbyid = (userId, threadId) => {
+        return new Promise(resolve => {
+            if (typeof threadId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            }
+        
+            if (threadId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('threadId cannot be blank.'))
+            }
+        
+            Thread.findOne({_id: {$eq: threadId}}).lean().then(result => {
+                if (result) {
+                    Category.findOne({_id: result.threadCategory}).lean().then(data =>{ 
+                        if (data) {
+                            var categoryImageKey = data.imageKey
+                            if (data.imageKey == "") {
+                                categoryImageKey = null
+                            }
+
+                            User.findOne({_id: result.creatorId}).lean().then(data => {
+                                if (data) {
+                                    User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThread => {
+                                        if (userRequestingThread) {
+                                            if (data.blockedAccounts.includes(userRequestingThread.secondId)) {
+                                                return resolve(HTTPWTHandler.notFound('Could not find thread creator'))
+                                            }
+
+                                            if (data.privateAccount === true && !data.followers.includes(userRequestingThread.secondId)) {
+                                                return resolve(HTTPWTHandler.forbidden("You must be following the thread's creator to view this thread."))
+                                            }
+
+                                            threadPostHandler.processMultiplePostDataFromOneOwner([result], data, userRequestingThread).then(posts => {
+                                                const post = {
+                                                    ...posts[0],
+                                                    categoryImageKey
+                                                }
+                                                return resolve(HTTPWTHandler.OK('Posts found', post))
+                                            }).catch(error => {
+                                                console.error('An error occured while processing thread. The error was:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while getting thread. Please try again.'))
+                                            })
+                                        } else {
+                                            return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                                        }
+                                    }).catch(error => {
+                                        console.error('An error occured while finding a user with id:', userId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                                    })
+                                } else {
+                                    return resolve(HTTPWTHandler.notFound('Could not find thread creator.'))
+                                }
+                            }).catch(error => {
+                                console.error('An error occurred while finding user with id:', result.creatorId, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding thread creator. Please try again.'))
+                            })
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Could not find category for thread.'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding category with title:', result.threadCategory, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find thread'))
+                }
+            }).catch(error => {
+                console.error('An error occured while trying to find thread with id:', threadId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding thread post. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -4017,6 +4089,10 @@ class TempController {
 
     static searchforthreadcommentreplies = async (userId, threadId, commentId) => {
         return await this.#searchforthreadcommentreplies(userId, threadId, commentId)
+    }
+
+    static getthreadbyid = async (userId, threadId) => {
+        return await this.#getthreadbyid(userId, threadId)
     }
 }
 
