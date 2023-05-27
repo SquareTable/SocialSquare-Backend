@@ -5002,6 +5002,67 @@ class TempController {
         })
     }
 
+    static #removefollowerfromaccount = (userId, userToRemovePubId) => {
+        return new Promise(resolve => {
+            if (typeof userToRemovePubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userToRemovePubId must be a string. Provided type: ${typeof userToRemovePubId}`))
+            }
+        
+            if (userToRemovePubId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('userToRemovePubId cannot be a blank string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+
+                if (!userFound.followers.includes(userToRemovePubId)) {
+                    return resolve(HTTPWTHandler.notFound("This user doesn't follow you"))
+                }
+        
+                User.findOne({secondId: {$eq: userToRemovePubId}}).lean().then(userToRemoveFound => {
+                    if (!userToRemoveFound) {
+                        User.findOneAndUpdate({_id: {$eq: userId}}, {$pull: {followers: userToRemovePubId}}).then(() => {
+                            return resolve(HTTPWTHandler.OK('Follower has been removed.'))
+                        }).catch(error => {
+                            console.error('An error occurred while pulling:', userToRemovePubId, 'from the followers list for user with id:', userId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while removing follower. Please try again.'))
+                        })
+                    }
+        
+                    const dbUpdates = [
+                        {
+                            updateOne: {
+                                filter: {_id: {$eq: userId}},
+                                update: {$pull: {followers: userToRemovePubId}}
+                            }
+                        },
+                        {
+                            updateOne: {
+                                filter: {secondId: {$eq: userToRemovePubId}},
+                                update: {$pull: {following: userFound.secondId}}
+                            }
+                        }
+                    ]
+        
+                    User.bulkWrite(dbUpdates).then(() => {
+                        return resolve(HTTPWTHandler.OK('Follower has been removed.'))
+                    }).catch(error => {
+                        console.error('An error occurred while making a bulkWrite operatin to the database on the User collection. The dbUpdates to be made were:', dbUpdates, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while removing follower. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one user with secondId:', userToRemovePubId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user to remove. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5248,6 +5309,10 @@ class TempController {
 
     static acceptfollowrequest = async (userId, accountFollowRequestAcceptedPubID) => {
         return await this.#acceptfollowrequest(userId, accountFollowRequestAcceptedPubID)
+    }
+
+    static removefollowerfromaccount = async (userId, userToRemovePubId) => {
+        return await this.#removefollowerfromaccount(userId, userToRemovePubId)
     }
 }
 

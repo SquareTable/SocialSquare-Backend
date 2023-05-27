@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/removefollowerfromaccount': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have accepted too many follow requests in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/blockaccount': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 5,
@@ -352,59 +343,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccount'], (req, res) => {
-    const userID = req.tokenData;
-    let {userToRemovePubId} = req.body;
-
-    if (typeof userToRemovePubId !== 'string') {
-        return HTTPHandler.badInput(res, `userToRemovePubId must be a string. Provided type: ${typeof userToRemovePubId}`)
-    }
-
-    if (userToRemovePubId.length == 0) {
-        return HTTPHandler.badInput(res, 'userToRemovePubId cannot be a blank string.')
-    }
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with provided userId')
-        }
-
-        User.findOne({secondId: {$eq: userToRemovePubId}}).lean().then(userToRemoveFound => {
-            if (!userToRemoveFound) {
-                return HTTPHandler.notFound(res, 'User to remove could not be found')
-            }
-
-            const dbUpdates = [
-                {
-                    updateOne: {
-                        filter: {_id: {$eq: userID}},
-                        update: {$pull: {followers: userToRemoveFound.secondId}}
-                    }
-                },
-                {
-                    updateOne: {
-                        filter: {secondId: {$eq: userToRemovePubId}},
-                        update: {$pull: {following: userFound.secondId}}
-                    }
-                }
-            ]
-
-            User.bulkWrite(dbUpdates).then(() => {
-                HTTPHandler.OK(res, 'Follower has been removed.')
-            }).catch(error => {
-                console.error('An error occurred while making a bulkWrite operatin to the database on the User collection. The dbUpdates to be made were:', dbUpdates, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while removing follower. Please try again later.')
-            })
-        }).catch(error => {
-            console.error('An error occurred while finding one user with secondId:', userToRemovePubId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user to remove. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
     let {userToBlockPubId} = req.body;
