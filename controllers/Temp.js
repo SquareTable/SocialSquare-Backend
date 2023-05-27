@@ -4497,6 +4497,162 @@ class TempController {
         })
     }
 
+    static #toggleFollowOfAUser = (userId, userToFollowPubId) => {
+        return new Promise(resolve => {
+            if (typeof userToFollowPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userToFollowPubId must be a string. Provided type: ${typeof userToFollowPubId}`))
+            }
+        
+            if (userToFollowPubId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('userToFollowPubId cannot be a blank string.'))
+            }
+        
+            //Check for userId validity and get user for their pub Id
+            User.findOne({_id: {$eq: userId}}).lean().then(userFollowingFound => {
+                if (userFollowingFound) {
+                    //Check for other user for validity and to make sure they exist
+                    User.findOne({secondId: {$eq: userToFollowPubId}}).lean().then(userGettingFollowed => {
+                        if (!userGettingFollowed || userGettingFollowed.blockedAccounts.includes(userFollowingFound.secondId)) {
+                            //If the user could not be found or if the user has blocked the user trying to follow
+                            return resolve(HTTPWTHandler.notFound('User not found'))
+                        }
+
+                        if (userId === String(userGettingFollowed._id)) {
+                            return resolve(HTTPWTHandler.forbidden('You cannot follow yourself'))
+                        }
+
+
+                        if (userGettingFollowed.privateAccount == true) {
+                            if (userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
+                                //UnFollow private account
+                                const dbUpdates = [
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userGettingFollowed._id}},
+                                            update: {$pull : {followers: userFollowingFound.secondId}}
+                                        }
+                                    },
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userId}},
+                                            update: { $pull : {following: userGettingFollowed.secondId}}
+                                        }
+                                    }
+                                ]
+
+                                User.bulkWrite(dbUpdates).then(() => {
+                                    return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                }).catch(error => {
+                                    console.error('An error occurred while unfollowing private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                })
+                            } else {
+                                if (!userGettingFollowed.accountFollowRequests.includes(userFollowingFound.secondId)) {
+                                    //Request to follow the account
+                                    User.findOneAndUpdate({_id: userGettingFollowed._id}, {$addToSet: {accountFollowRequests: userFollowingFound.secondId}}).then(function() {
+                                        if (userFollowingFound.settings.notificationSettings.SendFollowRequests && userGettingFollowed.settings.notificationSettings.FollowRequests) {
+                                            //If the user following has SENDING follow requests notifications ON and user getting followed has follow requests notifications ON
+                                            var notifMessage = {
+                                                title: "New Follow Request",
+                                                body: userFollowingFound.name + " has requested to follow you."
+                                            }
+                                            var notifData = {
+                                                type: "Follow request",
+                                                pubIdOfFollower: userFollowingFound.secondId
+                                            }
+                                            sendNotifications(userGettingFollowed._id, notifMessage, notifData)
+                                        }
+                                        return resolve(HTTPWTHandler.OK('Requested To Follow User'))
+                                    }).catch(err => {
+                                        console.error('An error occurred while adding to set:', userFollowingFound.secondId, 'to accountFollowRequests on user with id:', userGettingFollowed._id, '. The error was:', err)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while sending follow request to user. Please try again.'))
+                                    })
+                                } else {
+                                    //Remove request to follow the account
+                                    User.findOneAndUpdate({_id: userGettingFollowed._id}, {$pull: {accountFollowRequests: userFollowingFound.secondId}}).then(function() {
+                                        return resolve(HTTPWTHandler.OK('Removed Request To Follow User'))
+                                    }).catch(err => {
+                                        console.error('An error occurred while pulling:', userFollowingFound.secondId, 'from accountFollowRequests for user with id:', userGettingFollowed._id, '. The error was:', err)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing request to follow user. Please try again.'))
+                                    })
+                                }
+                            }
+                        } else {
+                            if (!userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
+                                //Follow
+
+                                const dbUpdates = [
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userGettingFollowed._id}},
+                                            update: {$addToSet : {followers: userFollowingFound.secondId}}
+                                        }
+                                    },
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userId}},
+                                            update: { $addToSet : {following: userGettingFollowed.secondId}}
+                                        }
+                                    }
+                                ]
+
+                                User.bulkWrite(dbUpdates).then(() => {
+                                    var notifMessage = {
+                                        title: "New Follower",
+                                        body: userFollowingFound[0].name + " has followed you."
+                                    }
+                                    var notifData = {
+                                        type: "Follow",
+                                        pubIdOfFollower: userFollowingFound[0].secondId
+                                    }
+                                    sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
+
+                                    return resolve(HTTPWTHandler.OK('Followed User'))
+                                }).catch(error => {
+                                    console.error('An error occurred while following not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                })
+                            } else {
+                                //UnFollow
+
+                                const dbUpdates = [
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userGettingFollowed._id}},
+                                            update: {$pull : {followers: userFollowingFound.secondId}}
+                                        }
+                                    },
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userId}},
+                                            update: { $pull : {following: userGettingFollowed.secondId}}
+                                        }
+                                    }
+                                ]
+
+                                User.bulkWrite(dbUpdates).then(() => {
+                                    return resolve(HTTPWTHandler.OK('UnFollowed User'))
+                                }).catch(error => {
+                                    console.error('An error occurred while unfollowing not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                })
+                            }
+                        }
+                    }).catch(err => {
+                        console.error('An error occurred while finding user with secondId:', userToFollowPubId, '. The error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user to follow. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(err => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -4707,6 +4863,10 @@ class TempController {
 
     static downvotecomment = async (userId, format, postId, commentId) => {
         return await this.#downvotecomment(userId, format, postId, commentId)
+    }
+
+    static toggleFollowOfAUser = async (userId, userToFollowPubId) => {
+        return await this.#toggleFollowOfAUser(userId, userToFollowPubId)
     }
 }
 
