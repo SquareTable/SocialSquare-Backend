@@ -4806,7 +4806,7 @@ class TempController {
                             if (userFound.blockedAccounts.includes(requestingUser.secondId)) {
                                 return resolve(HTTPWTHandler.notFound('User not found.'))
                             }
-                            
+
                             const dataToSend = userHandler.returnPublicInformation(userFound, requestingUser)
                             return resolve(HTTPWTHandler.OK('User found.', dataToSend))
                         } else {
@@ -4821,6 +4821,28 @@ class TempController {
                 }
             }).catch(error => {
                 console.error('An error occurred while finding user with id:', userRequestingId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #makeaccountprivate = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then((userFound) => {
+                if (userFound) {
+                    // User exists
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {privateAccount: true}).then(function() {
+                        return resolve(HTTPWTHandler.OK('Account is now private.'))
+                    }).catch((error) => {
+                        console.error('An error occurred while making user private (setting privateAccount to true) for user with id:', userId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while making your account private. Please try again.'))
+                    })
+                } else {
+                    // User does not exist
+                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
+                }
+            }).catch((error) => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -5052,6 +5074,10 @@ class TempController {
 
     static getuserbyid = async (userId, pubId) => {
         return await this.#getuserbyid(userId, pubId)
+    }
+
+    static makeaccountprivate = async (userId) => {
+        return await this.#makeaccountprivate(userId)
     }
 }
 

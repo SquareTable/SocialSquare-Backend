@@ -546,6 +546,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/makeaccountprivate': rateLimit({
+        windowMs: 1000 * 60 * 60, //1 hour
+        max: 5,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have made your account private too many times in the last hour. Please try again in 60 minutes."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1598,6 +1607,24 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getuserbyid:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'makeaccountprivate',
+            functionArgs: [req.tokenData]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /makeaccountprivate:', error)
         HTTPHandler.serverError(res, error)
     })
 });

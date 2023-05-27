@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/makeaccountprivate': rateLimit({
-        windowMs: 1000 * 60 * 60, //1 hour
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have made your account private too many times in the last hour. Please try again in 60 minutes."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/makeaccountpublic': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
         max: 5,
@@ -397,27 +388,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, res) => {
-    const userID = req.tokenData;
-    User.find({_id: {$eq: userID}}).then((userFound) => {
-        if (userFound.length) {
-            // User exists
-            User.findOneAndUpdate({_id: {$eq: userID}}, {privateAccount: true}).then(function() {
-                HTTPHandler.OK(res, 'Account is now private.')
-            }).catch((error) => {
-                console.error('An error occurred while making user private (setting privateAccount to true) for user with id:', userID, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while making your account private. Please try again.')
-            })
-        } else {
-            // User does not exist
-            HTTPHandler.notFound(res, 'Account with provided userId could not be found.')
-        }
-    }).catch((error) => {
-        console.error('An error occurred while finding user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res) => {
     const userID = req.tokenData;
