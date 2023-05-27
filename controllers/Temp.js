@@ -4922,6 +4922,38 @@ class TempController {
         })
     }
 
+    static #denyfollowrequest = (userId, accountFollowRequestDeniedPubID) => {
+        return new Promise(resolve => {
+            if (typeof accountFollowRequestDeniedPubID !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`accountFollowRequestDeniedPubID must be a string. Provided type: ${typeof accountFollowRequestDeniedPubID}`))
+            }
+        
+            if (accountFollowRequestDeniedPubID.length == 0) {
+                return resolve(HTTPWTHandler.badInput('accountFollowRequestDeniedPubID cannot be a blank string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    if (userFound.accountFollowRequests.includes(accountFollowRequestDeniedPubID)) {
+                        User.findOneAndUpdate({_id: {$eq: userId}}, {$pull: {accountFollowRequests: accountFollowRequestDeniedPubID}}).then(function() {
+                            return resolve(HTTPWTHandler.OK('Request denied.'))
+                        }).catch(err => {
+                            console.error('An error occurred while pulling:', accountFollowRequestDeniedPubID, 'from:', 'accountFollowRequests', 'for user with id:', userId, '. The error was:', err)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while denying the follow request. Please try again.'))
+                        })
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('Follow request could not be found.'))
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(err => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5160,6 +5192,10 @@ class TempController {
 
     static getfollowrequests = async (userId) => {
         return await this.#getfollowrequests(userId)
+    }
+
+    static denyfollowrequest = async (userId, accountFollowRequestDeniedPubID) => {
+        return await this.#denyfollowrequest(userId, accountFollowRequestDeniedPubID)
     }
 }
 

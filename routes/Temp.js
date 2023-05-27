@@ -573,6 +573,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/denyfollowrequest': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 60,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have denied too many follow requests in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1679,6 +1688,24 @@ router.post('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getfollowrequests:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'denyfollowrequest',
+            functionArgs: [req.tokenData, req.body.accountFollowRequestDeniedPubID]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /denyfollowrequest:', error)
         HTTPHandler.serverError(res, error)
     })
 });
