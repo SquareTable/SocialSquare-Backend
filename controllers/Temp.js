@@ -4653,6 +4653,105 @@ class TempController {
         })
     }
 
+    static #reloadUsersDetails = (userId, usersPubId) => {
+        return new Promise(resolve => {
+            if (typeof usersPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`usersPubId must be a string. Provided type: ${typeof usersPubId}`))
+            }
+
+            if (usersPubId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('usersPubId cannot be an empty string.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userSearching => {
+                if (userSearching) {
+                    const userSearchingPubId = userSearching.secondId;
+        
+                    User.findOne({secondId: {$eq: usersPubId}}).lean().then(userData => {
+                        if (userData) {
+                            //could do a user search ig but no need really
+                            if (userData.blockedAccounts.includes(userSearchingPubId)) {
+                                return resolve(HTTPWTHandler.notFound('User not found.'))
+                            } else {
+                                const userDataToSend = {
+                                    name: userData.name,
+                                    displayName: userData.name,
+                                    followers: userData.followers.length,
+                                    following: userData.following.length,
+                                    totalLikes: userData.totalLikes,
+                                    profileKey: userData.profileImageKey,
+                                    badges: userData.badges
+                                };
+        
+                                if (userData.privateAccount == true) {
+                                    if (userData.accountFollowRequests.includes(userSearchingPubId)) {
+                                        //User has requested to follow this account
+        
+                                        const toSend = {
+                                            ...userDataToSend,
+                                            userIsFollowing: 'Requested'
+                                        }
+        
+                                        return resolve(HTTPWTHandler.OK('Found', toSend))
+                                    } else {
+                                        //User has not requested to follow this private account
+                                        if (userData.followers.includes(userSearchingPubId)) {
+                                            // User is following this account
+        
+                                            const toSend = {
+                                                ...userDataToSend,
+                                                userIsFollowing: true
+                                            }
+        
+                                            return resolve(HTTPWTHandler.OK('Found', toSend))
+                                        } else {
+                                            //User is not following this private account
+        
+                                            const toSend = {
+                                                ...userDataToSend,
+                                                userIsFollowing: false
+                                            }
+        
+                                            return resolve(HTTPWTHandler.OK('Found', toSend))
+                                        }
+                                    }
+                                } else {
+                                    if (userData[0].followers.includes(userSearchingPubId)) {
+        
+                                        const toSend = {
+                                            ...userDataToSend,
+                                            userIsFollowing: true
+                                        }
+        
+                                        return resolve(HTTPWTHandler.OK('Found', toSend))
+                                    } else {
+        
+                                        const toSend = {
+                                            ...userDataToSend,
+                                            userIsFollowing: false
+                                        }
+        
+                                        return resolve(HTTPWTHandler.OK('Found', toSend))
+                                    }    
+                                }      
+                            }
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Could not find user with pubId'))
+                        }
+                    }).catch(err => {
+                        console.error('An error occurred while finding user with secondId:', usersPubId, '. The error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -4867,6 +4966,10 @@ class TempController {
 
     static toggleFollowOfAUser = async (userId, userToFollowPubId) => {
         return await this.#toggleFollowOfAUser(userId, userToFollowPubId)
+    }
+
+    static reloadUsersDetails = async (userId, usersPubId) => {
+        return await this.#reloadUsersDetails(userId, usersPubId)
     }
 }
 

@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/reloadUsersDetails/:usersPubId': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have reloaded user details too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/earnSpecialBadge': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 3,
@@ -424,99 +415,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-
-router.get('/reloadUsersDetails/:usersPubId', rateLimiters['/reloadUsersDetails/:usersPubId'], (req, res) => {
-    let usersPubId = req.params.usersPubId
-    let userId = req.tokenData;
-
-    User.findOne({_id: {$eq: userId}}).lean().then(userSearching => {
-        if (userSearching) {
-            const userSearchingPubId = userSearching.secondId;
-
-            User.find({secondId: {$eq: usersPubId}}).then(userData => {
-                if (userData.length) {
-                    //could do a user search ig but no need really
-                    if (userData[0].blockedAccounts.includes(userSearchingPubId)) {
-                        HTTPHandler.notFound(res, 'User not found.')
-                    } else {
-                        const userDataToSend = {
-                            name: userData[0].name,
-                            displayName: userData[0].name,
-                            followers: userData[0].followers.length,
-                            following: userData[0].following.length,
-                            totalLikes: userData[0].totalLikes,
-                            profileKey: userData[0].profileImageKey,
-                            badges: userData[0].badges
-                        };
-
-                        if (userData[0].privateAccount == true) {
-                            if (userData[0].accountFollowRequests.includes(userSearchingPubId)) {
-                                //User has requested to follow this account
-
-                                const toSend = {
-                                    ...userDataToSend,
-                                    userIsFollowing: 'Requested'
-                                }
-
-                                HTTPHandler.OK(res, 'Found', toSend)
-                            } else {
-                                //User has not requested to follow this private account
-                                if (userData[0].followers.includes(userSearchingPubId)) {
-                                    // User is following this account
-
-                                    const toSend = {
-                                        ...userDataToSend,
-                                        userIsFollowing: true
-                                    }
-
-                                    HTTPHandler.OK(res, "Found", toSend)
-                                } else {
-                                    //User is not following this private account
-
-                                    const toSend = {
-                                        ...userDataToSend,
-                                        userIsFollowing: false
-                                    }
-
-                                    HTTPHandler.OK(res, 'Found', toSend)
-                                }
-                            }
-                        } else {
-                            if (userData[0].followers.includes(userSearchingPubId)) {
-
-                                const toSend = {
-                                    ...userDataToSend,
-                                    userIsFollowing: true
-                                }
-
-                                HTTPHandler.OK(res, 'Found', toSend)
-                            } else {
-
-                                const toSend = {
-                                    ...userDataToSend,
-                                    userIsFollowing: false
-                                }
-
-                                HTTPHandler.OK(res, 'Found', toSend)
-                            }    
-                        }      
-                    }
-                } else {
-                    HTTPHandler.notFound(res, "Couldn't find user")
-                }
-            }).catch(err => {
-                console.error('An error occurred while finding user with secondId:', usersPubId, '. The error was:', err)
-                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, "Couldn't find user with provided userId")
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) => {
     const userId = req.tokenData;
