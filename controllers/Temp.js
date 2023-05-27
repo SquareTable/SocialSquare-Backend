@@ -5130,6 +5130,34 @@ class TempController {
         })
     }
 
+    static #unblockaccount = (userId, userToUnblockPubId) => {
+        return new Promise(resolve => {
+            if (typeof userToUnblockPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userToUnblockPubId must be a string. Provided type: ${typeof userToUnblockPubId}`))
+            }
+        
+            if (userToUnblockPubId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('userToUnblockPubId must not be an empty string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {$pull: {blockedAccounts: userToUnblockPubId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('User has been unblocked.'))
+                    }).catch(error => {
+                        console.error('An error occurred while pulling:', userToUnblockPubId, 'from:', 'blockedAccounts', 'for user with id:', userId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while unblocking user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5388,6 +5416,10 @@ class TempController {
 
     static getuserblockedaccounts = async (userId) => {
         return await this.#getuserblockedaccounts(userId)
+    }
+
+    static unblockaccount = async (userId, userToUnblockPubId) => {
+        return await this.#unblockaccount(userId, userToUnblockPubId)
     }
 }
 

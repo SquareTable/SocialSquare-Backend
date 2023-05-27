@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/unblockaccount': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have unblocked too many accounts in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/enableAlgorithm': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 3,
@@ -325,44 +316,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
-    const userID = req.tokenData;
-    let {userToUnblockPubId} = req.body;
-
-    if (typeof userToUnblockPubId !== 'string') {
-        return HTTPHandler.badInput(res, `userToUnblockPubId must be a string. Provided type: ${typeof userToUnblockPubId}`)
-    }
-
-    if (userToUnblockPubId.length == 0) {
-        return HTTPHandler.badInput(res, 'userToUnblockPubId must not be an empty string.')
-    }
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (userFound) {
-            User.findOne({secondId: {$eq: userToUnblockPubId}}).lean().then(userToUnblockFound => {
-                if (userToUnblockFound) {
-                    User.findOneAndUpdate({_id: {$eq: userID}}, {$pull: {blockedAccounts: userToUnblockPubId}}).then(() => {
-                        HTTPHandler.OK(res, 'User has been unblocked.')
-                    }).catch(error => {
-                        console.error('An error occurred while pulling:', userToUnblockPubId, 'from:', 'blockedAccounts', 'for user with id:', userID, '. The error was:', error)
-                        HTTPHandler.serverError(res, 'An error occurred while unblocking user. Please try again later.')
-                    })
-                } else {
-                    HTTPHandler.notFound(res, 'Could not find user to unblock.')
-                }
-            }).catch(error => {
-                console.error('An error occurred while finding one user with secondId:', userToUnblockPubId, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding user to unblock. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with userId provided.')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/enableAlgorithm',rateLimiters['/enableAlgorithm'], (req, res) => {
     const userID = req.tokenData;
