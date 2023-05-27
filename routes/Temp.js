@@ -627,6 +627,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/enableAlgorithm': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 3,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have enabled the algorithm too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1841,6 +1850,24 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /unblockaccount:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'enableAlgorithm',
+            functionArgs: [req.tokenData]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /enableAlgorithm:', error)
         HTTPHandler.serverError(res, error)
     })
 });

@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/enableAlgorithm': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have enabled the algorithm too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getAuthenticationFactorsEnabled': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -316,28 +307,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/enableAlgorithm',rateLimiters['/enableAlgorithm'], (req, res) => {
-    const userID = req.tokenData;
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with userId provided.')
-        }
-
-        let newSettings = {...userFound.settings};
-        newSettings.algorithmSettings.enabled = true;
-        User.findOneAndUpdate({_id: {$eq: userID}}, {settings: newSettings}).then(() => {
-            HTTPHandler.OK(res, 'Algorithm has now been enabled.')
-        }).catch(error => {
-            console.error('An error occurred while updating settings for user with id:', userID, '. The old settings were:', userFound.settings, ' The new settings are:', newSettings, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while turning algorithm on. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationFactorsEnabled'], (req, res) => {
     const userID = req.tokenData;

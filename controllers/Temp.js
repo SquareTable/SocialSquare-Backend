@@ -5158,6 +5158,27 @@ class TempController {
         })
     }
 
+    static #enableAlgorithm = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
+                }
+        
+                let newSettings = {...userFound.settings};
+                newSettings.algorithmSettings.enabled = true;
+                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
+                    return resolve(HTTPWTHandler.OK('Algorithm has now been enabled.'))
+                }).catch(error => {
+                    console.error('An error occurred while updating settings for user with id:', userId, '. The old settings were:', userFound.settings, ' The new settings are:', newSettings, '. The error was:', error)
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5420,6 +5441,10 @@ class TempController {
 
     static unblockaccount = async (userId, userToUnblockPubId) => {
         return await this.#unblockaccount(userId, userToUnblockPubId)
+    }
+
+    static enableAlgorithm = async (userId) => {
+        return await this.#enableAlgorithm(userId)
     }
 }
 
