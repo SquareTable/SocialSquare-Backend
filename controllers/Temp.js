@@ -4907,6 +4907,21 @@ class TempController {
         })
     }
 
+    static #getfollowrequests = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    return resolve(HTTPWTHandler.OK('Found user', userFound.accountFollowRequests))
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5141,6 +5156,10 @@ class TempController {
 
     static makeaccountpublic = async (userId) => {
         return await this.#makeaccountpublic(userId)
+    }
+
+    static getfollowrequests = async (userId) => {
+        return await this.#getfollowrequests(userId)
     }
 }
 
