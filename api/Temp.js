@@ -1,24 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
-const mongodb = require('mongodb');
-mongoose.set('useFindAndModify', false);
 const geoIPLite = require('geoip-lite')
 
-const sanitizeFilename = require('sanitize-filename');
 
-const ImageLibrary = require('../libraries/Image')
-const imageHandler = new ImageLibrary();
-const UserLibrary = require('../libraries/User')
-const userHandler = new UserLibrary();
-const ArrayLibrary = require('../libraries/Array')
-const arrayHelper = new ArrayLibrary();
-const ImagePostLibrary = require('../libraries/ImagePost')
-const imagePostHandler = new ImagePostLibrary();
-const PollPostLibrary = require('../libraries/PollPost');
-const pollPostHandler = new PollPostLibrary();
-const ThreadPostLibrary = require('../libraries/ThreadPost');
-const threadPostHandler = new ThreadPostLibrary();
 const HTTPLibrary = require('../libraries/HTTP');
 const HTTPHandler = new HTTPLibrary();
 
@@ -28,8 +12,6 @@ const CONSTANTS = require('../constants');
 //require('dotenv').config();
 const fs = require('fs')
 const S3 = require('aws-sdk/clients/s3')
-
-const { generateTwoDigitDate } = require('./../generateTwoDigitDate')
 
 const bucketName = process.env.AWS_BUCKET_NAME
 const region = process.env.AWS_BUCKET_REGION
@@ -60,20 +42,6 @@ const PostReports = require('../models/PostReports')
 const AccountReports = require('../models/AccountReports');
 const Upvote = require('../models/Upvote');
 const Downvote = require('../models/Downvote')
-
-// Password handler
-const bcrypt = require('bcrypt');
-
-const { setCacheItem } = require('../memoryCache.js')
-
-// Use axios to make HTTP GET requests to random.org to get random base-16 strings for account verification codes
-const axios = require('axios')
-
-// Use .env file for email configuration
-//require('dotenv').config();
-
-
-//Web Token Stuff
 
 const { tokenValidation, refreshTokenDecryption } = require("../middleware/TokenHandler");
 
