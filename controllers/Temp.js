@@ -3539,7 +3539,7 @@ class TempController {
                             if (data) {
                                 const comments = data.comments;
 
-                                const commentIndex = comment.findIndex(item => String(item.commentId) === commentId)
+                                const commentIndex = comments.findIndex(item => String(item.commentId) === commentId)
 
                                 if (commentIndex === -1) {
                                     return resolve(HTTPWTHandler.badInput("Couldn't find comment"))
@@ -3681,7 +3681,7 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('No comments'))
                 }
 
-                const commentIndex = comments.findIndex(comment => String(comment._id) === commentId)
+                const commentIndex = comments.findIndex(comment => String(comment.commentId) === commentId)
 
                 if (commentIndex === -1) {
                     return resolve(HTTPWTHandler.notFound('Comment could not be found'))
@@ -3768,7 +3768,7 @@ class TempController {
                         return resolve(HTTPWTHandler.badInput('No comments'))
                     }
 
-                    const commentIndex = comments.findIndex(comment => String(comment._id) === commentId)
+                    const commentIndex = comments.findIndex(comment => String(comment.commentId) === commentId)
 
                     if (commentIndex === -1) {
                         return resolve(HTTPWTHandler.notFound('Comment could not be found'))
@@ -3941,6 +3941,282 @@ class TempController {
                     })
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #upvotecomment = (userId, format, postId, commentId) => {
+        return new Promise(resolve => {
+            const supportedFormats = ["Image", "Poll", "Thread"]
+
+            if (!supportedFormats.includes(format)) {
+                return resolve(HTTPWTHandler.badInput(`format must be either ${supportedFormats.join(', ')}`))
+            }
+
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
+            }
+
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+
+            if (postId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
+            }
+
+            if (commentId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    //User exists
+                    if (format == "Poll") {
+                        Poll.findOne({_id: {$eq: postId}}).lean().then(poll => {
+                            if (poll) {
+                                User.findOne({_id: {$eq: poll.creatorId}}).lean().then(pollCreator => {
+                                    if (!pollCreator) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find poll creator'))
+                                    }
+
+                                    if (pollCreator.privateAccount === true && !pollCreator.followers.includes(result.secondId)) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find comment'))
+                                    }
+
+                                    if (pollCreator.blockedAccounts.includes(result.secondId)) {
+                                        return resolve(HTTPWTHandler.notFound('User not found'))
+                                    }
+
+                                    const comments = poll.comments;
+                                    if (comments.length == 0) {
+                                        return resolve(HTTPWTHandler.notFound('No comments could be found'))
+                                    }
+
+                                    const commentIndex = comments.findIndex(comment => String(comment.commentId) === commentId)
+
+                                    if (commentIndex === -1) {
+                                        return resolve(HTTPWTHandler.notFound('Comment could not be found'))
+                                    }
+
+                                    const comment = comments[commentIndex];
+
+                                    User.findOne({_id: {$eq: comment.commenterId}}).lean().then(commentCreator => {
+                                        if (!commentCreator) {
+                                            return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
+                                        }
+
+                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                            return resolve(HTTPWTHandler.notFound('User not found'))
+                                        }
+
+                                        if (comment.commentUpVotes.includes(userId)) {
+                                            //User has upvoted
+                                            Poll.findOneAndUpdate({_id: {$eq: postId}}, { $pull: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVote removed'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while pulling:', userId, 'from:', `comments.${commentIndex}.commentUpVotes`, 'in poll with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing current comment upvote. Please try again.'))
+                                            });
+                                        } else if (comment.commentDownVotes.includes(userId)) {
+                                            Poll.findOneAndUpdate({_id: {$eq: postId}}, { $pull: { [`comments.${commentIndex}.commentDownVotes`] : userId }, $addToSet: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVoted'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while pulling:', userId, 'from:', `comments.${commentIndex}.commentDownVotes`, 'and adding to set:', userId, 'to:', `comments.${commentIndex}.commentUpVotes`, 'on post with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while upvoting post comment. Please try again.'))
+                                            });
+                                        } else {
+                                            Poll.findOneAndUpdate({_id: {$eq: postId}}, { $addToSet: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVoted'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while adding to set:', userId, 'into:', `comments.${commentIndex}.commentUpVotes`, 'on poll with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while upvoting post comment. Please try again.'))
+                                            });
+                                        }
+                                    }).catch(error => {
+                                        console.error('An error occurred while finding one user with id:', comment.commenterId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creator.'))
+                                    })
+                                }).catch(error => {
+                                    console.error('An error occurred while finding one user with id:', poll.creatorId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding the poll creator. Please try again.'))
+                                })
+                            } else {
+                                return resolve(HTTPWTHandler.notFound('Could not find poll post.'))
+                            }
+                        }).catch(error => {
+                            console.error('An error occurred while finding poll with id:', postId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding poll post. Please try again.'))
+                        })
+                    } else if (format == "Image") {
+                        ImagePost.findOne({_id: {$eq: postId}}).lean().then(imagePost => {
+                            if (imagePost) {
+                                User.findOne({_id: {$eq: imagePost.creatorId}}).lean().then(postCreator => {
+                                    if (!postCreator) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find post creator'))
+                                    }
+
+                                    if (postCreator.privateAccount === true && !postCreator.followers.includes(result.secondId)) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find comment'))
+                                    }
+
+                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                        return resolve(HTTPWTHandler.notFound('User not found'))
+                                    }
+
+                                    const comments = imagePost.comments;
+
+                                    if (comments.length == 0) {
+                                        return resolve(HTTPWTHandler.notFound('No comments could be found'))
+                                    }
+
+                                    const commentIndex = comments.findIndex(comment => String(comment.commentId) === commentId)
+                                    if (commentIndex === -1) {
+                                        return resolve(HTTPWTHandler.notFound('Comment could not be found'))
+                                    }
+
+                                    const comment = comments[commentIndex]
+
+                                    User.findOne({_id: {$eq: comment.commenterId}}).lean().then(commentCreator => {
+                                        if (!commentCreator) {
+                                            return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
+                                        }
+
+                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                            return resolve(HTTPWTHandler.notFound('User not found'))
+                                        }
+
+                                        if (comment.commentUpVotes.includes(userId)) {
+                                            //User has upvoted
+                                            ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $pull: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVote removed'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while pulling:', userId, 'from:', `comments.${commentIndex}.commentUpVotes`, 'on image post with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing post comment upvote. Please try again.'))
+                                            });
+                                        } else if (comment.commentDownVotes.includes(userId)) {
+                                            ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $pull: { [`comments.${commentIndex}.commentDownVotes`] : userId}, $addToSet: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVoted'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while adding to set:', userId, 'to:', `comments.${commentIndex}.commentUpVotes`, 'and pull:', userId, 'from:', `comments.${commentIndex}.commentDownVotes`, 'on image post with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing downvote and adding upvote to image post comment. Please try again.'))
+                                            });
+                                        } else {
+                                            ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $addToSet: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVoted'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while pushing:', userId, 'to:', `comments.${commentIndex}.commentUpVotes`, 'on image post with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while upvoting post comment. Please try again.'))
+                                            });
+                                        }
+                                    }).catch(error => {
+                                        console.error('An error occurred while finding one user with id:', comment.commenterId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                                    })
+                                }).catch(error => {
+                                    console.error('An error occurred while finding one user with id:', imagePost.creatorId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
+                                })
+                            } else {
+                                return resolve(HTTPWTHandler.notFound('Could not find image post.'))
+                            }
+                        }).catch(error => {
+                            console.error('An error occurred while finding image post with id:', postId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                        })
+                    } else if (format == "Thread") {
+                        Thread.findOne({_id: {$eq: postId}}).lean().then(thread => {
+                            if (thread) {
+                                User.findOne({_id: {$eq: thread.creatorId}}).lean().then(postCreator => {
+                                    if (!postCreator) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find the post creator'))
+                                    }
+
+                                    if (postCreator.privateAccount === true && !postCreator.followers.includes(result.secondId)) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find comment'))
+                                    }
+
+                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                        return resolve(HTTPWTHandler.notFound('User not found'))
+                                    }
+
+                                    const comments = thread.comments;
+
+                                    if (comments.length == 0) {
+                                        return resolve(HTTPWTHandler.notFound('This thread post has no comments'))
+                                    }
+
+                                    const commentIndex = comments.findIndex(comment => String(comment.commentId) === commentId)
+
+                                    if (commentIndex === -1) {
+                                        return resolve(HTTPWTHandler.notFound('Could not find comment'))
+                                    }
+
+                                    const comment = comments[commentIndex]
+
+                                    User.findOne({_id: {$eq: comment.commenterId}}).lean().then(commentCreator => {
+                                        if (!commentCreator) {
+                                            return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
+                                        }
+
+                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                            return resolve(HTTPWTHandler.notFound('User not found'))
+                                        }
+
+                                        if (comment.commentUpVotes.includes(userId)) {
+                                            //User has upvoted
+                                            Thread.findOneAndUpdate({_id: {$eq: postId}}, { $pull: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVote removed'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while pulling:', userId, 'from:', `comments.${commentIndex}.commentUpVotes`, 'on thread post with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing upvote from post. Please try again.'))
+                                            });
+                                        } else if (comment.commentDownVotes.includes(userId)) {
+                                            Thread.findOneAndUpdate({_id: {$eq: postId}}, { $pull: { [`comments.${commentIndex}.commentDownVotes`] : userId }, $push: { [`comments.${commentIndex}.commentUpVotes`] : userId}}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVoted'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while pulling:', userId, 'from:', `comments.${sentIndex}.commentDownVotes`, 'and pushing:', userId, 'to:', `comments.${commentIndex}.commentUpVotes`, 'on thread post with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing downvote and adding upvote to thread post. Please try again.'))
+                                            });
+                                        } else {
+                                            Thread.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${commentIndex}.commentUpVotes`] : userId }}).then(function(){
+                                                return resolve(HTTPWTHandler.OK('Comment UpVoted'))
+                                            })
+                                            .catch(err => {
+                                                console.error('An error occurred while pushing:', userId, 'to:', `comments.${commentIndex}.commentUpVotes`, 'on thread post with id:', postId, '. The error was:', err)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while adding upvote to post. Please try again.'))
+                                            });
+                                        }
+                                    }).catch(error => {
+                                        console.error('An error occurred while finding one user with id:', comment.commenterId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creator. Please try again.'))
+                                    })
+                                }).catch(error => {
+                                    console.error('An error occurred while finding one user with id:', thread.creatorId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding thread creator. Please try again.'))
+                                })
+                            } else {
+                                return resolve(HTTPWTHandler.notFound('Thread could not be found'))
+                            }
+                        }).catch(error => {
+                            console.error('An error occurred while finding thread with id:', postId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding thread post. Please try again.'))
+                        })
+                    }
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
                 }
             }).catch(error => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
@@ -4151,6 +4427,10 @@ class TempController {
 
     static deletethread = async (userId, threadId) => {
         return await this.#deletethread(userId, threadId)
+    }
+
+    static upvotecomment = async (userId, format, postId, commentId) => {
+        return await this.#upvotecomment(userId, format, postId, commentId)
     }
 }
 
