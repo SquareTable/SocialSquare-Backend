@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/blockaccount': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have blocked too many accounts in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getuserblockedaccounts': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -343,59 +334,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
-    let {userToBlockPubId} = req.body;
-    const userID = req.tokenData;
-
-    if (typeof userToBlockPubId !== 'string') {
-        return HTTPHandler.badInput(res, `userToBlockPubId must be a string. Provided type: ${typeof userToBlockPubId}`)
-    }
-
-    if (userToBlockPubId.length == 0) {
-        return HTTPHandler.badInput(res, 'userToBlockPubId cannot be an empty string.')
-    }
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'User with provided userId could not be found')
-        }
-
-        User.findOne({secondId: {$eq: userToBlockPubId}}).lean().then(userToBlockFound => {
-            if (!userToBlockFound) {
-                return HTTPHandler.notFound(res, 'User to block could not be found')
-            }
-
-            const dbUpdates = [
-                {
-                    updateOne: {
-                        filter: {_id: {$eq: userID}},
-                        update: {$pull: {followers: userToBlockFound.secondId}, $push: {blockedAccounts: userToBlockFound.secondId}}
-                    }
-                },
-                {
-                    updateOne: {
-                        filter: {secondId: {$eq: userToBlockPubId}},
-                        update: {$pull: {following: userFound.secondId}}
-                    }
-                }
-            ]
-
-            User.bulkWrite(dbUpdates).then(() => {
-                HTTPHandler.OK(res, 'Blocked user.')
-            }).catch(error => {
-                console.error('An error occurred while making a bulkWrite operation on the User collection. The database updates were:', dbUpdates, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while blocking user. Please try again later.')
-            })
-        }).catch(error => {
-            console.error('An error occurred while finding one user with secondId:', userToBlockPubId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user to block. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.get('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (req, res) => {
     const userID = req.tokenData;

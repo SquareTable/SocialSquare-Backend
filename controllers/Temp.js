@@ -5063,6 +5063,58 @@ class TempController {
         })
     }
 
+    static #blockaccount = (userId, userToBlockPubId) => {
+        return new Promise(resolve => {
+            if (typeof userToBlockPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userToBlockPubId must be a string. Provided type: ${typeof userToBlockPubId}`))
+            }
+        
+            if (userToBlockPubId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('userToBlockPubId cannot be an empty string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
+                }
+        
+                User.findOne({secondId: {$eq: userToBlockPubId}}).lean().then(userToBlockFound => {
+                    if (!userToBlockFound) {
+                        return resolve(HTTPWTHandler.notFound('User to block could not be found'))
+                    }
+        
+                    const dbUpdates = [
+                        {
+                            updateOne: {
+                                filter: {_id: {$eq: userId}},
+                                update: {$pull: {followers: userToBlockFound.secondId}, $push: {blockedAccounts: userToBlockFound.secondId}}
+                            }
+                        },
+                        {
+                            updateOne: {
+                                filter: {secondId: {$eq: userToBlockPubId}},
+                                update: {$pull: {following: userFound.secondId}}
+                            }
+                        }
+                    ]
+        
+                    User.bulkWrite(dbUpdates).then(() => {
+                        return resolve(HTTPWTHandler.OK('Blocked user.'))
+                    }).catch(error => {
+                        console.error('An error occurred while making a bulkWrite operation on the User collection. The database updates were:', dbUpdates, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while blocking user. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one user with secondId:', userToBlockPubId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user to block. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5313,6 +5365,10 @@ class TempController {
 
     static removefollowerfromaccount = async (userId, userToRemovePubId) => {
         return await this.#removefollowerfromaccount(userId, userToRemovePubId)
+    }
+
+    static blockaccount = async (userId, userToBlockPubId) => {
+        return await this.#blockaccount(userId, userToBlockPubId)
     }
 }
 
