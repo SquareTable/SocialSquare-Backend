@@ -663,6 +663,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/turnOffEmailMultiFactorAuthentication': rateLimit({
+        windowMs: 1000 * 60 * 60 * 24, //1 day
+        max: 3,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have turned off email multi-factor authentication too many times today. Please try again in 24 hours."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1949,6 +1958,24 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /reloadProfileEssentials:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmailMultiFactorAuthentication'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'turnOffEmailMultiFactorAuthentication',
+            functionArgs: [req.tokenData]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /turnOffEmailMultiFactorAuthentication:', error)
         HTTPHandler.serverError(res, error)
     })
 });

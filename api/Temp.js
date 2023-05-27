@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/turnOffEmailMultiFactorAuthentication': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have turned off email multi-factor authentication too many times today. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/deleteaccount': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 1,
@@ -246,40 +237,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmailMultiFactorAuthentication'], (req, res) => {
-    const userID = req.tokenData;
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (userFound) {
-            User.findOneAndUpdate({_id: {$eq: userID}}, {$pull: {authenticationFactorsEnabled: 'Email'}, $unset: {MFAEmail: "this removes the MFAEmail field"}}).then(function() {
-                HTTPHandler.OK(res, 'Email multi-factor authentication has been turned off successfully.')
-
-                var emailData = {
-                    from: process.env.SMTP_EMAIL,
-                    to: userFound[0].email,
-                    subject: "Email Multi-Factor Authentication Turned Off",
-                    text: `Email Multi-Factor authentication has now been turned off for your account. If you did not request for this to happen, someone else may be logged into your account. If so, change your password immediately.`,
-                    html: `<p>Email Multi-Factor authentication has now been turned off for your account. If you did not request for this to happen, someone else may be logged into your account. If so, change your password immediately.</p>`
-                };
-
-                mailTransporter.sendMail(emailData, function(error, response) {
-                    if (error) {
-                        console.error('An error occured while sending an email to user with ID:', userID, '. The error was:', error, ' The emailData was:', emailData)
-                    }
-                })
-            }).catch(error => {
-                console.error('An error occurred while pulling:', 'Email', 'from:', 'authenticationFactorsEnabled', 'and unsetting the field:', 'MFAEmail', 'for user with id:', userID, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while turning off email multi-factor authentication. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'User not found.')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
     const userID = req.tokenData;
