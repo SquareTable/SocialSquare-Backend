@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/deleteaccount': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 1,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have tried to delete your account too many times today. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/checkIfCategoryExists/:categoryTitle': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -237,75 +228,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
-    const userID = req.tokenData;
-    console.log('Trying to delete user with ID: ' + userID)
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'User with provided userId could not be found')
-        }
-
-        PopularPosts.findOne({}).lean().then(popularPostDocument => {
-            const popularPosts = popularPostDocument.popularPosts
-            const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userID)
-
-            PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}).then(() => {
-                ImagePost.find({creatorId: {$eq: userID}}).lean().then(imagePosts => {
-                    const imageKeys = imagePosts.map(post => post.imageKey)
-                    Thread.find({creatorId: {$eq: userID}}).lean().then(threadPosts => {
-                        const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
-                        Promise.all([
-                            userFound?.profileImageKey ? fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, userFound.profileImageKey)) : Promise.resolve('Profile Image Deleted'),
-                            ...imageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
-                            ImagePost.deleteMany({creatorId: {$eq: userID}}),
-                            Poll.deleteMany({creatorId: {$eq: userID}}),
-                            ...threadImageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
-                            Thread.deleteMany({creatorId: {$eq: userID}}),
-                            Message.deleteMany({senderId: {$eq: userID}}),
-                            User.updateMany({followers: userFound.secondId}, {$pull: {followers: userFound.secondId}}),
-                            User.updateMany({following: userFound.secondId}, {$pull: {following: userFound.secondId}}),
-                            User.updateMany({blockedAccounts: userFound.secondId}, {$pull: {blockedAccounts: userFound.secondId}}),
-                            Downvote.deleteMany({userPublicId: userFound.secondId}),
-                            Upvote.deleteMany({userPublicId: userFound.secondId}),
-                            User.updateMany({accountFollowRequests: userFound.secondId}, {$pull: {accountFollowRequests: userFound.secondId}}),
-                            AccountReports.deleteMany({reporterId: {$eq: userID}}),
-                            PostReports.deleteMany({reporterId: {$eq: userID}}),
-                            RefreshToken.deleteMany({userId: {$eq: userID}}),
-                            Category.updateMany({}, {$pull: {members: userID}})
-                        ]).then(() => {
-                            User.deleteOne({_id: {$eq: userID}}).then(() => {
-                                HTTPHandler.OK(res, 'Successfully deleted account and all associated data.')
-                            }).catch(error => {
-                                console.error('An error occured while deleting user with id:', userID, '. The error was:', error)
-                                HTTPHandler.serverError(res, 'An error occurred while deleting account. Please try again later.')
-                            })
-                        }).catch(error => {
-                            console.error('An error occured while deleting account data for user with id:', userID, '. The error was:', error)
-                            HTTPHandler.serverError(res, 'An error occurred while deleting data. Please try again later.')
-                        })
-                    }).catch(error => {
-                        console.error('An error occurred while finding all threads from user with id:', userID, '. The error was:', error)
-                        HTTPHandler.serverError(res, 'An error occurred while finding user thread posts.')
-                    })
-                }).catch(error => {
-                    console.error('An error occured while finding all user image posts by user with id:', userID, '. The error was:', error)
-                    HTTPHandler.serverError(res, 'An error occurred while finding user image posts.')
-                })
-            }).catch(error => {
-                console.error('An error occurred while updating popularPosts array for popularPosts collection. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while updating popular posts. Please try again.')
-            })
-        }).catch(error => {
-            console.error('An error occurred while finding popular posts. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding popular posts. Please try again.')
-        })
-    }).catch(error => {
-        console.error('An error occured while finding user with id:', userID + '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again.')
-    })
-})
 
 router.get('/checkIfCategoryExists/:categoryTitle', rateLimiters['/checkIfCategoryExists/:categoryTitle'], (req, res) => {
     let categoryTitle = req.params.categoryTitle;

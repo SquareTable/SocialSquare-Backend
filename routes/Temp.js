@@ -672,6 +672,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/deleteaccount': rateLimit({
+        windowMs: 1000 * 60 * 60 * 24, //1 day
+        max: 1,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have tried to delete your account too many times today. Please try again in 24 hours."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1976,6 +1985,24 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /turnOffEmailMultiFactorAuthentication:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'deleteaccount',
+            functionArgs: [req.tokenData]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /deleteaccount:', error)
         HTTPHandler.serverError(res, error)
     })
 });

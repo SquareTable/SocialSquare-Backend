@@ -5,6 +5,7 @@ const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 const Category = require('../models/Category')
 const Thread = require('../models/Thread')
+const PopularPosts = require('../models/PopularPosts');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -21,7 +22,7 @@ const threadPostHandler = new ThreadPostLibrary();
 
 const { sendNotifications } = require("../notificationHandler");
 
-const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js')
+const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
@@ -5271,6 +5272,78 @@ class TempController {
         })
     }
 
+    static #deleteaccount = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
+                }
+        
+                PopularPosts.findOne({}).lean().then(async popularPostDocument => {
+                    const popularPosts = popularPostDocument.popularPosts
+                    const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userId)
+
+                    if (popularPosts.length !== newPopularPosts.length) {
+                        //The user did not have any popular posts so you don't have to update the PopularPosts in the database
+                        try {
+                            await PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts})
+                        } catch(error) {
+                            return resolve(HTTPWTHandler.serverError('An error occurred while removing your posts from the popular posts list. Please try again.'))
+                        }
+                    }
+        
+                    ImagePost.find({creatorId: {$eq: userId}}).lean().then(imagePosts => {
+                        const imageKeys = imagePosts.map(post => post.imageKey)
+                        Thread.find({creatorId: {$eq: userId}}).lean().then(threadPosts => {
+                            const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
+                            Promise.all([
+                                userFound?.profileImageKey ? fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, userFound.profileImageKey)) : Promise.resolve('Profile Image Deleted'),
+                                ...imageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
+                                ImagePost.deleteMany({creatorId: {$eq: userId}}),
+                                Poll.deleteMany({creatorId: {$eq: userId}}),
+                                ...threadImageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
+                                Thread.deleteMany({creatorId: {$eq: userId}}),
+                                Message.deleteMany({senderId: {$eq: userId}}),
+                                User.updateMany({followers: userFound.secondId}, {$pull: {followers: userFound.secondId}}),
+                                User.updateMany({following: userFound.secondId}, {$pull: {following: userFound.secondId}}),
+                                User.updateMany({blockedAccounts: userFound.secondId}, {$pull: {blockedAccounts: userFound.secondId}}),
+                                Downvote.deleteMany({userPublicId: userFound.secondId}),
+                                Upvote.deleteMany({userPublicId: userFound.secondId}),
+                                User.updateMany({accountFollowRequests: userFound.secondId}, {$pull: {accountFollowRequests: userFound.secondId}}),
+                                AccountReports.deleteMany({reporterId: {$eq: userId}}),
+                                PostReports.deleteMany({reporterId: {$eq: userId}}),
+                                RefreshToken.deleteMany({userId: {$eq: userId}}),
+                                Category.updateMany({}, {$pull: {members: userId}})
+                            ]).then(() => {
+                                User.deleteOne({_id: {$eq: userId}}).then(() => {
+                                    return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                }).catch(error => {
+                                    console.error('An error occured while deleting user with id:', userId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting account. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error occured while deleting account data for user with id:', userId, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting data. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while finding all threads from user with id:', userId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding user thread posts.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occured while finding all user image posts by user with id:', userId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user image posts.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding popular posts. The error was:', error)
+                    return resolve(HTPWTHandler.serverError('An error occurred while finding popular posts. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userID + '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5553,6 +5626,10 @@ class TempController {
 
     static turnOffEmailMultiFactorAuthentication = async (userId) => {
         return await this.#turnOffEmailMultiFactorAuthentication(userId)
+    }
+
+    static deleteaccount = async (userId) => {
+        return await this.#deleteaccount(userId)
     }
 }
 
