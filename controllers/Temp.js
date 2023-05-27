@@ -4752,6 +4752,43 @@ class TempController {
         })
     }
 
+    static #earnSpecialBadge = (userId, badgeEarnt) => {
+        return new Promise(resolve => {
+            //Check if an actual special badge was passed
+            if (badgeEarnt == "homeScreenLogoPressEasterEgg") { // Will add more badges here when we make more
+                User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                    if (userFound) {
+                        //User found
+                        if (userFound.badges.findIndex(x => x.badgeName == badgeEarnt) !== -1) {
+                            //Badge already earnt
+                            return resolve(HTTPWTHandler.badInput('Badge already earnt.'))
+                        } else {
+                            //Badge not earnt
+                            const badge = {
+                                badgeName: badgeEarnt,
+                                dateRecieved: Date.now()
+                            }
+
+                            User.findOneAndUpdate({_id: {$eq: userId}}, { $push : {badges: badge}}).then(function() {
+                                return resolve(HTTPWTHandler.OK('Badge earnt.'))
+                            }).catch(err => {
+                                console.error('An error occurred while pushing badge object:', badge, 'to badges array for user with id:', userId, '. The error was:', err)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while adding badge to your account. Please try again.'))
+                            })
+                        }
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('Could not find user withh provided userId'))
+                    }
+                }).catch(err => {
+                    console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                })
+            } else {
+                return resolve(HTTPWTHandler.badInput('Wrong badge was given.'))
+            }
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -4970,6 +5007,10 @@ class TempController {
 
     static reloadUsersDetails = async (userId, usersPubId) => {
         return await this.#reloadUsersDetails(userId, usersPubId)
+    }
+
+    static earnSpecialBadge = async (userId, badgeEarnt) => {
+        return await this.#earnSpecialBadge(userId, badgeEarnt)
     }
 }
 

@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/earnSpecialBadge': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You can only earn 3 special badges a day. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getuserbyid': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -415,44 +406,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) => {
-    const userId = req.tokenData;
-    let {badgeEarnt} = req.body;
-    
-    //Check if an actual special badge was passed
-    if (badgeEarnt == "homeScreenLogoPressEasterEgg") { // Will add more badges here when we make more
-        User.find({_id: {$eq: userId}}).then(userFound => {
-            if (userFound.length) {
-                //User found
-                if (userFound[0].badges.findIndex(x => x.badgeName == badgeEarnt) !== -1) {
-                    //Badge already earnt
-                    HTTPHandler.badInput(res, 'Badge already earnt.')
-                } else {
-                    //Badge not earnt
-                    const badge = {
-                        badgeName: badgeEarnt,
-                        dateRecieved: Date.now()
-                    }
-
-                    User.findOneAndUpdate({_id: {$eq: userId}}, { $push : {badges: badge}}).then(function() {
-                        HTTPHandler.OK(res, 'Badge earnt.')
-                    }).catch(err => {
-                        console.error('An error occurred while pushing badge object:', badge, 'to badges array for user with id:', userId, '. The error was:', err)
-                        HTTPHandler.serverError(res, 'An error occurred while adding badge to your account. Please try again later.')
-                    })
-                }
-            } else {
-                HTTPHandler.notFound(res, "Could not find user with provided userId.")
-            }
-        }).catch(err => {
-            console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-            HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-        })
-    } else {
-        HTTPHandler.badInput(res, 'Wrong badge was given.')
-    }
-})
 
 router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
     const {pubId} = req.body;
