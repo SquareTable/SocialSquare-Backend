@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/makeaccountpublic': rateLimit({
-        windowMs: 1000 * 60 * 60, //1 hour
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have made your account public too many times in the last hour. Please try again in 60 minutes."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getfollowrequests': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
@@ -388,67 +379,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res) => {
-    const userID = req.tokenData;
-
-    const makeAccountPublic = () => {
-        User.findOneAndUpdate({_id: {$eq: userID}}, {privateAccount: false}).then(function() {
-            HTTPHandler.OK(res, 'Account is now public.')
-        }).catch((error) => {
-            console.error('An error occurred while setting privateAccount to false for user with id:', userID, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while making the account public. Please try again later.')
-            console.log('An error occured while making account with ID: ' + userID + ' public.')
-        })
-    };
-
-    User.find({_id: {$eq: userID}}).then(userFound => {
-        if (userFound.length) {
-            //User found
-            const userData = userFound[0];
-            const accountsRequestingToFollow = userData.accountFollowRequests
-            if (accountsRequestingToFollow.length) {
-                const dbUpdates = [
-                    {
-                        updateOne: {
-                            filter: {_id: {$eq: userID}},
-                            update: {$push: {followers: {$each: accountsRequestingToFollow}}}
-                        }
-                    },
-                    {
-                        updateOne: {
-                            filter: {_id: {$eq: userID}},
-                            update: {accountFollowRequests: []}
-                        }
-                    },
-                    ...accountsRequestingToFollow.map(accountPubId => {
-                        return {
-                            updateOne: {
-                                filter: {secondId: {$eq: accountPubId}},
-                                update: {$push: {following: userFound[0].secondId}}
-                            }
-                        }
-                    })
-                ]
-
-                User.bulkWrite(dbUpdates).then(() => {
-                    makeAccountPublic()
-                }).catch(error => {
-                    console.error('An error occurred while making bulkWrite database updates to the User collection. The updates were:', dbUpdates, '. The error was:', error)
-                    HTTPHandler.serverError(res, 'An error occurred while adding users that requested to follow you to your followers list. Please try again later.')
-                })
-            } else {
-                makeAccountPublic()
-            }
-        } else {
-            //User not found
-            HTTPHandler.notFound(res, 'User not found.')
-        }
-    }).catch((error) => {
-        console.error('An error occurred while finding user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.get('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res) => {
     const userID = req.tokenData;

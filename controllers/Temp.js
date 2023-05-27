@@ -4848,6 +4848,65 @@ class TempController {
         })
     }
 
+    static #makeaccountpublic = (userId) => {
+        return new Promise(resolve => {
+            const makeAccountPublic = () => {
+                User.findOneAndUpdate({_id: {$eq: userId}}, {privateAccount: false}).then(function() {
+                    return resolve(HTTPWTHandler.OK('Account is now public.'))
+                }).catch((error) => {
+                    console.error('An error occurred while setting privateAccount to false for user with id:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while making the account public. Please try again.'))
+                })
+            };
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    //User found
+                    const accountsRequestingToFollow = userFound.accountFollowRequests
+                    if (accountsRequestingToFollow) {
+                        const dbUpdates = [
+                            {
+                                updateOne: {
+                                    filter: {_id: {$eq: userId}},
+                                    update: {$push: {followers: {$each: accountsRequestingToFollow}}}
+                                }
+                            },
+                            {
+                                updateOne: {
+                                    filter: {_id: {$eq: userId}},
+                                    update: {accountFollowRequests: []}
+                                }
+                            },
+                            ...accountsRequestingToFollow.map(accountPubId => {
+                                return {
+                                    updateOne: {
+                                        filter: {secondId: {$eq: accountPubId}},
+                                        update: {$push: {following: userFound.secondId}}
+                                    }
+                                }
+                            })
+                        ]
+        
+                        User.bulkWrite(dbUpdates).then(() => {
+                            makeAccountPublic()
+                        }).catch(error => {
+                            console.error('An error occurred while making bulkWrite database updates to the User collection. The updates were:', dbUpdates, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while adding users that requested to follow you to your followers list. Please try again.'))
+                        })
+                    } else {
+                        makeAccountPublic()
+                    }
+                } else {
+                    //User not found
+                    return resolve(HTTPWTHandler.notFound('User not found.'))
+                }
+            }).catch((error) => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5078,6 +5137,10 @@ class TempController {
 
     static makeaccountprivate = async (userId) => {
         return await this.#makeaccountprivate(userId)
+    }
+
+    static makeaccountpublic = async (userId) => {
+        return await this.#makeaccountpublic(userId)
     }
 }
 
