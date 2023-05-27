@@ -4954,6 +4954,54 @@ class TempController {
         })
     }
 
+    static #acceptfollowrequest = (userId, accountFollowRequestAcceptedPubID) => {
+        return new Promised(resolve => {
+            if (typeof accountFollowRequestAcceptedPubID !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`accountFollowRequestAcceptedPubID must be a string. Provided type: ${typeof accountFollowRequestAcceptedPubID}`))
+            }
+        
+            if (accountFollowRequestAcceptedPubID.length == 0) {
+                return resolve(HTTPWTHandler.badInput('accountFollowRequestAcceptedPubID cannot be a blank string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+        
+                if (!userFound.accountFollowRequests.includes(accountFollowRequestAcceptedPubID)) {
+                    //The follow request was not found in the user's list of follow requests
+                    return resolve(HTTPWTHandler.notFound('Follow request could not be found.'))
+                }
+        
+                const dbUpdates = [
+                    {
+                        updateOne: {
+                            filter: {_id: {$eq: userId}},
+                            update: {$push: {followers: accountFollowRequestAcceptedPubID}, $pull: {accountFollowRequests: accountFollowRequestAcceptedPubID}}
+                        }
+                    },
+                    {
+                        updateOne: {
+                            filter: {_id: {$eq: accountFollowRequestAcceptedPubID}},
+                            update: {$push: {following: userFound.secondId}}
+                        }
+                    }
+                ]
+    
+                User.bulkWrite(dbUpdates).then(() => {
+                    return resolve(HTTPWTHandler.OK('Follow request accepted.'))
+                }).catch(error => {
+                    console.error('An error occurred while making the following bulkWrite database updates on the User collection:', dbUpdates, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while accepting the follow request. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5196,6 +5244,10 @@ class TempController {
 
     static denyfollowrequest = async (userId, accountFollowRequestDeniedPubID) => {
         return await this.#denyfollowrequest(userId, accountFollowRequestDeniedPubID)
+    }
+
+    static acceptfollowrequest = async (userId, accountFollowRequestAcceptedPubID) => {
+        return await this.#acceptfollowrequest(userId, accountFollowRequestAcceptedPubID)
     }
 }
 

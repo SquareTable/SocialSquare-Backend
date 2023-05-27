@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/acceptfollowrequest': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have accepted too many follow requests in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/removefollowerfromaccount': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -361,65 +352,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, res) => {
-    const accountFollowRequestedID = req.tokenData;
-    let {accountFollowRequestAcceptedPubID} = req.body;
-
-
-    if (typeof accountFollowRequestAcceptedPubID !== 'string') {
-        return HTTPHandler.badInput(res, `accountFollowRequestAcceptedPubID must be a string. Provided type: ${typeof accountFollowRequestAcceptedPubID}`)
-    }
-
-    if (accountFollowRequestAcceptedPubID.length == 0) {
-        return HTTPHandler.badInput(res, 'accountFollowRequestAcceptedPubID cannot be a blank string.')
-    }
-
-    User.findOne({_id: {$eq: accountFollowRequestedID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with provided userId.')
-        }
-
-        if (!userFound.accountFollowRequests.includes(accountFollowRequestAcceptedPubID)) {
-            //The follow request was not found in the user's list of follow requests
-            return HTTPHandler.notFound(res, 'Follow reqeust was not found.')
-        }
-
-        User.findOne({secondId: {$eq: accountFollowRequestAcceptedPubID}}).lean().then(userRequesting => {
-            if (!userRequesting) {
-                return HTTPHandler.notFound(res, 'Could not find user that follow requested')
-            }
-
-            const dbUpdates = [
-                {
-                    updateOne: {
-                        filter: {_id: {$eq: accountFollowRequestedID}},
-                        update: {$push: {followers: accountFollowRequestAcceptedPubID}, $pull: {accountFollowRequests: accountFollowRequestAcceptedPubID}}
-                    }
-                },
-                {
-                    updateOne: {
-                        filter: {_id: {$eq: accountFollowRequestAcceptedPubID}},
-                        update: {$push: {following: userFound.secondId}}
-                    }
-                }
-            ]
-
-            User.bulkWrite(dbUpdates).then(() => {
-                HTTPHandler.OK(res, 'Follow request accepted.')
-            }).catch(error => {
-                console.error('An error occurred while making the following bulkWrite database updates on the User collection:', dbUpdates, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while accepting the follow request. Please try again later.')
-            })
-        }).catch(error => {
-            console.error('An error occurred while finding user with secondId:', accountFollowRequestAcceptedPubID, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user that requested to follow you. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding user with id:', accountFollowRequestedID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccount'], (req, res) => {
     const userID = req.tokenData;
