@@ -86,15 +86,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/disableAlgorithm': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have disabled the algorithm too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/reloadProfileEssentials': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 5,
@@ -296,28 +287,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) => {
-    const userID = req.tokenData;
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with provided userId')
-        }
-
-        let newSettings = {...userFound.settings}
-        newSettings.algorithmSettings.enabled = false;
-        User.findOneAndUpdate({_id: {$eq: userID}}, {settings: newSettings}).then(() => {
-            HTTPHandler.OK(res, 'Algorithm has now been disabled.')
-        }).catch(error => {
-            console.error('An error occurred while updating algorithm settings for user with id:', userID, ' Old settings:', userFound.settings, 'New settings:', newSettings, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while disabling algorithm. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.get('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials'], (req, res) => {
     const userId = req.tokenData;

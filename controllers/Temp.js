@@ -5198,6 +5198,29 @@ class TempController {
         })
     }
 
+    static #disableAlgorithm = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+        
+                let newSettings = {...userFound.settings}
+                newSettings.algorithmSettings.enabled = false;
+
+                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
+                    return resolve(HTTPWTHandler.OK('Algorithm has now been disabled.'))
+                }).catch(error => {
+                    console.error('An error occurred while updating algorithm settings for user with id:', userId, ' Old settings:', userFound.settings, 'New settings:', newSettings, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while disabling algorithm. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5468,6 +5491,10 @@ class TempController {
 
     static getAuthenticationFactorsEnabled = async (userId) => {
         return await this.#getAuthenticationFactorsEnabled(userId)
+    }
+
+    static disableAlgorithm = async (userId) => {
+        return await this.#disableAlgorithm(userId)
     }
 }
 

@@ -645,6 +645,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/disableAlgorithm': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 3,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have disabled the algorithm too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1895,6 +1904,24 @@ router.post('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthentication
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getAuthenticationFactorsEnabled:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'disableAlgorithm',
+            functionArgs: [req.tokenData]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /disableAlgorithm:', error)
         HTTPHandler.serverError(res, error)
     })
 });
