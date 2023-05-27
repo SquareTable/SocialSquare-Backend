@@ -86,15 +86,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/reloadProfileEssentials': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have refreshed your profile essentials too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/turnOffEmailMultiFactorAuthentication': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 3,
@@ -287,22 +278,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.get('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials'], (req, res) => {
-    const userId = req.tokenData;
-
-    User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with provided userId')
-        }
-
-        const sendBackForReload = userHandler.filterUserInformationToSend(userFound)
-        HTTPHandler.OK(res, 'Reload Information Successful.', sendBackForReload)
-    }).catch(err => {
-        console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-        HTTPHandler.serverError(res, 'An error occurred while finding user.')
-    })
-})
 
 router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmailMultiFactorAuthentication'], (req, res) => {
     const userID = req.tokenData;

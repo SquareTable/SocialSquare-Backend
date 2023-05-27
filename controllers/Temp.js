@@ -5221,6 +5221,22 @@ class TempController {
         })
     }
 
+    static #reloadProfileEssentials = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+        
+                const sendBackForReload = userHandler.filterUserInformationToSend(userFound)
+                return resolve(HTTPWTHandler.OK('Reload Information Successful.', sendBackForReload))
+            }).catch(err => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5495,6 +5511,10 @@ class TempController {
 
     static disableAlgorithm = async (userId) => {
         return await this.#disableAlgorithm(userId)
+    }
+
+    static reloadProfileEssentials = async (userId) => {
+        return await this.#reloadProfileEssentials(userId)
     }
 }
 
