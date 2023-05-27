@@ -19,6 +19,10 @@ const imageHandler = new ImageLibrary();
 const ThreadPostLibrary = require('../libraries/ThreadPost');
 const threadPostHandler = new ThreadPostLibrary();
 
+const { sendNotifications } = require("../notificationHandler");
+
+const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js')
+
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
         return Promise(resolve => {
@@ -5179,6 +5183,21 @@ class TempController {
         })
     }
 
+    static #getAuthenticationFactorsEnabled = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+        
+                return resolve(HTTPWTHandler.OK('Authentication factors found.', {authenticationFactorsEnabled: userFound.authenticationFactorsEnabled, MFAEmail: userFound.MFAEmail ? blurEmailFunction(userFound.MFAEmail) : null}))
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5445,6 +5464,10 @@ class TempController {
 
     static enableAlgorithm = async (userId) => {
         return await this.#enableAlgorithm(userId)
+    }
+
+    static getAuthenticationFactorsEnabled = async (userId) => {
+        return await this.#getAuthenticationFactorsEnabled(userId)
     }
 }
 
