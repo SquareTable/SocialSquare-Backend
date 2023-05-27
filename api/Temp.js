@@ -88,15 +88,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getuserbyid': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested too many users by their id in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/makeaccountprivate': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
         max: 5,
@@ -406,38 +397,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
-    const {pubId} = req.body;
-    const userRequestingId = req.tokenData;
-
-    if (typeof pubId !== 'string') {
-        return HTTPHandler.badInput(res, `pubId must be a string. Provided type: ${typeof pubId}`)
-    }
-
-    pubId = pubId.toString().trim();
-
-    User.findOne({_id: {$eq: userRequestingId}}).then(requestingUser => {
-        if (requestingUser) {
-            User.findOne({secondId: {$eq: pubId}}).then(userFound => {
-                if (userFound) {
-                    const dataToSend = userHandler.returnPublicInformation(userFound, requestingUser)
-                    HTTPHandler.OK(res, 'User found.', dataToSend)
-                } else {
-                    HTTPHandler.notFound(res, 'User not found.')
-                }
-            }).catch(error => {
-                console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with the provided userId')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding user with id:', userRequestingId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, res) => {
     const userID = req.tokenData;

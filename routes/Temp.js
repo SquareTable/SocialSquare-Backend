@@ -537,6 +537,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getuserbyid': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 60,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested too many users by their id in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1571,6 +1580,24 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /earnSpecialBadge:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getuserbyid',
+            functionArgs: [req.tokenData, req.body.pubId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /getuserbyid:', error)
         HTTPHandler.serverError(res, error)
     })
 });

@@ -4789,6 +4789,43 @@ class TempController {
         })
     }
 
+    static #getuserbyid = (userId, pubId) => {
+        return new Promise(resolve => {
+            if (typeof pubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
+            }
+        
+            if (pubId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(requestingUser => {
+                if (requestingUser) {
+                    User.findOne({secondId: {$eq: pubId}}).lean().then(userFound => {
+                        if (userFound) {
+                            if (userFound.blockedAccounts.includes(requestingUser.secondId)) {
+                                return resolve(HTTPWTHandler.notFound('User not found.'))
+                            }
+                            
+                            const dataToSend = userHandler.returnPublicInformation(userFound, requestingUser)
+                            return resolve(HTTPWTHandler.OK('User found.', dataToSend))
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('User not found.'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userRequestingId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5011,6 +5048,10 @@ class TempController {
 
     static earnSpecialBadge = async (userId, badgeEarnt) => {
         return await this.#earnSpecialBadge(userId, badgeEarnt)
+    }
+
+    static getuserbyid = async (userId, pubId) => {
+        return await this.#getuserbyid(userId, pubId)
     }
 }
 
