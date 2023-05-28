@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/checkIfCategoryExists/:categoryTitle': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have checked if a certain category exists too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/uploadNotificationsSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
@@ -228,21 +219,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.get('/checkIfCategoryExists/:categoryTitle', rateLimiters['/checkIfCategoryExists/:categoryTitle'], (req, res) => {
-    let categoryTitle = req.params.categoryTitle;
-
-    Category.countDocuments({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).then(categoryCount => {
-        if (categoryCount > 0) {
-            HTTPHandler.OK(res, true)
-        } else {
-            HTTPHandler.OK(res, false)
-        }
-    }).catch(error => {
-        console.error('An error occured while checking if a category existed with title:', categoryTitle, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred. Please try again later.')
-    })
-})
 
 router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSettings'], (req, res) => {
     const userID = req.tokenData;

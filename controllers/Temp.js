@@ -5344,6 +5344,21 @@ class TempController {
         })
     }
 
+    static #checkIfCategoryExists = (categoryTitle) => {
+        return new Promise(resolve => {
+            Category.countDocuments({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).then(categoryCount => {
+                if (categoryCount > 0) {
+                    return resolve(HTTPWTHandler.OK(true))
+                } else {
+                    return resolve(HTTPWTHandler.OK(false))
+                }
+            }).catch(error => {
+                console.error('An error occured while checking if a category existed with title:', categoryTitle, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5630,6 +5645,10 @@ class TempController {
 
     static deleteaccount = async (userId) => {
         return await this.#deleteaccount(userId)
+    }
+
+    static checkIfCategoryExists = async (categoryTitle) => {
+        return await this.#checkIfCategoryExists(categoryTitle)
     }
 }
 
