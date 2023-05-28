@@ -708,6 +708,16 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/reportUser': rateLimit({
+        windowMs: 1000 * 60 * 60, //1 hour
+        max: 10,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "The network you are connected to has sent too many report user requests in the last hour. Please wait 60 minutes before trying to report the user again."},
+        skipFailedRequests: true
+        //keyGenerator function is not provided for this rate limiter. By default if the keyGenerator function is not provided, express-rate-limit will use the IP address as the key
+        //This means this rate limiter will be limiting requests per IP instead of per account
+    }),
 }
 
 
@@ -2084,6 +2094,25 @@ router.post('/getUserNotificationSettings', rateLimiters['/getUserNotificationSe
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getUserNotificationSettings:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
+    let {reportType, reporteePubId} = req.body;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'reportUser',
+            functionArgs: [req.tokenData, reportType, reporteePubId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /reportUser:', error)
         HTTPHandler.serverError(res, error)
     })
 });

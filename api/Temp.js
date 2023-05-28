@@ -54,16 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/reportUser': rateLimit({
-        windowMs: 1000 * 60 * 60, //1 hour
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "The network you are connected to has sent too many report user requests in the last hour. Please wait 60 minutes before trying to report the user again."},
-        skipFailedRequests: true
-        //keyGenerator function is not provided for this rate limiter. By default if the keyGenerator function is not provided, express-rate-limit will use the IP address as the key
-        //This means this rate limiter will be limiting requests per IP instead of per account
-    }),
     '/getUserActivity': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -201,77 +191,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-const validReportOptions = {Content: ["Spam", "Nudity/Sexual", "Don't Like", "Hate", "SelfHarm", "Illegal/Regulated goods", "Violence/Dangerous", "Bullying/Harassment", "Intellectual property violation", "Scam/Fraud", "False Info"], Age: ["Underage"], Impersonation: ["Of Reporter", "Of Someone Reporter Knows", "Celebrity/Public", "Business/Organisation"]}
-
-router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
-    const reporterId = req.tokenData;
-    let {reportType, reporteePubId} = req.body; // maybe add a body which is just text the reporter can add to emphasize their point.
-
-    if (typeof reporteePubId !== 'string') {
-        return HTTPHandler.badInput(res, `reporteePubId must be a string. Provided type: ${typeof reporteePubId}`)
-    }
-
-    if (reporteePubId.length == 0) {
-        return HTTPHandler.badInput(res, 'reporteePubId cannot be a blank string.')
-    }
-
-    if (typeof reportType !== 'object' || Array.isArray(reportType) || reportType === null) {
-        return HTTPHandler.badInput(res, `reportType must be an object. Is array: ${Array.isArray(reportType)} Is null: ${reportType === null} Provided type: ${typeof reportType}`)
-    }
-
-    if (!Object.hasOwn(reportType, 'topic')) {
-        return HTTPHandler.badInput(res, `reportType object must have a topic key`)
-    }
-
-    if (!Object.hasOwn(reportType, 'subTopic')) {
-        return HTTPHandler.badInput(res, `reportType object must have a subTopic key`)
-    }
-
-    if (validReportOptions[reportType?.topic]?.includes(reportType?.subTopic)) {
-        return HTTPHandler.badInput(res, 'Invalid report options provided.')
-    }
-
-    User.findOne({_id: {$eq: reporterId}}).lean().then(reporterFound => {
-        if (!reporterFound) {
-            return HTTPHandler.notFound(res, 'User could not be found with provided userId')
-        }
-
-        User.findOne({secondId: {$eq: reporteePubId}}).lean().then(reporteeFound => {
-            if (!reporteeFound) {
-                return HTTPHandler.notFound(res, 'Could not find user to report.')
-            }
-
-            if (reporterFound._id.toString() === reporteeFound._id.toString()) {
-                return HTTPHandler.forbidden(res, 'You cannot report yourself')
-            }
-
-            console.log(`Valid report passed by: ${reporterFound[0].name} about ${reporteeFound[0].name} with the reasoning being: ${reportType.topic}-${reportType.subTopic}`)
-
-            const report = {
-                reportedAccountPubId: reporteePubId,
-                reporterId: reporterId,
-                topic: reportType.topic,
-                subTopic: reportType.subTopic
-            }
-
-            const newUserReport = new AccountReports(report)
-            
-            newUserReport.save().then(() => {
-                HTTPHandler.OK(res, 'Successfully sent report')
-            }).catch(error => {
-                console.error('An error occurred while saving user report. The report was:', report, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while saving account report.')
-            })
-        }).catch(error => {
-            console.error('An error occurred while finding one user with secondId:', reporteePubId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding user to report. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', reporterId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/getUserActivity', rateLimiters['/getUserActivity'], async (req, res) => {
     const userID = req.tokenData;
