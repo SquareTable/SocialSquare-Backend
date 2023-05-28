@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/uploadNotificationsSettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have updated your notifications settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getUserNotificationSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
@@ -219,49 +210,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSettings'], (req, res) => {
-    const userID = req.tokenData;
-    let {notificationSettings} = req.body;
-
-    if (typeof notificationSettings !== 'object' || notificationSettings === null || Array.isArray(notificationSettings)) {
-        return HTTPHandler.badInput(res, `notificationSettings must be an object. Is null: ${notificationSettings === null} Is array: ${Array.isArray(notificationSettings)} Type provided: ${typeof notificationSettings}`)
-    }
-
-    const allowedKeys = [
-        'GainsFollower'
-    ]
-
-    User.find({_id: {$eq: userID}}).then(userFound => {
-        if (userFound.length) {
-            for (let [key, value] of Object.entries(notificationSettings)) {
-                if (!allowedKeys.includes(key) || typeof value !== 'boolean') {
-                    delete notificationSettings[key]
-                }
-            }
-
-            const newUserSettings = {
-                ...userFound.settings,
-                notificationSettings: {
-                    ...userFound.settings.notificationSettings,
-                    ...notificationSettings
-                }
-            }
-
-            User.findOneAndUpdate({_id: {$eq: userID}}, {settings: newUserSettings}).then(function() {
-                HTTPHandler.OK(res, 'Notification settings updated successfully.')
-            }).catch(error => {
-                console.error('An error occured while changing notification settings for user with ID:', userID, '. The error was:', error);
-                HTTPHandler.serverError(res, 'An error occurred while updating notification settings.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'User not found.')
-        }
-    }).catch(error => {
-        console.error('An error occurred while finding user with ID:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSettings'], (req, res) => {
     const userID = req.tokenData;

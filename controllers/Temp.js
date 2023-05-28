@@ -5359,6 +5359,48 @@ class TempController {
         })
     }
 
+    static #uploadNotificationsSettings = (userId, notificationSettings) => {
+        return new Promise(resolve => {
+            if (typeof notificationSettings !== 'object' || notificationSettings === null || Array.isArray(notificationSettings)) {
+                return resolve(HTTPWTHandler.badInput(`notificationSettings must be an object. Is null: ${notificationSettings === null} Is array: ${Array.isArray(notificationSettings)} Type provided: ${typeof notificationSettings}`))
+            }
+        
+            const allowedKeys = [
+                'GainsFollower'
+            ]
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    for (let [key, value] of Object.entries(notificationSettings)) {
+                        if (!allowedKeys.includes(key) || typeof value !== 'boolean') {
+                            delete notificationSettings[key]
+                        }
+                    }
+        
+                    const newUserSettings = {
+                        ...userFound.settings,
+                        notificationSettings: {
+                            ...userFound.settings.notificationSettings,
+                            ...notificationSettings
+                        }
+                    }
+        
+                    User.findOneAndUpdate({_id: {$eq: userID}}, {settings: newUserSettings}).then(function() {
+                        return resolve(HTTPWTHandler.OK('Notification settings updated successfully.'))
+                    }).catch(error => {
+                        console.error('An error occured while changing notification settings for user with ID:', userId, '. The error was:', error);
+                        return resolve(HTTPWTHandler.serverError('An error occurred while updating notification settings.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('User not found.'))
+                }
+            }).catch(error => {
+                console.error('An error occurred while finding user with ID:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5649,6 +5691,10 @@ class TempController {
 
     static checkIfCategoryExists = async (categoryTitle) => {
         return await this.#checkIfCategoryExists(categoryTitle)
+    }
+
+    static uploadNotificationsSettings = async (userId, notificationSettings) => {
+        return await this.#uploadNotificationsSettings(userId, notificationSettings)
     }
 }
 
