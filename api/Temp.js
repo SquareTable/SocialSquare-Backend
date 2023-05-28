@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getUserNotificationSettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested notifications settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/reportUser': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
         max: 10,
@@ -210,30 +201,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSettings'], (req, res) => {
-    const userID = req.tokenData;
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'User with provided userId cannot be found')
-        }
-
-        const defaults = {
-            GainsFollower: true,
-            FollowRequests: true,
-            SendGainsFollower: true,
-            SendFollowRequests: true
-        }
-
-        const toSend = {...defaults, ...userFound?.settings?.notificationSettings || {}}
-
-        HTTPHandler.OK(res, 'Notification settings retrieved successfully.', toSend)
-    }).catch(error => {
-        console.error('An error occurred while finding user with ID:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 const validReportOptions = {Content: ["Spam", "Nudity/Sexual", "Don't Like", "Hate", "SelfHarm", "Illegal/Regulated goods", "Violence/Dangerous", "Bullying/Harassment", "Intellectual property violation", "Scam/Fraud", "False Info"], Age: ["Underage"], Impersonation: ["Of Reporter", "Of Someone Reporter Knows", "Celebrity/Public", "Business/Organisation"]}
 

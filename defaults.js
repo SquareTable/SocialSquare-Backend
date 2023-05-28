@@ -4,6 +4,12 @@ const DEFAULTS = {
         showPolls: true,
         showTextThreads: true,
         showImageThreads: true
+    },
+    userNotificationSettings: {
+        GainsFollower: true,
+        FollowRequests: true,
+        SendGainsFollower: true,
+        SendFollowRequests: true
     }
 }
 

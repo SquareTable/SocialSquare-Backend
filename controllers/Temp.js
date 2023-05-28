@@ -9,6 +9,7 @@ const PopularPosts = require('../models/PopularPosts');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
+const DEFAULTS = require('../defaults')
 const HTTPWTHandler = new HTTPWTLibrary()
 
 const HTTPLibrary = require('../libraries/HTTP');
@@ -5401,6 +5402,23 @@ class TempController {
         })
     }
 
+    static #getUserNotificationSettings = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
+                }
+        
+                const toSend = {...DEFAULTS.userNotificationSettings, ...userFound?.settings?.notificationSettings || {}}
+        
+                return resolve(HTTPWTHandler.OK('Notification settings retrieved successfully.', toSend))
+            }).catch(error => {
+                console.error('An error occurred while finding user with ID:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5695,6 +5713,10 @@ class TempController {
 
     static uploadNotificationsSettings = async (userId, notificationSettings) => {
         return await this.#uploadNotificationsSettings(userId, notificationSettings)
+    }
+
+    static getUserNotificationSettings = async (userId) => {
+        return await this.#getUserNotificationSettings(userId)
     }
 }
 
