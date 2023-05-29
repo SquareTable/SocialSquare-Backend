@@ -818,6 +818,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.ip + req.tokenData //The account's login activity will be rate limited per account per IP address
     }),
+    '/loginActivitySettings': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 5,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested your login activity settings too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -2414,6 +2423,24 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /logoutallotherdevices:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'loginActivitySettings',
+            functionArgs: [req.tokenData, req.body.tokenIdNotToLogout]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for GET /loginActivitySettings:', error)
         HTTPHandler.serverError(res, error)
     })
 });

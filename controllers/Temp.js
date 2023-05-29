@@ -6044,6 +6044,23 @@ class TempController {
         })
     }
 
+    static #loginActivitySettings = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('User with userId could not be found'))
+                }
+
+                const settings = {...DEFAULTS.userLoginActivitySettings, ...userFound?.settings?.loginActivitySettings || {}}
+
+                return resolve(HTTPWTHandler.OK('Found settings', settings))
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6390,6 +6407,10 @@ class TempController {
 
     static logoutallotherdevices = async (userId, tokenIdNotToLogout) => {
         return await this.#logoutallotherdevices(userId, tokenIdNotToLogout)
+    }
+
+    static loginActivitySettings = async (userId) => {
+        return await this.#loginActivitySettings(userId)
     }
 }
 

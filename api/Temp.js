@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/loginActivitySettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested your login activity settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/uploadLoginActivitySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -91,29 +82,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (req, res) => {
-    const userId = req.tokenData;
-
-    const defaults = {
-        getIP: false,
-        getDeviceType: false,
-        getLocation: false
-    }
-
-    User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'User with userId could not be found')
-        }
-
-        const settings = {...defaults, ...userFound?.settings?.loginActivitySettings || {}}
-
-        HTTPHandler.OK(res, 'Found settings', settings)
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySettings'], (req, res) => {
     const userId = req.tokenData;
