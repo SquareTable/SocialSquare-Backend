@@ -6014,6 +6014,36 @@ class TempController {
         })
     }
 
+    static #logoutallotherdevices = (userId, tokenIdNotToLogout) => {
+        return new Promise(resolve => {
+            if (typeof tokenIdNotToLogout !== 'string' && tokenIdNotToLogout !== null) {
+                return HTTPHandler.badInput(res, `tokenIdNotToLogout must be a string or null. Provided type: ${typeof tokenIdNotToLogout}`)
+            }
+        
+            const query = {userId: {$eq: userId}};
+        
+            if (typeof tokenIdNotToLogout === 'string') {
+                query._id = {$ne: tokenIdNotToLogout}
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+                }
+        
+                RefreshToken.deleteMany(query).then(() => {
+                    return resolve(HTTPWTHandler.OK('Successfully logged out all other devices out of your account'))
+                }).catch(error => {
+                    console.error('An error occurred while deleting all refresh tokens by this query:', query, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while logging all other devices out of your account. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6356,6 +6386,10 @@ class TempController {
 
     static logoutdevice = async (userId, tokenToLogout) => {
         return await this.#logoutdevice(userId, tokenToLogout)
+    }
+
+    static logoutallotherdevices = async (userId, tokenIdNotToLogout) => {
+        return await this.#logoutallotherdevices(userId, tokenIdNotToLogout)
     }
 }
 

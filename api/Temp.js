@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/logoutallotherdevices': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have logged all other devices out of your account too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.ip + req.tokenData //The account's login activity will be rate limited per account per IP address
-    }),
     '/loginActivitySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 5,
@@ -100,37 +91,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (req, res) => {
-    const userId = req.tokenData;
-    const {tokenIdNotToLogout} = req.body;
-
-    if (typeof tokenIdNotToLogout !== 'string' && tokenIdNotToLogout !== null) {
-        return HTTPHandler.badInput(res, `tokenIdNotToLogout must be a string or null. Provided type: ${typeof tokenIdNotToLogout}`)
-    }
-
-    const query = {userId};
-
-    if (typeof tokenIdNotToLogout === 'string') {
-        query._id = {$ne: tokenIdNotToLogout}
-    }
-
-    User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with userId provided.')
-        }
-
-        RefreshToken.deleteMany(query).then(() => {
-            HTTPHandler.OK(res, 'Successfully logged all other devices out of your account')
-        }).catch(error => {
-            console.error('An error occurred while deleting all refresh tokens by this query:', query, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while logging all other devices out of your account. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (req, res) => {
     const userId = req.tokenData;
