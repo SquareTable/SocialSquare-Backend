@@ -33,7 +33,8 @@ const CONSTANTS = {
     THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE: 'threadTags must only have one line', //Update this value to reflect the VALID_THREAD_TAGS_TEST above
     MAX_THREAD_IMAGE_DESCRIPTION_LENGTH: 1000,
     VALID_THREAD_IMAGE_DESCRIPTION_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure thread image description has less than 10 lines
-    THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE: 'threadImageDescription must have less than 10 lines' //Update this value to reflect the VALID_THREAD_IMAGE_DESCRIPTION_TEST above
+    THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE: 'threadImageDescription must have less than 10 lines', //Update this value to reflect the VALID_THREAD_IMAGE_DESCRIPTION_TEST above
+    GET_USER_ACTIVITY_API_LIMIT: 20 //This is the limit for the temp/getUserActivity API - Limits the amount of posts returns
 }
 
 module.exports = CONSTANTS

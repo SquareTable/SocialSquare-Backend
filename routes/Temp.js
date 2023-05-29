@@ -718,6 +718,15 @@ const rateLimiters = {
         //keyGenerator function is not provided for this rate limiter. By default if the keyGenerator function is not provided, express-rate-limit will use the IP address as the key
         //This means this rate limiter will be limiting requests per IP instead of per account
     }),
+    '/getUserActivity': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 30,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested user activity too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -2113,6 +2122,25 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /reportUser:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => {
+    let {skip = 0, voteType, postFormat} = req.body;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getUserActivity',
+            functionArgs: [req.tokenData, skip, voteType, postFormat]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /getUserActivity:', error)
         HTTPHandler.serverError(res, error)
     })
 });

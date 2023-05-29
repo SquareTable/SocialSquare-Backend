@@ -18,6 +18,12 @@ const HTTPHandler = new HTTPLibrary();
 const ImageLibrary = require('../libraries/Image');
 const imageHandler = new ImageLibrary();
 
+const ImagePostLibrary = require('../libraries/ImagePost');
+const imagePostHandler = new ImagePostLibrary();
+
+const PollPostLibrary = require('../libraries/PollPost');
+const pollPostHandler = new PollPostLibrary();
+
 const ThreadPostLibrary = require('../libraries/ThreadPost');
 const threadPostHandler = new ThreadPostLibrary();
 
@@ -5485,6 +5491,139 @@ class TempController {
         })
     }
 
+    static #getUserActivity = (userId, skip, voteType, postFormat) => {
+        return new Promise(async resolve => {
+            let userFound;
+            let posts;
+            let votes;
+            let creators;
+            let promises;
+
+            skip = parseInt(skip)
+            if (isNaN(skip)) {
+                return resolve(HTTPWTHandler.badInput('Skip value is not a number.'))
+            }
+
+            if (voteType !== 'down' && voteType !== 'up') {
+                return resolve(HTTPWTHandler.badInput('voteType must be either "down" or "up"'))
+            }
+
+            const supportedPostFormats = ['Image', 'Poll', 'Thread']
+
+            if (!supportedPostFormats.includes(postType)) {
+                return resolve(HTTPWTHandler.badInput('Post type is not a valid post type'))
+            }
+
+            try {
+                userFound = await User.findOne({_id: {$eq: userId}}).lean()
+            } catch (error) {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            }
+
+            if (voteType === 'up') {
+                try {
+                    votes = await Upvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(limit).lean()
+                } catch(error) {
+                    console.error('An error occurred while finding all upvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', limit, ', and sorting by interactionDate of -1. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding upvotes. Please try again.'))
+                }
+            } else {
+                try {
+                    votes = await Downvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(limit).lean()
+                } catch(error) {
+                    console.error('An error occurred while finding all downvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', limit, ', and sorting by interactionDate of -1. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding downvotes. Please try again.'))
+                }
+            }
+
+            const postIds = votes.map(vote => vote.postId)
+
+            if (postFormat === 'Image') {
+                try {
+                    posts = await ImagePost.find({_id: {$in: postIds}}).lean()
+                } catch(error) {
+                    console.error('An error occurred while finding image posts with _ids that are $in:', postIds, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding image posts. Please try again.'))
+                }
+            } else if (postFormat === 'Poll') {
+                try {
+                    posts = await Poll.find({_id: {$in: postIds}}).lean()
+                } catch(error) {
+                    console.error('An error occurred while finding poll posts with _ids that are $in:', postIds, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll posts. Please try again.'))
+                }
+            } else if (postFormat === 'Thread') {
+                try {
+                    posts = await Thread.find({_id: {$in: postIds}}).lean()
+                } catch(error) {
+                    console.error('An error occurred while finding thread posts with _ids that are $in:', postIds, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding thread posts. Please try again.'))
+                }
+            }
+
+            const uniqueCreators = Array.from(new Set(posts.map(post => post.creatorId)))
+
+
+            try {
+                creators = await User.find({_id: {$in: uniqueCreators}}).lean()
+            } catch(error) {
+                console.error('An error occurred while finding users with _ids $in:', uniqueCreators, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
+            }
+
+            const creatorObject = {};
+            const postsObject = {};
+
+            creators.forEach(creator => {
+                const stringifiedUserId = String(creator._id)
+
+                if (creator.privateAccount === true && !creator.followers.includes(userFound.secondId)) {
+                    creatorObject[stringifiedUserId] = 'PRIVATE'
+                }
+
+                if (creator.blockedAccounts.includes(userFound.secondId)) {
+                    creatorObject[stringifiedUserId] = 'BLOCKED'
+                }
+
+                creatorObject[stringifiedUserId] = creator;
+            })
+
+            for (const post of posts) {
+                const stringifiedCreatorId = String(post.creatorId)
+
+                if (!postsObject[stringifiedCreatorId]) {
+                    console.error('Found an', postFormat, 'post with an id of:', post._id, 'that belongs to user with id:', post.creatorId, '. This user could not be found in the database and as such this post should get deleted immediately.')
+                    continue;
+                }
+
+                if (postsObject[stringifiedCreatorId] === 'PRIVATE' || postsObject[stringifiedCreatorId] === 'BLOCKED') {
+                    continue;
+                }
+
+                if (!Array.isArray(postsObject[stringifiedCreatorId])) {
+                    postsObject[stringifiedCreatorId] = []
+                }
+            }
+
+            if (postFormat === 'Image') {
+                promises = Object.entries(postsObject).map(([key, value]) => imagePostHandler.processMultiplePostDataFromOneOwner(value, creatorObject[key], userFound))
+            } else if (postFormat === 'Poll') {
+                promises = Object.entries(postsObject).map(([key, value]) => pollPostHandler.processMultiplePostDataFromOneOwner(value, creatorObject[key], userFound))
+            } else if (postFormat === 'Thread') {
+                promises = Object.entries(postsObject).map(([key, value]) => threadPostHandler.processMultiplePostDataFromOneOwner(value, creatorObject[key], userFound))
+            }
+
+            Promise.all(promises).then(arrays => {
+                const toSend = [].concat(...arrays)
+                return resolve(HTTPWTHandler.OK(`Successfully found ${postFormat.toLowerCase()} posts ${skip} - ${skip + toSend.length}`, toSend))
+            }).catch(error => {
+                console.error('An error occurred while processing image posts. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while processing image posts. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5787,6 +5926,10 @@ class TempController {
 
     static reportUser = async (userId, reportType, reporteePubId) => {
         return await this.#reportUser(userId, reportType, reporteePubId)
+    }
+
+    static getUserActivity = async (userId, skip, voteType, postFormat) => {
+        return await this.#getUserActivity(userId, skip, voteType, postFormat)
     }
 }
 
