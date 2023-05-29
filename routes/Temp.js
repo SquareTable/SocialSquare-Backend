@@ -845,6 +845,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/followingFeedFilterSettings': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 10,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested your following feed settings on signup too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    })
 }
 
 
@@ -2496,6 +2505,24 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /updateLoginActivitySettingsOnSignup:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSettings'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'followingFeedFilterSettings',
+            functionArgs: [req.tokenData]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for GET /followingFeedFilterSettings:', error)
         HTTPHandler.serverError(res, error)
     })
 });

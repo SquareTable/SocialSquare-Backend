@@ -6176,6 +6176,23 @@ class TempController {
         })
     }
 
+    static #followingFeedFilterSettings = async (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}, 'settings.followingFeedFilterSettings').then(projectedUserObject => {
+                if (!projectedUserObject) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+        
+                const toSend = {...projectedUserObject?.settings?.followingFeedFilterSettings || {}, ...DEFAULTS.userFollowingFeedFilterSettings}
+        
+                return resolve(HTTPWTHandler.OK('Found following feed filter settings', toSend))
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, 'with projection "settings.followingFeedFilterSettings". The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6534,6 +6551,10 @@ class TempController {
 
     static updateLoginActivitySettingsOnSignup = async (userId, newSettings, refreshTokenId, IP, deviceName) => {
         return await this.#updateLoginActivitySettingsOnSignup(userId, newSettings, refreshTokenId, IP, deviceName)
+    }
+
+    static followingFeedFilterSettings = async (userId) => {
+        return await this.#followingFeedFilterSettings(userId)
     }
 }
 
