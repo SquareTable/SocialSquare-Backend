@@ -5734,6 +5734,21 @@ class TempController {
         })
     }
 
+    static #userAlgorithmSettings = (userId) => {
+        User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+            if (!userFound) {
+                return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+            }
+    
+            const toSend = {...DEFAULTS.userAlgorithmSettings, ...userFound?.settings?.algorithmSettings || {}}
+    
+            return resolve(HTTPWTHandler.OK('Algorithm settings retrieved successfully.', toSend))
+        }).catch(error => {
+            console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+            return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6048,6 +6063,10 @@ class TempController {
 
     static reportPost = async (reporterId, postId, postFormat, reason) => {
         return await this.#reportPost(reporterId, postId, postFormat, reasom)
+    }
+
+    static userAlgorithmSettings = async (userId) => {
+        return await this.#userAlgorithmSettings(userId)
     }
 }
 

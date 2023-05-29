@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/userAlgorithmSettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 4,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested your algorithm settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/uploadAlgorithmSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 5,
@@ -163,30 +154,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (req, res) => {
-    const userID = req.tokenData;
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with provided userId')
-        }
-
-        const defaults = {
-            enabled: false,
-            useUserUpvoteData: false,
-            useUserDownvoteData: false,
-            useUserFollowingData: false
-        }
-
-        const toSend = {...defaults, ...userFound?.settings?.algorithmSettings || {}}
-
-        HTTPHandler.OK(res, 'Algorithm settings retrieved successully.', toSend)
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings'], (req, res) => {
     const {algorithmSettings} = req.body;
