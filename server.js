@@ -9,7 +9,7 @@ const app = require('express')();
 const port = process.env.PORT || 3000;
 
 const UserRouter = require('./routes/User')
-const TempRouter = require('./api/Temp')
+const TempRouter = require('./routes/Temp')
 const ConversationsRouter = require('./api/Conversations')
 const MessagesRouter = require('./api/Messages')
 const PublicApisRouter = require('./api/PublicApis')
