@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getCategoriesUserIsAPartOf': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested the categories you are part of too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/reportPost': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
         max: 100,
@@ -182,34 +173,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPartOf'], (req, res) => {
-    let {skip = 0} = req.body;
-    const userID = req.tokenData;
-    const limit = 20;
-
-    skip = parseInt(skip)
-    if (isNaN(skip)) {
-        return HTTPHandler.badInput(res, 'skip must be an number (integer).')
-    }
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with provided userId.')
-        }
-
-        const query = { members: { $in: [String(userID)] } }
-        Category.find(query).sort({dateCreated: -1}).skip(skip).limit(limit).lean().then(categoriesFound => {
-            HTTPHandler.OK(res, `Successfully found categories ${skip} - ${sjip + categoriesFound.length}`, categoriesFound)
-        }).catch(error => {
-            console.error('An error occured while finding what categories user with id:', userID, 'is part of. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding what categories you are a part of. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/reportPost', rateLimiters['/reportPost'], async (req, res) => {
     const reporterId = req.tokenData;

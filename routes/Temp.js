@@ -727,6 +727,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getCategoriesUserIsAPartOf': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 3,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested the categories you are part of too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -2141,6 +2150,25 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getUserActivity:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPartOf'], (req, res) => {
+    let {skip = 0} = req.body;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getCategoriesUserIsAPartOf',
+            functionArgs: [req.tokenData, skip]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /getCategoriesUserIsAPartOf:', error)
         HTTPHandler.serverError(res, error)
     })
 });

@@ -5624,6 +5624,33 @@ class TempController {
         })
     }
 
+    static #getCategoriesUserIsAPartOf = (userId, skip) => {
+        return new Promise(resolve => {
+            const limit = 20;
+
+            skip = parseInt(skip)
+            if (isNaN(skip)) {
+                return resolve(HTTPWTHandler.badInput('skip must be a number (integer)'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+
+                Category.find({members: userId}).sort({dateCreated: -1}).skip(skip).limit(limit).lean().then(categoriesFound => {
+                    return resolve(HTTPWTHandler.OK(`Successfully found categories ${skip} - ${skip + categoriesFound.length}`, categoriesFound))
+                }).catch(error => {
+                    console.error('An error occured while finding what categories user with id:', userId, 'is part of. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding what categories you are a part of. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5930,6 +5957,10 @@ class TempController {
 
     static getUserActivity = async (userId, skip, voteType, postFormat) => {
         return await this.#getUserActivity(userId, skip, voteType, postFormat)
+    }
+
+    static getCategoriesUserIsAPartOf = async (userId, skip) => {
+        return await this.#getCategoriesUserIsAPartOf(userId, skip)
     }
 }
 
