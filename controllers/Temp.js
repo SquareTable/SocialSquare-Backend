@@ -7,6 +7,7 @@ const Category = require('../models/Category')
 const Thread = require('../models/Thread')
 const PopularPosts = require('../models/PopularPosts');
 const AccountReports = require('../models/AccountReports')
+const PostReports = require('../models/PostReports');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -5652,6 +5653,87 @@ class TempController {
         })
     }
 
+    static #reportPost = (reporterId, postId, postFormat, reason) => {
+        return new Promise(async resolve => {
+            let post;
+
+            if (typeof reason !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`reason must be a string. Provided type: ${typeof reason}`))
+            }
+        
+            reason = reason.trim()
+        
+            if (reason.length === 0) {
+                return resolve(HTTPWTHandler.badInput('You cannt leave the reason blank.'))
+            }
+        
+            try {
+                if (await User.findOne({_id: {$eq: reporterId}}) == null) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            } catch (error) {
+                console.error('An error occured while finding a user with id: ', reporterId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            }
+
+            const supportedFormats = ['Image', 'Poll', 'Thread']
+
+            if (!supportedFormats.includes(postFormat)) {
+                return resolve(HTTPWTHandler.badInput('Invalid post format supplied'))
+            }
+
+            if (postFormat === 'Image') {
+                try {
+                    post = await ImagePost.findOne({_id: {$eq: postId}}).lean()
+                } catch (error) {
+                    console.error('An error occurred while finding one image post with id:', postId)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding one image post. Please try again.'))
+                }
+            } else if (postFormat === 'Poll') {
+                try {
+                    post = await Poll.findOne({_id: {$eq: postId}}).lean()
+                } catch(error) {
+                    console.error('An error occurred while finding one poll post with id:', postId)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll post. Please try again.'))
+                }
+            } else if (postFormat === 'Thread') {
+                try {
+                    post = await Thread.findOne({_id: {$eq: postId}}).lean()
+                } catch (error) {
+                    console.error('An error occurred while finding one thread post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding thread post. Please try again.'))
+                }
+            }
+
+            if (!post) {
+                return resolve(HTTPWTHandler.notFound('Could not find post.'))
+            }
+
+            PostReports.findOne({postId: {$eq: postId}, format: {$eq: postFormat}, reporterId: {$eq: reporterId}}).lean().then(report => {
+                if (report) {
+                    return resolve(HTTPWTHandler.forbidden('You have already made a report for this post.'))
+                }
+
+                const newReport = new PostReports({
+                    postId,
+                    format: postFormat,
+                    reason,
+                    reporterId
+                })
+
+                newReport.save().then(() => {
+                    return resolve(HTTPWTHandler.OK('Post has successfully been reported'))
+                }).catch(error => {
+                    console.error('An error occurred while reporting', postFormat, 'post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while submitting report. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding post report with postId:', postId, ', format:', postFormat, 'and reporterId:', reporterId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while checking if you have already reported this post before. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -5962,6 +6044,10 @@ class TempController {
 
     static getCategoriesUserIsAPartOf = async (userId, skip) => {
         return await this.#getCategoriesUserIsAPartOf(userId, skip)
+    }
+
+    static reportPost = async (reporterId, postId, postFormat, reason) => {
+        return await this.#reportPost(reporterId, postId, postFormat, reasom)
     }
 }
 
