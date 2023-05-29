@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/privacySettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 4,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested your privacy settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/savePrivacySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
@@ -145,28 +136,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
-    const userID = req.tokenData;
-
-    const defaults = {
-        viewFollowers: 'followers', //Options are: 'no-one', 'followers', 'everyone'
-        viewFollowing: 'followers', //Options are 'no-one', 'followers', 'everyone',
-        showBadges: 'everyone' //Options are 'no-one', 'followers', 'everyone',
-    }
-
-    User.findOne({_id: {$eq: userID}}).lean().then(user => {
-        if (user) {
-            const privacySettings = {...defaults, ...user?.settings?.privacySettings};
-            HTTPHandler.OK(res, 'Sent privacy settings', privacySettings)
-        } else {
-            HTTPHandler.notFound(res, 'User not found')
-        }
-    }).catch(error => {
-        console.error('An error occured while getting user with ID:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, res) => {
     const userID = req.tokenData;

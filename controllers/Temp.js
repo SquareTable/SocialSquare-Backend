@@ -5787,6 +5787,22 @@ class TempController {
         })
     }
 
+    static #privacySettings = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(user => {
+                if (user) {
+                    const privacySettings = {...DEFAULTS.userPrivacySettings, ...user?.settings?.privacySettings};
+                    return resolve(HTTPWTHandler.OK('Sent privacy settings', privacySettings))
+                } else {
+                    return resolve(HTTPWTHandler.notFound('User not found'))
+                }
+            }).catch(error => {
+                console.error('An error occured while getting user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6109,6 +6125,10 @@ class TempController {
 
     static uploadAlgorithmSettings = async (userId, algorithmSettings) => {
         return await this.#uploadAlgorithmSettings(userId, algorithmSettings)
+    }
+
+    static privacySettings = async (userId) => {
+        return await this.#privacySettings(userId)
     }
 }
 

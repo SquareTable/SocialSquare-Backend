@@ -764,6 +764,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/privacySettings': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 4,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested your privacy settings too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -2252,6 +2261,24 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /uploadAlgorithmSettings:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'privacySettings',
+            functionArgs: [req.tokenData, req.body.algorithmSettings]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for GET /privacySettings:', error)
         HTTPHandler.serverError(res, error)
     })
 });

@@ -17,6 +17,11 @@ const DEFAULTS = {
         useUserUpvoteData: false,
         useUserDownvoteData: false,
         useUserFollowingData: false
+    },
+    userPrivacySettings: {
+        viewFollowers: 'followers', //Options are: 'no-one', 'followers', 'everyone'
+        viewFollowing: 'followers', //Options are 'no-one', 'followers', 'everyone',
+        showBadges: 'everyone' //Options are 'no-one', 'followers', 'everyone',
     }
 }
 
