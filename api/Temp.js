@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/uploadLoginActivitySettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have changed your login activity settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/updateLoginActivitySettingsOnSignup': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 5, //Should only be doing this once for the whole lifetime of the account but will have this set to 5 just in case
@@ -82,56 +73,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySettings'], (req, res) => {
-    const userId = req.tokenData;
-    const {newSettings} = req.body;
-
-    if (typeof newSettings !== 'object') {
-        return HTTPHandler.badInput(res, `newSettings must be an object. Provided type: ${typeof newSettings}`)
-    }
-
-    if (Array.isArray(newSettings)) {
-        return HTTPHandler.badInput(res, 'newSettings must be an object. An array was provided.')
-    }
-
-    if (newSettings === null) {
-        return HTTPHandler.badInput(res, 'newSettings must be an object. null was provided.')
-    }
-
-    const allowedKeyValues = {
-        getIP: [false, true],
-        getDeviceType: [false, true],
-        getLocation: [false, true]
-    }
-
-    const allowedKeys = Object.keys(allowedKeyValues)
-
-    for (const key of Object.keys(newSettings)) {
-        if (!allowedKeys.includes(key) || !allowedKeyValues[key].includes(newSettings[key])) {
-            delete newSettings[key];
-        }
-    }
-
-    User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.badInput(res, 'User could not be found with provided userId')
-        }
-
-        const loginActivitySettingsToSet = {...userFound?.settings?.loginActivitySettings || {}, ...newSettings}
-        const settingsToSet = {...userFound?.settings || {}, loginActivitySettings: loginActivitySettingsToSet}
-
-        User.findOneAndUpdate({_id: {$eq: userId}}, {settings: settingsToSet}).then(() => {
-            HTTPHandler.OK(res, 'Changed settings successfully')
-        }).catch(error => {
-            console.error('An error occurred while updating user settings. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while updating login activity settings. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginActivitySettingsOnSignup'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
     const userId = req.tokenData;

@@ -6061,6 +6061,49 @@ class TempController {
         })
     }
 
+    static #uploadLoginActivitySettings = (userId, newSettings) => {
+        return new Promise(resolve => {
+            if (typeof newSettings !== 'object') {
+                return resolve(HTTPWTHandler.badInput(`newSettings must be an object. Provided type: ${typeof newSettings}`))
+            }
+        
+            if (Array.isArray(newSettings)) {
+                return resolve(HTTPWTHandler.badInput('newSettings must be an object. An array was provided.'))
+            }
+        
+            if (newSettings === null) {
+                return resolve(HTTPWTHandler.badInput('newSettings must be an object. null was provided.'))
+            }
+        
+            const allowedKeys = Object.keys(CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES)
+        
+            for (const key of Object.keys(newSettings)) {
+                if (!allowedKeys.includes(key) || !CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES[key].includes(newSettings[key])) {
+                    delete newSettings[key];
+                }
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
+                }
+        
+                const loginActivitySettingsToSet = {...userFound?.settings?.loginActivitySettings || {}, ...newSettings}
+                const settingsToSet = {...userFound?.settings || {}, loginActivitySettings: loginActivitySettingsToSet}
+        
+                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: settingsToSet}).then(() => {
+                    return resolve(HTTPWTHandler.OK('Changed settings successfully'))
+                }).catch(error => {
+                    console.error('An error occurred while updating user settings. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while updating login activity settings. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6411,6 +6454,10 @@ class TempController {
 
     static loginActivitySettings = async (userId) => {
         return await this.#loginActivitySettings(userId)
+    }
+
+    static uploadLoginActivitySettings = async (userId, newSettings) => {
+        return await this.#uploadLoginActivitySettings(userId, newSettings)
     }
 }
 
