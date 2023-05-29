@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/savePrivacySettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have updated your privacy settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/getProfileStats': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 10,
@@ -136,66 +127,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, res) => {
-    const userID = req.tokenData;
-    const settings = req.body.settings;
-
-    if (typeof settings !== 'object') {
-        return HTTPHandler.badInput(res, `settings must be an object. Provided type: ${typeof settings}`)
-    }
-
-    if (Array.isArray(settings)) {
-        return HTTPHandler.badInput(res, 'Settings must be an object. Provided was an array.')
-    }
-
-    if (settings === null) {
-        return HTTPHandler.badInput(res, 'Settings must be an object. Provided was null.')
-    }
-
-    const allowedValues = {
-        viewFollowers: ['no-one', 'followers', 'everyone'],
-        viewFollowing: ['no-one', 'followers', 'everyone'],
-        showBadges: ['no-one', 'followers', 'everyone']
-    }
-
-    const allowedKeys = Object.keys(allowedValues)
-
-    console.log('New Privacy Settings:', settings)
-
-    for (let [key, value] of Object.entries(settings)) {
-        if (!allowedKeys.includes(key) || !allowedValues[key].includes(value)) {
-            console.log('Deleting key:', key, '  value:', value, '  from /tempRoute/savePrivacySettings')
-            delete settings[key]
-        }
-    }
-
-    User.findOne({_id: {$eq: userID}}).lean().then(user => {
-        if (user) {
-            const newPrivacySettings = {
-                ...user?.settings?.privacySettings,
-                ...settings
-            }
-
-            const newSettings = {
-                ...user.settings,
-                privacySettings: newPrivacySettings
-            }
-
-            User.findOneAndUpdate({_id: {$eq: userID}}, {settings: newSettings}).then(() => {
-                HTTPHandler.OK(res, 'Successfully updated privacy settings')
-            }).catch(error => {
-                console.error('An error occured while updating privacy settings for user with ID:', userID, 'The new privacy settings are:', newPrivacySettings, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while updating privacy settings. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with userId provided.')
-        }
-    }).catch(error => {
-        console.error('An error occured while finding user with ID:', userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding the user. Please try again later.')
-    })
-})
 
 router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => {
     const userRequestingID = req.tokenData;

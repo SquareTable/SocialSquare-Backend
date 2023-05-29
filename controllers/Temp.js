@@ -5803,6 +5803,57 @@ class TempController {
         })
     }
 
+    static #savePrivacySettings = (userId, settings) => {
+        return new Promise(resolve => {
+            if (typeof settings !== 'object') {
+                return resolve(HTTPWTHandler.badInput(`settings must be an object. Provided type: ${typeof settings}`))
+            }
+        
+            if (Array.isArray(settings)) {
+                return resolve(HTTPWTHandler.badInput('Settings must be an object. Provided was an array.'))
+            }
+        
+            if (settings === null) {
+                return resolve(HTTPWTHandler.badInput('Settings must be an object. Provided was null.'))
+            }
+        
+            const allowedKeys = Object.keys(CONSTANTS.PRIVACY_SETTINGS_ALLOWED_VALUES)
+        
+            for (let [key, value] of Object.entries(settings)) {
+                if (!allowedKeys.includes(key) || !CONSTANTS.PRIVACY_SETTINGS_ALLOWED_VALUES[key].includes(value)) {
+                    console.log('Deleting key:', key, '  value:', value, '  from /tempRoute/savePrivacySettings')
+                    delete settings[key]
+                }
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(user => {
+                if (user) {
+                    const newPrivacySettings = {
+                        ...user?.settings?.privacySettings,
+                        ...settings
+                    }
+        
+                    const newSettings = {
+                        ...user.settings,
+                        privacySettings: newPrivacySettings
+                    }
+        
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully updated privacy settings'))
+                    }).catch(error => {
+                        console.error('An error occured while updating privacy settings for user with id:', userId, 'The new privacy settings are:', newPrivacySettings, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while updating privacy settings. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+                }
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding the user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6129,6 +6180,10 @@ class TempController {
 
     static privacySettings = async (userId) => {
         return await this.#privacySettings(userId)
+    }
+
+    static savePrivacySettings = async (userId, settings) => {
+        return await this.#savePrivacySettings(userId, settings)
     }
 }
 
