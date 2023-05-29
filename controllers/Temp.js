@@ -5735,17 +5735,55 @@ class TempController {
     }
 
     static #userAlgorithmSettings = (userId) => {
-        User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-            if (!userFound) {
-                return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-            }
-    
-            const toSend = {...DEFAULTS.userAlgorithmSettings, ...userFound?.settings?.algorithmSettings || {}}
-    
-            return resolve(HTTPWTHandler.OK('Algorithm settings retrieved successfully.', toSend))
-        }).catch(error => {
-            console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-            return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+        
+                const toSend = {...DEFAULTS.userAlgorithmSettings, ...userFound?.settings?.algorithmSettings || {}}
+        
+                return resolve(HTTPWTHandler.OK('Algorithm settings retrieved successfully.', toSend))
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #uploadAlgorithmSettings = (userId, algorithmSettings) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    let newUserSettings = userFound.settings;
+                    let newAlgorithmSettings = newUserSettings.algorithmSettings;
+                    if (typeof algorithmSettings.algorithmEnabled == 'boolean') {
+                        newAlgorithmSettings.algorithmEnabled = algorithmSettings.algorithmEnabled;
+                    }
+                    if (typeof algorithmSettings.useUserUpvoteData == 'boolean') {
+                        newAlgorithmSettings.useUserUpvoteData = algorithmSettings.useUserUpvoteData;
+                    }
+                    if (typeof algorithmSettings.useUserDownvoteData == 'boolean') {
+                        newAlgorithmSettings.useUserDownvoteData = algorithmSettings.useUserDownvoteData;
+                    }
+                    if (typeof algorithmSettings.useUserFollowingData == 'boolean') {
+                        newAlgorithmSettings.useUserFollowingData = algorithmSettings.useUserFollowingData;
+                    }
+                    newUserSettings.algorithmSettings = newAlgorithmSettings;
+        
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newUserSettings}).then(function() {
+                        return resolve(HTTPWTHandler.OK('Algorithm settings updated successfully.'))
+                    }).catch(error => {
+                        console.error('An error occured while changing settings for user with ID:', userId, 'The new settings are:', newUserSettings, '. Only algorithm settings got changed. These are the new algorithm settings:', newAlgorithmSettings, '. The error was:', error);
+                        return resolve(HTTPWTHandler.serverError('An error occurred while updating algorithm settings. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while trying to find the user. Please try again.'))
+            })
         })
     }
 
@@ -6067,6 +6105,10 @@ class TempController {
 
     static userAlgorithmSettings = async (userId) => {
         return await this.#userAlgorithmSettings(userId)
+    }
+
+    static uploadAlgorithmSettings = async (userId, algorithmSettings) => {
+        return await this.#uploadAlgorithmSettings(userId, algorithmSettings)
     }
 }
 

@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/uploadAlgorithmSettings': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have changed your algorithm settings too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/privacySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 4,
@@ -154,43 +145,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings'], (req, res) => {
-    const {algorithmSettings} = req.body;
-    const userID = req.tokenData;
-
-    User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
-        if (userFound) {
-            let newUserSettings = userFound.settings;
-            let newAlgorithmSettings = newUserSettings.algorithmSettings;
-            if (typeof algorithmSettings.algorithmEnabled == 'boolean') {
-                newAlgorithmSettings.algorithmEnabled = algorithmSettings.algorithmEnabled;
-            }
-            if (typeof algorithmSettings.useUserUpvoteData == 'boolean') {
-                newAlgorithmSettings.useUserUpvoteData = algorithmSettings.useUserUpvoteData;
-            }
-            if (typeof algorithmSettings.useUserDownvoteData == 'boolean') {
-                newAlgorithmSettings.useUserDownvoteData = algorithmSettings.useUserDownvoteData;
-            }
-            if (typeof algorithmSettings.useUserFollowingData == 'boolean') {
-                newAlgorithmSettings.useUserFollowingData = algorithmSettings.useUserFollowingData;
-            }
-            newUserSettings.algorithmSettings = newAlgorithmSettings;
-
-            User.findOneAndUpdate({_id: {$eq: userID}}, {settings: newUserSettings}).then(function() {
-                HTTPHandler.OK(res, 'Algorithm settings updated successfully.')
-            }).catch(error => {
-                console.error('An error occured while changing settings for user with ID:', userID, 'The new settings are:', newUserSettings, '. Only algorithm settings got changed. These are the new algorithm settings:', newAlgorithmSettings, '. The error was:', error);
-                HTTPHandler.serverError(res, 'An error occurred while updating algorithm settings. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with provided userId')
-        }
-    }).catch(error => {
-        console.error('An error occured while finding user with ID: ' + userID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while trying to find the user. Please try again later.')
-    })
-})
 
 router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
     const userID = req.tokenData;
