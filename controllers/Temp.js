@@ -5951,6 +5951,37 @@ class TempController {
         })
     }
 
+    static #loginactivity = (userId) => {
+        return new Promise(resolve => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+                }
+        
+                RefreshToken.find({admin: false, userId}).lean().then(encryptedRefreshTokens => {
+                    const refreshTokens = []
+        
+                    for (let i = 0; i < encryptedRefreshTokens.length; i++) {
+                        let decryptedToken = `Bearer ${refreshTokenDecryption(encryptedRefreshTokens[i].encryptedRefreshToken)}`
+                        if (decryptedToken == req.headers["auth-refresh-token"]) {
+                            refreshTokens.unshift({refreshTokenId: encryptedRefreshTokens[i]._id, currentDevice: true, location: encryptedRefreshTokens[i].location, IP: encryptedRefreshTokens[i].IP, deviceType: encryptedRefreshTokens[i].deviceType, loginTime: encryptedRefreshTokens[i].createdAt})
+                        } else {
+                            refreshTokens.push({refreshTokenId: encryptedRefreshTokens[i]._id, currentDevice: false, location: encryptedRefreshTokens[i].location, IP: encryptedRefreshTokens[i].IP, deviceType: encryptedRefreshTokens[i].deviceType, loginTime: encryptedRefreshTokens[i].createdAt})
+                        }
+                    }
+        
+                    return resolve(HTTPWTHandler.OK('Found devices logged in to your account', refreshTokens))
+                }).catch(error => {
+                    console.error('An error occurred while finding refresh tokens with admin set to false and userId set to:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding refresh tokens. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6285,6 +6316,10 @@ class TempController {
 
     static getProfileStats = async (userId, pubId, skip, stat) => {
         return await this.#getProfileStats(userId, pubId, skip, stat)
+    }
+
+    static loginactivity = async (userId) => {
+        return await this.#loginactivity(userId)
     }
 }
 

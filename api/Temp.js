@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/loginactivity': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 5,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested profile stats too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.ip + req.tokenData //The account's login activity will be rate limited per account per IP address
-    }),
     '/logoutdevice': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -118,37 +109,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
-    const userId = req.tokenData;
-
-    User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'Could not find user with userId provided.')
-        }
-
-        RefreshToken.find({admin: false, userId}).lean().then(encryptedRefreshTokens => {
-            const refreshTokens = []
-
-            for (let i = 0; i < encryptedRefreshTokens.length; i++) {
-                let decryptedToken = `Bearer ${refreshTokenDecryption(encryptedRefreshTokens[i].encryptedRefreshToken)}`
-                if (decryptedToken == req.headers["auth-refresh-token"]) {
-                    refreshTokens.unshift({refreshTokenId: encryptedRefreshTokens[i]._id, currentDevice: true, location: encryptedRefreshTokens[i].location, IP: encryptedRefreshTokens[i].IP, deviceType: encryptedRefreshTokens[i].deviceType, loginTime: encryptedRefreshTokens[i].createdAt})
-                } else {
-                    refreshTokens.push({refreshTokenId: encryptedRefreshTokens[i]._id, currentDevice: false, location: encryptedRefreshTokens[i].location, IP: encryptedRefreshTokens[i].IP, deviceType: encryptedRefreshTokens[i].deviceType, loginTime: encryptedRefreshTokens[i].createdAt})
-                }
-            }
-
-            HTTPHandler.OK(res, 'Found devices logged in to your account', refreshTokens)
-        }).catch(error => {
-            console.error('An error occurred while finding refresh tokens with admin set to false and userId set to:', userId, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding refresh tokens. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
     const userId = req.tokenData;
