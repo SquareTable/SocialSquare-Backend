@@ -8,6 +8,7 @@ const Thread = require('../models/Thread')
 const PopularPosts = require('../models/PopularPosts');
 const AccountReports = require('../models/AccountReports')
 const PostReports = require('../models/PostReports');
+const RefreshToken = require('../models/RefreshToken');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -6104,6 +6105,77 @@ class TempController {
         })
     }
 
+    static #updateLoginActivitySettingsOnSignup = (userId, newSettings, refreshTokenId, IP, deviceName) => {
+        return new Promise(resolve => {
+            if (typeof newSettings !== 'object') {
+                return resolve(HTTPWTHandler.badInput(`newSettings must be an object. Provided type: ${typeof newSettings}`))
+            }
+        
+            if (Array.isArray(newSettings)) {
+                return resolve(HTTPWTHandler.badInput('newSettings must be an object. An array was provided.'))
+            }
+        
+            if (newSettings === null) {
+                return resolve(HTTPWTHandler.badInput('newSettings must be an object. null was provided.'))
+            }
+        
+            if (typeof refreshTokenId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`refreshTokenId must be a string. Provided type: ${typeof refreshTokenId}`))
+            }
+        
+            if (refreshTokenId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('refreshTokenId cannot be an empty string.'))
+            }
+        
+            const allowedKeys = Object.keys(CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES)
+        
+            for (const key of Object.keys(newSettings)) {
+                if (!allowedKeys.includes(key) || !CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES[key].includes(newSettings[key])) {
+                    delete newSettings[key];
+                }
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
+                }
+        
+                const loginActivitySettingsToSet = {...userFound?.settings?.loginActivitySettings || {}, ...newSettings}
+                const settingsToSet = {...userFound?.settings || {}, loginActivitySettings: loginActivitySettingsToSet}
+        
+                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: settingsToSet}).then(() => {
+                    const changesToMake = {}
+        
+                    if (loginActivitySettingsToSet.getIP) {
+                        changesToMake.IP = HTTPHandler.getIP(IP)
+                    }
+        
+                    if (loginActivitySettingsToSet.getLocation) {
+                        const location = geoIPLite.lookup(IP)
+                        changesToMake.location = location.city + ', ' + location.country
+                    }
+        
+                    if (loginActivitySettingsToSet.getDeviceType) {
+                        changesToMake.deviceType = deviceName
+                    }
+        
+                    RefreshToken.findOneAndUpdate({_id: {$eq: refreshTokenId}, userId: {$eq: userId}}, changesToMake).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully updated settings'))
+                    }).catch(error => {
+                        console.error('An error occurred while updating refresh token with id:', refreshTokenId, 'that belongs to user with id:', userId, '. The update was going to make these updates:', changesToMake, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while updating refresh token. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while updating user settings. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while updating login activity settings. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6458,6 +6530,10 @@ class TempController {
 
     static uploadLoginActivitySettings = async (userId, newSettings) => {
         return await this.#uploadLoginActivitySettings(userId, newSettings)
+    }
+
+    static updateLoginActivitySettingsOnSignup = async (userId, newSettings, refreshTokenId, IP, deviceName) => {
+        return await this.#updateLoginActivitySettingsOnSignup(userId, newSettings, refreshTokenId, IP, deviceName)
     }
 }
 

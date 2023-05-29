@@ -836,6 +836,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/updateLoginActivitySettingsOnSignup': rateLimit({
+        windowMs: 1000 * 60 * 60 * 24, //1 day
+        max: 5, //Should only be doing this once for the whole lifetime of the account but will have this set to 5 just in case
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have updated your login activity settings on signup too many times today. Please try again in 24 hours."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -2468,6 +2477,25 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /uploadLoginActivitySettings:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginActivitySettingsOnSignup'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
+    const {newSettings, refreshTokenId} = req.body;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'updateLoginActivitySettingsOnSignup',
+            functionArgs: [req.tokenData, newSettings, refreshTokenId, req.ip, req.device.name]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /updateLoginActivitySettingsOnSignup:', error)
         HTTPHandler.serverError(res, error)
     })
 });
