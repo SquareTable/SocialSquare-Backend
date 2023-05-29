@@ -6,6 +6,7 @@ const Downvote = require('../models/Downvote')
 const Category = require('../models/Category')
 const Thread = require('../models/Thread')
 const PopularPosts = require('../models/PopularPosts');
+const AccountReports = require('../models/AccountReports')
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
