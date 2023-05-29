@@ -800,6 +800,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.ip + req.tokenData //The account's login activity will be rate limited per account per IP address
     }),
+    '/logoutdevice': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 30,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have logged devices out of your account too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.ip + req.tokenData //The account's login activity will be rate limited per account per IP address
+    }),
 }
 
 
@@ -2360,6 +2369,24 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /loginactivity:', error)
+        HTTPHandler.serverError(res, error)
+    })
+});
+
+router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'logoutdevice',
+            functionArgs: [req.tokenData, req.body.tokenToLogout]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /logoutdevice:', error)
         HTTPHandler.serverError(res, error)
     })
 });

@@ -5982,6 +5982,38 @@ class TempController {
         })
     }
 
+    static #logoutdevice = (userId, tokenToLogout) => {
+        return new Promise(resolve => {
+            if (typeof tokenToLogout !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`tokenToLogout must be a string. Provided type: ${typeof tokenToLogout}`))
+            }
+        
+            if (tokenToLogout.length == 0) {
+                return resolve(HTTPWTHandler.badInput('tokenToLogout cannot be an empty string.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
+                }
+        
+                RefreshToken.deleteOne({userId: {$eq: userId}, admin: false, _id: {$eq: tokenToLogout}}).then(result => {
+                    if (result.deletedCount === 1) {
+                        return resolve(HTTPWTHandler.OK('Successfully logged device out of your account.'))
+                    } else {
+                        return resolve(HTTPWTHandler.notFound('Could not find refresh token.'))
+                    }
+                }).catch(error => {
+                    console.error('An error occurred while deleting one refresh token with userId set to:', userId, ', admin set to false, and _id set to:', tokenToLogout, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while logging user out of account. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6320,6 +6352,10 @@ class TempController {
 
     static loginactivity = async (userId) => {
         return await this.#loginactivity(userId)
+    }
+
+    static logoutdevice = async (userId, tokenToLogout) => {
+        return await this.#logoutdevice(userId, tokenToLogout)
     }
 }
 

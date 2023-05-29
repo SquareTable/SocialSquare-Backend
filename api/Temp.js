@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/logoutdevice': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have logged devices out of your account too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.ip + req.tokenData //The account's login activity will be rate limited per account per IP address
-    }),
     '/logoutallotherdevices': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 3,
@@ -109,39 +100,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
-    const userId = req.tokenData;
-    const {tokenToLogout} = req.body;
-
-    if (typeof tokenToLogout !== 'string') {
-        return HTTPHandler.badInput(res, `tokenToLogout must be a string. Provided type: ${typeof tokenToLogout}`)
-    }
-
-    if (tokenToLogout.length == 0) {
-        return HTTPHandler.badInput(res, 'tokenToLogout cannot be an empty string.')
-    }
-
-    User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-        if (!userFound) {
-            return HTTPHandler.notFound(res, 'User could not be found with provided userId')
-        }
-
-        RefreshToken.deleteOne({userId: {$eq: userId}, admin: false, _id: {$eq: tokenToLogout}}).then(result => {
-            if (result.deletedCount === 1) {
-                HTTPHandler.OK(res, 'Successfully logged device out of your account.')
-            } else {
-                HTTPHandler.notFound(res, 'Could not find refresh token.')
-            }
-        }).catch(error => {
-            console.error('An error occurred while deleting one refresh token with userId set to:', userId, ', admin set to false, and _id set to:', tokenToLogout, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while logging user out of account. Please try again later.')
-        })
-    }).catch(error => {
-        console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-    })
-})
 
 router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (req, res) => {
     const userId = req.tokenData;
