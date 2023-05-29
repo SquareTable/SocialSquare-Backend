@@ -5753,6 +5753,18 @@ class TempController {
 
     static #uploadAlgorithmSettings = (userId, algorithmSettings) => {
         return new Promise(resolve => {
+            if (typeof algorithmSettings !== 'object') {
+                return resolve(HTTPWTHandler.badInput(`algorithmSettings must be an object. Provided type: ${typeof algorithmSettings}`))
+            }
+        
+            if (Array.isArray(algorithmSettings)) {
+                return resolve(HTTPWTHandler.badInput('algorithmSettings must be an object. Provided was an array.'))
+            }
+        
+            if (algorithmSettings === null) {
+                return resolve(HTTPWTHandler.badInput('algorithmSettings must be an object. Provided was null.'))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     let newUserSettings = userFound.settings;
