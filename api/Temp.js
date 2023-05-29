@@ -54,15 +54,6 @@ const RefreshToken = require('../models/RefreshToken');
 const PopularPosts = require('../models/PopularPosts');
 
 const rateLimiters = {
-    '/getProfileStats': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 10,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested profile stats too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/loginactivity': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 5,
@@ -127,94 +118,6 @@ const rateLimiters = {
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
-
-router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => {
-    const userRequestingID = req.tokenData;
-    const profilePublicID = req.body.pubId;
-    const skip = req.body.skip;
-    const limit = 10;
-    const stat = req.body.stat;
-
-    const allowedStats = ['following', 'followers']
-
-    if (!allowedStats.includes(stat)) {
-        return HTTPHandler.badInput(res, `${stat} is not a valid stat`)
-    }
-
-    if (typeof skip !== 'number') {
-        return HTTPHandler.badInput(res, `skip must be a number. Provided type: ${typeof skip}`)
-    }
-
-    if (typeof profilePublicID !== 'string') {
-        return HTTPHandler.badInput(res, `profilePublicId must be a string. Provided type: ${typeof profilePublicId}`)
-    }
-
-    if (profilePublicID.length == 0) {
-        return HTTPHandler.badInput(res, 'profilePublicID cannot be an empty string.')
-    }
-
-    const sendItemsToUser = (array, userRequesting) => {
-        const {items, noMoreItems} = arrayHelper.returnSomeItems(array, skip, limit)
-        console.log('Items after going though array helper:', items)
-        console.log('no more items:', noMoreItems)
-
-        User.find({secondId: {$in: items}}).then(items => {
-            const newItems = [];
-            for (let i = 0; i < items.length; i++) {
-                newItems.push(userHandler.returnPublicInformation(items[i], userRequesting))
-            }
-
-            HTTPHandler.OK(res, 'Successfully retrieved data', {items: newItems, noMoreItems})
-        }).catch(error => {
-            console.error('An error occured while finding users with a secondId that is inside of an array. The array is:', items, '. The error was:', error)
-            HTTPHandler.serverError(res, 'An error occurred while finding users. Please try again later.')
-        })
-    }
-
-    const wrongPermissions = (stat) => {
-        HTTPHandler.forbidden(res, `User's privacy settings do not allow you to see ${stat === 'following' ? 'who they follow' : 'who follows them'}`)
-    }
-
-    User.findOne({_id: {$eq: userRequestingID}}).lean().then(userRequesting => {
-        if (userRequesting) {
-            User.findOne({secondId: {$eq: profilePublicID}}).lean().then(profileRequested => {
-                if (profileRequested) {
-                    const setting = stat == 'following' ? profileRequested?.settings?.privacySettings?.viewFollowing || 'followers' : profileRequested?.settings?.privacySettings?.viewFollowers || 'followers'
-                    console.log('Settings is:', setting)
-
-                    if (userRequestingID === profileRequested._id.toString() || setting === 'everyone') {
-                        return sendItemsToUser(stat == 'following' ? profileRequested.following : profileRequested.followers, userRequesting)
-                    }
-
-                    if (setting == 'no-one') {
-                        return wrongPermissions(stat)
-                    }
-
-                    //Setting must be followers since if they were no-one or everyone the code would've returned by now
-                    const pubIdIndex = profileRequested.followers.findIndex(x => x === userRequesting.secondId);
-                    const isFollower = pubIdIndex !== -1;
-                    console.log('isFollower:', isFollower, '   |   pubIdIndex:', pubIdIndex)
-
-                    if (isFollower) {
-                        return sendItemsToUser(stat == 'following' ? profileRequested.following : profileRequested.followers, userRequesting)
-                    } else {
-                        return wrongPermissions(stat)
-                    }
-                } else {
-                    HTTPHandler.notFound(res, 'Could not find requested profile')
-                }
-            }).catch(error => {
-                console.error('An error occured while finding user with secondId:', profilePublicID, '. The error was:', error)
-                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
-            })
-        } else {
-            HTTPHandler.notFound(res, 'Could not find user with provided userId')
-        }
-    }).catch(error => {
-        console.error('An error occured while finding user with id:', userRequestingID, '. The error was:', error)
-        HTTPHandler.serverError(res, 'An error occurred while finding the user. Please try again later.')
-    })
-})
 
 router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
     const userId = req.tokenData;

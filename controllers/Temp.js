@@ -29,6 +29,9 @@ const pollPostHandler = new PollPostLibrary();
 const ThreadPostLibrary = require('../libraries/ThreadPost');
 const threadPostHandler = new ThreadPostLibrary();
 
+const ArrayLibrary = require('../libraries/Array');
+const arrayHelper = new ArrayLibrary();
+
 const { sendNotifications } = require("../notificationHandler");
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
@@ -5866,6 +5869,88 @@ class TempController {
         })
     }
 
+    static #getProfileStats = (userId, profilePublicId, skip, stat) => {
+        return new Promise(resolve => {
+            const allowedStats = ['following', 'followers']
+
+            if (!allowedStats.includes(stat)) {
+                return resolve(HTTPWTHandler.badInput('Invalid stat provided'))
+            }
+
+            if (typeof skip !== 'number') {
+                return resolve(HTTPWTHandler.badInput(`skip must be a number. Provided type: ${typeof skip}`))
+            }
+
+            if (typeof profilePublicId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`profilePublicId must be a string. Provided type: ${typeof profilePublicId}`))
+            }
+
+            if (profilePublicId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('profilePublicId cannot be an empty string.'))
+            }
+
+            const sendItemsToUser = (array, userRequesting) => {
+                const {items, noMoreItems} = arrayHelper.returnSomeItems(array, skip, limit)
+
+                User.find({secondId: {$in: items}}).lean().then(items => {
+                    const newItems = [];
+                    for (let i = 0; i < items.length; i++) {
+                        newItems.push(userHandler.returnPublicInformation(items[i], userRequesting))
+                    }
+
+                    return resolve(HTTPWTHandler.OK('Successfully retrieved data', {items: newItems, noMoreItems}))
+                }).catch(error => {
+                    console.error('An error occured while finding users with a secondId that is inside of an array. The array is:', items, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
+                })
+            }
+
+            const wrongPermissions = (stat) => {
+                return resolve(HTTPWTHandler.forbidden(`User's privacy settings do not allow you to see ${stat === 'following' ? 'who they follow' : 'who follows them'}`))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userRequesting => {
+                if (userRequesting) {
+                    User.findOne({secondId: {$eq: profilePublicId}}).lean().then(profileRequested => {
+                        if (profileRequested) {
+                            const setting = stat == 'following' ? profileRequested?.settings?.privacySettings?.viewFollowing || 'followers' : profileRequested?.settings?.privacySettings?.viewFollowers || 'followers'
+                            console.log('Settings is:', setting)
+
+                            if (String(userId) === String(profileRequested._id) || setting === 'everyone') {
+                                return sendItemsToUser(stat == 'following' ? profileRequested.following : profileRequested.followers, userRequesting)
+                            }
+
+                            if (setting == 'no-one') {
+                                return wrongPermissions(stat)
+                            }
+
+                            //Setting must be followers since if they were no-one or everyone the code would've returned by now
+                            const pubIdIndex = profileRequested.followers.findIndex(x => x === userRequesting.secondId);
+                            const isFollower = pubIdIndex !== -1;
+                            console.log('isFollower:', isFollower, '   |   pubIdIndex:', pubIdIndex)
+
+                            if (isFollower) {
+                                return sendItemsToUser(stat == 'following' ? profileRequested.following : profileRequested.followers, userRequesting)
+                            } else {
+                                return wrongPermissions(stat)
+                            }
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Could not find requested profile'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occured while finding user with secondId:', profilePublicId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userRequestingId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding the user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6196,6 +6281,10 @@ class TempController {
 
     static savePrivacySettings = async (userId, settings) => {
         return await this.#savePrivacySettings(userId, settings)
+    }
+
+    static getProfileStats = async (userId, pubId, skip, stat) => {
+        return await this.#getProfileStats(userId, pubId, skip, stat)
     }
 }
 
