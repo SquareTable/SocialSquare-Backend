@@ -1,6 +1,9 @@
+const makeThreadsReferenceCategoryById = require('./OneTimeExecuteCode/makeThreadsReferenceCategoryById')
+
 // mongodb
 require('./config/db').then(() => {
     console.log("DB Connected"); 
+    makeThreadsReferenceCategoryById()
 }).catch((err) => console.log(err));
 
 const CONSTANTS = require('./constants');

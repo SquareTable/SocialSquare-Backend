@@ -2933,7 +2933,7 @@ class TempController {
         })
     }
 
-    static #posttextthread = (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
+    static #posttextthread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
         return new Promise(resolve => {
             if (typeof threadTitle !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadTitle must be a string. Provided type: ${typeof threadTitle}`))
@@ -2947,8 +2947,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`threadTags must be a string. Provided type: ${typeof threadTags}`))
             }
         
-            if (typeof threadCategory !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`threadCategory must be a string. Provided type: ${typeof threadCategory}`))
+            if (typeof threadCategoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`threadCategoryId must be a string. Provided type: ${typeof threadCategoryId}`))
             }
         
             if (typeof threadBody !== 'string') {
@@ -3030,7 +3030,7 @@ class TempController {
         
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    Category.findOne({categoryTitle: {$eq: threadCategory}}).then(data => {
+                    Category.findOne({_id: {$eq: threadCategoryId}}).then(data => {
                         if (data) {
                             const categoryNSFW = data.NSFW;
                             const categoryNSFL = data.NSFL;
@@ -3054,7 +3054,7 @@ class TempController {
                                 threadTitle: threadTitle,
                                 threadSubtitle: threadSubtitle,
                                 threadTags: threadTags,
-                                threadCategory: threadCategory,
+                                threadCategoryId: threadCategoryId,
                                 threadBody: threadBody,
                                 threadImageKey: "",
                                 threadImageDescription: "",
@@ -3077,7 +3077,7 @@ class TempController {
                             return resolve(HTTPWTHandler.notFound('No category found!'))
                         }
                     }).catch(error => {
-                        console.error('An error occurred while finding category with categoryTitle:', threadCategory, '. The error was:', error)
+                        console.error('An error occurred while finding category with id:', threadCategoryId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
                     })
                 } else {
@@ -3090,7 +3090,7 @@ class TempController {
         })
     }
 
-    static #postimagethread = (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
+    static #postimagethread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
         return new Promise(resolve => {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file sent.'))
@@ -3115,9 +3115,9 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`threadTags must be a string. Provided type: ${typeof threadTags}`))
             }
         
-            if (typeof threadCategory !== 'string') {
+            if (typeof threadCategoryId !== 'string') {
                 deleteImage()
-                return resolve(HTTPWTHandler.badInput(`threadCategory must be a string. Provided type: ${typeof threadCategory}`))
+                return resolve(HTTPWTHandler.badInput(`threadCategoryId must be a string. Provided type: ${typeof threadCategoryId}`))
             }
         
             if (typeof threadImageDescription !== 'string') {
@@ -3167,7 +3167,7 @@ class TempController {
             threadTitle = threadTitle.trim();
             threadSubtitle = threadSubtitle.trim();
             threadTags = threadTags.trim();
-            threadCategory = threadCategory.trim();
+            threadCategoryId = threadCategoryId.trim();
             threadImageDescription = threadImageDescription.trim();
         
             if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
@@ -3210,7 +3210,7 @@ class TempController {
             console.log(userId)
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    Category.findOne({categoryTitle: {$eq: threadCategory}}).lean().then(data => {
+                    Category.findOne({_id: {$eq: threadCategoryId}}).lean().then(data => {
                         if (data) {
                             const categoryNSFW = data.NSFW;
                             const categoryNSFL = data.NSFL;
@@ -3233,7 +3233,7 @@ class TempController {
                                     threadTitle: threadTitle,
                                     threadSubtitle: threadSubtitle,
                                     threadTags: threadTags,
-                                    threadCategory: threadCategory,
+                                    threadCategoryId: threadCategoryId,
                                     threadBody: "",
                                     threadImageKey: imageKey,
                                     threadImageDescription: threadImageDescription,
@@ -3264,7 +3264,8 @@ class TempController {
                         }
                     }).catch(error => {
                         deleteImage()
-                        console.error('An error occured while finding category with title:', threadCategory, '. The error was:', error)
+                        console.error('An error occured while finding category with id:', threadCategoryId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
                     })
                 } else {
                     deleteImage()
@@ -3284,7 +3285,7 @@ class TempController {
                 if (userRequesting) {
                     Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{ 
                         if (data) {
-                            Thread.find({threadCategory: {$eq: categoryId}}).lean().then(result => {
+                            Thread.find({threadCategoryId: {$eq: categoryId}}).lean().then(result => {
                                 if (result) {
                                     const uniqueUsers = Array.from(new Set(result.map(item => item.creatorId)))
 
@@ -3853,7 +3854,7 @@ class TempController {
         
             Thread.findOne({_id: {$eq: threadId}}).lean().then(result => {
                 if (result) {
-                    Category.findOne({_id: result.threadCategory}).lean().then(data =>{ 
+                    Category.findOne({_id: result.threadCategoryId}).lean().then(data =>{ 
                         if (data) {
                             var categoryImageKey = data.imageKey
                             if (data.imageKey == "") {
@@ -3900,7 +3901,7 @@ class TempController {
                             return resolve(HTTPWTHandler.notFound('Could not find category for thread.'))
                         }
                     }).catch(error => {
-                        console.error('An error occurred while finding category with title:', result.threadCategory, '. The error was:', error)
+                        console.error('An error occurred while finding category with id:', result.threadCategoryId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
                     })
                 } else {
@@ -6345,12 +6346,12 @@ class TempController {
         return await this.#joincategory(userId, categoryId)
     }
 
-    static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
-        return await this.#posttextthread(userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots)
+    static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
+        return await this.#posttextthread(userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots)
     }
 
-    static postimagethread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
-        return await this.#postimagethread(userId, threadTitle, threadSubtitle, threadTags, threadCategory, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file)
+    static postimagethread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
+        return await this.#postimagethread(userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file)
     }
 
     static getthreadsfromcategory = async (userId, categoryId) => {

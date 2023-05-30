@@ -8,7 +8,7 @@ const ThreadSchema = new Schema({
     threadTitle: String,
     threadSubtitle: String,
     threadTags: String,
-    threadCategory: String,
+    threadCategoryId: mongoose.Schema.Types.ObjectId,
     threadBody: String,
     threadImageKey: String,
     threadImageDescription: String,
