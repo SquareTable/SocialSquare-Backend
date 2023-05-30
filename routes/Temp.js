@@ -1276,7 +1276,7 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getProfilePic',
-            functionArgs: [req.body.pubId]
+            functionArgs: [req.params.pubId]
         }
     })
 
