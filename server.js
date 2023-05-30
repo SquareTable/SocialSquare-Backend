@@ -1,12 +1,7 @@
-const makeThreadsReferenceCategoryById = require('./OneTimeExecuteCode/makeThreadsReferenceCategoryById')
-
 // mongodb
 require('./config/db').then(() => {
     console.log("DB Connected"); 
-    makeThreadsReferenceCategoryById()
 }).catch((err) => console.log(err));
-
-const CONSTANTS = require('./constants');
 
 const app = require('express')();
 const port = process.env.PORT || 3000;
