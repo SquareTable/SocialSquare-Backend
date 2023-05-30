@@ -9,7 +9,6 @@ const workerPath = path.resolve('workers', 'TempWorker.js')
 
 //Image post
 const multer  = require('multer')
-const path = require('path');
 const CONSTANTS = require('../constants');
 const { v4: uuidv4 } = require('uuid');
 
