@@ -446,7 +446,7 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/searchforthreadcomments/:sentthreadid': rateLimit({
+    '/searchforthreadcomments': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
         standardHeaders: false,
