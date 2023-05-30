@@ -1593,8 +1593,10 @@ class TempController {
                 })
             }
         
-            User.findOne({secondId: {$eq: pubId}}).lean().then(data => { 
+            User.findOne({secondId: {$eq: pubId}}).lean().then(data => {
                 User.findOne({_id: {$eq: userId}}).lean().then(secondData => {
+                    console.log('Second Data:', secondData)
+                    console.log('userId:', userId)
                     if (!data) {
                         return resolve(HTTPWTHandler.notFound('User could not be found'))
                     }
