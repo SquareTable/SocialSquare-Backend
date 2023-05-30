@@ -1275,7 +1275,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
 router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
-            functionName: 'getProfilePic/:pubId',
+            functionName: 'getProfilePic',
             functionArgs: [req.body.pubId]
         }
     })
