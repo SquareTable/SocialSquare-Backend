@@ -46,7 +46,7 @@ function generateNewAuthToken(res, refreshToken) {
         if (err) {
             console.log("Refresh Failed")
             console.log("Issue with refresh token may be incorrect or expired.")
-            res.status(403).json({message: "Issue with refresh token may be incorrect or expired."});
+            res.status(403).json({message: "Issue with refresh token may be incorrect or expired.", logout: true});
         } else {
             console.log(decoded)
             if (decoded.accountType == 'admin') {
@@ -74,21 +74,21 @@ function generateNewAuthToken(res, refreshToken) {
                             // only would happen if all done and none matched
                             console.log("Refresh Failed")
                             console.log("Refresh token didn't match valid ones.")
-                            res.status(403).json({message: "Refresh token didn't match valid ones."})
+                            res.status(403).json({message: "Refresh token didn't match valid ones.", logout: true})
                         }).catch(error => {
                             console.error('An error occurred while finding all refresh tokens with admin set to true and userId:', decoded._id, '. The error was:', error)
-                            res.status(403).json({message: "Error finding refresh tokens with token provided."})
+                            res.status(403).json({message: "Error finding refresh tokens with token provided.", logout: true})
                         })
                     } else {
                         console.log("Refresh Failed")
                         console.log("Couldn't find admin with token provided.")
-                        res.status(403).json({message: "Couldn't find admin with token provided."})
+                        res.status(403).json({message: "Couldn't find admin with token provided.", logout: true})
                     }
                 }).catch(err => {
                     console.log(`Error occured when finding admin with the token: ${err}`)
                     console.log("Refresh Failed")
                     console.log("Error finding admin with token provided.")
-                    res.status(403).json({message: "Error finding admin with token provided."})
+                    res.status(403).json({message: "Error finding admin with token provided.", logout: true})
                 })
             } else {
                 User.findOne({_id: decoded._id}).lean().then(userFoundWithTokensId => {
@@ -114,21 +114,21 @@ function generateNewAuthToken(res, refreshToken) {
                             // only would happen if all done and none matched
                             console.log("Refresh Failed")
                             console.log("Refresh token didn't match valid ones.")
-                            res.status(403).json({message: "Refresh token didn't match valid ones."})
+                            res.status(403).json({message: "Refresh token didn't match valid ones.", logout: true})
                         }).catch(error => {
                             console.error('An error occurred while finding all refresh tokens with admin set to false and userId:', decoded._id, '. The error was:', error)
-                            res.status(403).json({message: "Error finding refresh tokens with token provided."})
+                            res.status(403).json({message: "Error finding refresh tokens with token provided.", logout: true})
                         })
                     } else {
                         console.log("Refresh Failed")
                         console.log("Couldn't find user with token provided.")
-                        res.status(403).json({message: "Couldn't find user with token provided."})
+                        res.status(403).json({message: "Couldn't find user with token provided.", logout: true})
                     }
                 }).catch(err => {
                     console.log(`Error occured when finding user with the token: ${err}`)
                     console.log("Refresh Failed")
                     console.log("Error finding user with token provided.")
-                    res.status(403).json({message: "Error finding user with token provided."})
+                    res.status(403).json({message: "Error finding user with token provided.", logout: true})
                 })
             }
         }
