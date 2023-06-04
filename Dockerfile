@@ -2,6 +2,7 @@ FROM node:16
 WORKDIR /server
 COPY  package*.json /server/
 RUN mkdir Local-Images
+RUN mkdir TEMP-IMAGES
 RUN yarn install --network-timeout 100000
 COPY . /server/
 CMD ["yarn", "start"]
