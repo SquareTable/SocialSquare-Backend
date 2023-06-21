@@ -2093,7 +2093,7 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
     })
 });
 
-router.post('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationFactorsEnabled'], (req, res) => {
+router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationFactorsEnabled'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getAuthenticationFactorsEnabled',
@@ -2106,7 +2106,7 @@ router.post('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthentication
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getAuthenticationFactorsEnabled:', error)
+        console.error('An error occurred from TempWorker for GET /getAuthenticationFactorsEnabled:', error)
         HTTPHandler.serverError(res, error)
     })
 });
