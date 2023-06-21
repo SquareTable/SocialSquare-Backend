@@ -44,7 +44,9 @@ const CONSTANTS = {
         getIP: [false, true],
         getDeviceType: [false, true],
         getLocation: [false, true]
-    }
+    },
+    EMAIL_VERIFICATION_CODE_SALT_ROUNDS: 10,
+    EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS: 60 * 5 //5 minutes
 }
 
 module.exports = CONSTANTS

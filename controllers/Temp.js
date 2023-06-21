@@ -33,6 +33,11 @@ const threadPostHandler = new ThreadPostLibrary();
 const ArrayLibrary = require('../libraries/Array');
 const arrayHelper = new ArrayLibrary();
 
+const UserLibrary = require('../libraries/User')
+const userHandler = new UserLibrary();
+
+const bcrypt = require('bcrypt')
+
 const { sendNotifications } = require("../notificationHandler");
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
@@ -227,7 +232,7 @@ class TempController {
                                     const newRefreshToken = new RefreshToken(newRefreshTokenObject)
         
                                     newRefreshToken.save().then(() => {
-                                        RefreshToken.deleteMany({encryptedRefreshToken: {$not: encryptedRefreshToken}, userId: result._id, admin: false}).then(() => {
+                                        RefreshToken.deleteMany({encryptedRefreshToken: {$ne: encryptedRefreshToken}, userId: data._id, admin: false}).then(() => {
                                             User.findOneAndUpdate({_id: {$eq: userId}}, {password: hashedPassword}).then(() => {
                                                 return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`}))
                                             }).catch(error => {
@@ -235,7 +240,7 @@ class TempController {
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
                                             })
                                         }).catch(error => {
-                                            console.error('An error occurred while deleting all RefreshTokens that have a userId of:', result._id, 'and that do not have an encryptedRefreshToken:', encryptedRefreshToken, '. The error was:', error)
+                                            console.error('An error occurred while deleting all RefreshTokens that have a userId of:', data._id, 'and that do not have an encryptedRefreshToken:', encryptedRefreshToken, '. The error was:', error)
                                             return resolve(HTTPWTHandler.serverError('An error occurred while invalidating all other sessions. Please manually log out all other users from your account.'))
                                         })
                                     }).catch(error => {

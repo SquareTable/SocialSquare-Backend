@@ -13,7 +13,8 @@ const bcrypt = require('bcrypt')
 
 const { setCacheItem, getCacheItem, delCacheItem } = require('../memoryCache.js')
 
-const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js')
+const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
+const EmailVerificationCode = require('../models/EmailVerificationCode');
 
 class UserController {
     static #signup = (name, email, password, IP, deviceName) => {
@@ -311,16 +312,16 @@ class UserController {
     static #sendemailverificationcode = (userID, task, getAccountMethod, username, email) => {
         return new Promise(async resolve => {
             try {
-                var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
+                var randomString = await axios.get('https://www.random.org/integers/?num=1&min=268500000&max=1000000000&col=1&base=16&format=plain&rnd=new')
                 randomString = randomString.data.trim();
                 console.log('Random string generated: ' + randomString)
         
                 if (randomString.length != 8) {
-                    console.log('An error occured while generating random string. The random string that was generated is: ' + randomString)
+                    console.log('An error occured while generating random string. The string is not 8 characters long. The random string that was generated is: ' + randomString)
                     return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again later.'))
                 }
             } catch (error) {
-                console.error('An error occurred while getting a random string. The error was:', error)
+                console.error('An error occurred while getting a random string. Data returned from random.org axios call:' + randomString.data, '.The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
             }
         
@@ -330,21 +331,53 @@ class UserController {
                 }
         
                 userID = userID.trim();
+
+                if (userID.length === 0) {
+                    return resolve(HTTPWTHandler.badInput('userID must not be blank'))
+                }
         
-                User.find({_id: {$eq: userID}}).then(async (userFound) => {
-                    if (userFound.length) {
-                        const saltRounds = 10;
+                User.findOne({_id: {$eq: userID}}).lean().then(async (userFound) => {
+                    if (userFound) {
                         try {
-                            var hashedRandomString = await bcrypt.hash(randomString, saltRounds);
+                            var hashedRandomString = await bcrypt.hash(randomString, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS);
                         } catch (error) {
                             console.error('An error occured while hashing random string:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while hashing the random string. Please try again.'))
                         }
-                        const success = setCacheItem('EmailVerificationCodeCache', userID, hashedRandomString);
-                        if (!success) {
-                            console.error('An error occured while setting cache item in EmailVerificationCodeCache. The key was:', userID, 'and the value was:', hashedRandomString)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while setting random string'))
-                        }
+                        const emailVerificationCodeData = {
+                            userId: userID,
+                            hashedVerificationCode: hashedRandomString
+                        };
+
+                        EmailVerificationCode.findOneAndReplace({userId: userID}, emailVerificationCodeData, {upsert: true}).then(() => {
+                            //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
+                            //If it does not exist, it'll get added to the database because of upsert: true
+
+                            if (task == "Add Email Multi-Factor Authentication") {
+                                var emailData = {
+                                    from: process.env.SMTP_EMAIL,
+                                    to: email,
+                                    subject: "Add Email as a Multi-Factor Authentication to your SocialSquare account",
+                                    text: `Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.`,
+                                    html: `<p>Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.</p>`
+                                };
+                            } else {
+                                return resolve(HTTPWTHandler.badInput('Unknown task sent'))
+                            }
+                    
+                            mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
+                                if(error){
+                                    console.error("Error happened while sending email to user for task: " + task + ". User ID for user was: " + userID, '. Error object:', error);
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while sending email. Please try again.'))
+                                } else if (response) {
+                                    console.log('Sent random string to user.')
+                                    return resolve(HTTPWTHandler.OK('Email sent.', {email, fromAddress: process.env.SMTP_EMAIL}))
+                                }
+                            });
+                        }).catch(error => {
+                            console.error('An error occurred while saving email verification code to database with data:', emailVerificationCodeData, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code.'))
+                        })
                     } else {
                         return resolve(HTTPWTHandler.notFound('User not found'))
                     }
@@ -353,43 +386,31 @@ class UserController {
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding the user'))
                 })
         
-                if (task == "Add Email Multi-Factor Authentication") {
-                    var emailData = {
-                        from: process.env.SMTP_EMAIL,
-                        to: email,
-                        subject: "Add Email as a Multi-Factor Authentication to your SocialSquare account",
-                        text: `Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.`,
-                        html: `<p>Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.</p>`
-                    };
-                } else {
-                    return resolve(HTTPWTHandler.badInput('Unknown task sent'))
-                }
-        
-                mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
-                    if(error){
-                        console.error("Error happened while sending email to user for task: " + task + ". User ID for user was: " + userID, '. Error object:', error);
-                        return resolve(HTTPWTHandler.serverError('An error occurred while sending email. Please try again.'))
-                    } else if (response) {
-                        console.log('Sent random string to user.')
-                        return resolve(HTTPWTHandler.OK('Email sent.', {email, fromAddress: process.env.SMTP_EMAIL}))
-                    }
-                });
-        
             } else if (getAccountMethod == "username") {
                 if (typeof username !== 'string') {
                     return resolve(HTTPWTHandler.badInput(`username must be a string. Provided type: ${typeof username}`))
                 }
                 username = username.trim();
-                User.find({name: {$eq: username}}).then(userFound => {
-                    if (userFound.length) {
+                if (username.length === 0) {
+                    return resolve(HTTPWTHandler.badInput('username cannot be blank'))
+                }
+                User.findOne({name: {$eq: username}}).lean().then(userFound => {
+                    if (userFound) {
                         // User exists
                         // Create a verification key so the user can reset their password
-                        const userID = userFound[0]._id.toString();
-                        const userEmail = userFound[0].email;
-                        const saltRounds = 10;
+                        const userID = userFound._id.toString();
+                        const userEmail = userFound.email;
+                        const saltRounds = CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS;
                         bcrypt.hash(randomString, saltRounds).then(hashedRandomString => {
-                            const success = setCacheItem('AccountVerificationCodeCache', userID, hashedRandomString);
-                            if (success) {
+                            const emailVerificationCodeData = {
+                                hashedVerificationCode: hashedRandomString,
+                                userId: userID
+                            }
+
+                            EmailVerificationCode.findOneAndReplace({userId: userID}, emailVerificationCodeData, {upsert: true}).then(() => {
+                                //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
+                                //If it does not exist, it'll get added to the database because of upsert: true
+
                                 let blurredMail = blurEmailFunction(userEmail)
                                 // --- End of blur email code ---
                                 var emailData = {
@@ -401,16 +422,16 @@ class UserController {
                                 };
                                 mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
                                     if(error){
-                                        console.error('An error occurred while sending email to user for forgotten password. Username of user was:', userFound[0].name, '. THe error object was:', error)
+                                        console.error('An error occurred while sending email to user for forgotten password. Username of user was:', userFound.name, '. THe error object was:', error)
                                         return resolve(HTTPWTHandler.serverError('An error occurred while sending email to reset password. Please try again.'))
                                     } else if (response) {
                                         return resolve(HTTPWTHandler.OK('Email sent to reset password.', {blurredEmail: blurredMail, fromAddress: process.env.SMTP_EMAIL}))
                                     }
                                 });
-                            } else {
-                                console.error('An error occurred while setting cache item for AccountVerificationCodeCache. The key is:', userID, 'and the value is:', hashedRandomString)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while setting verification code. Please try again.'))
-                            }
+                            }).catch(error => {
+                                console.error('An error occurred while saving email verification code to database with data:', emailVerificationCodeData, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code.'))
+                            })
                         }).catch((error) => {
                             console.error('An error occurred while hashing random string:', error);
                             return resolve(HTTPWTHandler.serverError('An error occurred while hashing random string.'))
@@ -436,17 +457,27 @@ class UserController {
                 }
         
                 username = username.trim()
+
+                if (username.length === 0) {
+                    return resolve(HTTPWTHandler.badInput('username cannot be blank'))
+                }
         
-                User.find({name: {$eq: username}}).then(userFound => {
-                    if (userFound.length) {
-                        const userID = userFound[0]._id.toString();
-                        const hashedVerificationCode = getCacheItem('AccountVerificationCodeCache', userID);
-                        if (hashedVerificationCode == undefined) {
-                            return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new verification code.'))
-                        } else {
-                            bcrypt.compare(verificationCode, hashedVerificationCode).then(result => {
+                User.findOne({name: {$eq: username}}).lean().then(userFound => {
+                    if (userFound) {
+                        const userID = userFound._id.toString();
+
+                        EmailVerificationCode.findOne({userId: userFound._id}).lean().then(verificationCodeFound => {
+                            if (!verificationCodeFound) {
+                                return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new verification code.'))
+                            }
+
+                            if ((Date.now() - verificationCodeFound.createdAt) / 1000 > CONSTANTS.EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS) {
+                                return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new verification code.'))
+                            }
+
+                            bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
                                 if (result) {
-                                    if (task == 'Check Before Reset Password') {
+                                    if (task === 'Check Before Reset Password') {
                                         return resolve(HTTPWTHandler.OK('Verification code is correct.'))
                                     } else {
                                         return resolve(HTTPWTHandler.badInput('Task is not supported.'))
@@ -458,7 +489,10 @@ class UserController {
                                 console.error('An error occurred while comparing a string and its hash with bcrypt. The error was:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while comparing verification code. Please try again.'))
                             })
-                        }
+                        }).catch(error => {
+                            console.error('An error occurred while finding email verification code with userId:', userFound._id, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding email verification code. Please try again.'))
+                        })
                     } else {
                         return resolve(HTTPWTHandler.notFound('There is no user with that username. Please try again.'))
                     }
@@ -472,47 +506,64 @@ class UserController {
                 }
         
                 userID = userID.trim();
-        
-                User.find({_id: {$eq: userID}}).then(userFound => {
-                    if (userFound.length) {
-                        const hashedVerificationCode = getCacheItem('EmailVerificationCodeCache', userID);
-                        if (hashedVerificationCode == undefined) {
-                            return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new code.'))
-                        } else {
-                            bcrypt.compare(verificationCode, hashedVerificationCode).then(result => {
-                                if (result) {
-                                    if (task == 'Add Email Multi-Factor Authentication') {
-                                        User.findOneAndUpdate({_id: {$eq: userID}}, {$push: {authenticationFactorsEnabled: 'Email'}, MFAEmail: String(email)}).then(function() {
-                                            var emailData = {
-                                                from: process.env.SMTP_EMAIL,
-                                                to: userFound[0].email,
-                                                subject: "Email Multi-Factor Authentication Turned On",
-                                                text: `Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.`,
-                                                html: `<p>Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.</p>`
-                                            };
-                        
-                                            mailTransporter.sendMail(emailData, function(error, response) {
-                                                if (error) {
-                                                    console.error('An error occured while sending an email to user with ID: ' + userID)
-                                                }
-                                            })
 
-                                            return resolve(HTTPWTHandler.OK('Email is now a multi-factor authentication factor for your account.'))
-                                        }).catch(error => {
-                                            console.error('An error occurred while pushing Email to authenticationFactorsEnabled and setting MFAEmail to:', String(email), 'for user with id:', userID, '. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while adding email to the list of authentication factors enabled for your account. Please try again.'))
-                                        })
-                                    } else {
-                                        return resolve(HTTPWTHandler.badInput('Task is not supported.'))
-                                    }
+                if (userID.length === 0) {
+                    return resolve(HTTPWTHandler.badInput('userID cannot be blank.'))
+                }
+        
+                User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
+                    if (userFound) {
+                        EmailVerificationCode.findOne({userId: userID}).lean().then(verificationCodeFound => {
+                            if (!verificationCodeFound) {
+                                return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
+                            }
+
+                            if ((Date.now() - verificationCodeFound.createdAt) / 1000 > CONSTANTS.EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS)  {
+                                return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
+                            }
+
+                            bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
+                                if (result) {
+                                    EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
+                                        if (task == 'Add Email Multi-Factor Authentication') {
+                                            User.findOneAndUpdate({_id: {$eq: userID}}, {$push: {authenticationFactorsEnabled: 'Email'}, MFAEmail: String(email)}).then(function() {
+                                                var emailData = {
+                                                    from: process.env.SMTP_EMAIL,
+                                                    to: userFound.email,
+                                                    subject: "Email Multi-Factor Authentication Turned On",
+                                                    text: `Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.`,
+                                                    html: `<p>Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.</p>`
+                                                };
+                            
+                                                mailTransporter.sendMail(emailData, function(error, response) {
+                                                    if (error) {
+                                                        console.error('An error occured while sending an email to user with ID: ' + userID)
+                                                    }
+                                                })
+    
+                                                return resolve(HTTPWTHandler.OK('Email is now a multi-factor authentication factor for your account.'))
+                                            }).catch(error => {
+                                                console.error('An error occurred while pushing Email to authenticationFactorsEnabled and setting MFAEmail to:', String(email), 'for user with id:', userID, '. The error was:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while adding email to the list of authentication factors enabled for your account. Please try again.'))
+                                            })
+                                        } else {
+                                            return resolve(HTTPWTHandler.badInput('Task is not supported.'))
+                                        }
+                                    }).catch(error => {
+                                        console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting used email verification code. Please try again.'))
+                                    })
                                 } else {
                                     return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
                                 }
                             }).catch(error => {
-                                console.error('An error occured while comparing user-supplied verification code to hashed verification code:', error)
+                                console.error('An error occurred while comparing two strings with bcrypt:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while comparing verification code. Please try again.'))
                             })
-                        }
+                        }).catch(error => {
+                            console.error('An error occurred while finding one email verification code with userId:', userID, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding email verification code. Please try again.'))
+                        })
                     } else {
                         return resolve(HTTPWTHandler.notFound('User not found.'))
                     }
@@ -525,50 +576,60 @@ class UserController {
                     return resolve(HTTPWTHandler.badInput(`secondId must be a string. Provided type: ${typeof secondId}`))
                 }
         
-                User.find({secondId: {$eq: secondId}}).then(userFound => {
-                    if (userFound.length) {
-                        const hashedVerificationCode = getCacheItem('EmailVerificationCodeCache', secondId);
-                        if (hashedVerificationCode == undefined) {
-                            return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new code.'))
-                        } else {
-                            bcrypt.compare(verificationCode, hashedVerificationCode).then(result => {
-                                if (result) {
-                                    if (task == "Verify Email MFA Code") {
-                                        const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(data[0]._id)
-        
-                                        const newRefreshTokenObject = {
-                                            encryptedRefreshToken,
-                                            userId: userFound[0]._id,
-                                            createdAt: Date.now(),
-                                            admin: false
-                                        }
+                User.findOne({secondId: {$eq: secondId}}).lean().then(userFound => {
+                    if (userFound) {
+                        EmailVerificationCode.findOne({userId: userFound._id}).lean().then(verificationCodeFound => {
+                            if (!verificationCodeFound) {
+                                return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
+                            }
 
-                                        const formattedIP = HTTPHandler.formatIP(IP)
-        
-                                        if (userFound[0]?.settings?.loginActivitySettings?.getIP) {
-                                            newRefreshTokenObject.IP = formattedIP
+                            if ((Date.now() - verificationCodeFound.createdAt) / 1000 > CONSTANTS.EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS)  {
+                                return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
+                            }
+
+                            bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
+                                if (result) {
+                                    EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
+                                        if (task == "Verify Email MFA Code") {
+                                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(data._id)
+            
+                                            const newRefreshTokenObject = {
+                                                encryptedRefreshToken,
+                                                userId: userFound._id,
+                                                createdAt: Date.now(),
+                                                admin: false
+                                            }
+    
+                                            const formattedIP = HTTPHandler.formatIP(IP)
+            
+                                            if (userFound?.settings?.loginActivitySettings?.getIP) {
+                                                newRefreshTokenObject.IP = formattedIP
+                                            }
+            
+                                            if (userFound?.settings?.loginActivitySettings?.getLocation) {
+                                                const location = geoIPLite.lookup(formattedIP)
+                                                newRefreshTokenObject.location = location.city + ', ' + location.country
+                                            }
+            
+                                            if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
+                                                newRefreshTokenObject.deviceType = deviceType;
+                                            }
+            
+                                            const newRefreshToken = new RefreshToken(newRefreshTokenObject)
+            
+                                            newRefreshToken.save().then(() => {
+                                                return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`}))
+                                            }).catch(error => {
+                                                console.error('An error occurred while saving new refresh token. The refresh token object is:', newRefreshTokenObject, 'The error was:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
+                                            })
+                                        } else {
+                                            return resolve(HTTPWTHandler.badInput('Unsupported task sent.'))
                                         }
-        
-                                        if (userFound[0]?.settings?.loginActivitySettings?.getLocation) {
-                                            const location = geoIPLite.lookup(formattedIP)
-                                            newRefreshTokenObject.location = location.city + ', ' + location.country
-                                        }
-        
-                                        if (userFound[0]?.settings?.loginActivitySettings?.getDeviceType) {
-                                            newRefreshTokenObject.deviceType = req.device.name
-                                        }
-        
-                                        const newRefreshToken = new RefreshToken(newRefreshTokenObject)
-        
-                                        newRefreshToken.save().then(() => {
-                                            return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound[0]), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`}))
-                                        }).catch(error => {
-                                            console.error('An error occurred while saving new refresh token. The refresh token object is:', newRefreshTokenObject, 'The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
-                                        })
-                                    } else {
-                                        return resolve(HTTPWTHandler.badInput('Unsupported task sent.'))
-                                    }
+                                    }).catch(error => {
+                                        console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting used email verification code. Please try again.'))
+                                    })
                                 } else {
                                     return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
                                 }
@@ -576,7 +637,10 @@ class UserController {
                                 console.error('An error occured while comparing a string against its hash. The error was:', error)
                                 return resolve(HTTPWTHandler.serverError("An error occurred while comparing verification code against it's hash. Please try again later."))
                             })
-                        }
+                        }).catch(error => {
+                            console.error('An error occurred while finding one email verification code with userId:', userFound._id, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding email verification code. Please try again.'))
+                        })
                     } else {
                         return resolve(HTTPWTHandler.notFound('User not found.'))
                     }
@@ -631,25 +695,34 @@ class UserController {
                 if (userFound) {
                     //User exists
                     const userID = userFound._id.toString();
-                    const hashedVerificationCode = getCacheItem('AccountVerificationCodeCache', userID);
-                    if (hashedVerificationCode == undefined) {
-                        return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new code.'))
-                    } else {
-                        bcrypt.compare(verificationCode, hashedVerificationCode).then(result => {
+
+                    EmailVerificationCode.findOne({userId: userID}).lean().then(verificationCodeFound => {
+                        if (!verificationCodeFound) {
+                            return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
+                        }
+
+                        if ((Date.now() - verificationCodeFound.createdAt) / 1000 > CONSTANTS.EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS)  {
+                            return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
+                        }
+
+                        bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
                             if (result) {
                                 //Verification code is correct
-                                delCacheItem('AccountVerificationCodeCache', userID);
-                                const saltRounds = 10;
-                                bcrypt.hash(newPassword, saltRounds).then(hashedPassword => {
-                                    User.findOneAndUpdate({_id: {$eq: userID}}, {password: hashedPassword}).then(() => {
-                                        return resolve(HTTPWTHandler.OK('Password changed successfully.'))
+                                EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
+                                    bcrypt.hash(newPassword, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS).then(hashedPassword => {
+                                        User.findOneAndUpdate({_id: {$eq: userID}}, {password: hashedPassword}).then(() => {
+                                            return resolve(HTTPWTHandler.OK('Password changed successfully.'))
+                                        }).catch(error => {
+                                            console.error('An error occured while updating user with id:', userID, ' to have password:', hashedPassword, '. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                                        })
                                     }).catch(error => {
-                                        console.error('An error occured while updating user with id:', userID, ' to have password:', hashedPassword, '. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                                        console.error('An error occured while hashing a password:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while hashing the password. Please try again.'))
                                     })
                                 }).catch(error => {
-                                    console.error('An error occured while hashing a password:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while hashing the password. Please try again.'))
+                                    console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting used code. Please try again.'))
                                 })
                             } else {
                                 return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
@@ -658,7 +731,10 @@ class UserController {
                             console.error('An error occured while comparing hashes:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while comoaring verificaation to hash. Please try again.'))
                         })
-                    }
+                    }).catch(error => {
+                        console.error('An error occurred while finding one email verification code with userId:', userID, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding email verification code. Please try again.'))
+                    })
                 } else {
                     return resolve(HTTPWTHandler.notFound('There is no user with that username.'))
                 }
