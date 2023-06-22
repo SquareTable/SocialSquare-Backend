@@ -319,7 +319,7 @@ class UserController {
         })
     }
 
-    static #sendemailverificationcode = (userID, task, getAccountMethod, username, email) => {
+    static #sendemailverificationcode = (userID, task, getAccountMethod, username, email, secondId) => {
         return new Promise(async resolve => {
             try {
                 var randomString = await axios.get('https://www.random.org/integers/?num=1&min=268500000&max=1000000000&col=1&base=16&format=plain&rnd=new')
@@ -334,128 +334,103 @@ class UserController {
                 console.error('An error occurred while getting a random string. Data returned from random.org axios call:' + randomString.data, '.The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
             }
+
+            let user;
         
-            if (getAccountMethod == 'userID') {
-                if (typeof userID !== 'string') {
-                    return resolve(HTTPWTHandler.badInput(`userID must be a string. Provided type: ${typeof userID}`))
+            try {
+                console.log('Task:', task, '  |   getAccountMethod:', getAccountMethod)
+                if (getAccountMethod === 'userID') {
+                    if (typeof userID !== 'string') return resolve(HTTPWTHandler.badInput(`userID must be a string. Provided type: ${typeof userID}`))
+                    if (userID.length === 0) return resolve(HTTPWTHandler.badInput('userID cannot be blank'))
+
+                    user = await User.findOne({_id: {$eq: userID}}).lean()
+                } else if (getAccountMethod === 'username') {
+                    if (typeof username !== 'string') return resolve(HTTPWTHandler.badInput(`username must be a string. Provided type: ${typeof username}`))
+                    if (username.length === 0) return resolve(HTTPWTHandler.badInput('username cannot be blank'))
+
+                    user = await User.findOne({name: {$eq: username}}).lean()
+                } else if (getAccountMethod === 'secondId') {
+                    if (typeof secondId !== 'string') return resolve(HTTPWTHandler.badInput(`secondId must be a string. Provided type: ${typeof secondId}`))
+                    if (secondId.length === 0) return resolve(HTTPWTHandler.badInput('secondId cannot be blank'))
+
+                    user = await User.findOne({secondId: {$eq: secondId}}).lean()
+                } else {
+                    return resolve(HTTPWTHandler.badInput('Unrecognized getAccountMethod sent'))
                 }
-        
-                userID = userID.trim();
-
-                if (userID.length === 0) {
-                    return resolve(HTTPWTHandler.badInput('userID must not be blank'))
-                }
-        
-                User.findOne({_id: {$eq: userID}}).lean().then(async (userFound) => {
-                    if (userFound) {
-                        try {
-                            var hashedRandomString = await bcrypt.hash(randomString, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS);
-                        } catch (error) {
-                            console.error('An error occured while hashing random string:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while hashing the random string. Please try again.'))
-                        }
-                        const emailVerificationCodeData = {
-                            userId: userID,
-                            hashedVerificationCode: hashedRandomString
-                        };
-
-                        EmailVerificationCode.findOneAndReplace({userId: userID}, emailVerificationCodeData, {upsert: true}).then(() => {
-                            //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
-                            //If it does not exist, it'll get added to the database because of upsert: true
-
-                            if (task == "Add Email Multi-Factor Authentication") {
-                                var emailData = {
-                                    from: process.env.SMTP_EMAIL,
-                                    to: email,
-                                    subject: "Add Email as a Multi-Factor Authentication to your SocialSquare account",
-                                    text: `Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.`,
-                                    html: `<p>Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.</p>`
-                                };
-                            } else {
-                                return resolve(HTTPWTHandler.badInput('Unknown task sent'))
-                            }
-                    
-                            mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
-                                if(error){
-                                    console.error("Error happened while sending email to user for task: " + task + ". User ID for user was: " + userID, '. Error object:', error);
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while sending email. Please try again.'))
-                                } else if (response) {
-                                    console.log('Sent random string to user.')
-                                    return resolve(HTTPWTHandler.OK('Email sent.', {email, fromAddress: process.env.SMTP_EMAIL}))
-                                }
-                            });
-                        }).catch(error => {
-                            console.error('An error occurred while saving email verification code to database with data:', emailVerificationCodeData, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code.'))
-                        })
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('User not found'))
-                    }
-                }).catch(error => {
-                    console.error('An error occured while finding user with user ID:', userID, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding the user'))
-                })
-        
-            } else if (getAccountMethod == "username") {
-                if (typeof username !== 'string') {
-                    return resolve(HTTPWTHandler.badInput(`username must be a string. Provided type: ${typeof username}`))
-                }
-                username = username.trim();
-                if (username.length === 0) {
-                    return resolve(HTTPWTHandler.badInput('username cannot be blank'))
-                }
-                User.findOne({name: {$eq: username}}).lean().then(userFound => {
-                    if (userFound) {
-                        // User exists
-                        // Create a verification key so the user can reset their password
-                        const userID = userFound._id.toString();
-                        const userEmail = userFound.email;
-                        const saltRounds = CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS;
-                        bcrypt.hash(randomString, saltRounds).then(hashedRandomString => {
-                            const emailVerificationCodeData = {
-                                hashedVerificationCode: hashedRandomString,
-                                userId: userID
-                            }
-
-                            EmailVerificationCode.findOneAndReplace({userId: userID}, emailVerificationCodeData, {upsert: true}).then(() => {
-                                //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
-                                //If it does not exist, it'll get added to the database because of upsert: true
-
-                                let blurredMail = blurEmailFunction(userEmail)
-                                // --- End of blur email code ---
-                                var emailData = {
-                                    from: process.env.SMTP_EMAIL,
-                                    to: userEmail,
-                                    subject: "Reset password for your SocialSquare account",
-                                    text: `Your account requested a password reset. Please enter this code into SocialSquare to reset your password: ${randomString}. If you did not request a password reset, please ignore this email.`,
-                                    html: `<p>Your account requested a password reset. Please enter this code into SocialSquare to reset your password: ${randomString}. If you did not request a password reset, please ignore this email.</p>`
-                                };
-                                mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
-                                    if(error){
-                                        console.error('An error occurred while sending email to user for forgotten password. Username of user was:', userFound.name, '. THe error object was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while sending email to reset password. Please try again.'))
-                                    } else if (response) {
-                                        return resolve(HTTPWTHandler.OK('Email sent to reset password.', {blurredEmail: blurredMail, fromAddress: process.env.SMTP_EMAIL}))
-                                    }
-                                });
-                            }).catch(error => {
-                                console.error('An error occurred while saving email verification code to database with data:', emailVerificationCodeData, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code.'))
-                            })
-                        }).catch((error) => {
-                            console.error('An error occurred while hashing random string:', error);
-                            return resolve(HTTPWTHandler.serverError('An error occurred while hashing random string.'))
-                        })
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('There is no user with this username.'))
-                    }
-                }).catch(err => {
-                    console.error('An error occurred while finding users with name:', username, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again'))
-                })
-            } else {
-                return resolve(HTTPWTHandler.badInput('Unrecognized getAccountMethod sent'))
+            } catch (error) {
+                console.error('An error occurred while finding one user with getAccountMethod:', getAccountMethod, 'and the value of the getAccountMethod being:', getAccountMethod === 'userID' ? userID : getAccountMethod === 'username' ? username : secondId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding the user. Please try again.'))
             }
+
+            if (!user) {
+                return resolve(HTTPWTHandler.notFound('Could not find user'))
+            }
+
+            //Would use bcrypt.hash (async version) but since each request makes a new thread, having it sync doesn't matter and it won't affect other requests being processed
+            let hashedRandomString;
+            try {
+                hashedRandomString = bcrypt.hashSync(randomString, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS)
+            } catch (error) {
+                console.error('An error occurred while hashing random string:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while hashing verification code. Please try again.'))
+            }
+
+            const emailVerificationCodeData = {
+                userId: user._id,
+                hashedVerificationCode: hashedRandomString
+            }
+
+            EmailVerificationCode.findOneAndReplace({userId: {$eq: user._id}}, emailVerificationCodeData, {upsert: true}).then(() => {
+                //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
+                //If it does not exist, it'll get added to the database because of upsert: true
+
+                let emailData;
+
+                let blurredMail;
+
+                if (task == "Add Email Multi-Factor Authentication") {
+                    emailData = {
+                        from: process.env.SMTP_EMAIL,
+                        to: email,
+                        subject: "Add Email as a Multi-Factor Authentication to your SocialSquare account",
+                        text: `Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.`,
+                        html: `<p>Your account requested to add email as a factor for multi-factor authentication. Please enter this code into SocialSquare to add email as a factor for multi-factor authentication: ${randomString}. If you did not request this, please change your password as only users who are logged into your account can make this request.</p>`
+                    };
+                    blurredMail = blurEmailFunction(email)
+                } else if (task == 'Check Before Reset Password') {
+                    emailData = {
+                        from: process.env.SMTP_EMAIL,
+                        to: user.email,
+                        subject: "Reset password for your SocialSquare account",
+                        text: `Your account requested a password reset. Please enter this code into SocialSquare to reset your password: ${randomString}. If you did not request a password reset, please ignore this email.`,
+                        html: `<p>Your account requested a password reset. Please enter this code into SocialSquare to reset your password: ${randomString}. If you did not request a password reset, please ignore this email.</p>`
+                    };
+                    blurredMail = blurEmailFunction(user.email)
+                } else if (task == 'Verify Email MFA Code') {
+                    emailData = {
+                        from: process.env.SMTP_EMAIL,
+                        to: user.MFAEmail,
+                        subject: "Code to login to your SocialSquare account",
+                        text: `Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.`,
+                        html: `<p>Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.</p>`
+                    };
+                    blurredMail = blurEmailFunction(user.MFAEmail)
+                } else {
+                    return resolve(HTTPWTHandler.badInput('Unrecognized task sent'))
+                }
+
+                mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
+                    if(error){
+                        console.error('An error occurred while sending email verification code to user. Email Data was:', emailData, 'The error object was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while sending email verification code. Please try again.'))
+                    } else if (response) {
+                        return resolve(HTTPWTHandler.OK('Email verification code has been sent.', {blurredEmail: blurredMail, fromAddress: process.env.SMTP_EMAIL}))
+                    }
+                });
+            }).catch(error => {
+                console.error('An error occurred while finding email verification code with userId:', user._id, 'and replacing it with:', emailVerificationCodeData, 'with upsert set to true. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code. Please try again.'))
+            })
         })
     }
 
@@ -769,8 +744,8 @@ class UserController {
         return await this.#checkusernameavailability(name)
     }
 
-    static sendemailverificationcode = async (userID, task, getAccountMethod, username, email) => {
-        return await this.#sendemailverificationcode(userID, task, getAccountMethod, username, email)
+    static sendemailverificationcode = async (userID, task, getAccountMethod, username, email, secondId) => {
+        return await this.#sendemailverificationcode(userID, task, getAccountMethod, username, email, secondId)
     }
 
     static checkverificationcode = async (username, verificationCode, task, getAccountMethod, userID, email, secondId, IP, deviceType) => {

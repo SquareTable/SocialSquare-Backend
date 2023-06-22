@@ -116,12 +116,12 @@ router.post('/checkusernameavailability', rateLimiters['/checkusernameavailabili
 });
 
 router.post('/sendemailverificationcode', rateLimiters['/sendemailverificationcode'], (req, res) => {
-    const {userID, task, getAccountMethod, username, email} = req.body;
+    const {userID, task, getAccountMethod, username, email, secondId} = req.body;
     
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'sendemailverificationcode',
-            functionArgs: [userID, task, getAccountMethod, username, email]
+            functionArgs: [userID, task, getAccountMethod, username, email, secondId]
         }
     })
 
