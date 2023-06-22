@@ -184,7 +184,7 @@ class UserController {
                                     if (data.authenticationFactorsEnabled.includes('Email')) {
                                         try {
                                             var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
-                                            randomString = randomString.data.trim();
+                                            randomString = String(randomString.data).trim();
                                             console.log('Random string generated: ' + randomString)
                                     
                                             if (randomString.length != 8) {
@@ -323,7 +323,7 @@ class UserController {
         return new Promise(async resolve => {
             try {
                 var randomString = await axios.get('https://www.random.org/integers/?num=1&min=268500000&max=1000000000&col=1&base=16&format=plain&rnd=new')
-                randomString = randomString.data.trim();
+                randomString = String(randomString.data).trim();
                 console.log('Random string generated: ' + randomString)
         
                 if (randomString.length != 8) {
