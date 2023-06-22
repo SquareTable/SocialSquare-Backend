@@ -196,36 +196,46 @@ class UserController {
                                             return resolve(HTTPWTHandler.serverError('An error occurred while generating a random string. Please try again'))
                                         }
         
-                                        const saltRounds = 10;
                                         try {
-                                            var hashedRandomString = await bcrypt.hash(randomString, saltRounds);
+                                            var hashedRandomString = await bcrypt.hash(randomString, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS);
                                         } catch (error) {
                                             console.error('An error occurred while hashing random string. The error was:', error)
                                             return resolve(HTTPWTHandler.serverError('An error occurred while hashing the random string. Please try again'))
                                         }
-                                        const success = setCacheItem('EmailVerificationCodeCache', data.secondId, hashedRandomString);
-                                        if (!success) {
-                                            console.error('Setting cache item EmailVerificationCodeCache with key:', data.secondId, 'and value:', hashedRandomString, 'failed.')
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while setting random string. Please try again'))
-                                        }
-        
-                                        var emailData = {
-                                            from: process.env.SMTP_EMAIL,
-                                            to: data.MFAEmail,
-                                            subject: "Code to login to your SocialSquare account",
-                                            text: `Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.`,
-                                            html: `<p>Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.</p>`
-                                        };
-        
-                                        mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
-                                            if(error){
-                                                console.error('An error occurred while sending email to user for task:', task, '. User ID for user was:', userID, '. Error type:', error.name, '. SMTP log:', error.data)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while sending email. Please try again'))
-                                            }
 
-                                            console.log('Sent random string to user.')
-                                            return resolve(HTTPWTHandler.OK('Email', {email: blurEmailFunction(data.MFAEmail), fromAddress: process.env.SMTP_EMAIL, secondId: data.secondId}))
-                                        });
+                                        const userId = data._id
+
+                                        const emailVerificationCodeData = {
+                                            userId,
+                                            hashedVerificationCode: hashedRandomString
+                                        }
+
+                                        EmailVerificationCode.findOneAndReplace({userId: {$eq: userId}}, emailVerificationCodeData, {upsert: true}).then(() => {
+                                            //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
+                                            //If it does not exist, it'll get added to the database because of upsert: true
+
+                                            var emailData = {
+                                                from: process.env.SMTP_EMAIL,
+                                                to: data.MFAEmail,
+                                                subject: "Code to login to your SocialSquare account",
+                                                text: `Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.`,
+                                                html: `<p>Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.</p>`
+                                            };
+            
+                                            mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
+                                                if(error){
+                                                    console.error('An error occurred while sending email to user for task:', task, '. User ID for user was:', userId, '. Error type:', error.name, '. SMTP log:', error.data)
+                                                    return resolve(HTTPWTHandler.serverError('An error occurred while sending email verification code. Please try again'))
+                                                }
+    
+                                                console.log('Sent random string to user.')
+                                                return resolve(HTTPWTHandler.OK('Email', {email: blurEmailFunction(data.MFAEmail), fromAddress: process.env.SMTP_EMAIL, secondId: data.secondId}))
+                                            });
+                                        }).catch(error => {
+                                            console.error('An error occurred while doing findOneAndReplace for EmailVerificationCode querying {userId:', userId, '}. emailVerificationCodeData is:', emailVerificationCodeData, '. Options: {upsert: true}. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code. Please try again.'))
+                                        })
+                                
                                     } else {
                                         const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(data._id)
         
@@ -580,10 +590,12 @@ class UserController {
                     if (userFound) {
                         EmailVerificationCode.findOne({userId: userFound._id}).lean().then(verificationCodeFound => {
                             if (!verificationCodeFound) {
+                                console.log('Verification code expired - code not found in database')
                                 return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
                             }
 
                             if ((Date.now() - verificationCodeFound.createdAt) / 1000 > CONSTANTS.EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS)  {
+                                console.log('Verification code still in database - has expired though')
                                 return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
                             }
 
@@ -591,7 +603,7 @@ class UserController {
                                 if (result) {
                                     EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
                                         if (task == "Verify Email MFA Code") {
-                                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(data._id)
+                                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userFound._id)
             
                                             const newRefreshTokenObject = {
                                                 encryptedRefreshToken,
