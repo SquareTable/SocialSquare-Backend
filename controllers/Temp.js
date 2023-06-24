@@ -549,7 +549,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('Empty input fields!'))
             } else {
                 //Try to create a new post
-                User.findOne({_id: {$eq: creatorId}}).lean().then(data => {
+                User.findOne({_id: {$eq: userId}}).lean().then(data => {
                     if (data) {
                         const pollObject = {
                             pollTitle,
@@ -573,7 +573,7 @@ class TempController {
                             optionSixesColor,
                             optionSixesVotes,
                             totalNumberOfOptions,
-                            creatorId,
+                            creatorId: userId,
                             comments: comments,
                             datePosted: Date.now(),
                             allowScreenShots: allowScreenShots
@@ -593,7 +593,7 @@ class TempController {
                     } 
                 })
                 .catch(err => {
-                    console.error('An error occured while finding a user with _id:', creatorId, '. The error was:', err)
+                    console.error('An error occured while finding a user with _id:', userId, '. The error was:', err)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
                 });
             }
