@@ -428,48 +428,48 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`optionOne must be a string. Provided type: ${typeof optionOne}`))
             }
 
-            if (!allowedColors.includes(optionOnesColor) || optionOnesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionOnesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionOnesColor) && optionOnesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionOnesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionOnesColor}`))
             }
 
             if (typeof optionTwo !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionTwo must be a string. Provied type: ${typeof optionTwo}`))
             }
 
-            if (!allowedColors.includes(optionTwosColor) || optionTwosColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionTwosColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionTwosColor) && optionTwosColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionTwosColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionTwosColor}`))
             }
 
             if (typeof optionThree !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionThree must be a string. Provied type: ${typeof optionThree}`))
             }
 
-            if (!allowedColors.includes(optionThreesColor) || optionThreesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionThreesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionThreesColor) && optionThreesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionThreesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionThreesColor}`))
             }
 
             if (typeof optionFour !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionFour must be a string. Provied type: ${typeof optionFour}`))
             }
 
-            if (!allowedColors.includes(optionFoursColor) || optionFoursColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionFoursColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionFoursColor) && optionFoursColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionFoursColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionFoursColor}`))
             }
 
             if (typeof optionFive !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionFive must be a string. Provied type: ${typeof optionFive}`))
             }
 
-            if (!allowedColors.includes(optionFivesColor) || optionFivesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionFivesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionFivesColor) && optionFivesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionFivesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionFivesColor}`))
             }
 
             if (typeof optionSix !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSix must be a string. Provied type: ${typeof optionSix}`))
             }
 
-            if (!allowedColors.includes(optionSixesColor) || optionSixesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionSixesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionSixesColor) && optionSixesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionSixesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionSixesColor}`))
             }
 
             const allowedNumbersOfOptions = ['Two', 'Three', 'Four', 'Five', 'Six']
