@@ -503,7 +503,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('optionTwo must not be blank'))
             }
 
-            const pollOptions = allowedNumbersOfOptions.findIndex(totalNumberOfOptions) + 2
+            const pollOptions = allowedNumbersOfOptions.indexOf(totalNumberOfOptions) + 2
 
             if (optionThree.length == 0 && pollOptions >= 3) {
                 return resolve(HTTPWTHandler.badInput('optionThree must not be blank'))
