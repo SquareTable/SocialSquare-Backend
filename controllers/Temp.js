@@ -581,8 +581,8 @@ class TempController {
 
                         const newPoll = new Poll(pollObject);
                 
-                        newPoll.save().then(result => {
-                            return resolve(HTTPWTHandler.OK('Poll creation successful', result))
+                        newPoll.save().then(() => {
+                            return resolve(HTTPWTHandler.OK('Poll creation successful'))
                         })
                         .catch(err => {
                             console.error('An error occured while creating a new poll post:', pollObject, '. The error was:', err)
