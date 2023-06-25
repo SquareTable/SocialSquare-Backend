@@ -37,6 +37,7 @@ const UserLibrary = require('../libraries/User')
 const userHandler = new UserLibrary();
 
 const bcrypt = require('bcrypt')
+const mongoose = require('mongoose')
 
 const { sendNotifications } = require("../notificationHandler");
 
@@ -634,8 +635,11 @@ class TempController {
                                     }
 
                                     if (previousPostId) {
-                                        dbQuery._id = {$gt: previousPostId}
+                                        dbQuery._id = {$lt: mongoose.Types.ObjectId(previousPostId)}
                                     }
+
+                                    console.log('previousPostId:', previousPostId)
+                                    console.log('dbQuery:', dbQuery)
 
                                     Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
                                         if (data.length) {
