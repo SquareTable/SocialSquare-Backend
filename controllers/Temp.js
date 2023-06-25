@@ -639,9 +639,14 @@ class TempController {
 
                                     Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
                                         if (data.length) {
-                                            return resolve(HTTPWTHandler.OK('Poll search successful', data))
+                                            const toSend = {
+                                                posts: data,
+                                                noMorePosts: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
+                                            }
+
+                                            return resolve(HTTPWTHandler.OK('Poll search successful', toSend))
                                         } else {
-                                            return resolve(HTTPWTHandler.notFound('No Poll Posts'))
+                                            return resolve(HTTPWTHandler.OK('No more poll posts could be found', {posts: [], noMorePosts: true}))
                                         }
                                     }).catch(error => {
                                         console.error('An error occured while finding polls with a creatorId of:', result._id, '. The error was:', error)
