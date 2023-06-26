@@ -83,7 +83,7 @@ class User {
             name: userObject.name,
             profileImageKey: userObject.profileImageKey,
             pubId: userObject.secondId,
-            privateAccount: userObject.privateAccount,
+            privateAccount: typeof userObject.privateAccount === 'boolean' ? userObject.privateAccount : false,
             badges: userObject.secondId === requestingUserObject.secondId ? userObject.badges : userObject?.settings?.privacySettings?.showBadges === 'no-one' ? [] : userObject?.settings?.privacySettings?.showBadges === 'everyone' ? userObject.badges : isFollowing ? userObject.badges : [],
             followers: userObject.followers.length,
             following: userObject.following.length,
