@@ -46,7 +46,8 @@ const CONSTANTS = {
         getLocation: [false, true]
     },
     EMAIL_VERIFICATION_CODE_SALT_ROUNDS: 10,
-    EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS: 60 * 5 //5 minutes
+    EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS: 60 * 5, //5 minutes
+    NUM_POLLS_TO_SEND_PER_API_CALL: 10
 }
 
 module.exports = CONSTANTS

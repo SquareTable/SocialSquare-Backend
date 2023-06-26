@@ -37,6 +37,7 @@ const UserLibrary = require('../libraries/User')
 const userHandler = new UserLibrary();
 
 const bcrypt = require('bcrypt')
+const mongoose = require('mongoose')
 
 const { sendNotifications } = require("../notificationHandler");
 
@@ -600,12 +601,16 @@ class TempController {
         })
     }
 
-    static #searchforpollposts = (userId, pubId) => {
+    static #searchforpollposts = (userId, pubId, previousPostId) => {
         //userId is the ID of the user requesting the poll posts
         //pubId is the secondId of the user with the poll posts that are being searched for
         return new Promise(resolve => {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
+            }
+
+            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`previousPostId must be either a string or undefined`))
             }
         
             //Check Input fields
@@ -625,11 +630,27 @@ class TempController {
                                     return resolve(HTTPWTHandler.notFound('No Poll Posts'))
                                 } else {
                                     // User exists
-                                    Poll.find({creatorId: result._id}).sort({datePosted: -1}).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
+                                    const dbQuery = {
+                                        creatorId: {$eq: result._id}
+                                    }
+
+                                    if (previousPostId) {
+                                        dbQuery._id = {$lt: mongoose.Types.ObjectId(previousPostId)}
+                                    }
+
+                                    console.log('previousPostId:', previousPostId)
+                                    console.log('dbQuery:', dbQuery)
+
+                                    Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
                                         if (data.length) {
-                                            return resolve(HTTPWTHandler.OK('Poll search successful', data))
+                                            const toSend = {
+                                                posts: data,
+                                                noMorePosts: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
+                                            }
+
+                                            return resolve(HTTPWTHandler.OK('Poll search successful', toSend))
                                         } else {
-                                            return resolve(HTTPWTHandler.notFound('No Poll Posts'))
+                                            return resolve(HTTPWTHandler.OK('No more poll posts could be found', {posts: [], noMorePosts: true}))
                                         }
                                     }).catch(error => {
                                         console.error('An error occured while finding polls with a creatorId of:', result._id, '. The error was:', error)
@@ -6233,8 +6254,8 @@ class TempController {
         return await this.#createpollpost(userId, pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots)
     }
 
-    static searchforpollposts = async (userId, pubId) => {
-        return await this.#searchforpollposts(userId, pubId)
+    static searchforpollposts = async (userId, pubId, previousPostId) => {
+        return await this.#searchforpollposts(userId, pubId, previousPostId)
     }
 
     static pollpostcomment = async (userId, comment, userName, pollId) => {
