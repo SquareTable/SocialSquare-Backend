@@ -28,7 +28,8 @@ class ImagePostClass {
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
-                                _id: post._id.toString()
+                                _id: post._id.toString(),
+                                comments: post.comments ? post.comments.map(comment => ({...comment, commentId: String(comment.commentId)})) : []
                             })
                         }).catch(error => {
                             reject(`An error occured while executing Promise.all in ImagePostLibrary.processMultiplePostDataFromOneOwner: ${error}`)
