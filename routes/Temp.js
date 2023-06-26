@@ -2404,10 +2404,11 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
 });
 
 router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
+    const authRefreshTokenHeader = req.headers["auth-refresh-token"]
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'loginactivity',
-            functionArgs: [req.tokenData]
+            functionArgs: [req.tokenData, authRefreshTokenHeader]
         }
     })
 

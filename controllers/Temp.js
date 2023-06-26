@@ -43,6 +43,8 @@ const { sendNotifications } = require("../notificationHandler");
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 
+const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
+
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
         return Promise(resolve => {
@@ -5981,7 +5983,7 @@ class TempController {
         })
     }
 
-    static #loginactivity = (userId) => {
+    static #loginactivity = (userId, authRefreshTokenHeader) => {
         return new Promise(resolve => {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
@@ -5993,7 +5995,7 @@ class TempController {
         
                     for (let i = 0; i < encryptedRefreshTokens.length; i++) {
                         let decryptedToken = `Bearer ${refreshTokenDecryption(encryptedRefreshTokens[i].encryptedRefreshToken)}`
-                        if (decryptedToken == req.headers["auth-refresh-token"]) {
+                        if (decryptedToken == authRefreshTokenHeader) {
                             refreshTokens.unshift({refreshTokenId: encryptedRefreshTokens[i]._id, currentDevice: true, location: encryptedRefreshTokens[i].location, IP: encryptedRefreshTokens[i].IP, deviceType: encryptedRefreshTokens[i].deviceType, loginTime: encryptedRefreshTokens[i].createdAt})
                         } else {
                             refreshTokens.push({refreshTokenId: encryptedRefreshTokens[i]._id, currentDevice: false, location: encryptedRefreshTokens[i].location, IP: encryptedRefreshTokens[i].IP, deviceType: encryptedRefreshTokens[i].deviceType, loginTime: encryptedRefreshTokens[i].createdAt})
@@ -6558,8 +6560,8 @@ class TempController {
         return await this.#getProfileStats(userId, pubId, skip, stat)
     }
 
-    static loginactivity = async (userId) => {
-        return await this.#loginactivity(userId)
+    static loginactivity = async (userId, authRefreshTokenHeader) => {
+        return await this.#loginactivity(userId, authRefreshTokenHeader)
     }
 
     static logoutdevice = async (userId, tokenToLogout) => {
