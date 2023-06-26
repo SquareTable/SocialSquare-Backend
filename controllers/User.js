@@ -181,7 +181,7 @@ class UserController {
                         bcrypt.compare(password, hashedPassword).then(async (result) => {
                                 if (result) {
                                     // Password match
-                                    if (data.authenticationFactorsEnabled.includes('Email')) {
+                                    if (data.authenticationFactorsEnabled?.includes('Email')) {
                                         try {
                                             var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
                                             randomString = String(randomString.data).trim();
