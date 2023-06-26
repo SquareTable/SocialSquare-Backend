@@ -380,7 +380,7 @@ class TempController {
                             if (data.length) {
                                 var itemsProcessed = 0;
                                 data.forEach(function (item, index) {
-                                    if (data[index].blockedAccounts.includes(userFound.secondId)) {
+                                    if (data[index].blockedAccounts?.includes(userFound.secondId)) {
                                         itemsProcessed++;
                                     } else {
                                         foundArray.push(userHandler.returnPublicInformation(data[index], userFound))
@@ -618,7 +618,7 @@ class TempController {
                         //User Exists
                         User.findOne({_id: {$eq: userId}}).lean().then(userGettingPollPosts => {
                             if (userGettingPollPosts) {
-                                if (result.blockedAccounts.includes(userGettingPollPosts.secondId)) {
+                                if (result.blockedAccounts?.includes(userGettingPollPosts.secondId)) {
                                     // User is blocked or the account is private but the user requesting doesn't follow the user so do not send posts
                                     return resolve(HTTPWTHandler.notFound('User could not be found.'))
                                 } else if (result.privateAccount && !result.followers.includes(userGettingPollPosts.secondId)) {
@@ -1614,7 +1614,7 @@ class TempController {
                     const isOwner = userId == data._id.toString()
                     if (isOwner === true) {
                         getImagesAndSendToUser(data, secondData)
-                    } else if (data.blockedAccounts.includes(userPublicID)) {
+                    } else if (data.blockedAccounts?.includes(userPublicID)) {
                         return resolve(HTTPWTHandler.notFound('User not found.'))
                     } else {
                         if (data.privateAccount != true) {
@@ -2831,7 +2831,7 @@ class TempController {
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
                 if (result) {
                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingCategories => {
-                        if (!userRequestingCategories || result.blockedAccounts.includes(userRequestingCategories.secondId)) {
+                        if (!userRequestingCategories || result.blockedAccounts?.includes(userRequestingCategories.secondId)) {
                             return resolve(HTTPWTHandler.notFound('User could not be found.'))
                         }
 
@@ -3357,7 +3357,7 @@ class TempController {
             User.findOne({secondId: {$eq: pubId}}).lean().then(userResult => {
                 if (userResult) {
                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThreads => {
-                        if (userRequestingThreads && !userResult.blockedAccounts.includes(userRequestingThreads.secondId)) {
+                        if (userRequestingThreads && !userResult.blockedAccounts?.includes(userRequestingThreads.secondId)) {
                             if (userResult.privateAccount && !userResult.followers.includes(userRequestingThreads.secondId)) {
                                 return resolve(HTTPWTHandler.notFound('This user has no thread posts!'))
                             }
@@ -3872,7 +3872,7 @@ class TempController {
                                 if (data) {
                                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThread => {
                                         if (userRequestingThread) {
-                                            if (data.blockedAccounts.includes(userRequestingThread.secondId)) {
+                                            if (data.blockedAccounts?.includes(userRequestingThread.secondId)) {
                                                 return resolve(HTTPWTHandler.notFound('Could not find thread creator'))
                                             }
 
@@ -4014,7 +4014,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (pollCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (pollCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4036,7 +4036,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4093,7 +4093,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4115,7 +4115,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4172,7 +4172,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4195,7 +4195,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4291,7 +4291,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4312,7 +4312,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4368,7 +4368,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4389,7 +4389,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator.'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4446,7 +4446,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4467,7 +4467,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4538,7 +4538,7 @@ class TempController {
                 if (userFollowingFound) {
                     //Check for other user for validity and to make sure they exist
                     User.findOne({secondId: {$eq: userToFollowPubId}}).lean().then(userGettingFollowed => {
-                        if (!userGettingFollowed || userGettingFollowed.blockedAccounts.includes(userFollowingFound.secondId)) {
+                        if (!userGettingFollowed || userGettingFollowed.blockedAccounts?.includes(userFollowingFound.secondId)) {
                             //If the user could not be found or if the user has blocked the user trying to follow
                             return resolve(HTTPWTHandler.notFound('User not found'))
                         }
@@ -4696,7 +4696,7 @@ class TempController {
                     User.findOne({secondId: {$eq: usersPubId}}).lean().then(userData => {
                         if (userData) {
                             //could do a user search ig but no need really
-                            if (userData.blockedAccounts.includes(userSearchingPubId)) {
+                            if (userData.blockedAccounts?.includes(userSearchingPubId)) {
                                 return resolve(HTTPWTHandler.notFound('User not found.'))
                             } else {
                                 const userDataToSend = {
@@ -4829,7 +4829,7 @@ class TempController {
                 if (requestingUser) {
                     User.findOne({secondId: {$eq: pubId}}).lean().then(userFound => {
                         if (userFound) {
-                            if (userFound.blockedAccounts.includes(requestingUser.secondId)) {
+                            if (userFound.blockedAccounts?.includes(requestingUser.secondId)) {
                                 return resolve(HTTPWTHandler.notFound('User not found.'))
                             }
 
@@ -5145,7 +5145,7 @@ class TempController {
         return new Promise(resolve => {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
-                    return resolve(HTTPWTHandler.OK('Found blocked accounts', userFound.blockedAccounts))
+                    return resolve(HTTPWTHandler.OK('Found blocked accounts', userFound.blockedAccounts || []))
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
@@ -5596,7 +5596,7 @@ class TempController {
                     creatorObject[stringifiedUserId] = 'PRIVATE'
                 }
 
-                if (creator.blockedAccounts.includes(userFound.secondId)) {
+                if (creator.blockedAccounts?.includes(userFound.secondId)) {
                     creatorObject[stringifiedUserId] = 'BLOCKED'
                 }
 
