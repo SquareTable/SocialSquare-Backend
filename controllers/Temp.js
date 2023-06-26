@@ -381,7 +381,7 @@ class TempController {
                             if (data.length) {
                                 var itemsProcessed = 0;
                                 data.forEach(function (item, index) {
-                                    if (data[index].blockedAccounts.includes(userFound.secondId)) {
+                                    if (data[index].blockedAccounts?.includes(userFound.secondId)) {
                                         itemsProcessed++;
                                     } else {
                                         foundArray.push(userHandler.returnPublicInformation(data[index], userFound))
@@ -429,48 +429,48 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`optionOne must be a string. Provided type: ${typeof optionOne}`))
             }
 
-            if (!allowedColors.includes(optionOnesColor) || optionOnesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionOnesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionOnesColor) && optionOnesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionOnesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionOnesColor}`))
             }
 
             if (typeof optionTwo !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionTwo must be a string. Provied type: ${typeof optionTwo}`))
             }
 
-            if (!allowedColors.includes(optionTwosColor) || optionTwosColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionTwosColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionTwosColor) && optionTwosColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionTwosColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionTwosColor}`))
             }
 
             if (typeof optionThree !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionThree must be a string. Provied type: ${typeof optionThree}`))
             }
 
-            if (!allowedColors.includes(optionThreesColor) || optionThreesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionThreesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionThreesColor) && optionThreesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionThreesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionThreesColor}`))
             }
 
             if (typeof optionFour !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionFour must be a string. Provied type: ${typeof optionFour}`))
             }
 
-            if (!allowedColors.includes(optionFoursColor) || optionFoursColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionFoursColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionFoursColor) && optionFoursColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionFoursColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionFoursColor}`))
             }
 
             if (typeof optionFive !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionFive must be a string. Provied type: ${typeof optionFive}`))
             }
 
-            if (!allowedColors.includes(optionFivesColor) || optionFivesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionFivesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionFivesColor) && optionFivesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionFivesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionFivesColor}`))
             }
 
             if (typeof optionSix !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSix must be a string. Provied type: ${typeof optionSix}`))
             }
 
-            if (!allowedColors.includes(optionSixesColor) || optionSixesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionSixesColor must be either ${allowedColors.join(', ')} or be "Not Specified"`))
+            if (!allowedColors.includes(optionSixesColor) && optionSixesColor !== 'Not Specified') {
+                return resolve(HTTPWTHandler.badInput(`optionSixesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionSixesColor}`))
             }
 
             const allowedNumbersOfOptions = ['Two', 'Three', 'Four', 'Five', 'Six']
@@ -504,7 +504,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('optionTwo must not be blank'))
             }
 
-            const pollOptions = allowedNumbersOfOptions.findIndex(totalNumberOfOptions) + 2
+            const pollOptions = allowedNumbersOfOptions.indexOf(totalNumberOfOptions) + 2
 
             if (optionThree.length == 0 && pollOptions >= 3) {
                 return resolve(HTTPWTHandler.badInput('optionThree must not be blank'))
@@ -550,7 +550,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('Empty input fields!'))
             } else {
                 //Try to create a new post
-                User.findOne({_id: {$eq: creatorId}}).lean().then(data => {
+                User.findOne({_id: {$eq: userId}}).lean().then(data => {
                     if (data) {
                         const pollObject = {
                             pollTitle,
@@ -574,7 +574,7 @@ class TempController {
                             optionSixesColor,
                             optionSixesVotes,
                             totalNumberOfOptions,
-                            creatorId,
+                            creatorId: userId,
                             comments: comments,
                             datePosted: Date.now(),
                             allowScreenShots: allowScreenShots
@@ -582,8 +582,8 @@ class TempController {
 
                         const newPoll = new Poll(pollObject);
                 
-                        newPoll.save().then(result => {
-                            return resolve(HTTPWTHandler.OK('Poll creation successful', result))
+                        newPoll.save().then(() => {
+                            return resolve(HTTPWTHandler.OK('Poll creation successful'))
                         })
                         .catch(err => {
                             console.error('An error occured while creating a new poll post:', pollObject, '. The error was:', err)
@@ -594,7 +594,7 @@ class TempController {
                     } 
                 })
                 .catch(err => {
-                    console.error('An error occured while finding a user with _id:', creatorId, '. The error was:', err)
+                    console.error('An error occured while finding a user with _id:', userId, '. The error was:', err)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
                 });
             }
@@ -623,7 +623,7 @@ class TempController {
                         //User Exists
                         User.findOne({_id: {$eq: userId}}).lean().then(userGettingPollPosts => {
                             if (userGettingPollPosts) {
-                                if (result.blockedAccounts.includes(userGettingPollPosts.secondId)) {
+                                if (result.blockedAccounts?.includes(userGettingPollPosts.secondId)) {
                                     // User is blocked or the account is private but the user requesting doesn't follow the user so do not send posts
                                     return resolve(HTTPWTHandler.notFound('User could not be found.'))
                                 } else if (result.privateAccount && !result.followers.includes(userGettingPollPosts.secondId)) {
@@ -1635,7 +1635,7 @@ class TempController {
                     const isOwner = userId == data._id.toString()
                     if (isOwner === true) {
                         getImagesAndSendToUser(data, secondData)
-                    } else if (data.blockedAccounts.includes(userPublicID)) {
+                    } else if (data.blockedAccounts?.includes(userPublicID)) {
                         return resolve(HTTPWTHandler.notFound('User not found.'))
                     } else {
                         if (data.privateAccount != true) {
@@ -2852,7 +2852,7 @@ class TempController {
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
                 if (result) {
                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingCategories => {
-                        if (!userRequestingCategories || result.blockedAccounts.includes(userRequestingCategories.secondId)) {
+                        if (!userRequestingCategories || result.blockedAccounts?.includes(userRequestingCategories.secondId)) {
                             return resolve(HTTPWTHandler.notFound('User could not be found.'))
                         }
 
@@ -3378,7 +3378,7 @@ class TempController {
             User.findOne({secondId: {$eq: pubId}}).lean().then(userResult => {
                 if (userResult) {
                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThreads => {
-                        if (userRequestingThreads && !userResult.blockedAccounts.includes(userRequestingThreads.secondId)) {
+                        if (userRequestingThreads && !userResult.blockedAccounts?.includes(userRequestingThreads.secondId)) {
                             if (userResult.privateAccount && !userResult.followers.includes(userRequestingThreads.secondId)) {
                                 return resolve(HTTPWTHandler.notFound('This user has no thread posts!'))
                             }
@@ -3893,7 +3893,7 @@ class TempController {
                                 if (data) {
                                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThread => {
                                         if (userRequestingThread) {
-                                            if (data.blockedAccounts.includes(userRequestingThread.secondId)) {
+                                            if (data.blockedAccounts?.includes(userRequestingThread.secondId)) {
                                                 return resolve(HTTPWTHandler.notFound('Could not find thread creator'))
                                             }
 
@@ -4035,7 +4035,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (pollCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (pollCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4057,7 +4057,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4114,7 +4114,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4136,7 +4136,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4193,7 +4193,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4216,7 +4216,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4312,7 +4312,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4333,7 +4333,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4389,7 +4389,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4410,7 +4410,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator.'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4467,7 +4467,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.notFound('Could not find comment'))
                                     }
 
-                                    if (postCreator.blockedAccounts.includes(result.secondId)) {
+                                    if (postCreator.blockedAccounts?.includes(result.secondId)) {
                                         return resolve(HTTPWTHandler.notFound('User not found'))
                                     }
 
@@ -4488,7 +4488,7 @@ class TempController {
                                             return resolve(HTTPWTHandler.notFound('Could not find comment creator'))
                                         }
 
-                                        if (commentCreator.blockedAccounts.includes(result.secondId)) {
+                                        if (commentCreator.blockedAccounts?.includes(result.secondId)) {
                                             return resolve(HTTPWTHandler.notFound('User not found'))
                                         }
 
@@ -4559,7 +4559,7 @@ class TempController {
                 if (userFollowingFound) {
                     //Check for other user for validity and to make sure they exist
                     User.findOne({secondId: {$eq: userToFollowPubId}}).lean().then(userGettingFollowed => {
-                        if (!userGettingFollowed || userGettingFollowed.blockedAccounts.includes(userFollowingFound.secondId)) {
+                        if (!userGettingFollowed || userGettingFollowed.blockedAccounts?.includes(userFollowingFound.secondId)) {
                             //If the user could not be found or if the user has blocked the user trying to follow
                             return resolve(HTTPWTHandler.notFound('User not found'))
                         }
@@ -4717,7 +4717,7 @@ class TempController {
                     User.findOne({secondId: {$eq: usersPubId}}).lean().then(userData => {
                         if (userData) {
                             //could do a user search ig but no need really
-                            if (userData.blockedAccounts.includes(userSearchingPubId)) {
+                            if (userData.blockedAccounts?.includes(userSearchingPubId)) {
                                 return resolve(HTTPWTHandler.notFound('User not found.'))
                             } else {
                                 const userDataToSend = {
@@ -4850,7 +4850,7 @@ class TempController {
                 if (requestingUser) {
                     User.findOne({secondId: {$eq: pubId}}).lean().then(userFound => {
                         if (userFound) {
-                            if (userFound.blockedAccounts.includes(requestingUser.secondId)) {
+                            if (userFound.blockedAccounts?.includes(requestingUser.secondId)) {
                                 return resolve(HTTPWTHandler.notFound('User not found.'))
                             }
 
@@ -5166,7 +5166,7 @@ class TempController {
         return new Promise(resolve => {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
-                    return resolve(HTTPWTHandler.OK('Found blocked accounts', userFound.blockedAccounts))
+                    return resolve(HTTPWTHandler.OK('Found blocked accounts', userFound.blockedAccounts || []))
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
@@ -5617,7 +5617,7 @@ class TempController {
                     creatorObject[stringifiedUserId] = 'PRIVATE'
                 }
 
-                if (creator.blockedAccounts.includes(userFound.secondId)) {
+                if (creator.blockedAccounts?.includes(userFound.secondId)) {
                     creatorObject[stringifiedUserId] = 'BLOCKED'
                 }
 
