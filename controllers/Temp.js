@@ -1598,7 +1598,7 @@ class TempController {
         })
     }
 
-    static #getImagesFromProfile = (userId, pubId) => {
+    static #getImagesFromProfile = (userId, pubId, previousPostId) => {
         return new Promise(resolve => {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Type provided: ${typeof pubId}`))
@@ -1607,13 +1607,34 @@ class TempController {
             if (pubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
+
+            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`previousPostId must be a string or undefined. Type provided: ${typeof previousPostId}`))
+            }
+
+            if (previousPostId?.length === 0) {
+                return resolve(HTTPWTHandler.badInput('previousPostId cannot be a blank string'))
+            }
         
             const getImagesAndSendToUser = (postOwner, userRequesting) => {
-                ImagePost.find({creatorId: postOwner._id}).sort({datePosted: -1}).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
+                const dbQuery = {
+                    creatorId: postOwner._id
+                }
+
+                if (previousPostId != undefined) {
+                    dbQuery._id = {$lt: previousPostId}
+                }
+
+                ImagePost.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
                     if (result.length) {
-                        return resolve(HTTPWTHandler.OK('Posts found', result))
+                        const toSend = {
+                            posts: result,
+                            noMorePosts: result.length < CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL
+                        }
+
+                        return resolve(HTTPWTHandler.OK('Posts found', toSend))
                     } else {
-                        return resolve(HTTPWTHandler.notFound('This user has no image posts!'))
+                        return resolve(HTTPWTHandler.OK('No more image posts could be found', {posts: [], noMorePosts: true}))
                     }
                 }).catch(error => {
                     console.error('An error occured while getting user images from user with id:', postOwner._id, '. The error was:', error)
