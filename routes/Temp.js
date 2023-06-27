@@ -1534,7 +1534,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategoryfromprofile',
-            functionArgs: [req.tokenData, req.body.pubId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.previousCategoryId]
         }
     })
 

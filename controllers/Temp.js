@@ -2852,7 +2852,7 @@ class TempController {
         })
     }
 
-    static #findcategoryfromprofile = (userId, pubId) => {
+    static #findcategoryfromprofile = (userId, pubId, previousCategoryId) => {
         return new Promise(resolve => {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
@@ -2861,11 +2861,19 @@ class TempController {
             if (pubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
+
+            if (typeof previousCategoryId !== 'string' && previousCategoryId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`previousCategoryId must be a string or undefined. Type provided: ${typeof previousCategoryId}`))
+            }
+
+            if (previousCategoryId?.length === 0) {
+                return resolve(HTTPWTHandler.badInput('previousCategoryId cannot be an empty string.'))
+            }
         
             function sendResponse(foundCategories) {
                 console.log("Params Recieved")
                 console.log(foundCategories)
-                return resolve(HTTPWTHandler.OK('Categories search successful', foundCategories))
+                return resolve(HTTPWTHandler.OK('Categories search successful', {categories: foundCategories, noMoreCategories: foundCategories.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
             }
 
             //Find Categories
@@ -2886,15 +2894,20 @@ class TempController {
                         var profilesId = result._id
                         console.log("profilesId:")
                         console.log(profilesId)
-                        Category.find({members: profilesId}).lean().then(data =>{
+
+                        const dbQuery = {
+                            members: profilesId
+                        }
+
+                        if (previousCategoryId) {
+                            dbQuery._id = {$lt: previousCategoryId}
+                        }
+
+                        Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data =>{
                             console.log("Found categories")
                             console.log(data)
                             if (data.length) {
                                 data.forEach(function (item, index) {
-                                    var inCategory = false
-                                    if (data[index].members.includes(userId)) {
-                                        inCategory = true
-                                    }
                                     foundCategories.push({
                                         categoryTitle: data[index].categoryTitle,
                                         categoryDescription: data[index].categoryDescription,
@@ -2904,7 +2917,7 @@ class TempController {
                                         NSFW: data[index].NSFW,
                                         NSFL: data[index].NSFL,
                                         datePosted: data[index].datePosted,
-                                        inCategory: inCategory,
+                                        inCategory: true,
                                         allowScreenShots: data[index].allowScreenShots,
                                         categoryId: String(data[index]._id)
                                     })
@@ -2914,7 +2927,7 @@ class TempController {
                                     }
                                 })
                             } else {
-                                return resolve(HTTPWTHandler.notFound('No categories found'))
+                                return resolve(HTTPWTHandler.OK('No more categories could be found', {categories: [], noMoreCategories: true}))
                             }
                         })
                         .catch(err => {
@@ -6419,8 +6432,8 @@ class TempController {
         return await this.#findcategorybyid(userId, categoryId)
     }
 
-    static findcategoryfromprofile = async (userId, pubId) => {
-        return await this.#findcategoryfromprofile(userId, pubId)
+    static findcategoryfromprofile = async (userId, pubId, previousCategoryId) => {
+        return await this.#findcategoryfromprofile(userId, pubId, previousCategoryId)
     }
 
     static joincategory = async (userId, categoryId) => {
