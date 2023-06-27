@@ -6329,8 +6329,8 @@ class TempController {
         return await this.#postProfileImage(userId, file)
     }
 
-    static getImagesFromProfile = async (userId, pubId) => {
-        return await this.#getImagesFromProfile(userId, pubId)
+    static getImagesFromProfile = async (userId, pubId, previousPostId) => {
+        return await this.#getImagesFromProfile(userId, pubId, previousPostId)
     }
 
     static getProfilePic = async (pubId) => {
