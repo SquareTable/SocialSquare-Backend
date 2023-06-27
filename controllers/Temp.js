@@ -2896,7 +2896,7 @@ class TempController {
                         console.log(profilesId)
 
                         const dbQuery = {
-                            members: profilesId
+                            members: {$elemMatch: {$eq: String(profilesId)}}
                         }
 
                         if (previousCategoryId) {
