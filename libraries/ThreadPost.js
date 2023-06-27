@@ -27,7 +27,8 @@ class ThreadPost {
                                 upvoted: !!isUpvoted,
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
-                                interacted: !!isUpvoted || !!isDownvoted
+                                interacted: !!isUpvoted || !!isDownvoted,
+                                _id: String(post._id)
                             })
                         }).catch(error => {
                             reject(`An error occured while executing Promise.all in PollPostLibrary.processMultiplePostDataFromOneOwner: ${error}`)
