@@ -1629,7 +1629,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getthreadsfromprofile',
-            functionArgs: [req.tokenData, req.body.pubId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
         }
     })
 

@@ -3396,8 +3396,24 @@ class TempController {
         })
     }
 
-    static #getthreadsfromprofile = (userId, pubId) => {
+    static #getthreadsfromprofile = (userId, pubId, previousPostId) => {
         return new Promise(resolve => {
+            if (typeof pubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pubId must be a string. Type provided: ${typeof pubId}`))
+            }
+
+            if (pubId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
+            }
+
+            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`previousPostId must either be a string or undefined. Type provided: ${typeof previousPostId}`))
+            }
+
+            if (previousPostId?.length === 0) {
+                return resolve(HTTPWTHandler.badInput('previousPostId must not be an empty string'))
+            }
+
             User.findOne({secondId: {$eq: pubId}}).lean().then(userResult => {
                 if (userResult) {
                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThreads => {
@@ -3408,16 +3424,30 @@ class TempController {
                             var userid = userResult._id
                             console.log("user id:")
                             console.log(userid)
-                            Thread.find({creatorId: {$eq: userid}}).sort({datePosted: -1}).lean().then(result => {
+
+                            const dbQuery = {
+                                creatorId: {$eq: userid}
+                            }
+
+                            if (previousPostId) {
+                                dbQuery._id = {$lt: previousPostId}
+                            }
+
+                            Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
                                 if (result.length) {
                                     threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
-                                        return resolve(HTTPWTHandler.OK('Posts found', posts))
+                                        const toSend = {
+                                            posts,
+                                            noMorePosts: posts.length < CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL
+                                        }
+
+                                        return resolve(HTTPWTHandler.OK('Posts found', toSend))
                                     }).catch(error => {
                                         console.error('An error occurred while processing thread posts. The error was:', error)
                                         return resolve(HTTPWTHandler.serverError('An error occurred while getting thread posts. Please try again.'))
                                     })
                                 } else {
-                                    return resolve(HTTPWTHandler.notFound('This user has no thread posts!'))
+                                    return resolve(HTTPWTHandler.notFound('No more thread posts could be found.', {posts: [], noMorePosts: true}))
                                 }
                             }).catch(error => {
                                 console.error('An error occurred while finding threads with creatorId:', userid, '. The error was:', error)
@@ -6409,8 +6439,8 @@ class TempController {
         return await this.#getthreadsfromcategory(userId, categoryId)
     }
 
-    static getthreadsfromprofile = async (userId, pubId) => {
-        return await this.#getthreadsfromprofile(userId, pubId)
+    static getthreadsfromprofile = async (userId, pubId, previousPostId) => {
+        return await this.#getthreadsfromprofile(userId, pubId, previousPostId)
     }
 
     static upvotethread = async (userId, threadId) => {
