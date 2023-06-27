@@ -1262,7 +1262,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getImagesFromProfile',
-            functionArgs: [req.tokenData, req.body.pubId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
         }
     })
 
