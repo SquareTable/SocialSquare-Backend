@@ -4829,7 +4829,7 @@ class TempController {
                                         }
                                     }
                                 } else {
-                                    if (userData[0].followers.includes(userSearchingPubId)) {
+                                    if (userData.followers.includes(userSearchingPubId)) {
         
                                         const toSend = {
                                             ...userDataToSend,
