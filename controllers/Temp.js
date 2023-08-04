@@ -2681,7 +2681,7 @@ class TempController {
                                 categoryOriginalCreator: userId,
                                 categoryModeratorIds: [],
                                 datePosted: Date.now(),
-                                allowScreenShots: allowScreenShots
+                                allowScreenShots: sentAllowScreenShots
                             }
         
                             const newCategory = new Category(newCategoryObject);
