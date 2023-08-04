@@ -5232,7 +5232,7 @@ class TempController {
         return new Promise(resolve => {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
-                    return resolve(HTTPWTHandler.OK('Found blocked accounts', userFound.blockedAccounts || []))
+                    return resolve(HTTPWTHandler.OK('Found blocked accounts', userFound?.blockedAccounts || []))
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
