@@ -2232,7 +2232,7 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getUserNotificationSettings:', error)
+        console.error('An error occurred from TempWorker for GET /getUserNotificationSettings:', error)
         HTTPHandler.serverError(res, error)
     })
 });
