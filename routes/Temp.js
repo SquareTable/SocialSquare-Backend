@@ -2219,7 +2219,7 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
     })
 });
 
-router.post('/getUserNotificationSettings', rateLimiters['/getUserNotificationSettings'], (req, res) => {
+router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSettings'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getUserNotificationSettings',
