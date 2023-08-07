@@ -3376,7 +3376,7 @@ class TempController {
                                                 return threadPostHandler.processMultiplePostDataFromOneOwner(value, users.find(user => String(user._id) === key), userRequesting)
                                             })
                                         ).then(posts => {
-                                            return resolve(HTTPWTHandler.OK('Posts found', posts))
+                                            return resolve(HTTPWTHandler.OK('Posts found', [].concat(...posts)))
                                         }).catch(error => {
                                             console.error('An error occurred while processing data for thread posts. The error was:', error)
                                             return resolve(HTTPWTHandler.serverError('An error occurred while processing data. Please try again.'))
