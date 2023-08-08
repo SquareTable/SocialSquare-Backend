@@ -6113,7 +6113,7 @@ class TempController {
     static #logoutallotherdevices = (userId, tokenIdNotToLogout) => {
         return new Promise(resolve => {
             if (typeof tokenIdNotToLogout !== 'string' && tokenIdNotToLogout !== null) {
-                return HTTPHandler.badInput(res, `tokenIdNotToLogout must be a string or null. Provided type: ${typeof tokenIdNotToLogout}`)
+                return HTTPWTHandler.badInput(`tokenIdNotToLogout must be a string or null. Provided type: ${typeof tokenIdNotToLogout}`)
             }
         
             const query = {userId: {$eq: userId}};
