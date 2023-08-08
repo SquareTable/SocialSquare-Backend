@@ -5624,16 +5624,16 @@ class TempController {
 
             if (voteType === 'up') {
                 try {
-                    votes = await Upvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(limit).lean()
+                    votes = await Upvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(CONSTANTS.GET_USER_ACTIVITY_API_LIMIT).lean()
                 } catch(error) {
-                    console.error('An error occurred while finding all upvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', limit, ', and sorting by interactionDate of -1. The error was:', error)
+                    console.error('An error occurred while finding all upvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', CONSTANTS.GET_USER_ACTIVITY_API_LIMIT, ', and sorting by interactionDate of -1. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding upvotes. Please try again.'))
                 }
             } else {
                 try {
-                    votes = await Downvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(limit).lean()
+                    votes = await Downvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(CONSTANTS.GET_USER_ACTIVITY_API_LIMIT).lean()
                 } catch(error) {
-                    console.error('An error occurred while finding all downvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', limit, ', and sorting by interactionDate of -1. The error was:', error)
+                    console.error('An error occurred while finding all downvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', CONSTANTS.GET_USER_ACTIVITY_API_LIMIT, ', and sorting by interactionDate of -1. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding downvotes. Please try again.'))
                 }
             }
