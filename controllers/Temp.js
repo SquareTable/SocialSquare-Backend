@@ -5693,18 +5693,20 @@ class TempController {
             for (const post of posts) {
                 const stringifiedCreatorId = String(post.creatorId)
 
-                if (!postsObject[stringifiedCreatorId]) {
+                if (!creatorObject[stringifiedCreatorId]) {
                     console.error('Found an', postFormat, 'post with an id of:', post._id, 'that belongs to user with id:', post.creatorId, '. This user could not be found in the database and as such this post should get deleted immediately.')
                     continue;
                 }
 
-                if (postsObject[stringifiedCreatorId] === 'PRIVATE' || postsObject[stringifiedCreatorId] === 'BLOCKED') {
+                if (creatorObject[stringifiedCreatorId] === 'PRIVATE' || creatorObject[stringifiedCreatorId] === 'BLOCKED') {
                     continue;
                 }
 
                 if (!Array.isArray(postsObject[stringifiedCreatorId])) {
                     postsObject[stringifiedCreatorId] = []
                 }
+
+                postsObject[stringifiedCreatorId].push(post)
             }
 
             if (postFormat === 'Image') {
