@@ -5986,6 +5986,7 @@ class TempController {
             }
 
             const sendItemsToUser = (array, userRequesting) => {
+                const limit = CONSTANTS.NUM_USERS_TO_SEND_PER_PROFILE_STATS_API_CALL;
                 const {items, noMoreItems} = arrayHelper.returnSomeItems(array, skip, limit)
 
                 User.find({secondId: {$in: items}}).lean().then(items => {
