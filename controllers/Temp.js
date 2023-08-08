@@ -5611,7 +5611,7 @@ class TempController {
 
             const supportedPostFormats = ['Image', 'Poll', 'Thread']
 
-            if (!supportedPostFormats.includes(postType)) {
+            if (!supportedPostFormats.includes(postFormat)) {
                 return resolve(HTTPWTHandler.badInput('Post type is not a valid post type'))
             }
 
