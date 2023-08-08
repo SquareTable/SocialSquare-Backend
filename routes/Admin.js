@@ -23,7 +23,7 @@ router.post('/login', (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from AdminWorker for POST /login:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -45,7 +45,7 @@ router.get('/assignReports', (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from AdminWorker for GET /assignReports:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 })
 
@@ -63,7 +63,7 @@ router.delete('/dismissPostReport', (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from AdminWorker for DELETE /dismissPostReport:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 })
 
@@ -81,7 +81,7 @@ router.delete('/postAndReport', (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from AdminWorker for DELETE /postAndReport:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 })
 
