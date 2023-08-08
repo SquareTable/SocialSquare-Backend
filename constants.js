@@ -47,10 +47,10 @@ const CONSTANTS = {
     },
     EMAIL_VERIFICATION_CODE_SALT_ROUNDS: 10,
     EMAIL_VERIFICATION_CODE_EXPIRE_TIME_SECONDS: 60 * 5, //5 minutes
-    NUM_POLLS_TO_SEND_PER_API_CALL: 10,
-    NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL: 10,
-    NUM_THREAD_POSTS_TO_SEND_PER_API_CALL: 10,
-    NUM_CATEGORIES_TO_SEND_PER_API_CALL: 10
+    NUM_POLLS_TO_SEND_PER_API_CALL: 10, //Used for temp/searchforpollposts API - Determines how many polls to send per API call
+    NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getImagesFromProfile API - Determines how many image posts to send per API call
+    NUM_THREAD_POSTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getthreadsfromprofile API - Determines how many thread posts to send per API call
+    NUM_CATEGORIES_TO_SEND_PER_API_CALL: 10, //Used for temp/findcategoryfromprofile API - Determines how many categories to send per API call
 }
 
 module.exports = CONSTANTS
