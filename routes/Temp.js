@@ -874,7 +874,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /sendnotificationkey:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -892,7 +892,7 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /changedisplayname:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -910,7 +910,7 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /changeemail:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -928,7 +928,7 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /changeemail:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -946,7 +946,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /changeusername:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -964,7 +964,7 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /changebio:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -982,7 +982,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchpageusersearch:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1020,7 +1020,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /createpollpost:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1038,7 +1038,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforpollposts:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1056,7 +1056,7 @@ router.post('/pollpostcomment', rateLimiters['/pollpostcomment'], (req, res) => 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /pollpostcomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1074,7 +1074,7 @@ router.post('/pollpostcommentreply', rateLimiters['/pollpostcommentreply'], (req
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /pollpostcommentreply:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1092,7 +1092,7 @@ router.post('/searchforpollcomments', rateLimiters['/searchforpollcomments'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforpollcomments:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1110,7 +1110,7 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /voteonpoll:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1128,7 +1128,7 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforpollpostsbyid:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1146,7 +1146,7 @@ router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /upvotepoll:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1164,7 +1164,7 @@ router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /downvotepoll:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1182,7 +1182,7 @@ router.post('/getsinglepollcomment', rateLimiters['/getsinglepollcomment'], (req
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getsinglepollcomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1200,7 +1200,7 @@ router.post('/searchforpollcommentreplies', rateLimiters['/searchforpollcommentr
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforpollcommentreplies:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1218,7 +1218,7 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /deletepoll:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1236,7 +1236,7 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /postImage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1254,7 +1254,7 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /postProfileImage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1272,7 +1272,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getImagesFromProfile:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1290,7 +1290,7 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /getProfilePic/:pubId:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1308,7 +1308,7 @@ router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /imagepostcomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1326,7 +1326,7 @@ router.post('/imagepostcommentreply', rateLimiters['/imagepostcommentreply'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /imagepostcommentreply:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1344,7 +1344,7 @@ router.post('/getimagepostcomments', rateLimiters['/getimagepostcomments'], (req
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getimagepostcomments:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1362,7 +1362,7 @@ router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /upvoteimage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1380,7 +1380,7 @@ router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /downvoteimage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1398,7 +1398,7 @@ router.post('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getsingleimagecomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1416,7 +1416,7 @@ router.post('/searchforimagecommentreplies', rateLimiters['/searchforimagecommen
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforimagecommentreplies:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1435,7 +1435,7 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /postcategorywithimage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1453,7 +1453,7 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /deleteimage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1472,7 +1472,7 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /postcategorywithoutimage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1490,7 +1490,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchpagesearchcategories:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1508,7 +1508,7 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getcategoryimage:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1526,7 +1526,7 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /findcategorybyid:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1544,7 +1544,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /findcategoryfromprofile:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1562,7 +1562,7 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /joincategory:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1582,7 +1582,7 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /posttextthread:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1601,7 +1601,7 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /postimagethread:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1621,7 +1621,7 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getthreadsfromcategory:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1639,7 +1639,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getthreadsfromprofile:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1657,7 +1657,7 @@ router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /upvotethread:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1675,7 +1675,7 @@ router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /downvotethread:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1693,7 +1693,7 @@ router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /threadpostcomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1711,7 +1711,7 @@ router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /threadpostcommentreply:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1729,7 +1729,7 @@ router.post('/searchforthreadcomments', rateLimiters['/searchforthreadcomments']
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforthreadcomments:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1747,7 +1747,7 @@ router.post('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getsinglethreadcomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1765,7 +1765,7 @@ router.post('/searchforthreadcommentreplies', rateLimiters['/searchforthreadcomm
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforthreadcommentreplies:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1783,7 +1783,7 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getthreadbyid:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1801,7 +1801,7 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /deletethread:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1819,7 +1819,7 @@ router.post('/upvotecomment', rateLimiters['/upvotecomment'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /upvotecomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1837,7 +1837,7 @@ router.post('/downvotecomment', rateLimiters['/downvotecomment'], (req, res) => 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /downvotecomment:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1855,7 +1855,7 @@ router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /toggleFollowOfAUser:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1873,7 +1873,7 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /reloadUsersDetails:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1891,7 +1891,7 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /earnSpecialBadge:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1909,7 +1909,7 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getuserbyid:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1927,7 +1927,7 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /makeaccountprivate:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1945,7 +1945,7 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /makeaccountpublic:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1963,7 +1963,7 @@ router.post('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getfollowrequests:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1981,7 +1981,7 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /denyfollowrequest:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -1999,7 +1999,7 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /acceptfollowrequest:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2017,7 +2017,7 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /removefollowerfromaccount:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2035,7 +2035,7 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /blockaccount:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2053,7 +2053,7 @@ router.get('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /getuserblockedaccounts:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2071,7 +2071,7 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /unblockaccount:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2089,7 +2089,7 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /enableAlgorithm:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2107,7 +2107,7 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /getAuthenticationFactorsEnabled:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2125,7 +2125,7 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /disableAlgorithm:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2143,7 +2143,7 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /reloadProfileEssentials:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2161,7 +2161,7 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /turnOffEmailMultiFactorAuthentication:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2179,7 +2179,7 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /deleteaccount:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2197,7 +2197,7 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /checkIfCategoryExists:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2215,7 +2215,7 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /uploadNotificationsSettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2233,7 +2233,7 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /getUserNotificationSettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2252,7 +2252,7 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /reportUser:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2271,7 +2271,7 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getUserActivity:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2290,7 +2290,7 @@ router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPa
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getCategoriesUserIsAPartOf:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2309,7 +2309,7 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /reportPost:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2327,7 +2327,7 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /userAlgorithmSettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2345,7 +2345,7 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /uploadAlgorithmSettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2363,7 +2363,7 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /privacySettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2381,7 +2381,7 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /savePrivacySettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2399,7 +2399,7 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getProfileStats:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2418,7 +2418,7 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /loginactivity:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2436,7 +2436,7 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /logoutdevice:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2454,7 +2454,7 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /logoutallotherdevices:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2472,7 +2472,7 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /loginActivitySettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2490,7 +2490,7 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /uploadLoginActivitySettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2509,7 +2509,7 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /updateLoginActivitySettingsOnSignup:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -2527,7 +2527,7 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /followingFeedFilterSettings:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
