@@ -74,7 +74,7 @@ router.post('/signup', rateLimiters['/signup'], HTTPHandler.getDeviceTypeMiddlew
 
     worker.on('error', (error) => {
         console.error('An error occurred from UserWorker for POST /signup:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -93,7 +93,7 @@ router.post('/signin', rateLimiters['/signin'], HTTPHandler.getDeviceTypeMiddlew
 
     worker.on('error', (error) => {
         console.error('An error occurred from UserWorker for POST /signin:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -111,7 +111,7 @@ router.post('/checkusernameavailability', rateLimiters['/checkusernameavailabili
 
     worker.on('error', (error) => {
         console.error('An error occurred from UserWorker for POST /checkusernameavailability:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 });
 
@@ -131,7 +131,7 @@ router.post('/sendemailverificationcode', rateLimiters['/sendemailverificationco
 
     worker.on('error', (error) => {
         console.error('An error occurred from UserWorker for POST /sendemailverificationcode:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 })
 
@@ -151,7 +151,7 @@ router.post('/checkverificationcode', rateLimiters['/checkverificationcode'], HT
 
     worker.on('error', (error) => {
         console.error('An error occurred from UserWorker for POST /checkverificationcode:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 })
 
@@ -171,7 +171,7 @@ router.post('/changepasswordwithverificationcode', rateLimiters['/changepassword
 
     worker.on('error', (error) => {
         console.error('An error occurred from UserWorker for POST /changepasswordwithverificationcode:', error)
-        HTTPHandler.serverError(res, error)
+        HTTPHandler.serverError(res, String(error))
     })
 })
 
