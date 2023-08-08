@@ -5729,8 +5729,6 @@ class TempController {
 
     static #getCategoriesUserIsAPartOf = (userId, skip) => {
         return new Promise(resolve => {
-            const limit = 20;
-
             skip = parseInt(skip)
             if (isNaN(skip)) {
                 return resolve(HTTPWTHandler.badInput('skip must be a number (integer)'))
@@ -5741,7 +5739,7 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
 
-                Category.find({members: userId}).sort({dateCreated: -1}).skip(skip).limit(limit).lean().then(categoriesFound => {
+                Category.find({members: userId}).sort({dateCreated: -1}).skip(skip).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoriesFound => {
                     return resolve(HTTPWTHandler.OK(`Successfully found categories ${skip} - ${skip + categoriesFound.length}`, categoriesFound))
                 }).catch(error => {
                     console.error('An error occured while finding what categories user with id:', userId, 'is part of. The error was:', error)
