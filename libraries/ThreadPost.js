@@ -2,6 +2,7 @@ const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 const Thread = require('../models/Thread')
 const ImageLibrary = require('./Image')
+const Category = require('../models/Category')
 const imageLib = new ImageLibrary()
 
 class ThreadPost {
@@ -17,7 +18,8 @@ class ThreadPost {
                             Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Thread"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
-                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
+                            Category.findOne({_id: {$eq: post.threadCategoryId}}, {categoryTitle: 1})
+                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, category]) => {
                             resolve({
                                 ...post,
                                 votes: upvotes - downvotes,
@@ -28,7 +30,8 @@ class ThreadPost {
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
-                                _id: String(post._id)
+                                _id: String(post._id),
+                                threadCategory: category.categoryTitle
                             })
                         }).catch(error => {
                             reject(`An error occured while executing Promise.all in PollPostLibrary.processMultiplePostDataFromOneOwner: ${error}`)
