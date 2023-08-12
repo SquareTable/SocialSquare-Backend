@@ -6602,7 +6602,7 @@ class TempController {
     }
 
     static reportPost = async (reporterId, postId, postFormat, reason) => {
-        return await this.#reportPost(reporterId, postId, postFormat, reasom)
+        return await this.#reportPost(reporterId, postId, postFormat, reason)
     }
 
     static userAlgorithmSettings = async (userId) => {
