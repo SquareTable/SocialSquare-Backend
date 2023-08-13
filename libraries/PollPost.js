@@ -16,17 +16,15 @@ class PollPost {
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
-                            resolve({
-                                ...{
-                                    ...post,
-                                    optionOnesVotes: post.optionOnesVotes.length,
-                                    optionTwosVotes: post.optionTwosVotes.length,
-                                    optionThreesVotes: post.optionThreesVotes.length,
-                                    optionFoursVotes: post.optionFoursVotes.length,
-                                    optionFivesVotes: post.optionFivesVotes.length,
-                                    optionSixesVotes: post.optionSixesVotes.length,
-                                    _id: post._id.toString()
-                                },
+                            const postObject = {
+                                ...post,
+                                optionOnesVotes: post.optionOnesVotes.length,
+                                optionTwosVotes: post.optionTwosVotes.length,
+                                optionThreesVotes: post.optionThreesVotes.length,
+                                optionFoursVotes: post.optionFoursVotes.length,
+                                optionFivesVotes: post.optionFivesVotes.length,
+                                optionSixesVotes: post.optionSixesVotes.length,
+                                _id: post._id.toString(),
                                 votes: upvotes - downvotes,
                                 creatorName: postOwner.name,
                                 creatorDisplayName: postOwner.displayName,
@@ -35,7 +33,17 @@ class PollPost {
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted
-                            })
+                            }
+
+                            if (isUpvoted) {
+                                postObject.voteId = isUpvoted._id.toString()
+                            }
+
+                            if (isDownvoted) {
+                                postObject.voteId = isDownvoted._id.toString()
+                            }
+                                
+                            resolve(postObject)
                         }).catch(error => {
                             reject(`An error occured while executing Promise.all in PollPostLibrary.processMultiplePostDataFromOneOwner: ${error}`)
                         })

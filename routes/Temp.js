@@ -2257,7 +2257,7 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
 });
 
 router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => {
-    let {skip = 0, voteType, postFormat} = req.body;
+    let {skip, voteType, postFormat} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getUserActivity',
