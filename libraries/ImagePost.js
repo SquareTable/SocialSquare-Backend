@@ -18,7 +18,7 @@ class ImagePostClass {
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Image", userPublicId: userRequesting.secondId}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Image", userPublicId: userRequesting.secondId}),
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
-                            resolve({
+                            const postObject = {
                                 ...post,
                                 votes: upvotes - downvotes,
                                 creatorName: postOwner.name,
@@ -30,7 +30,17 @@ class ImagePostClass {
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: post._id.toString(),
                                 comments: post.comments ? post.comments.map(comment => ({...comment, commentId: String(comment.commentId)})) : []
-                            })
+                            }
+
+                            if (isUpvoted) {
+                                postObject.voteId = isUpvoted._id.toString()
+                            }
+
+                            if (isDownvoted) {
+                                postObject.voteId = isDownvoted._id.toString()
+                            }
+                            
+                            resolve(postObject)
                         }).catch(error => {
                             reject(`An error occured while executing Promise.all in ImagePostLibrary.processMultiplePostDataFromOneOwner: ${error}`)
                         })

@@ -20,7 +20,7 @@ class ThreadPost {
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
                             Category.findOne({_id: {$eq: post.threadCategoryId}}, {categoryTitle: 1})
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, category]) => {
-                            resolve({
+                            const postObject = {
                                 ...post,
                                 votes: upvotes - downvotes,
                                 creatorName: postOwner.name,
@@ -32,7 +32,17 @@ class ThreadPost {
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: String(post._id),
                                 threadCategory: category.categoryTitle
-                            })
+                            }
+
+                            if (isUpvoted) {
+                                postObject.voteId = isUpvoted._id.toString()
+                            }
+
+                            if (isDownvoted) {
+                                postObject.voteId = isDownvoted._id.toString()
+                            }
+
+                            resolve(postObject)
                         }).catch(error => {
                             reject(`An error occured while executing Promise.all in PollPostLibrary.processMultiplePostDataFromOneOwner: ${error}`)
                         })

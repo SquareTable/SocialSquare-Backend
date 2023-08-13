@@ -5600,9 +5600,8 @@ class TempController {
             let creators;
             let promises;
 
-            skip = parseInt(skip)
-            if (isNaN(skip)) {
-                return resolve(HTTPWTHandler.badInput('Skip value is not a number.'))
+            if (typeof skip !== 'string' && skip !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`skip must be a string or undefined. Provided type: ${typeof skip}`))
             }
 
             if (voteType !== 'down' && voteType !== 'up') {
@@ -5622,21 +5621,35 @@ class TempController {
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             }
 
+            const votesDBQuery = {
+                userPublicId: {$eq: userFound.secondId},
+                postFormat: {$eq: postFormat}
+            }
+
+            if (skip !== undefined) {
+                votesDBQuery._id = {$lt: mongoose.Types.ObjectId(skip)}
+            }
+
+            console.log('Votes DB Query:', votesDBQuery)
+
             if (voteType === 'up') {
                 try {
-                    votes = await Upvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(CONSTANTS.GET_USER_ACTIVITY_API_LIMIT).lean()
+                    votes = await Upvote.find(votesDBQuery).sort({_id: -1}).limit(CONSTANTS.GET_USER_ACTIVITY_API_LIMIT).lean()
                 } catch(error) {
-                    console.error('An error occurred while finding all upvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', CONSTANTS.GET_USER_ACTIVITY_API_LIMIT, ', and sorting by interactionDate of -1. The error was:', error)
+                    console.error('An error occurred while finding all upvotes with a votesDBQuery of:', votesDBQuery, 'and a limit of:', CONSTANTS.GET_USER_ACTIVITY_API_LIMIT, ', and sorting by _id of -1. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding upvotes. Please try again.'))
                 }
             } else {
                 try {
-                    votes = await Downvote.find({userPublicId: userFound.secondId, postFormat}).sort({interactionDate: 1}).skip(skip).limit(CONSTANTS.GET_USER_ACTIVITY_API_LIMIT).lean()
+                    votes = await Downvote.find(votesDBQuery).sort({_id: -1}).limit(CONSTANTS.GET_USER_ACTIVITY_API_LIMIT).lean()
                 } catch(error) {
-                    console.error('An error occurred while finding all downvotes with a userPublicId of:', userFound.secondId, 'and a post format of:', postFormat, ' and a skip of:', skip, 'and a limit of:', CONSTANTS.GET_USER_ACTIVITY_API_LIMIT, ', and sorting by interactionDate of -1. The error was:', error)
+                    console.error('An error occurred while finding all downvotes with a votesDBQuery of:', votesDBQuery,  'and a limit of:', CONSTANTS.GET_USER_ACTIVITY_API_LIMIT, ', and sorting by _id of -1. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding downvotes. Please try again.'))
                 }
             }
+
+            const lastVoteId = votes.length > 0 ? votes[votes.length - 1]._id.toString() : null
+            const noMoreVotes = votes.length < CONSTANTS.GET_USER_ACTIVITY_API_LIMIT
 
             const postIds = votes.map(vote => vote.postId)
 
@@ -5718,7 +5731,12 @@ class TempController {
             }
 
             Promise.all(promises).then(arrays => {
-                const toSend = [].concat(...arrays)
+                const toSend = {
+                    posts: [].concat(...arrays),
+                    lastVoteId,
+                    noMoreVotes
+                }
+
                 return resolve(HTTPWTHandler.OK(`Successfully found ${postFormat.toLowerCase()} posts ${skip} - ${skip + toSend.length}`, toSend))
             }).catch(error => {
                 console.error('An error occurred while processing image posts. The error was:', error)
