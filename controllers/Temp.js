@@ -6450,8 +6450,8 @@ class TempController {
         return await this.#postcategorywithoutimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots)
     }
 
-    static searchpagesearchcategories = async (userId, val) => {
-        return await this.#searchpagesearchcategories(userId, val)
+    static searchpagesearchcategories = async (userId, val, lastCategoryId) => {
+        return await this.#searchpagesearchcategories(userId, val, lastCategoryId)
     }
 
     static getcategoryimage = async (val) => {
