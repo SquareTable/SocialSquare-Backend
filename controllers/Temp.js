@@ -47,7 +47,7 @@ const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = requ
 
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
-        return Promise(resolve => {
+        return new Promise(resolve => {
             if (typeof notificationKey !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`notificationKey must be a string. Provided type: ${typeof notificationKey}`))
             }
