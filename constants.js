@@ -50,8 +50,8 @@ const CONSTANTS = {
     NUM_POLLS_TO_SEND_PER_API_CALL: 10, //Used for temp/searchforpollposts API - Determines how many polls to send per API call
     NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getImagesFromProfile API - Determines how many image posts to send per API call
     NUM_THREAD_POSTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getthreadsfromprofile API - Determines how many thread posts to send per API call
-    NUM_CATEGORIES_TO_SEND_PER_API_CALL: 10, //Used for temp/findcategoryfromprofile and temp/getCategoriesUserIsAPartOf APIs - Determines how many categories to send per API call
-    NUM_USERS_TO_SEND_PER_PROFILE_STATS_API_CALL: 10 //Used for temp/getProfileStats API - Determines how many users they are following or users that follow them to send per API call
+    NUM_CATEGORIES_TO_SEND_PER_API_CALL: 10, //Used for temp/findcategoryfromprofile, temp/getCategoriesUserIsAPartOf, and temp/searchpagesearchcategories APIs - Determines how many categories to send per API call
+    NUM_USERS_TO_SEND_PER_PROFILE_STATS_API_CALL: 10, //Used for temp/getProfileStats API - Determines how many users they are following or users that follow them to send per API call
 }
 
 module.exports = CONSTANTS

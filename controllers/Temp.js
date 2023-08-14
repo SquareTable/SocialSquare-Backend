@@ -2710,7 +2710,7 @@ class TempController {
         })
     }
 
-    static #searchpagesearchcategories = (userId, val) => {
+    static #searchpagesearchcategories = (userId, val, lastCategoryId) => {
         return new Promise(resolve => {
             if (typeof val !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
@@ -2719,11 +2719,9 @@ class TempController {
             if (val.length == 0) {
                 return resolve(HTTPWTHandler.badInput('Search box cannot be empty!'))
             }
-        
-            function sendResponse(foundArray) {
-                console.log("Params Recieved")
-                console.log(foundArray)
-                return resolve(HTTPWTHandler.OK('Search successful', foundArray))
+
+            if (lastCategoryId !== undefined && typeof lastCategoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`lastCategoryId must be undefined or a string. Provided type: ${typeof lastCategoryId}`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -2731,27 +2729,40 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
 
-                var foundArray = []
-                Category.find({categoryTitle: {$regex: `^${val}`, $options: 'i'}}).lean().then(data =>{
-                    if (data.length) {
-                        var itemsProcessed = 0;
-                        data.forEach(function (item, index) {
-                            foundArray.push({categoryTitle: data[index].categoryTitle, categoryDescription: data[index].categoryDescription, members: data[index].members.length, categoryTags: data[index].categoryTags, imageKey: data[index].imageKey, NSFW: data[index].NSFW, NSFL: data[index].NSFL, datePosted: data[index].datePosted, allowScreenShots: data[index].allowScreenShots, categoryId: String(data[index]._id)})
-                            itemsProcessed++;
-                            if(itemsProcessed === data.length) {
-                                console.log("Before Function")
-                                console.log(foundArray)
-                                sendResponse(foundArray);
-                            }
-                        });
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('No results'))
+                const dbQuery = {
+                    categoryTitle: {$regex: `^${val}`, $options: 'i'}
+                }
+
+                if (lastCategoryId !== undefined) {
+                    dbQuery._id = {$lt: mongoose.Types.ObjectId(lastCategoryId)}
+                }
+
+                Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
+                    const categories = data.map(category => {
+                        return {
+                            categoryTitle: category.categoryTitle,
+                            categoryDescription: category.categoryDescription,
+                            members: category.members.length,
+                            categoryTags: category.categoryTags,
+                            imageKey: category.imageKey,
+                            NSFW: category.NSFW,
+                            NSFL: category.NSFL,
+                            datePosted: category.datePosted,
+                            allowScreenShots: category.allowScreenShots,
+                            categoryId: String(category._id)
+                        }
+                    })
+
+                    const toSend = {
+                        categories,
+                        noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
                     }
-                })
-                .catch(err => {
-                    console.error('An error occurred while finding category with categoryTitle regex ^val and options: "i". val is:', val, '. The error was:', err)
+
+                    return resolve(HTTPWTHandler.OK('Search successful', toSend))
+                }).catch(error => {
+                    console.error('An error occurred while finding category with dbQuery:', dbQuery, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
-                });
+                })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
