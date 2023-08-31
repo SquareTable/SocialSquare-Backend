@@ -2531,4 +2531,22 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
     })
 });
 
+router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'logoutuser',
+            functionArgs: [req.tokenData, req.headers['auth-refresh-token']]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /logoutuser:', error)
+        HTTPHandler.serverError(res, String(error))
+    })
+});
+
 module.exports = router;
