@@ -2544,7 +2544,7 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'logoutuser',
-            functionArgs: [req.tokenData, req.headers['auth-refresh-token']]
+            functionArgs: [req.tokenData, req.body.refreshTokenId]
         }
     })
 
