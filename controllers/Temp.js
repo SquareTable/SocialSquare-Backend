@@ -6329,7 +6329,8 @@ class TempController {
 
 
                 RefreshToken.findOne({_id: {$eq: refreshTokenId}}).then(refreshToken => {
-                    if (String(refreshToken._id) !== refreshTokenId) return HTTPWTHandler.forbidden('You cannot remove a refresh token that does not belong to your account')
+                    if (!refreshToken) return resolve(HTTPWTHandler.OK('Could not find refresh token. This device is already logged out.'))
+                    if (String(refreshToken._id) !== refreshTokenId) return resolve(HTTPWTHandler.forbidden('You cannot remove a refresh token that does not belong to your account'))
 
                     RefreshToken.deleteOne({_id: {$eq: refreshTokenId}}).then(() => {
                         return resolve(HTTPWTHandler.OK('Successfully logged out of account'))
