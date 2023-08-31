@@ -6318,8 +6318,34 @@ class TempController {
         })
     }
 
-    static #logoutuser = (userId, authRefreshTokenHeader) => {
-        
+    static #logoutuser = (userId, refreshTokenId) => {
+        return new Promise(resolve => {
+            if (typeof refreshTokenId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`refreshTokenId must be a string. Type provided: ${typeof refreshTokenId}`))
+            }
+            
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('User could not be found'))
+
+
+                RefreshToken.findOne({_id: {$eq: refreshTokenId}}).then(refreshToken => {
+                    if (String(refreshToken._id) !== refreshTokenId) return HTTPWTHandler.forbidden('You cannot remove a refresh token that does not belong to your account')
+
+                    RefreshToken.deleteOne({_id: {$eq: refreshTokenId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully logged out of account'))
+                    }).catch(error => {
+                        console.error('An error occurred while deleting one refresh token with id:', refreshTokenId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while logging you out. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one refresh token with id:', refreshTokenId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding refresh token. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
     }
 
     static sendnotificationkey = async (userId, notificationKey) => {
@@ -6686,8 +6712,8 @@ class TempController {
         return await this.#followingFeedFilterSettings(userId)
     }
 
-    static logoutuser = async (userId, authRefreshTokenHeader) => {
-        return await this.#logoutuser(userId, authRefreshTokenHeader)
+    static logoutuser = async (userId, refreshTokenId) => {
+        return await this.#logoutuser(userId, refreshTokenId)
     }
 }
 
