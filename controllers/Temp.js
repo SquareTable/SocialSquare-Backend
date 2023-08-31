@@ -237,7 +237,7 @@ class TempController {
                                     newRefreshToken.save().then(savedRefreshToken => {
                                         RefreshToken.deleteMany({encryptedRefreshToken: {$ne: encryptedRefreshToken}, userId: data._id, admin: false}).then(() => {
                                             User.findOneAndUpdate({_id: {$eq: userId}}, {password: hashedPassword}).then(() => {
-                                                return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: savedRefreshToken._id}))
+                                                return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(savedRefreshToken._id)}))
                                             }).catch(error => {
                                                 console.error('An error occurred while setting password to:', hashedPassword, 'for user with id:', userId, '. The error was:', error)
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))

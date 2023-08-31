@@ -265,7 +265,7 @@ class UserController {
         
                                         newRefreshToken.save().then(refreshTokenSaved => {
                                             const dataToSend = userHandler.filterUserInformationToSend(data)
-                                            return resolve(HTTPWTHandler.OK('Signin successful', dataToSend, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: refreshTokenSaved._id}))
+                                            return resolve(HTTPWTHandler.OK('Signin successful', dataToSend, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
                                         }).catch(error => {
                                             console.error('An error occurred while saving new refresh token. The error was:', error)
                                             return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
@@ -605,7 +605,7 @@ class UserController {
                                             const newRefreshToken = new RefreshToken(newRefreshTokenObject)
             
                                             newRefreshToken.save().then(refreshTokenSaved => {
-                                                return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: refreshTokenSaved._id}))
+                                                return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
                                             }).catch(error => {
                                                 console.error('An error occurred while saving new refresh token. The refresh token object is:', newRefreshTokenObject, 'The error was:', error)
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
