@@ -1748,7 +1748,7 @@ class TempController {
                 if (result) {
                     if (result.name == userName) {
                         async function findImages() {
-                            const objectId = new mongodb.ObjectID()
+                            const objectId = new mongoose.Types.ObjectId()
                             console.log(objectId)
                             var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                             ImagePost.findOneAndUpdate({_id: {$eq: imageId}}, { $push: { comments: commentForPost } }).then(function(){
