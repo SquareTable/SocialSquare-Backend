@@ -777,7 +777,7 @@ class TempController {
                             if (data) {
                                 var comments = data.comments
                                 async function findThreads(sentIndex) {
-                                    var objectId = new mongodb.ObjectID()
+                                    var objectId = new mongoose.Types.ObjectId()
                                     console.log(objectId)
                                     var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
                                     Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
