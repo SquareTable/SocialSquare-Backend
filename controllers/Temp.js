@@ -711,7 +711,7 @@ class TempController {
                 if (result) {
                     if (result.name == userName) {
                         async function findPolls() {
-                            var objectId = new mongodb.ObjectID()
+                            var objectId = new mongoose.Types.ObjectId()
                             console.log(objectId)
                             var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                             Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { comments: commentForPost } }).then(function(){
