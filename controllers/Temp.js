@@ -3598,7 +3598,7 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
                     if (result.name == userName) {
-                        var objectId = new mongodb.ObjectID()
+                        var objectId = new mongoose.Types.ObjectId()
                         console.log(objectId)
                         var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                         Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { comments: commentForPost } }).then(function(){
