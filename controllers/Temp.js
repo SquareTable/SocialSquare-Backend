@@ -3669,7 +3669,7 @@ class TempController {
                                     return resolve(HTTPWTHandler.badInput("Couldn't find comment"))
                                 }
 
-                                const objectId = new mongodb.ObjectID()
+                                const objectId = new mongoose.Types.ObjectId()
                                 console.log(objectId)
                                 var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
                                 Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
