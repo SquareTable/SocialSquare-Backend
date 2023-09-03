@@ -840,7 +840,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pollId cannot be blank'))
             } else {
                 //Find User
-                console.log(sentPollId)
+                console.log(pollId)
                 function sendResponse(nameSendBackObject) {
                     console.log("Params Recieved")
                     console.log(nameSendBackObject)
