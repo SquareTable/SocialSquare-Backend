@@ -8,6 +8,6 @@ const CategoryMemberSchema = new Schema({
     role: String
 })
 
-const CategoryMemberModel = mongoose.model('CategoryMember', CategoryMemberSchema)
+const CategoryMember = mongoose.model('CategoryMember', CategoryMemberSchema)
 
-export default CategoryMemberModel;
+export default CategoryMember;
