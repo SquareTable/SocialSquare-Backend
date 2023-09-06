@@ -44,6 +44,7 @@ const { sendNotifications } = require("../notificationHandler");
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 
 const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
+const { default: CategoryMember } = require('../models/CategoryMember');
 
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
@@ -5432,7 +5433,7 @@ class TempController {
                                 AccountReports.deleteMany({reporterId: {$eq: userId}}),
                                 PostReports.deleteMany({reporterId: {$eq: userId}}),
                                 RefreshToken.deleteMany({userId: {$eq: userId}}),
-                                Category.updateMany({}, {$pull: {members: userId}})
+                                CategoryMember.deleteMany({userId: {$eq: userId}})
                             ]).then(() => {
                                 User.deleteOne({_id: {$eq: userId}}).then(() => {
                                     return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
