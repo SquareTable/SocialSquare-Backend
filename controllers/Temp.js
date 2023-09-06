@@ -56,7 +56,7 @@ class TempController {
                 if (userData) {
                     const notificationKeys = userData.notificationKeys;
                     if (notificationKeys.includes(notificationKey)) {
-                        return resolve(HTTPWTHandler.conflict('Notification key already exists in account data'))
+                        return resolve(HTTPWTHandler.OK('Notification key already exists in account data'))
                     } else if (notificationKey == null) {
                         return resolve(HTTPWTHandler.badInput('Notification key cannot be null'))
                     } else {
