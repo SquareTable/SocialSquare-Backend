@@ -6273,7 +6273,7 @@ class TempController {
                     const changesToMake = {}
         
                     if (loginActivitySettingsToSet.getIP) {
-                        changesToMake.IP = HTTPHandler.getIP(IP)
+                        changesToMake.IP = HTTPHandler.formatIP(IP)
                     }
         
                     if (loginActivitySettingsToSet.getLocation) {
