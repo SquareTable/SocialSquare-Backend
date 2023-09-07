@@ -10,6 +10,7 @@ const User = require('../models/User')
 const axios = require('axios')
 const RefreshToken = require('../models/RefreshToken')
 const bcrypt = require('bcrypt')
+const { v4: uuidv4 } = require('uuid');
 
 const { setCacheItem, getCacheItem, delCacheItem } = require('../memoryCache.js')
 
