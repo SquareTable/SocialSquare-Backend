@@ -9,6 +9,7 @@ const PopularPosts = require('../models/PopularPosts');
 const AccountReports = require('../models/AccountReports')
 const PostReports = require('../models/PostReports');
 const RefreshToken = require('../models/RefreshToken');
+const Message = require('../models/Message')
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
