@@ -40,6 +40,8 @@ const userHandler = new UserLibrary();
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
+const geoIPLite = require('geoip-lite')
+
 const { sendNotifications } = require("../notificationHandler");
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
