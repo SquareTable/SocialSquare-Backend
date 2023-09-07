@@ -10,6 +10,7 @@ const User = require('../models/User')
 const axios = require('axios')
 const RefreshToken = require('../models/RefreshToken')
 const bcrypt = require('bcrypt')
+const { v4: uuidv4 } = require('uuid');
 
 const { setCacheItem, getCacheItem, delCacheItem } = require('../memoryCache.js')
 
@@ -32,9 +33,9 @@ class UserController {
             }
 
             name = name.trim();
-            displayName = ""; //Adding displayName via SocialSquare app will be coming soon - For now it'll be an empty string
+            let displayName = ""; //Adding displayName via SocialSquare app will be coming soon - For now it'll be an empty string
             email = email.trim();
-            badges = [];
+            let badges = [];
             password = password.trim();
 
             if (name == "" || email == "" || password == "") {
@@ -124,7 +125,7 @@ class UserController {
                                             const newRefreshToken = new RefreshToken(newRefreshTokenObject)
 
                                             newRefreshToken.save().then(refreshTokenResult => {
-                                                return resolve(HTTPWTHandler.OK('Signup successful', userHandler.filterUserInformationToSend(result), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: refreshTokenResult._id}))
+                                                return resolve(HTTPWTHandler.OK('Signup successful', userHandler.filterUserInformationToSend(result.toJSON()), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenResult._id)}))
                                             }).catch(error => {
                                                 console.error('An error occurred while saving new RefreshToken to database. The error was:', error)
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while logging you into your new account. Your account was successfully created so please go to the login screen to login to your account.'))
@@ -263,9 +264,9 @@ class UserController {
         
                                         const newRefreshToken = new RefreshToken(newRefreshTokenObject)
         
-                                        newRefreshToken.save().then(() => {
+                                        newRefreshToken.save().then(refreshTokenSaved => {
                                             const dataToSend = userHandler.filterUserInformationToSend(data)
-                                            return resolve(HTTPWTHandler.OK('Signin successful', dataToSend, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`}))
+                                            return resolve(HTTPWTHandler.OK('Signin successful', dataToSend, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
                                         }).catch(error => {
                                             console.error('An error occurred while saving new refresh token. The error was:', error)
                                             return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
@@ -604,8 +605,8 @@ class UserController {
             
                                             const newRefreshToken = new RefreshToken(newRefreshTokenObject)
             
-                                            newRefreshToken.save().then(() => {
-                                                return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`}))
+                                            newRefreshToken.save().then(refreshTokenSaved => {
+                                                return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
                                             }).catch(error => {
                                                 console.error('An error occurred while saving new refresh token. The refresh token object is:', newRefreshTokenObject, 'The error was:', error)
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))

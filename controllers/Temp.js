@@ -9,6 +9,7 @@ const PopularPosts = require('../models/PopularPosts');
 const AccountReports = require('../models/AccountReports')
 const PostReports = require('../models/PostReports');
 const RefreshToken = require('../models/RefreshToken');
+const Message = require('../models/Message')
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -57,7 +58,7 @@ class TempController {
                 if (userData) {
                     const notificationKeys = userData.notificationKeys;
                     if (notificationKeys.includes(notificationKey)) {
-                        return resolve(HTTPWTHandler.conflict('Notification key already exists in account data'))
+                        return resolve(HTTPWTHandler.OK('Notification key already exists in account data'))
                     } else if (notificationKey == null) {
                         return resolve(HTTPWTHandler.badInput('Notification key cannot be null'))
                     } else {
@@ -235,10 +236,10 @@ class TempController {
         
                                     const newRefreshToken = new RefreshToken(newRefreshTokenObject)
         
-                                    newRefreshToken.save().then(() => {
+                                    newRefreshToken.save().then(savedRefreshToken => {
                                         RefreshToken.deleteMany({encryptedRefreshToken: {$ne: encryptedRefreshToken}, userId: data._id, admin: false}).then(() => {
                                             User.findOneAndUpdate({_id: {$eq: userId}}, {password: hashedPassword}).then(() => {
-                                                return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`}))
+                                                return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(savedRefreshToken._id)}))
                                             }).catch(error => {
                                                 console.error('An error occurred while setting password to:', hashedPassword, 'for user with id:', userId, '. The error was:', error)
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
@@ -712,7 +713,7 @@ class TempController {
                 if (result) {
                     if (result.name == userName) {
                         async function findPolls() {
-                            var objectId = new mongodb.ObjectID()
+                            var objectId = new mongoose.Types.ObjectId()
                             console.log(objectId)
                             var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                             Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { comments: commentForPost } }).then(function(){
@@ -778,7 +779,7 @@ class TempController {
                             if (data) {
                                 var comments = data.comments
                                 async function findThreads(sentIndex) {
-                                    var objectId = new mongodb.ObjectID()
+                                    var objectId = new mongoose.Types.ObjectId()
                                     console.log(objectId)
                                     var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
                                     Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
@@ -841,7 +842,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pollId cannot be blank'))
             } else {
                 //Find User
-                console.log(sentPollId)
+                console.log(pollId)
                 function sendResponse(nameSendBackObject) {
                     console.log("Params Recieved")
                     console.log(nameSendBackObject)
@@ -1749,7 +1750,7 @@ class TempController {
                 if (result) {
                     if (result.name == userName) {
                         async function findImages() {
-                            const objectId = new mongodb.ObjectID()
+                            const objectId = new mongoose.Types.ObjectId()
                             console.log(objectId)
                             var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                             ImagePost.findOneAndUpdate({_id: {$eq: imageId}}, { $push: { comments: commentForPost } }).then(function(){
@@ -1828,7 +1829,7 @@ class TempController {
                             if (data) {
                                 var comments = data.comments
                                 async function findThreads(sentIndex) {
-                                    var objectId = new mongodb.ObjectID()
+                                    var objectId = new mongoose.Types.ObjectId()
                                     console.log(objectId)
                                     var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
                                     ImagePost.findOneAndUpdate({_id: {$eq: imageId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
@@ -3599,7 +3600,7 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
                     if (result.name == userName) {
-                        var objectId = new mongodb.ObjectID()
+                        var objectId = new mongoose.Types.ObjectId()
                         console.log(objectId)
                         var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                         Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { comments: commentForPost } }).then(function(){
@@ -3670,7 +3671,7 @@ class TempController {
                                     return resolve(HTTPWTHandler.badInput("Couldn't find comment"))
                                 }
 
-                                const objectId = new mongodb.ObjectID()
+                                const objectId = new mongoose.Types.ObjectId()
                                 console.log(objectId)
                                 var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
                                 Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
@@ -6319,6 +6320,37 @@ class TempController {
         })
     }
 
+    static #logoutuser = (userId, refreshTokenId) => {
+        return new Promise(resolve => {
+            if (typeof refreshTokenId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`refreshTokenId must be a string. Type provided: ${typeof refreshTokenId}`))
+            }
+            
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('User could not be found'))
+
+
+                RefreshToken.findOne({_id: {$eq: refreshTokenId}}).then(refreshToken => {
+                    if (!refreshToken) return resolve(HTTPWTHandler.OK('Could not find refresh token. This device is already logged out.'))
+                    if (String(refreshToken._id) !== refreshTokenId) return resolve(HTTPWTHandler.forbidden('You cannot remove a refresh token that does not belong to your account'))
+
+                    RefreshToken.deleteOne({_id: {$eq: refreshTokenId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully logged out of account'))
+                    }).catch(error => {
+                        console.error('An error occurred while deleting one refresh token with id:', refreshTokenId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while logging you out. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one refresh token with id:', refreshTokenId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding refresh token. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey) => {
         return await this.#sendnotificationkey(userId, notificationKey)
     }
@@ -6681,6 +6713,10 @@ class TempController {
 
     static followingFeedFilterSettings = async (userId) => {
         return await this.#followingFeedFilterSettings(userId)
+    }
+
+    static logoutuser = async (userId, refreshTokenId) => {
+        return await this.#logoutuser(userId, refreshTokenId)
     }
 }
 
