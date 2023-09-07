@@ -32,7 +32,7 @@ class UserController {
             }
 
             name = name.trim();
-            displayName = ""; //Adding displayName via SocialSquare app will be coming soon - For now it'll be an empty string
+            let displayName = ""; //Adding displayName via SocialSquare app will be coming soon - For now it'll be an empty string
             email = email.trim();
             badges = [];
             password = password.trim();
