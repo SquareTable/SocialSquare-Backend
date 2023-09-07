@@ -125,7 +125,7 @@ class UserController {
                                             const newRefreshToken = new RefreshToken(newRefreshTokenObject)
 
                                             newRefreshToken.save().then(refreshTokenResult => {
-                                                return resolve(HTTPWTHandler.OK('Signup successful', userHandler.filterUserInformationToSend(result), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: refreshTokenResult._id}))
+                                                return resolve(HTTPWTHandler.OK('Signup successful', userHandler.filterUserInformationToSend(result.toJSON()), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenResult._id)}))
                                             }).catch(error => {
                                                 console.error('An error occurred while saving new RefreshToken to database. The error was:', error)
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while logging you into your new account. Your account was successfully created so please go to the login screen to login to your account.'))
