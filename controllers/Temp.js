@@ -40,6 +40,8 @@ const userHandler = new UserLibrary();
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
+const geoIPLite = require('geoip-lite')
+
 const { sendNotifications } = require("../notificationHandler");
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
@@ -6273,7 +6275,7 @@ class TempController {
                     const changesToMake = {}
         
                     if (loginActivitySettingsToSet.getIP) {
-                        changesToMake.IP = HTTPHandler.getIP(IP)
+                        changesToMake.IP = HTTPHandler.formatIP(IP)
                     }
         
                     if (loginActivitySettingsToSet.getLocation) {
