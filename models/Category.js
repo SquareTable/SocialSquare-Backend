@@ -7,7 +7,7 @@ const CategorySchema = new Schema({
     categoryDescription: String,
     categoryTags: String,
     members: Array,
-    NSFW: false,
+    NSFW: {type: Boolean, default: false},
     NSFL: {type: Boolean, default: false},
     categoryOwnerId: mongoose.Schema.Types.ObjectId,
     categoryOriginalCreator: mongoose.Schema.Types.ObjectId,
