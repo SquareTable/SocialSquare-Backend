@@ -10,6 +10,7 @@ const AccountReports = require('../models/AccountReports')
 const PostReports = require('../models/PostReports');
 const RefreshToken = require('../models/RefreshToken');
 const Message = require('../models/Message')
+const CategoryMember = require('../models/CategoryMember');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -47,7 +48,6 @@ const { sendNotifications } = require("../notificationHandler");
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 
 const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
-const { default: CategoryMember } = require('../models/CategoryMember');
 
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
