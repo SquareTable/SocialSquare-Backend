@@ -2742,27 +2742,36 @@ class TempController {
                 }
 
                 Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
-                    const categories = data.map(category => {
-                        return {
-                            categoryTitle: category.categoryTitle,
-                            categoryDescription: category.categoryDescription,
-                            members: category.members.length,
-                            categoryTags: category.categoryTags,
-                            imageKey: category.imageKey,
-                            NSFW: category.NSFW,
-                            NSFL: category.NSFL,
-                            datePosted: category.datePosted,
-                            allowScreenShots: category.allowScreenShots,
-                            categoryId: String(category._id)
+                    Promise.all(
+                        data.map(category => {
+                            return CategoryMember.countDocuments({categoryId: {$eq: category._id}})
+                        })
+                    ).then(memberCounts => {
+                        const categories = data.map((category, index) => {
+                            return {
+                                categoryTitle: category.categoryTitle,
+                                categoryDescription: category.categoryDescription,
+                                members: memberCounts[index],
+                                categoryTags: category.categoryTags,
+                                imageKey: category.imageKey,
+                                NSFW: category.NSFW,
+                                NSFL: category.NSFL,
+                                datePosted: category.datePosted,
+                                allowScreenShots: category.allowScreenShots,
+                                categoryId: String(category._id)
+                            }
+                        })
+    
+                        const toSend = {
+                            categories,
+                            noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
                         }
+    
+                        return resolve(HTTPWTHandler.OK('Search successful', toSend))
+                    }).catch(error => {
+                        console.error('An error occurred while counting CategoryMember documents. The categoryIds were:', data.map(category => category._id), '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
                     })
-
-                    const toSend = {
-                        categories,
-                        noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
-                    }
-
-                    return resolve(HTTPWTHandler.OK('Search successful', toSend))
                 }).catch(error => {
                     console.error('An error occurred while finding category with dbQuery:', dbQuery, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
