@@ -888,7 +888,7 @@ app.post("/leaveConversations", (req, res) => {
                                     }
                                 } else {
                                     const conversationIdString = conversationId.toString()
-                                    Message.remove({conversationId: {$eq: conversationIdString}}).then(function() {
+                                    Message.deleteMany({conversationId: {$eq: conversationIdString}}).then(function() {
                                         Conversation.findOneAndDelete({_id: {$eq: conversationId}}).then(function() {
                                             getSocketToDisconnect(conversationId, idSent, function(toLeave) {
                                                 if (toLeave == null || toLeave.length == 0) {
