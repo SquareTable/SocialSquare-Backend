@@ -10,4 +10,4 @@ const CategoryMemberSchema = new Schema({
 
 const CategoryMember = mongoose.model('CategoryMember', CategoryMemberSchema)
 
-export default CategoryMember;
+module.exports = CategoryMember;
