@@ -11,7 +11,7 @@ const UserSchema = new Schema({
     badges: Array,
     followers: Array,
     following: Array,
-    totalLikes: 0,
+    totalLikes: {type: Number, default: 0},
     status: String,
     profileImageKey: String,
     notificationKeys: Array,
