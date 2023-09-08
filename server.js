@@ -1,7 +1,12 @@
 // mongodb
 require('./config/db').then(() => {
     console.log("DB Connected"); 
-}).catch((err) => console.log(err));
+}).catch((err) => {
+    console.error('ERROR CONNECTING TO DATABASE:')
+    console.error(err)
+    console.error('SERVER WILL EXIT WITH CODE 1 (FAIL)')
+    process.exit(1)
+});
 
 const app = require('express')();
 const port = process.env.PORT || 3000;

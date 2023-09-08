@@ -29,5 +29,14 @@ async function run() {
 require('../config/db').then(async connection => {
     await run();
     console.log('Disconnecting from database on User Thread...')
-    connection.disconnect()
-}).catch((err) => console.log(err))
+    try {
+        await connection.disconnect()
+    } catch (error) {
+        console.error('An error occurred while disconnecting from database in UserWorker for User controller function:', functionName, '. The error was:', error)
+    }
+}).catch((err) => {
+    console.error('An error occurred while connecting to database for UserWorker:', err)
+    parentPort.postMessage(
+        HTTPWTHandler.serverError('A database error occurred. Please try again.')
+    )
+})
