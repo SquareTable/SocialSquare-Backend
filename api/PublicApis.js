@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const mongodb = require('mongodb');
-mongoose.set('useFindAndModify', false);
 
 var stringSimilarity = require("string-similarity");
 

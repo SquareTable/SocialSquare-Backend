@@ -29,6 +29,15 @@ async function run() {
 
 require('../config/db').then(async connection => {
     await run();
-    console.log('Disconnecting from database...')
-    connection.disconnect();
-}).catch((err) => console.log(err))
+    console.log('Disconnecting Feed thread from database...')
+    try {
+        await connection.disconnect();
+    } catch (error) {
+        console.error('An error occurred while disconnecting from database in FeedWorker for Feed controller function:', functionName, '. The error was:', error)
+    }
+}).catch((err) => {
+    console.error('An error occurred while connecting to database for FeedWorker:', err)
+    parentPort.postMessage(
+        HTTPWTHandler.serverError('A database error occurred. Please try again.')
+    )
+})

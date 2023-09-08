@@ -40,6 +40,8 @@ const userHandler = new UserLibrary();
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
+const geoIPLite = require('geoip-lite')
+
 const { sendNotifications } = require("../notificationHandler");
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
@@ -639,7 +641,7 @@ class TempController {
                                     }
 
                                     if (previousPostId) {
-                                        dbQuery._id = {$lt: mongoose.Types.ObjectId(previousPostId)}
+                                        dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousPostId)}
                                     }
 
                                     console.log('previousPostId:', previousPostId)
@@ -2736,7 +2738,7 @@ class TempController {
                 }
 
                 if (lastCategoryId !== undefined) {
-                    dbQuery._id = {$lt: mongoose.Types.ObjectId(lastCategoryId)}
+                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(lastCategoryId)}
                 }
 
                 Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
@@ -5640,7 +5642,7 @@ class TempController {
             }
 
             if (skip !== undefined) {
-                votesDBQuery._id = {$lt: mongoose.Types.ObjectId(skip)}
+                votesDBQuery._id = {$lt: new mongoose.Types.ObjectId(skip)}
             }
 
             console.log('Votes DB Query:', votesDBQuery)
@@ -6274,7 +6276,7 @@ class TempController {
                     const changesToMake = {}
         
                     if (loginActivitySettingsToSet.getIP) {
-                        changesToMake.IP = HTTPHandler.getIP(IP)
+                        changesToMake.IP = HTTPHandler.formatIP(IP)
                     }
         
                     if (loginActivitySettingsToSet.getLocation) {

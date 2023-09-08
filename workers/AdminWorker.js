@@ -28,6 +28,15 @@ async function run() {
 
 require('../config/db').then(async connection => {
     await run();
-    console.log('Disconnecting thread from database...')
-    connection.disconnect()
-}).catch((err) => console.log(err))
+    console.log('Disconnecting Admin thread from database...')
+    try {
+        await connection.disconnect()
+    } catch (error) {
+        console.error('An error occurred while disconnecting from database in AdminWorker for Admin controller function:', functionName, '. The error was:', error)
+    }
+}).catch((err) => {
+    console.error('An error occurred while connecting to database for AdminWorker:', err)
+    parentPort.postMessage(
+        HTTPWTHandler.serverError('A database error occurred. Please try again.')
+    )
+})

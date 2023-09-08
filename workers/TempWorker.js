@@ -29,5 +29,14 @@ async function run() {
 require('../config/db').then(async connection => {
     await run();
     console.log('Disconnecting from database on Temp API Thread...')
-    connection.disconnect()
-}).catch((err) => console.log(err))
+    try {
+        await connection.disconnect()
+    } catch (error) {
+        console.error('An error occurred while disconnecting from database in TempWorker for Temp controller function:', functionName, '. The error was:', error)
+    }
+}).catch((err) => {
+    console.error('An error occurred while connecting to database for TempWorker:', err)
+    parentPort.postMessage(
+        HTTPWTHandler.serverError('A database error occurred. Please try again.')
+    )
+})
