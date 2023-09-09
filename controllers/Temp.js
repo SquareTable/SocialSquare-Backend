@@ -5468,8 +5468,8 @@ class TempController {
 
     static #checkIfCategoryExists = (categoryTitle) => {
         return new Promise(resolve => {
-            Category.countDocuments({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).then(categoryCount => {
-                if (categoryCount > 0) {
+            Category.exists({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).then(category => {
+                if (category) {
                     return resolve(HTTPWTHandler.OK(true))
                 } else {
                     return resolve(HTTPWTHandler.OK(false))

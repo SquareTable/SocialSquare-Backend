@@ -14,8 +14,8 @@ class ThreadPost {
                     delete post.creatorId
                     return new Promise((resolve, reject) => {
                         Promise.all([
-                            Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Thread"}),
-                            Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Thread"}),
+                            Upvote.estimatedDocumentCount({postId: {$eq: post._id}, postFormat: "Thread"}),
+                            Downvote.estimatedDocumentCount({postId: {$eq: post._id}, postFormat: "Thread"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
                             Category.findOne({_id: {$eq: post.threadCategoryId}}, {categoryTitle: 1})
