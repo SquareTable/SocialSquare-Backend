@@ -3021,6 +3021,43 @@ class TempController {
         })
     }
 
+    static #leavecategory = (userId, categoryId) => {
+        return new Promise(resolve => {
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
+            }
+
+            if (categoryId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('categoryId must not be an empty string.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+
+                Category.findOne({_id: {$eq: categoryId}}).then(categoryFound => {
+                    if (!categoryFound) {
+                        return resolve(HTTPWTHandler.notFound('Could not find category.'))
+                    }
+
+                    CategoryMember.deleteMany({userId: {$eq: userId}, categoryId: {$eq: categoryId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully left category'))
+                    }).catch(error => {
+                        console.error('An error occurred while deleting many category members with userId:', userId, 'and categoryId:', categoryId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while leaving category. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static #posttextthread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
         return new Promise(resolve => {
             if (typeof threadTitle !== 'string') {
@@ -6512,6 +6549,10 @@ class TempController {
 
     static joincategory = async (userId, categoryId) => {
         return await this.#joincategory(userId, categoryId)
+    }
+
+    static leavecategory = async (userId, categoryId) => {
+        return await this.#leavecategory(userId, categoryId)
     }
 
     static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
