@@ -2312,11 +2312,10 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
 });
 
 router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPartOf'], (req, res) => {
-    let {skip = 0} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getCategoriesUserIsAPartOf',
-            functionArgs: [req.tokenData, skip]
+            functionArgs: [req.tokenData, req.body.previousCategoryMemberId]
         }
     })
 

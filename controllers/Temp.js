@@ -5806,11 +5806,10 @@ class TempController {
         })
     }
 
-    static #getCategoriesUserIsAPartOf = (userId, skip) => {
+    static #getCategoriesUserIsAPartOf = (userId, previousCategoryMemberId) => {
         return new Promise(resolve => {
-            skip = parseInt(skip)
-            if (isNaN(skip)) {
-                return resolve(HTTPWTHandler.badInput('skip must be a number (integer)'))
+            if (typeof previousCategoryMemberId !== 'undefined' && typeof previousCategoryMemberId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must either be undefined or a string. Provided type: ${typeof previousCategoryMemberId}`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -5818,11 +5817,37 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
 
-                Category.find({members: userId}).sort({dateCreated: -1}).skip(skip).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoriesFound => {
-                    return resolve(HTTPWTHandler.OK(`Successfully found categories ${skip} - ${skip + categoriesFound.length}`, categoriesFound))
+                const dbQuery = {
+                    userId: {$eq: userId}
+                }
+
+                if (previousCategoryMemberId) {
+                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousCategoryMemberId)}
+                }
+
+                CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoryMemberDocuments => {
+                    const categoryIds = categoryMemberDocuments.map(doc => doc.categoryId)
+                    Category.find({_id: {$in: categoryIds}}).then(categories => {
+                        const categoriesToSend = categories.map((category, index) => {
+                            const newCategory = {...category}
+                            newCategory.dateJoined = categoryMemberDocuments[index].dateJoined;
+                            newCategory.role = categoryMemberDocuments[index].role;
+                            return newCategory
+                        })
+
+                        const toSend = {
+                            noMoreCategories: categoryMemberDocuments.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL,
+                            categories: categoriesToSend
+                        }
+
+                        return resolve(HTTPWTHandler.OK(`Successfully found ${categoryMemberDocuments.length} categories`, toSend))
+                    }).catch(error => {
+                        console.error('An error occurred while finding categories with ids:', categoryIds, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
+                    })
                 }).catch(error => {
-                    console.error('An error occured while finding what categories user with id:', userId, 'is part of. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding what categories you are a part of. Please try again.'))
+                    console.error('An error occurred while finding CategoryMembers with dbQuery:', dbQuery, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding categories you are a part of. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
