@@ -5461,6 +5461,21 @@ class TempController {
 
                         mongoose.startSession().then(session => {
                             session.startTransaction()
+
+                            const dbUpdates = [
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userGettingFollowed._id}},
+                                        update: {$pull : {followers: userFollowingFound.secondId}}
+                                    }
+                                },
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userId}},
+                                        update: { $pull : {following: userGettingFollowed.secondId}}
+                                    }
+                                }
+                            ]
     
                             Promise.all([
                                 popularPosts.length !== newPopularPosts.length ? PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}) : Promise.resolve('Popular posts do not need to be updated'),
@@ -5471,23 +5486,53 @@ class TempController {
                                 ...threadImageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
                                 Thread.deleteMany({creatorId: {$eq: userId}}),
                                 Message.deleteMany({senderId: {$eq: userId}}),
-                                User.updateMany({followers: userFound.secondId}, {$pull: {followers: userFound.secondId}}),
-                                User.updateMany({following: userFound.secondId}, {$pull: {following: userFound.secondId}}),
-                                User.updateMany({blockedAccounts: userFound.secondId}, {$pull: {blockedAccounts: userFound.secondId}}),
+                                User.bulkWrite([
+                                    {
+                                        updateMany: {
+                                            filter: {followers: userFound.secondId},
+                                            update: {$pull: {followers: userFound.secondId}}
+                                        },
+                                        updateMany: {
+                                            filter: {following: userFound.secondId},
+                                            update: {$pull: {following: userFound.secondId}}
+                                        },
+                                        updateMany: {
+                                            filter: {blockedAccounts: userFound.secondId},
+                                            update: {$pull: {blockedAccounts: userFound.secondId}}
+                                        },
+                                        updateMany: {
+                                            filter: {accountFollowRequests: userFound.secondId},
+                                            update: {$pull: {accountFollowRequests: userFound.secondId}}
+                                        },
+                                        deleteOne: {
+                                            filter: {_id: {$eq: userId}},
+                                        }
+                                    }
+                                ]),
                                 Downvote.deleteMany({userPublicId: userFound.secondId}),
                                 Upvote.deleteMany({userPublicId: userFound.secondId}),
-                                User.updateMany({accountFollowRequests: userFound.secondId}, {$pull: {accountFollowRequests: userFound.secondId}}),
                                 AccountReports.deleteMany({reporterId: {$eq: userId}}),
                                 PostReports.deleteMany({reporterId: {$eq: userId}}),
                                 RefreshToken.deleteMany({userId: {$eq: userId}}),
                                 CategoryMember.deleteMany({userId: {$eq: userId}}),
-                                User.deleteOne({_id: {$eq: userId}})
                             ]).then(() => session.commitTransaction()).then(() => {
                                 console.log('User with id:', userId, 'has been successfully deleted along with all associated data.')
-                                return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending session after deleting account. The error was:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                })
                             }).catch(error => {
-                                console.error('An error occured while deleting account data for user with id:', userId, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting data. Please try again.'))
+                                session.abortTransaction().catch(error => {
+                                    console.error('An error occurred while aborting transaction after deleting account. The error was:', error)
+                                }).finally(() => {
+                                    session.endSession().catch(error => {
+                                        console.error('An error occurred while ending session after deleting account data. The error was:', error)
+                                    }).finally(() => {
+                                        console.error('An error occured while deleting account data for user with id:', userId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting data. Please try again.'))
+                                    })
+                                })
                             })
                         }).catch(error => {
                             console.log('An error occurred while starting Mongoose session. The error was:', error)
