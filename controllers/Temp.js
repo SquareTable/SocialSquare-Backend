@@ -5405,20 +5405,18 @@ class TempController {
                     const popularPosts = popularPostDocument.popularPosts
                     const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userId)
 
-                    if (popularPosts.length !== newPopularPosts.length) {
-                        //The user did not have any popular posts so you don't have to update the PopularPosts in the database
-                        try {
-                            await PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts})
-                        } catch(error) {
-                            return resolve(HTTPWTHandler.serverError('An error occurred while removing your posts from the popular posts list. Please try again.'))
-                        }
-                    }
-        
-                    ImagePost.find({creatorId: {$eq: userId}}).lean().then(imagePosts => {
+                    Promise.all([
+                        ImagePost.find({creatorId: {$eq: userId}}).lean(),
+                        Thread.find({creatorId: {$eq: userId}}).lean()
+                    ]).then(([imagePosts, threadPosts]) => {
                         const imageKeys = imagePosts.map(post => post.imageKey)
-                        Thread.find({creatorId: {$eq: userId}}).lean().then(threadPosts => {
-                            const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
+                        const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
+
+                        mongoose.startSession().then(session => {
+                            session.startTransaction()
+    
                             Promise.all([
+                                popularPosts.length !== newPopularPosts.length ? PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}) : Promise.resolve('Popular posts do not need to be updated'),
                                 userFound?.profileImageKey ? fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, userFound.profileImageKey)) : Promise.resolve('Profile Image Deleted'),
                                 ...imageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
                                 ImagePost.deleteMany({creatorId: {$eq: userId}}),
@@ -5435,25 +5433,22 @@ class TempController {
                                 AccountReports.deleteMany({reporterId: {$eq: userId}}),
                                 PostReports.deleteMany({reporterId: {$eq: userId}}),
                                 RefreshToken.deleteMany({userId: {$eq: userId}}),
-                                Category.updateMany({}, {$pull: {members: userId}})
-                            ]).then(() => {
-                                User.deleteOne({_id: {$eq: userId}}).then(() => {
-                                    return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
-                                }).catch(error => {
-                                    console.error('An error occured while deleting user with id:', userId, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting account. Please try again.'))
-                                })
+                                Category.updateMany({}, {$pull: {members: userId}}),
+                                User.deleteOne({_id: {$eq: userId}})
+                            ]).then(() => session.commitTransaction()).then(() => {
+                                console.log('User with id:', userId, 'has been successfully deleted along with all associated data.')
+                                return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
                             }).catch(error => {
                                 console.error('An error occured while deleting account data for user with id:', userId, '. The error was:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while deleting data. Please try again.'))
                             })
                         }).catch(error => {
-                            console.error('An error occurred while finding all threads from user with id:', userId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding user thread posts.'))
+                            console.log('An error occurred while starting Mongoose session. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting account. Please try again.'))
                         })
                     }).catch(error => {
-                        console.error('An error occured while finding all user image posts by user with id:', userId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user image posts.'))
+                        console.error('An error occurred while getting posts with images before deleting account. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding images to delete. Please try again.'))
                     })
                 }).catch(error => {
                     console.error('An error occurred while finding popular posts. The error was:', error)
