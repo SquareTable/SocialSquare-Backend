@@ -5437,10 +5437,22 @@ class TempController {
                                 User.deleteOne({_id: {$eq: userId}})
                             ]).then(() => session.commitTransaction()).then(() => {
                                 console.log('User with id:', userId, 'has been successfully deleted along with all associated data.')
-                                return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending session after deleting account. The error was:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                })
                             }).catch(error => {
-                                console.error('An error occured while deleting account data for user with id:', userId, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting data. Please try again.'))
+                                session.abortTransaction().catch(error => {
+                                    console.error('An error occurred while aborting transaction after deleting account. The error was:', error)
+                                }).finally(() => {
+                                    session.endSession().catch(error => {
+                                        console.error('An error occurred while ending session after deleting account data. The error was:', error)
+                                    }).finally(() => {
+                                        console.error('An error occured while deleting account data for user with id:', userId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting data. Please try again.'))
+                                    })
+                                })
                             })
                         }).catch(error => {
                             console.log('An error occurred while starting Mongoose session. The error was:', error)
