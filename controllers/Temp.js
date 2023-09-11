@@ -5295,12 +5295,31 @@ class TempController {
                             }
                         }
                     ]
-        
-                    User.bulkWrite(dbUpdates).then(() => {
-                        return resolve(HTTPWTHandler.OK('Blocked user.'))
+
+                    mongoose.startSession().then(session => {
+                        session.startTransaction();
+
+                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending Mongoose session. The error was:', error)
+                            }).finally(() => {
+                                return resolve(HTTPWTHandler.OK('Blocked user.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while making a bulkWrite operation on the User collection. The database updates were:', dbUpdates, '. The error was:', error)
+                            session.abortTransaction().catch(error => {
+                                console.error('An error occurred while aborting Mongoose transaction. The error was:', error)
+                            }).finally(() => {
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending Mongoose session. The error was:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while blocking user. Please try again.'))
+                                })
+                            })
+                        })
                     }).catch(error => {
-                        console.error('An error occurred while making a bulkWrite operation on the User collection. The database updates were:', dbUpdates, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while blocking user. Please try again.'))
+                        console.error('An error occurred while starting Mongoose session. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while blocking an account. Please try again.'))
                     })
                 }).catch(error => {
                     console.error('An error occurred while finding one user with secondId:', userToBlockPubId, '. The error was:', error)
