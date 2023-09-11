@@ -5030,12 +5030,31 @@ class TempController {
                             })
                         }
                     }
-                    
-                    User.bulkWrite(dbUpdates).then(() => {
-                        return resolve(HTTPWTHandler.OK('Account is now public.'))
+
+                    mongoose.startSession().then(session => {
+                        session.startTransaction();
+
+                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending the Mongoose session:', error)
+                            }).finally(() => {
+                                return resolve(HTTPWTHandler.OK('Account is now public.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while making bulkWrite database updates to the User collection and commiting transaction. The updates were:', dbUpdates, '. The error was:', error)
+                            session.abortTransaction().catch(error => {
+                                console.error('An error occurred while aborting a Mongoose transaction:', error)
+                            }).finally(() => {
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending a Mongoose session:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding users that requested to follow you to your followers list. Please try again.'))
+                                })
+                            })
+                        })
                     }).catch(error => {
-                        console.error('An error occurred while making bulkWrite database updates to the User collection. The updates were:', dbUpdates, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while adding users that requested to follow you to your followers list. Please try again.'))
+                        console.error('An error occurred while starting Mongoose session. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while making your account public. Please try again.'))
                     })
                 } else {
                     //User not found
