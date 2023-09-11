@@ -4650,26 +4650,47 @@ class TempController {
 
                         if (userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
                             //Already following account
-                            const dbUpdates = [
-                                {
-                                    updateOne: {
-                                        filter: {_id: {$eq: userGettingFollowed._id}},
-                                        update: {$pull : {followers: userFollowingFound.secondId}}
-                                    }
-                                },
-                                {
-                                    updateOne: {
-                                        filter: {_id: {$eq: userId}},
-                                        update: { $pull : {following: userGettingFollowed.secondId}}
-                                    }
-                                }
-                            ]
 
-                            User.bulkWrite(dbUpdates).then(() => {
-                                return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                            mongoose.startSession().then(session => {
+                                session.startTransaction();
+
+                                const dbUpdates = [
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userGettingFollowed._id}},
+                                            update: {$pull : {followers: userFollowingFound.secondId}}
+                                        }
+                                    },
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userId}},
+                                            update: { $pull : {following: userGettingFollowed.secondId}}
+                                        }
+                                    }
+                                ]
+    
+                                User.bulkWrite(dbUpdates).then(() => {
+                                    session.commitTransaction().then(() => session.endSession()).then(() => {
+                                        return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                    }).catch(error => {
+                                        console.error('An error occurred while commiting transaction and ending session. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
+                                    })
+                                }).catch(error => {
+                                    session.abortTransaction().catch(error => {
+                                        console.error('An error occurred while aborting transaction:', error)
+                                    }).finally(() => {
+                                        session.endSession().catch(error => {
+                                            console.error('An error occurred while ending mongoose session:', error)
+                                        }).finally(() => {
+                                            console.error('An error occurred while unfollowing account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                        })
+                                    })
+                                })
                             }).catch(error => {
-                                console.error('An error occurred while unfollowing account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                console.error('An error occurred while starting mongoose session. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
                             })
                         } else {
                             //Is not following account
