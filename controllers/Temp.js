@@ -4725,36 +4725,56 @@ class TempController {
                                     })
                                 }
                             } else {
-                                const dbUpdates = [
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userGettingFollowed._id}},
-                                            update: {$addToSet : {followers: userFollowingFound.secondId}}
-                                        }
-                                    },
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userId}},
-                                            update: { $addToSet : {following: userGettingFollowed.secondId}}
-                                        }
-                                    }
-                                ]
+                                mongoose.startSession().then(session => {
+                                    session.startTransaction();
 
-                                User.bulkWrite(dbUpdates).then(() => {
-                                    var notifMessage = {
-                                        title: "New Follower",
-                                        body: userFollowingFound[0].name + " has followed you."
-                                    }
-                                    var notifData = {
-                                        type: "Follow",
-                                        pubIdOfFollower: userFollowingFound[0].secondId
-                                    }
-                                    sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
+                                    const dbUpdates = [
+                                        {
+                                            updateOne: {
+                                                filter: {_id: {$eq: userGettingFollowed._id}},
+                                                update: {$addToSet : {followers: userFollowingFound.secondId}}
+                                            }
+                                        },
+                                        {
+                                            updateOne: {
+                                                filter: {_id: {$eq: userId}},
+                                                update: { $addToSet : {following: userGettingFollowed.secondId}}
+                                            }
+                                        }
+                                    ]
+    
+                                    User.bulkWrite(dbUpdates).then(() => {
+                                        var notifMessage = {
+                                            title: "New Follower",
+                                            body: userFollowingFound[0].name + " has followed you."
+                                        }
+                                        var notifData = {
+                                            type: "Follow",
+                                            pubIdOfFollower: userFollowingFound[0].secondId
+                                        }
+                                        sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
 
-                                    return resolve(HTTPWTHandler.OK('Followed User'))
+                                        session.commitTransaction().then(() => session.endSession()).then(() => {
+                                            return resolve(HTTPWTHandler.OK('Followed User'))
+                                        }).catch(error => {
+                                            console.error('An error occurred while commiting transaction and ending session. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
+                                        })
+                                    }).catch(error => {
+                                        session.abortTransaction().catch(error => {
+                                            console.error('An error occurred while aborting transaction:', error)
+                                        }).finally(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session. The error was:', error)
+                                            }).finally(() => {
+                                                console.error('An error occurred while following not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                            })
+                                        })
+                                    })
                                 }).catch(error => {
-                                    console.error('An error occurred while following not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                    console.error('An error occurred while starting a mongoose session. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
                                 })
                             }
                         }
