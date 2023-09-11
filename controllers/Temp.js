@@ -5386,21 +5386,6 @@ class TempController {
 
                         mongoose.startSession().then(session => {
                             session.startTransaction()
-
-                            const dbUpdates = [
-                                {
-                                    updateOne: {
-                                        filter: {_id: {$eq: userGettingFollowed._id}},
-                                        update: {$pull : {followers: userFollowingFound.secondId}}
-                                    }
-                                },
-                                {
-                                    updateOne: {
-                                        filter: {_id: {$eq: userId}},
-                                        update: { $pull : {following: userGettingFollowed.secondId}}
-                                    }
-                                }
-                            ]
     
                             Promise.all([
                                 popularPosts.length !== newPopularPosts.length ? PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}) : Promise.resolve('Popular posts do not need to be updated'),
