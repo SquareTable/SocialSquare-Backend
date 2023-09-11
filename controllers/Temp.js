@@ -4754,8 +4754,12 @@ class TempController {
                                         }
                                         sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
 
-                                        session.commitTransaction().then(() => session.endSession()).then(() => {
-                                            return resolve(HTTPWTHandler.OK('Followed User'))
+                                        session.commitTransaction().then(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending mongoose session:', error)
+                                            }).finally(() => {
+                                                return resolve(HTTPWTHandler.OK('Followed User'))
+                                            })
                                         }).catch(error => {
                                             console.error('An error occurred while commiting transaction and ending session. The error was:', error)
                                             return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
