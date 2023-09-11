@@ -4648,32 +4648,32 @@ class TempController {
                             return resolve(HTTPWTHandler.forbidden('You cannot follow yourself'))
                         }
 
-
-                        if (userGettingFollowed.privateAccount == true) {
-                            if (userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
-                                //UnFollow private account
-                                const dbUpdates = [
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userGettingFollowed._id}},
-                                            update: {$pull : {followers: userFollowingFound.secondId}}
-                                        }
-                                    },
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userId}},
-                                            update: { $pull : {following: userGettingFollowed.secondId}}
-                                        }
+                        if (userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
+                            //Already following account
+                            const dbUpdates = [
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userGettingFollowed._id}},
+                                        update: {$pull : {followers: userFollowingFound.secondId}}
                                     }
-                                ]
+                                },
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userId}},
+                                        update: { $pull : {following: userGettingFollowed.secondId}}
+                                    }
+                                }
+                            ]
 
-                                User.bulkWrite(dbUpdates).then(() => {
-                                    return resolve(HTTPWTHandler.OK('UnFollowed user'))
-                                }).catch(error => {
-                                    console.error('An error occurred while unfollowing private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
-                                })
-                            } else {
+                            User.bulkWrite(dbUpdates).then(() => {
+                                return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                            }).catch(error => {
+                                console.error('An error occurred while unfollowing account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                            })
+                        } else {
+                            //Is not following account
+                            if (userGettingFollowed.privateAccount == true) {
                                 if (!userGettingFollowed.accountFollowRequests.includes(userFollowingFound.secondId)) {
                                     //Request to follow the account
                                     User.findOneAndUpdate({_id: userGettingFollowed._id}, {$addToSet: {accountFollowRequests: userFollowingFound.secondId}}).then(function() {
@@ -4703,11 +4703,7 @@ class TempController {
                                         return resolve(HTTPWTHandler.serverError('An error occurred while removing request to follow user. Please try again.'))
                                     })
                                 }
-                            }
-                        } else {
-                            if (!userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
-                                //Follow
-
+                            } else {
                                 const dbUpdates = [
                                     {
                                         updateOne: {
@@ -4738,30 +4734,6 @@ class TempController {
                                 }).catch(error => {
                                     console.error('An error occurred while following not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
-                                })
-                            } else {
-                                //UnFollow
-
-                                const dbUpdates = [
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userGettingFollowed._id}},
-                                            update: {$pull : {followers: userFollowingFound.secondId}}
-                                        }
-                                    },
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userId}},
-                                            update: { $pull : {following: userGettingFollowed.secondId}}
-                                        }
-                                    }
-                                ]
-
-                                User.bulkWrite(dbUpdates).then(() => {
-                                    return resolve(HTTPWTHandler.OK('UnFollowed User'))
-                                }).catch(error => {
-                                    console.error('An error occurred while unfollowing not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
                                 })
                             }
                         }
