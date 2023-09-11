@@ -4998,52 +4998,45 @@ class TempController {
 
     static #makeaccountpublic = (userId) => {
         return new Promise(resolve => {
-            const makeAccountPublic = () => {
-                User.findOneAndUpdate({_id: {$eq: userId}}, {privateAccount: false}).then(function() {
-                    return resolve(HTTPWTHandler.OK('Account is now public.'))
-                }).catch((error) => {
-                    console.error('An error occurred while setting privateAccount to false for user with id:', userId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while making the account public. Please try again.'))
-                })
-            };
-        
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     //User found
                     const accountsRequestingToFollow = userFound.accountFollowRequests
+
+                    const dbUpdates = [
+                        {
+                            updateOne: {
+                                filter: {_id: {$eq: userId}},
+                                update: {$set: {privateAccount: false}}
+                            }
+                        }
+                    ]
+
                     if (accountsRequestingToFollow) {
-                        const dbUpdates = [
-                            {
+                        //Add all accounts' public ids requesting to follow to the user's followers list, add user's public id to each account requesting to follow's following list, and empty accountFollowRequests array
+                        dbUpdates.push({
+                            updateOne: {
+                                filter: {_id: {$eq: userId}},
+                                update: {$push: {followers: {$each: accountsRequestingToFollow}}, $set: {accountFollowRequests: []}}
+                            }
+                        })
+
+                        for (const accountPubId of accountsRequestingToFollow) {
+                            dbUpdates.push({
                                 updateOne: {
-                                    filter: {_id: {$eq: userId}},
-                                    update: {$push: {followers: {$each: accountsRequestingToFollow}}}
-                                }
-                            },
-                            {
-                                updateOne: {
-                                    filter: {_id: {$eq: userId}},
-                                    update: {accountFollowRequests: []}
-                                }
-                            },
-                            ...accountsRequestingToFollow.map(accountPubId => {
-                                return {
-                                    updateOne: {
-                                        filter: {secondId: {$eq: accountPubId}},
-                                        update: {$push: {following: userFound.secondId}}
-                                    }
+                                    filter: {secondId: {$eq: accountPubId}},
+                                    update: {$push: {following: userFound.secondId}}
                                 }
                             })
-                        ]
-        
-                        User.bulkWrite(dbUpdates).then(() => {
-                            makeAccountPublic()
-                        }).catch(error => {
-                            console.error('An error occurred while making bulkWrite database updates to the User collection. The updates were:', dbUpdates, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while adding users that requested to follow you to your followers list. Please try again.'))
-                        })
-                    } else {
-                        makeAccountPublic()
+                        }
                     }
+                    
+                    User.bulkWrite(dbUpdates).then(() => {
+                        return resolve(HTTPWTHandler.OK('Account is now public.'))
+                    }).catch(error => {
+                        console.error('An error occurred while making bulkWrite database updates to the User collection. The updates were:', dbUpdates, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while adding users that requested to follow you to your followers list. Please try again.'))
+                    })
                 } else {
                     //User not found
                     return resolve(HTTPWTHandler.notFound('User not found.'))
