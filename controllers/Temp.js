@@ -4650,26 +4650,51 @@ class TempController {
 
                         if (userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
                             //Already following account
-                            const dbUpdates = [
-                                {
-                                    updateOne: {
-                                        filter: {_id: {$eq: userGettingFollowed._id}},
-                                        update: {$pull : {followers: userFollowingFound.secondId}}
-                                    }
-                                },
-                                {
-                                    updateOne: {
-                                        filter: {_id: {$eq: userId}},
-                                        update: { $pull : {following: userGettingFollowed.secondId}}
-                                    }
-                                }
-                            ]
 
-                            User.bulkWrite(dbUpdates).then(() => {
-                                return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                            mongoose.startSession().then(session => {
+                                session.startTransaction();
+
+                                const dbUpdates = [
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userGettingFollowed._id}},
+                                            update: {$pull : {followers: userFollowingFound.secondId}}
+                                        }
+                                    },
+                                    {
+                                        updateOne: {
+                                            filter: {_id: {$eq: userId}},
+                                            update: { $pull : {following: userGettingFollowed.secondId}}
+                                        }
+                                    }
+                                ]
+    
+                                User.bulkWrite(dbUpdates).then(() => {
+                                    session.commitTransaction().then(() => {
+                                        session.endSession().catch(error => {
+                                            console.error('An error occurred while ending Mongoose session:', error)
+                                        }).finally(() => {
+                                            return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while commiting transaction and ending session. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
+                                    })
+                                }).catch(error => {
+                                    session.abortTransaction().catch(error => {
+                                        console.error('An error occurred while aborting transaction:', error)
+                                    }).finally(() => {
+                                        session.endSession().catch(error => {
+                                            console.error('An error occurred while ending mongoose session:', error)
+                                        }).finally(() => {
+                                            console.error('An error occurred while unfollowing account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                        })
+                                    })
+                                })
                             }).catch(error => {
-                                console.error('An error occurred while unfollowing account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                console.error('An error occurred while starting mongoose session. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
                             })
                         } else {
                             //Is not following account
@@ -4704,36 +4729,60 @@ class TempController {
                                     })
                                 }
                             } else {
-                                const dbUpdates = [
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userGettingFollowed._id}},
-                                            update: {$addToSet : {followers: userFollowingFound.secondId}}
-                                        }
-                                    },
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userId}},
-                                            update: { $addToSet : {following: userGettingFollowed.secondId}}
-                                        }
-                                    }
-                                ]
+                                mongoose.startSession().then(session => {
+                                    session.startTransaction();
 
-                                User.bulkWrite(dbUpdates).then(() => {
-                                    var notifMessage = {
-                                        title: "New Follower",
-                                        body: userFollowingFound[0].name + " has followed you."
-                                    }
-                                    var notifData = {
-                                        type: "Follow",
-                                        pubIdOfFollower: userFollowingFound[0].secondId
-                                    }
-                                    sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
+                                    const dbUpdates = [
+                                        {
+                                            updateOne: {
+                                                filter: {_id: {$eq: userGettingFollowed._id}},
+                                                update: {$addToSet : {followers: userFollowingFound.secondId}}
+                                            }
+                                        },
+                                        {
+                                            updateOne: {
+                                                filter: {_id: {$eq: userId}},
+                                                update: { $addToSet : {following: userGettingFollowed.secondId}}
+                                            }
+                                        }
+                                    ]
+    
+                                    User.bulkWrite(dbUpdates).then(() => {
+                                        var notifMessage = {
+                                            title: "New Follower",
+                                            body: userFollowingFound[0].name + " has followed you."
+                                        }
+                                        var notifData = {
+                                            type: "Follow",
+                                            pubIdOfFollower: userFollowingFound[0].secondId
+                                        }
+                                        sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
 
-                                    return resolve(HTTPWTHandler.OK('Followed User'))
+                                        session.commitTransaction().then(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending mongoose session:', error)
+                                            }).finally(() => {
+                                                return resolve(HTTPWTHandler.OK('Followed User'))
+                                            })
+                                        }).catch(error => {
+                                            console.error('An error occurred while commiting transaction and ending session. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
+                                        })
+                                    }).catch(error => {
+                                        session.abortTransaction().catch(error => {
+                                            console.error('An error occurred while aborting transaction:', error)
+                                        }).finally(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session. The error was:', error)
+                                            }).finally(() => {
+                                                console.error('An error occurred while following not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                            })
+                                        })
+                                    })
                                 }).catch(error => {
-                                    console.error('An error occurred while following not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                    console.error('An error occurred while starting a mongoose session. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
                                 })
                             }
                         }
@@ -4949,52 +4998,64 @@ class TempController {
 
     static #makeaccountpublic = (userId) => {
         return new Promise(resolve => {
-            const makeAccountPublic = () => {
-                User.findOneAndUpdate({_id: {$eq: userId}}, {privateAccount: false}).then(function() {
-                    return resolve(HTTPWTHandler.OK('Account is now public.'))
-                }).catch((error) => {
-                    console.error('An error occurred while setting privateAccount to false for user with id:', userId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while making the account public. Please try again.'))
-                })
-            };
-        
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     //User found
                     const accountsRequestingToFollow = userFound.accountFollowRequests
+
+                    const dbUpdates = [
+                        {
+                            updateOne: {
+                                filter: {_id: {$eq: userId}},
+                                update: {$set: {privateAccount: false}}
+                            }
+                        }
+                    ]
+
                     if (accountsRequestingToFollow) {
-                        const dbUpdates = [
-                            {
+                        //Add all accounts' public ids requesting to follow to the user's followers list, add user's public id to each account requesting to follow's following list, and empty accountFollowRequests array
+                        dbUpdates.push({
+                            updateOne: {
+                                filter: {_id: {$eq: userId}},
+                                update: {$push: {followers: {$each: accountsRequestingToFollow}}, $set: {accountFollowRequests: []}}
+                            }
+                        })
+
+                        for (const accountPubId of accountsRequestingToFollow) {
+                            dbUpdates.push({
                                 updateOne: {
-                                    filter: {_id: {$eq: userId}},
-                                    update: {$push: {followers: {$each: accountsRequestingToFollow}}}
-                                }
-                            },
-                            {
-                                updateOne: {
-                                    filter: {_id: {$eq: userId}},
-                                    update: {accountFollowRequests: []}
-                                }
-                            },
-                            ...accountsRequestingToFollow.map(accountPubId => {
-                                return {
-                                    updateOne: {
-                                        filter: {secondId: {$eq: accountPubId}},
-                                        update: {$push: {following: userFound.secondId}}
-                                    }
+                                    filter: {secondId: {$eq: accountPubId}},
+                                    update: {$push: {following: userFound.secondId}}
                                 }
                             })
-                        ]
-        
-                        User.bulkWrite(dbUpdates).then(() => {
-                            makeAccountPublic()
-                        }).catch(error => {
-                            console.error('An error occurred while making bulkWrite database updates to the User collection. The updates were:', dbUpdates, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while adding users that requested to follow you to your followers list. Please try again.'))
-                        })
-                    } else {
-                        makeAccountPublic()
+                        }
                     }
+
+                    mongoose.startSession().then(session => {
+                        session.startTransaction();
+
+                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending the Mongoose session:', error)
+                            }).finally(() => {
+                                return resolve(HTTPWTHandler.OK('Account is now public.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while making bulkWrite database updates to the User collection and commiting transaction. The updates were:', dbUpdates, '. The error was:', error)
+                            session.abortTransaction().catch(error => {
+                                console.error('An error occurred while aborting a Mongoose transaction:', error)
+                            }).finally(() => {
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending a Mongoose session:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding users that requested to follow you to your followers list. Please try again.'))
+                                })
+                            })
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while starting Mongoose session. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while making your account public. Please try again.'))
+                    })
                 } else {
                     //User not found
                     return resolve(HTTPWTHandler.notFound('User not found.'))
@@ -5087,12 +5148,31 @@ class TempController {
                         }
                     }
                 ]
-    
-                User.bulkWrite(dbUpdates).then(() => {
-                    return resolve(HTTPWTHandler.OK('Follow request accepted.'))
+
+                mongoose.startSession().then(session => {
+                    session.startTransaction();
+
+                    User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                        session.endSession().catch(error => {
+                            console.error('An error occurred while ending Mongoose session. The error was:', error)
+                        }).finally(() => {
+                            return resolve(HTTPWTHandler.OK('Follow request accepted.'))
+                        })
+                    }).catch(error => {
+                        session.abortTransaction().catch(error => {
+                            console.error('An error occurred while aborting Mongoose transaction. The error was:', error)
+                        }).finally(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending Mongoose session. The error was:', error)
+                            }).finally(() => {
+                                console.error('An error occurred while making the following bulkWrite database updates on the User collection:', dbUpdates, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while accepting the follow request. Please try again.'))
+                            })
+                        })
+                    })
                 }).catch(error => {
-                    console.error('An error occurred while making the following bulkWrite database updates on the User collection:', dbUpdates, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while accepting the follow request. Please try again.'))
+                    console.error('An error occurred while starting a Mongoose session. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while accepting follow request. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
@@ -5144,11 +5224,30 @@ class TempController {
                             }
                         }
                     ]
-        
-                    User.bulkWrite(dbUpdates).then(() => {
-                        return resolve(HTTPWTHandler.OK('Follower has been removed.'))
+
+                    mongoose.startSession().then(session => {
+                        session.startTransaction();
+
+                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending Mongoose session. The error was:', error)
+                            }).finally(() => {
+                                return resolve(HTTPWTHandler.OK('Follower has been removed.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while making a bulkWrite operation to the database on the User collection and committing transaction. The dbUpdates to be made were:', dbUpdates, '. The error was:', error)
+                            session.abortTransaction().catch(error => {
+                                console.error('An error occurred while aborting Mongoose transaction. The error was:', error)
+                            }).finally(() => {
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending Mongoose session. The error was:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while removing follower. Please try again.'))
+                                })
+                            })
+                        })
                     }).catch(error => {
-                        console.error('An error occurred while making a bulkWrite operatin to the database on the User collection. The dbUpdates to be made were:', dbUpdates, '. The error was:', error)
+                        console.error('An error occurred while starting Mongoose session. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while removing follower. Please try again.'))
                     })
                 }).catch(error => {
@@ -5196,12 +5295,31 @@ class TempController {
                             }
                         }
                     ]
-        
-                    User.bulkWrite(dbUpdates).then(() => {
-                        return resolve(HTTPWTHandler.OK('Blocked user.'))
+
+                    mongoose.startSession().then(session => {
+                        session.startTransaction();
+
+                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending Mongoose session. The error was:', error)
+                            }).finally(() => {
+                                return resolve(HTTPWTHandler.OK('Blocked user.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while making a bulkWrite operation on the User collection. The database updates were:', dbUpdates, '. The error was:', error)
+                            session.abortTransaction().catch(error => {
+                                console.error('An error occurred while aborting Mongoose transaction. The error was:', error)
+                            }).finally(() => {
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending Mongoose session. The error was:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while blocking user. Please try again.'))
+                                })
+                            })
+                        })
                     }).catch(error => {
-                        console.error('An error occurred while making a bulkWrite operation on the User collection. The database updates were:', dbUpdates, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while blocking user. Please try again.'))
+                        console.error('An error occurred while starting Mongoose session. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while blocking an account. Please try again.'))
                     })
                 }).catch(error => {
                     console.error('An error occurred while finding one user with secondId:', userToBlockPubId, '. The error was:', error)
