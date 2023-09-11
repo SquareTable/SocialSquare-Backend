@@ -4670,8 +4670,12 @@ class TempController {
                                 ]
     
                                 User.bulkWrite(dbUpdates).then(() => {
-                                    session.commitTransaction().then(() => session.endSession()).then(() => {
-                                        return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                    session.commitTransaction().then(() => {
+                                        session.endSession().catch(error => {
+                                            console.error('An error occurred while ending Mongoose session:', error)
+                                        }).finally(() => {
+                                            return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                        })
                                     }).catch(error => {
                                         console.error('An error occurred while commiting transaction and ending session. The error was:', error)
                                         return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
