@@ -13,8 +13,8 @@ class ImagePostClass {
                     delete post.creatorId
                     return new Promise((resolve, reject) => {
                         Promise.all([
-                            Upvote.estimatedDocumentCount({postId: {$eq: post._id}, postFormat: "Image"}),
-                            Downvote.estimatedDocumentCount({postId: {$eq: post._id}, postFormat: "Image"}),
+                            Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Image"}),
+                            Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Image"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Image", userPublicId: userRequesting.secondId}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Image", userPublicId: userRequesting.secondId}),
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
