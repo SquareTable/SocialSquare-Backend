@@ -5519,19 +5519,27 @@ class TempController {
                                         updateMany: {
                                             filter: {followers: userFound.secondId},
                                             update: {$pull: {followers: userFound.secondId}}
-                                        },
+                                        }
+                                    },
+                                    {
                                         updateMany: {
                                             filter: {following: userFound.secondId},
                                             update: {$pull: {following: userFound.secondId}}
-                                        },
+                                        }
+                                    },
+                                    {
                                         updateMany: {
                                             filter: {blockedAccounts: userFound.secondId},
                                             update: {$pull: {blockedAccounts: userFound.secondId}}
-                                        },
+                                        }
+                                    },
+                                    {
                                         updateMany: {
                                             filter: {accountFollowRequests: userFound.secondId},
                                             update: {$pull: {accountFollowRequests: userFound.secondId}}
-                                        },
+                                        }
+                                    },
+                                    {
                                         deleteOne: {
                                             filter: {_id: {$eq: userId}},
                                         }
