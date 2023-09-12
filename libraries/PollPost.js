@@ -11,8 +11,8 @@ class PollPost {
                     delete post.creatorId
                     return new Promise((resolve, reject) => {
                         Promise.all([
-                            Upvote.estimatedDocumentCount({postId: {$eq: post._id}, postFormat: "Poll"}),
-                            Downvote.estimatedDocumentCount({postId: {$eq: post._id}, postFormat: "Poll"}),
+                            Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
+                            Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
