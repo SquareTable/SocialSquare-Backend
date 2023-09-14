@@ -16,6 +16,25 @@ class PollPost {
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
+                            let votedFor = "None";
+                            if (post.optionOnesVotes.includes(userRequesting._id)) {
+                                votedFor = "One"
+                            }
+                            if (post.optionTwosVotes.includes(userRequesting._id)) {
+                                votedFor = "Two"
+                            }
+                            if (post.optionThreesVotes.includes(userRequesting._id)) {
+                                votedFor = "Three"
+                            }
+                            if (post.optionFoursVotes.includes(userRequesting._id)) {
+                                votedFor = "Four"
+                            }
+                            if (post.optionFivesVotes.includes(userRequesting._id)) {
+                                votedFor = "Five"
+                            }
+                            if (post.optionSixesVotes.includes(userRequesting._id)) {
+                                votedFor = "Six"
+                            }
                             const postObject = {
                                 ...post,
                                 optionOnesVotes: post.optionOnesVotes.length,
@@ -32,7 +51,8 @@ class PollPost {
                                 upvoted: !!isUpvoted,
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
-                                interacted: !!isUpvoted || !!isDownvoted
+                                interacted: !!isUpvoted || !!isDownvoted,
+                                votedFor
                             }
 
                             if (isUpvoted) {
