@@ -1062,7 +1062,7 @@ class TempController {
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while removing existing vote. Please try again.'))
                                             })
                                         } else {
-                                            Poll.findOneAndUpdate({_id: {$eq: {$eq: pollId}}}, { $push: { [optionSelected] : userId }}).then(function(){
+                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected] : userId }}).then(function(){
                                                 return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: "None"}))
                                             })
                                             .catch(err => {
