@@ -1099,12 +1099,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
 
-            User.findOne({_id: {$eq: userId}}).then(userFound => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
 
-                Poll.findOne({_id: {$eq: pollId}}).then(pollFound => {
+                Poll.findOne({_id: {$eq: pollId}}).lean().then(pollFound => {
                     if (!pollFound) {
                         return resolve(HTTPWTHandler.notFound('Could not find poll with provided pollId'))
                     }
