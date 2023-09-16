@@ -49,30 +49,36 @@ const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
 
 class TempController {
-    static #sendnotificationkey = (userId, notificationKey) => {
+    static #sendnotificationkey = (userId, notificationKey, refreshTokenId) => {
         return new Promise(resolve => {
             if (typeof notificationKey !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`notificationKey must be a string. Provided type: ${typeof notificationKey}`))
             }
 
+            if (typeof refreshTokenId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`refreshTokenId must be a string. Provided type: ${typeof refreshTokenId}`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userData => {
-                if (userData) {
-                    const notificationKeys = userData.notificationKeys;
-                    if (notificationKeys.includes(notificationKey)) {
-                        return resolve(HTTPWTHandler.OK('Notification key already exists in account data'))
-                    } else if (notificationKey == null) {
-                        return resolve(HTTPWTHandler.badInput('Notification key cannot be null'))
-                    } else {
-                        User.findOneAndUpdate({_id: {$eq: userId}}, {$push : {notificationKeys: notificationKey}}).then(function() {
-                            return resolve(HTTPWTHandler.OK('Notification key saved.'))
-                        }).catch(err => {
-                            console.error('An error occurred while adding notification key to user with id:', userId, '. The error was:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while saving notification key. Please try again'))
-                        })
-                    }
-                } else {
-                    return resolve(HTTPWTHandler.notFound("Couldn't find user while sending device notification key."))
+                if (!userData) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
+
+                RefreshToken.findOne({_id: {$eq: refreshTokenId}}).lean().then(refreshTokenFound => {
+                    if (!refreshTokenFound) {
+                        return resolve(HTTPWTHandler.notFound('Could not find refresh token with provided id.'))
+                    }
+
+                    RefreshToken.findOneAndUpdate({_id: {$eq: refreshTokenId}}, {notificationKey}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Notification key saved.'))
+                    }).catch(error => {
+                        console.error('An error occurred while updating notificationKey field with:', notificationKey, 'for RefreshToken with id:', refreshTokenId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while saving notification key. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one refresh token with id:', refreshTokenId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while saving notification key. Please try again.'))
+                })
             }).catch(err => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user to save notification key to.'))
@@ -6406,8 +6412,8 @@ class TempController {
         })
     }
 
-    static sendnotificationkey = async (userId, notificationKey) => {
-        return await this.#sendnotificationkey(userId, notificationKey)
+    static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
+        return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
 
     static changedisplayname = async (userId, desiredDisplayName) => {
