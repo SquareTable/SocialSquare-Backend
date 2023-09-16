@@ -1371,18 +1371,36 @@ class TempController {
                     Poll.findOne({_id: {$eq: pollId}}).lean().then(poll => {
                         if (poll) {
                             if (String(userId) === String(poll.creatorId)) {
-                                Poll.deleteOne({_id: {$eq: pollId}}).then(() => {
+                                mongoose.startSession().then(session => {
+                                    session.startTransaction();
+
                                     Promise.all([
-                                        Upvote.deleteMany({postId: poll._id, postFormat: "Poll"}),
-                                        Downvote.deleteMany({postId: poll._id, postFormat: "Poll"})
+                                        Poll.deleteOne({_id: {$eq: pollId}}),
+                                        Upvote.deleteMany({postId: pollId, postFormat: "Poll"}),
+                                        Downvote.deleteMany({postId: pollId, postFormat: "Poll"}),
+                                        PollVote.deleteMany({pollId: {$eq: pollId}})
                                     ]).then(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully deleted poll'))
+                                        session.commitTransaction().then(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session:', error)
+                                            }).finally(() => {
+                                                return resolve(HTTPWTHandler.OK('Successfully deleted poll'))
+                                            })
+                                        })
                                     }).catch(error => {
-                                        console.error('An error occured while deleting all upvotes and downvotes from poll post with id:', pollId, '. The error was:', error)
-                                        return resolve(HTTPWTHandler.OK('Post was deleted, but upvotes and downvotes failed to get deleted.'))
+                                        session.abortTransaction().catch(error => {
+                                            console.error('An error occurred while aborting Mongoose transaction:', error)
+                                        }).finally(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session:', error)
+                                            }).finally(() => {
+                                                console.error('An error occurred while deleting poll and associated data from poll with id:', pollId, '. The error was:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
+                                            })
+                                        })
                                     })
                                 }).catch(error => {
-                                    console.error('An error occured while deleting poll with id:', pollId, '. The error was:', error)
+                                    console.error('An error occurred while starting a mongoose session:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
                                 })
                             } else {
