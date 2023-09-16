@@ -153,6 +153,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/removevoteonpoll': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 30,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have removed your vote on too many poll posts in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
     '/searchforpollpostsbyid': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -1119,6 +1128,24 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /voteonpoll:', error)
+        HTTPHandler.serverError(res, String(error))
+    })
+});
+
+router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'removevoteonpoll',
+            functionArgs: [req.tokenData, req.body.pollId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /removevoteonpoll:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });

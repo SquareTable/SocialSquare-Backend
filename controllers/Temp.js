@@ -929,6 +929,8 @@ class TempController {
 
     static #voteonpoll = (userId, optionSelected, pollId) => {
         return new Promise(resolve => {
+            return resolve(HTTPWTHandler.notImplemented('API functionality is temporarily disabled'))
+
             if (typeof optionSelected !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be a string. Provided type: ${typeof optionSelected}`))
             }
@@ -955,124 +957,17 @@ class TempController {
                             //User exists
                             Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
                                 if (data) {
-                                    var findUser = data;
-                                    console.log(findUser)
-                                    if (findUser.creatorId !== userId) {
-                                        if (findUser.optionOnesVotes.includes(userId)) {
-                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $pull: { optionOnesVotes: userId }}).then(function(){
-                                                if (optionSelected !== "optionOnesVotes") {
-                                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected]: userId }}).then(function(){
-                                                        return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: "One"}))
-                                                    })
-                                                    .catch(err => {
-                                                        console.error('An error occured while adding:', userId, 'to the list of votes in:', optionSelected, 'on poll with id:', pollId, '. The error was:', err)
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                                    });
-                                                } else {
-                                                    return resolve(HTTPWTHandler.OK('Pulled', {lastVote: 'One'}))
-                                                }
-                                            })
-                                            .catch(err => {
-                                                console.error('An error occured while pulling:', userId, 'from optionOnesVotes on poll with id:', pollId, '. The error was:', err)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while pulling vote. Please try again.'))
-                                            });
-                                        } else if (findUser.optionTwosVotes.includes(userId)) {
-                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $pull: { optionTwosVotes: userId }}).then(function(){
-                                                if (optionSelected !== "optionTwosVotes") {
-                                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected]: userId }}).then(function(){
-                                                        return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: 'Two'}))
-                                                    })
-                                                    .catch(err => {
-                                                        console.error('An error occured while adding:', userId, 'to:', optionSelected, 'in poll with id:', pollId, '. The error was:', err)
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                                    });
-                                                } else {
-                                                    return resolve(HTTPWTHandler.OK('Pulled', {lastVote: "Two"}))
-                                                }
-                                            }).catch(error => {
-                                                console.error('An error occurred while pulling:', userId, 'from optionTwosVotes from poll with id:', pollId, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing existing vote. Please try again.'))
-                                            })
-                                        } else if (findUser.optionThreesVotes.includes(userId)) {
-                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $pull: { optionThreesVotes: userId }}).then(function(){
-                                                if (optionSelected !== "optionThreesVotes") {
-                                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected]: userId }}).then(function(){
-                                                        return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: "Three"}))
-                                                    })
-                                                    .catch(err => {
-                                                        console.error('An error occurred while adding:', userId, 'to:', optionSelected, 'in poll with id:', pollId, '. The error was:', err)
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                                    });
-                                                } else {
-                                                    return resolve(HTTPWTHandler.OK('Pulled', {lastVote: 'Three'}))
-                                                } 
-                                            }).catch(error => {
-                                                console.error('An error occurred while pulling:', userId, 'from optionThreesVotes from poll with id:', pollId, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing existing vote. Please try again.'))
-                                            })
-                                        } else if (findUser.optionFoursVotes.includes(userId)) {
-                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $pull: { optionFoursVotes: userId }}).then(function(){
-                                                if (optionSelected !== "optionFoursVotes") {
-                                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected]: userId }}).then(function(){
-                                                        return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: 'Four'}))
-                                                    })
-                                                    .catch(err => {
-                                                        console.error('An error occured while adding:', userId, 'to:', optionSelected, 'in poll with id:', pollId, '. The error was:', err)
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                                    });
-                                                } else {
-                                                    return resolve(HTTPWTHandler.OK('Pulled', {lastVote: "Four"}))
-                                                }
-                                            }).catch(error => {
-                                                console.error('An error occurred while pulling:', userId, 'from optionFoursVotes from poll with id:', pollId, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing existing vote. Please try again.'))
-                                            })
-                                        } else if (findUser.optionFivesVotes.includes(userId)) {
-                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $pull: { optionFivesVotes: userId }}).then(function(){
-                                                if (optionSelected !== "optionFivesVotes") {
-                                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected]: userId }}).then(function(){
-                                                        return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: 'Five'}))
-                                                    })
-                                                    .catch(err => {
-                                                        console.error('An error occured while adding:', userId, 'to:', optionSelected, 'in poll with id:', pollId, '. The error was:', err)
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                                    });
-                                                } else {
-                                                    return resolve(HTTPWTHandler.OK('Pulled', {lastVote: "Five"}))
-                                                }
-                                            }).catch(error => {
-                                                console.error('An error occurred while pulling:', userId, 'from optionFivesVotes from poll with id:', pollId, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing existing vote. Please try again.'))
-                                            })
-                                        } else if (findUser.optionSixesVotes.includes(userId)) {
-                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $pull: { optionSixesVotes: userId }}).then(function(){
-                                                if (optionSelected !== "optionSixesVotes") {
-                                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected]: userId }}).then(function(){
-                                                        return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: "Six"}))
-                                                    })
-                                                    .catch(err => {
-                                                        console.error('An error occured while adding:', userId, 'to:', optionSelected, 'in poll with id:', pollId, '. The error was:', err)
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                                    });
-                                                } else {
-                                                    return resolve(HTTPWTHandler.OK('Pulled', {lastVote: 'Six'}))
-                                                }
-                                            }).catch(error => {
-                                                console.error('An error occurred while pulling:', userId, 'from optionSixesVotes in poll with id:', pollId, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing existing vote. Please try again.'))
-                                            })
-                                        } else {
-                                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [optionSelected] : userId }}).then(function(){
-                                                return resolve(HTTPWTHandler.OK('Vote successful', {lastVote: "None"}))
-                                            })
-                                            .catch(err => {
-                                                console.error('An error occurred while adding:', userId, 'to:', optionSelected, 'in poll with id:', pollId, '. The error was:', err)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                            });
-                                        }
-                                    } else {
-                                        return resolve(HTTPWTHandler.forbidden("You can't vote on your own post"))
+                                    if (data.creatorId == userId) {
+                                        return resolve(HTTPWTHandler.forbidden('You cannot vote on your own poll'))
                                     }
+
+                                    //Temporary until PollVote collection is made
+                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, {$addToSet: {[optionSelected]: userId}}).then(() => {
+                                        return resolve(HTTPWTHandler.OK('Successfully added vote'))
+                                    }).catch(error => {
+                                        console.error('An error occurred while adding:', pollId, 'to:', optionSelected, 'field on poll with id:', pollId, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
+                                    })
                                 } else {
                                     return resolve(HTTPWTHandler.notFound('Could not find poll'))
                                 }
@@ -1090,6 +985,42 @@ class TempController {
                 }
                 addVote()
             }
+        })
+    }
+
+    static #removevoteonpoll = (userId, pollId) => {
+        return new Promise(resolve => {
+            return resolve(HTTPWTHandler.notImplemented('API functionality is temporarily disabled'))
+            
+            if (typeof pollId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+
+                Poll.findOne({_id: {$eq: pollId}}).lean().then(pollFound => {
+                    if (!pollFound) {
+                        return resolve(HTTPWTHandler.notFound('Could not find poll with provided pollId'))
+                    }
+
+                    //This is temporary - Soon there will be a PollVote collection that we will remove the poll vote from
+                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, {$pull: {optionOnesVotes: userId, optionTwosVotes: userId, optionThreesVotes: userId, optionFoursVotes: userId, optionFivesVotes: userId, optionSixesVotes: userId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Removed vote successfully'))
+                    }).catch(error => {
+                        console.error('An error occurred while pulling:', userId, 'from all vote arrays for poll with id:', pollId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while removing vote from poll. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one poll with id:', pollId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 
@@ -6525,6 +6456,10 @@ class TempController {
 
     static voteonpoll = async (userId, optionSelected, pollId) => {
         return await this.#voteonpoll(userId, optionSelected, pollId)
+    }
+
+    static removevoteonpoll = async (userId, pollId) => {
+        return await this.#removevoteonpoll(userId, pollId)
     }
 
     static searchforpollpostsbyid = async (userId, pollId) => {
