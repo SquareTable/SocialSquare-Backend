@@ -1,6 +1,7 @@
 const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 const Poll = require('../models/Poll')
+const PollVote = require('../models/PollVote')
 
 class PollPost {
     processMultiplePostDataFromOneOwner(posts, postOwner, userRequesting) {
@@ -13,36 +14,25 @@ class PollPost {
                         Promise.all([
                             Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
                             Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
-                            Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
-                            Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
-                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
-                            let votedFor = "None";
-                            if (post.optionOnesVotes.includes(userRequesting._id)) {
-                                votedFor = "One"
-                            }
-                            if (post.optionTwosVotes.includes(userRequesting._id)) {
-                                votedFor = "Two"
-                            }
-                            if (post.optionThreesVotes.includes(userRequesting._id)) {
-                                votedFor = "Three"
-                            }
-                            if (post.optionFoursVotes.includes(userRequesting._id)) {
-                                votedFor = "Four"
-                            }
-                            if (post.optionFivesVotes.includes(userRequesting._id)) {
-                                votedFor = "Five"
-                            }
-                            if (post.optionSixesVotes.includes(userRequesting._id)) {
-                                votedFor = "Six"
-                            }
+                            Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
+                            Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
+                            PollVote.findOne({postId: {$eq: post._id}, userId: {$eq: userRequesting._id}}, 'vote').lean(),
+                            PollVote.find({pollId: {$eq: post._id}}, 'vote').lean(),
+                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'One'}),
+                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Two'}),
+                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Three'}),
+                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Four'}),
+                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Five'}),
+                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Six'})
+                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, pollVote, optionOnesVotes, optionTwosVotes, optionThreesVotes, optionFoursVotes, optionFivesVotes, optionSixesVotes]) => {
                             const postObject = {
                                 ...post,
-                                optionOnesVotes: post.optionOnesVotes.length,
-                                optionTwosVotes: post.optionTwosVotes.length,
-                                optionThreesVotes: post.optionThreesVotes.length,
-                                optionFoursVotes: post.optionFoursVotes.length,
-                                optionFivesVotes: post.optionFivesVotes.length,
-                                optionSixesVotes: post.optionSixesVotes.length,
+                                optionOnesVotes,
+                                optionTwosVotes,
+                                optionThreesVotes,
+                                optionFoursVotes,
+                                optionFivesVotes,
+                                optionSixesVotes,
                                 _id: post._id.toString(),
                                 votes: upvotes - downvotes,
                                 creatorName: postOwner.name,
@@ -52,7 +42,7 @@ class PollPost {
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
-                                votedFor
+                                votedFor: pollVote.vote
                             }
 
                             if (isUpvoted) {
