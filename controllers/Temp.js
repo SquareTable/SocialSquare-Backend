@@ -529,12 +529,6 @@ class TempController {
             }
 
             //Create important ones
-            const optionOnesVotes = []
-            const optionTwosVotes = []
-            const optionThreesVotes = []
-            const optionFoursVotes = []
-            const optionFivesVotes = []
-            const optionSixesVotes = []
             const comments = []
             //
             //allowScreenShots set up
@@ -563,25 +557,19 @@ class TempController {
                             pollSubTitle,
                             optionOne,
                             optionOnesColor,
-                            optionOnesVotes,
                             optionTwo,
                             optionTwosColor,
-                            optionTwosVotes,
                             optionThree,
                             optionThreesColor,
-                            optionThreesVotes,
                             optionFour,
                             optionFoursColor,
-                            optionFoursVotes,
                             optionFive,
                             optionFivesColor,
-                            optionFivesVotes,
                             optionSix,
                             optionSixesColor,
-                            optionSixesVotes,
                             totalNumberOfOptions,
                             creatorId: userId,
-                            comments: comments,
+                            comments,
                             datePosted: Date.now(),
                             allowScreenShots: allowScreenShots
                         }
