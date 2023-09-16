@@ -929,6 +929,8 @@ class TempController {
 
     static #voteonpoll = (userId, optionSelected, pollId) => {
         return new Promise(resolve => {
+            return resolve(HTTPWTHandler.notImplemented('API functionality is temporarily disabled'))
+
             if (typeof optionSelected !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be a string. Provided type: ${typeof optionSelected}`))
             }
@@ -988,6 +990,8 @@ class TempController {
 
     static #removevoteonpoll = (userId, pollId) => {
         return new Promise(resolve => {
+            return resolve(HTTPWTHandler.notImplemented('API functionality is temporarily disabled'))
+            
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
