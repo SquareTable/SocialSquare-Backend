@@ -17,7 +17,6 @@ class PollPost {
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
                             PollVote.findOne({postId: {$eq: post._id}, userId: {$eq: userRequesting._id}}, 'vote').lean(),
-                            PollVote.find({pollId: {$eq: post._id}}, 'vote').lean(),
                             PollVote.countDocuments({postId: {$eq: post._id}, vote: 'One'}),
                             PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Two'}),
                             PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Three'}),
