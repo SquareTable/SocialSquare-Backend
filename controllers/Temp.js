@@ -47,6 +47,7 @@ const { sendNotifications } = require("../notificationHandler");
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 
 const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
+const PollVote = require('../models/PollVote');
 
 class TempController {
     static #sendnotificationkey = (userId, notificationKey) => {
@@ -990,8 +991,6 @@ class TempController {
 
     static #removevoteonpoll = (userId, pollId) => {
         return new Promise(resolve => {
-            return resolve(HTTPWTHandler.notImplemented('API functionality is temporarily disabled'))
-            
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
@@ -1006,11 +1005,10 @@ class TempController {
                         return resolve(HTTPWTHandler.notFound('Could not find poll with provided pollId'))
                     }
 
-                    //This is temporary - Soon there will be a PollVote collection that we will remove the poll vote from
-                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, {$pull: {optionOnesVotes: userId, optionTwosVotes: userId, optionThreesVotes: userId, optionFoursVotes: userId, optionFivesVotes: userId, optionSixesVotes: userId}}).then(() => {
+                    PollVote.deleteMany({userId: {$eq: userId}, pollId: {$eq: pollId}}).then(() => {
                         return resolve(HTTPWTHandler.OK('Removed vote successfully'))
                     }).catch(error => {
-                        console.error('An error occurred while pulling:', userId, 'from all vote arrays for poll with id:', pollId, '. The error was:', error)
+                        console.error('An error occurred while deleting many PollVotes with userId:', userId, 'and pollId:', pollId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while removing vote from poll. Please try again.'))
                     })
                 }).catch(error => {
