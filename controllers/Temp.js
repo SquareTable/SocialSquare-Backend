@@ -1093,6 +1093,40 @@ class TempController {
         })
     }
 
+    static #removevoteonpoll = (userId, pollId) => {
+        return new Promise(resolve => {
+            if (typeof pollId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            }
+
+            User.findOne({_id: {$eq: userId}}).then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                }
+
+                Poll.findOne({_id: {$eq: pollId}}).then(pollFound => {
+                    if (!pollFound) {
+                        return resolve(HTTPWTHandler.notFound('Could not find poll with provided pollId'))
+                    }
+
+                    //This is temporary - Soon there will be a PollVote collection that we will remove the poll vote from
+                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, {$pull: {optionOnesVotes: userId, optionTwosVotes: userId, optionThreesVotes: userId, optionFoursVotes: userId, optionFivesVotes: userId, optionSixesVotes: userId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Removed vote successfully'))
+                    }).catch(error => {
+                        console.error('An error occurred while pulling:', userId, 'from all vote arrays for poll with id:', pollId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while removing vote from poll. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one poll with id:', pollId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static #searchforpollpostsbyid = (userId, pollId) => {
         return new Promise(resolve => {
             if (typeof pollId !== 'string') {
@@ -6525,6 +6559,10 @@ class TempController {
 
     static voteonpoll = async (userId, optionSelected, pollId) => {
         return await this.#voteonpoll(userId, optionSelected, pollId)
+    }
+
+    static removevoteonpoll = async (userId, pollId) => {
+        return await this.#removevoteonpoll(userId, pollId)
     }
 
     static searchforpollpostsbyid = async (userId, pollId) => {
