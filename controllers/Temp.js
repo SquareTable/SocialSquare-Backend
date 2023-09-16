@@ -5441,11 +5441,13 @@ class TempController {
                     const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userId)
 
                     Promise.all([
-                        ImagePost.find({creatorId: {$eq: userId}}).lean(),
-                        Thread.find({creatorId: {$eq: userId}}).lean()
-                    ]).then(([imagePosts, threadPosts]) => {
+                        ImagePost.find({creatorId: {$eq: userId}}, 'imageKey').lean(),
+                        Thread.find({creatorId: {$eq: userId}}, 'threadImageKey threadType').lean(),
+                        Poll.find({creatorId: {$eq: userId}}, '_id').lean()
+                    ]).then(([imagePosts, threadPosts, pollPosts]) => {
                         const imageKeys = imagePosts.map(post => post.imageKey)
                         const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
+                        const pollPostIds = pollPosts.map(post => String(post._id))
 
                         mongoose.startSession().then(session => {
                             session.startTransaction()
@@ -5456,6 +5458,8 @@ class TempController {
                                 ...imageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
                                 ImagePost.deleteMany({creatorId: {$eq: userId}}),
                                 Poll.deleteMany({creatorId: {$eq: userId}}),
+                                PollVote.deleteMany({userId: {$eq: userId}}),
+                                PollVote.deleteMany({postId: {$in: pollPostIds}}),
                                 ...threadImageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
                                 Thread.deleteMany({creatorId: {$eq: userId}}),
                                 Message.deleteMany({senderId: {$eq: userId}}),
