@@ -48,11 +48,17 @@ const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 
 const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
 
+const { Expo } = require('expo-server-sdk')
+
 class TempController {
     static #sendnotificationkey = (userId, notificationKey, refreshTokenId) => {
         return new Promise(resolve => {
             if (typeof notificationKey !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`notificationKey must be a string. Provided type: ${typeof notificationKey}`))
+            }
+
+            if (!Expo.isExpoPushToken(notificationKey)) {
+                return resolve(HTTPWTHandler.badInput('notificationKey must be a valid Expo push token.'))
             }
 
             if (typeof refreshTokenId !== 'string') {
