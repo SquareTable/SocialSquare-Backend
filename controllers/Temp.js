@@ -635,7 +635,10 @@ class TempController {
                                     console.log('previousPostId:', previousPostId)
                                     console.log('dbQuery:', dbQuery)
 
+                                    const time1 = performance.now()
                                     Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
+                                        const time2 = performance.now()
+                                        console.log('TIME TO PROCESS 10 POLLS:', time2 - time1, 'MILLISECONDS.')
                                         if (data.length) {
                                             const toSend = {
                                                 posts: data,

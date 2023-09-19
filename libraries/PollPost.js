@@ -16,13 +16,13 @@ class PollPost {
                             Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
-                            PollVote.findOne({postId: {$eq: post._id}, userId: {$eq: userRequesting._id}}, 'vote').lean(),
-                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'One'}),
-                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Two'}),
-                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Three'}),
-                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Four'}),
-                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Five'}),
-                            PollVote.countDocuments({postId: {$eq: post._id}, vote: 'Six'})
+                            PollVote.findOne({pollId: {$eq: post._id}, userId: {$eq: userRequesting._id}}, 'vote').lean(),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'One'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Two'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Three'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Four'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Five'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Six'})
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, pollVote, optionOnesVotes, optionTwosVotes, optionThreesVotes, optionFoursVotes, optionFivesVotes, optionSixesVotes]) => {
                             const postObject = {
                                 ...post,
