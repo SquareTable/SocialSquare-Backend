@@ -5607,68 +5607,70 @@ class TempController {
     }
 
     static #reportUser = (reporterId, reportType, reporteePubId) => {
-        if (typeof reporteePubId !== 'string') {
-            return resolve(HTPTWTHandler.badInput(`reporteePubId must be a string. Provided type: ${typeof reporteePubId}`))
-        }
-    
-        if (reporteePubId.length == 0) {
-            return resolve(HTTPWTHandler.badInput('reporteePubId cannot be a blank string.'))
-        }
-    
-        if (typeof reportType !== 'object' || Array.isArray(reportType) || reportType === null) {
-            return resolve(HTTPWTHandler.badInput(`reportType must be an object. Is array: ${Array.isArray(reportType)} Is null: ${reportType === null} Provided type: ${typeof reportType}`))
-        }
-    
-        if (!Object.hasOwn(reportType, 'topic')) {
-            return resolve(HTTPWTHandler.badInput(`reportType object must have a topic key`))
-        }
-    
-        if (!Object.hasOwn(reportType, 'subTopic')) {
-            return resolve(HTTPWTHandler.badInput(`reportType object must have a subTopic key`))
-        }
-    
-        if (DEFAULTS.validReportOptions[reportType?.topic]?.includes(reportType?.subTopic)) {
-            return resolve(HTTPWTHandler.badInput('Invalid report options provided.'))
-        }
-    
-        User.findOne({_id: {$eq: reporterId}}).lean().then(reporterFound => {
-            if (!reporterFound) {
-                return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
+        return new Promise(resolve => {
+            if (typeof reporteePubId !== 'string') {
+                return resolve(HTPTWTHandler.badInput(`reporteePubId must be a string. Provided type: ${typeof reporteePubId}`))
             }
-    
-            User.findOne({secondId: {$eq: reporteePubId}}).lean().then(reporteeFound => {
-                if (!reporteeFound) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user to report.'))
+        
+            if (reporteePubId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('reporteePubId cannot be a blank string.'))
+            }
+        
+            if (typeof reportType !== 'object' || Array.isArray(reportType) || reportType === null) {
+                return resolve(HTTPWTHandler.badInput(`reportType must be an object. Is array: ${Array.isArray(reportType)} Is null: ${reportType === null} Provided type: ${typeof reportType}`))
+            }
+        
+            if (!Object.hasOwn(reportType, 'topic')) {
+                return resolve(HTTPWTHandler.badInput(`reportType object must have a topic key`))
+            }
+        
+            if (!Object.hasOwn(reportType, 'subTopic')) {
+                return resolve(HTTPWTHandler.badInput(`reportType object must have a subTopic key`))
+            }
+        
+            if (DEFAULTS.validReportOptions[reportType?.topic]?.includes(reportType?.subTopic)) {
+                return resolve(HTTPWTHandler.badInput('Invalid report options provided.'))
+            }
+        
+            User.findOne({_id: {$eq: reporterId}}).lean().then(reporterFound => {
+                if (!reporterFound) {
+                    return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
                 }
-    
-                if (String(reporterFound._id) === String(reporteeFound._id)) {
-                    return resolve(HTTPWTHandler.forbidden('You cannot report yourself'))
-                }
-    
-                console.log(`Valid report passed by: ${reporterFound.name} about ${reporteeFound.name} with the reasoning being: ${reportType.topic}-${reportType.subTopic}`)
-    
-                const report = {
-                    reportedAccountPubId: reporteePubId,
-                    reporterId: reporterId,
-                    topic: reportType.topic,
-                    subTopic: reportType.subTopic
-                }
-    
-                const newUserReport = new AccountReports(report)
-                
-                newUserReport.save().then(() => {
-                    return resolve(HTTPWTHandler.OK('Successfully sent report'))
+        
+                User.findOne({secondId: {$eq: reporteePubId}}).lean().then(reporteeFound => {
+                    if (!reporteeFound) {
+                        return resolve(HTTPWTHandler.notFound('Could not find user to report.'))
+                    }
+        
+                    if (String(reporterFound._id) === String(reporteeFound._id)) {
+                        return resolve(HTTPWTHandler.forbidden('You cannot report yourself'))
+                    }
+        
+                    console.log(`Valid report passed by: ${reporterFound.name} about ${reporteeFound.name} with the reasoning being: ${reportType.topic}-${reportType.subTopic}`)
+        
+                    const report = {
+                        reportedAccountPubId: reporteePubId,
+                        reporterId: reporterId,
+                        topic: reportType.topic,
+                        subTopic: reportType.subTopic
+                    }
+        
+                    const newUserReport = new AccountReports(report)
+                    
+                    newUserReport.save().then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully sent report'))
+                    }).catch(error => {
+                        console.error('An error occurred while saving user report. The report was:', report, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while saving account report. Please try again.'))
+                    })
                 }).catch(error => {
-                    console.error('An error occurred while saving user report. The report was:', report, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while saving account report. Please try again.'))
+                    console.error('An error occurred while finding one user with secondId:', reporteePubId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user to report. Please try again later.'))
                 })
             }).catch(error => {
-                console.error('An error occurred while finding one user with secondId:', reporteePubId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user to report. Please try again later.'))
+                console.error('An error occurred while finding one user with id:', reporterId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
             })
-        }).catch(error => {
-            console.error('An error occurred while finding one user with id:', reporterId, '. The error was:', error)
-            return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
         })
     }
 
