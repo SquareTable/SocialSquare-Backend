@@ -5628,7 +5628,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`reportType object must have a subTopic key`))
             }
         
-            if (DEFAULTS.validReportOptions[reportType?.topic]?.includes(reportType?.subTopic)) {
+            if (!DEFAULTS.validReportOptions[reportType?.topic]?.includes(reportType?.subTopic)) {
                 return resolve(HTTPWTHandler.badInput('Invalid report options provided.'))
             }
         
