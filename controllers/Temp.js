@@ -47,6 +47,7 @@ const { sendNotifications } = require("../notificationHandler");
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 
 const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
+const PollVote = require('../models/PollVote');
 
 const { Expo } = require('expo-server-sdk')
 
@@ -540,12 +541,6 @@ class TempController {
             }
 
             //Create important ones
-            const optionOnesVotes = []
-            const optionTwosVotes = []
-            const optionThreesVotes = []
-            const optionFoursVotes = []
-            const optionFivesVotes = []
-            const optionSixesVotes = []
             const comments = []
             //
             //allowScreenShots set up
@@ -574,25 +569,19 @@ class TempController {
                             pollSubTitle,
                             optionOne,
                             optionOnesColor,
-                            optionOnesVotes,
                             optionTwo,
                             optionTwosColor,
-                            optionTwosVotes,
                             optionThree,
                             optionThreesColor,
-                            optionThreesVotes,
                             optionFour,
                             optionFoursColor,
-                            optionFoursVotes,
                             optionFive,
                             optionFivesColor,
-                            optionFivesVotes,
                             optionSix,
                             optionSixesColor,
-                            optionSixesVotes,
                             totalNumberOfOptions,
                             creatorId: userId,
-                            comments: comments,
+                            comments,
                             datePosted: Date.now(),
                             allowScreenShots: allowScreenShots
                         }
@@ -658,7 +647,10 @@ class TempController {
                                     console.log('previousPostId:', previousPostId)
                                     console.log('dbQuery:', dbQuery)
 
+                                    const time1 = performance.now()
                                     Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
+                                        const time2 = performance.now()
+                                        console.log('TIME TO PROCESS 10 POLLS:', time2 - time1, 'MILLISECONDS.')
                                         if (data.length) {
                                             const toSend = {
                                                 posts: data,
@@ -941,8 +933,6 @@ class TempController {
 
     static #voteonpoll = (userId, optionSelected, pollId) => {
         return new Promise(resolve => {
-            return resolve(HTTPWTHandler.notImplemented('API functionality is temporarily disabled'))
-
             if (typeof optionSelected !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be a string. Provided type: ${typeof optionSelected}`))
             }
@@ -951,59 +941,69 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
         
-            const allowedOptionsToSelect = ['optionOnesVotes', 'optionTwosVotes', 'optionThreesVotes', 'optionFoursVotes', 'optionFivesVotes', 'optionSixesVotes']
+            const allowedOptionsToSelect = ['One', 'Two', 'Three', 'Four', 'Five', 'Six']
             if (!allowedOptionsToSelect.includes(optionSelected)) {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be either ${allowedOptionsToSelect.join(', ')}`))
             }
-        
-            //Check Input fields
-            if (optionSelected == "" || pollId == "") {
-                return resolve(HTTPWTHandler.badInput('Both optionSelected and pollId cannot be a blank string,'))
-            } else {
-                //Find User
-                console.log(optionSelected)
-                async function addVote() {
-                    //Confirm User
-                    User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                        if (result) {
-                            //User exists
-                            Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
-                                if (data) {
-                                    if (data.creatorId == userId) {
-                                        return resolve(HTTPWTHandler.forbidden('You cannot vote on your own poll'))
-                                    }
 
-                                    //Temporary until PollVote collection is made
-                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, {$addToSet: {[optionSelected]: userId}}).then(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully added vote'))
-                                    }).catch(error => {
-                                        console.error('An error occurred while adding:', pollId, 'to:', optionSelected, 'field on poll with id:', pollId, '. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
-                                    })
-                                } else {
-                                    return resolve(HTTPWTHandler.notFound('Could not find poll'))
-                                }
+            if (pollId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('pollId cannot be an empty string'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(result => {
+                if (result) {
+                    //User exists
+                    Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
+                        if (data) {
+                            if (data.creatorId == userId) {
+                                return resolve(HTTPWTHandler.forbidden('You cannot vote on your own poll'))
+                            }
+
+                            if (data.totalNumberOfOptions === "Two" && (allowedOptionsToSelect.slice(2).includes(optionSelected))) {
+                                //There are only two options and the optionSelected is Three or more
+                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
+                            }
+
+                            if (data.totalNumberOfOptions === "Three" && (allowedOptionsToSelect.slice(3).includes(optionSelected))) {
+                                //There are only two options and the optionSelected is Three or more
+                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
+                            }
+
+                            if (data.totalNumberOfOptions === "Four" && (allowedOptionsToSelect.slice(4).includes(optionSelected))) {
+                                //There are only two options and the optionSelected is Three or more
+                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
+                            }
+
+                            if (data.totalNumberOfOptions === "Five" && (allowedOptionsToSelect.slice(5).includes(optionSelected))) {
+                                //There are only two options and the optionSelected is Three or more
+                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
+                            }
+
+                            PollVote.findOneAndUpdate({userId: {$eq: userId}, pollId: {$eq: pollId}}, {dateVoted: Date.now(), vote: optionSelected}, {upsert: true}).then(() => {
+                                return resolve(HTTPWTHandler.OK('Added poll vote'))
                             }).catch(error => {
-                                console.error('An error occured while finding poll with id:', pollId, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                                console.error('An error occurred while finding one and updating PollVote with filter filtering by userId:', userId, 'and pollId:', pollId, 'and update query updating dateVoted to Date.now() and vote to:', optionSelected, 'and upserts are enabled. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while adding vote to the poll. Please try again.'))
                             })
                         } else {
-                            return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                            return resolve(HTTPWTHandler.notFound('Could not find poll'))
                         }
                     }).catch(error => {
-                        console.error('An error occured while finding user with id:', userId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user with your id. Please try again.'))
+                        console.error('An error occured while finding poll with id:', pollId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
                     })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-                addVote()
-            }
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user with your id. Please try again.'))
+            })
         })
     }
 
     static #removevoteonpoll = (userId, pollId) => {
         return new Promise(resolve => {
-            return resolve(HTTPWTHandler.notImplemented('API functionality is temporarily disabled'))
-            
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
@@ -1018,11 +1018,10 @@ class TempController {
                         return resolve(HTTPWTHandler.notFound('Could not find poll with provided pollId'))
                     }
 
-                    //This is temporary - Soon there will be a PollVote collection that we will remove the poll vote from
-                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, {$pull: {optionOnesVotes: userId, optionTwosVotes: userId, optionThreesVotes: userId, optionFoursVotes: userId, optionFivesVotes: userId, optionSixesVotes: userId}}).then(() => {
+                    PollVote.deleteMany({userId: {$eq: userId}, pollId: {$eq: pollId}}).then(() => {
                         return resolve(HTTPWTHandler.OK('Removed vote successfully'))
                     }).catch(error => {
-                        console.error('An error occurred while pulling:', userId, 'from all vote arrays for poll with id:', pollId, '. The error was:', error)
+                        console.error('An error occurred while deleting many PollVotes with userId:', userId, 'and pollId:', pollId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while removing vote from poll. Please try again.'))
                     })
                 }).catch(error => {
@@ -1387,18 +1386,36 @@ class TempController {
                     Poll.findOne({_id: {$eq: pollId}}).lean().then(poll => {
                         if (poll) {
                             if (String(userId) === String(poll.creatorId)) {
-                                Poll.deleteOne({_id: {$eq: pollId}}).then(() => {
+                                mongoose.startSession().then(session => {
+                                    session.startTransaction();
+
                                     Promise.all([
-                                        Upvote.deleteMany({postId: poll._id, postFormat: "Poll"}),
-                                        Downvote.deleteMany({postId: poll._id, postFormat: "Poll"})
+                                        Poll.deleteOne({_id: {$eq: pollId}}),
+                                        Upvote.deleteMany({postId: pollId, postFormat: "Poll"}),
+                                        Downvote.deleteMany({postId: pollId, postFormat: "Poll"}),
+                                        PollVote.deleteMany({pollId: {$eq: pollId}})
                                     ]).then(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully deleted poll'))
+                                        session.commitTransaction().then(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session:', error)
+                                            }).finally(() => {
+                                                return resolve(HTTPWTHandler.OK('Successfully deleted poll'))
+                                            })
+                                        })
                                     }).catch(error => {
-                                        console.error('An error occured while deleting all upvotes and downvotes from poll post with id:', pollId, '. The error was:', error)
-                                        return resolve(HTTPWTHandler.OK('Post was deleted, but upvotes and downvotes failed to get deleted.'))
+                                        session.abortTransaction().catch(error => {
+                                            console.error('An error occurred while aborting Mongoose transaction:', error)
+                                        }).finally(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session:', error)
+                                            }).finally(() => {
+                                                console.error('An error occurred while deleting poll and associated data from poll with id:', pollId, '. The error was:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
+                                            })
+                                        })
                                     })
                                 }).catch(error => {
-                                    console.error('An error occured while deleting poll with id:', pollId, '. The error was:', error)
+                                    console.error('An error occurred while starting a mongoose session:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
                                 })
                             } else {
@@ -5439,11 +5456,13 @@ class TempController {
                     const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userId)
 
                     Promise.all([
-                        ImagePost.find({creatorId: {$eq: userId}}).lean(),
-                        Thread.find({creatorId: {$eq: userId}}).lean()
-                    ]).then(([imagePosts, threadPosts]) => {
+                        ImagePost.find({creatorId: {$eq: userId}}, 'imageKey').lean(),
+                        Thread.find({creatorId: {$eq: userId}}, 'threadImageKey threadType').lean(),
+                        Poll.find({creatorId: {$eq: userId}}, '_id').lean()
+                    ]).then(([imagePosts, threadPosts, pollPosts]) => {
                         const imageKeys = imagePosts.map(post => post.imageKey)
                         const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
+                        const pollPostIds = pollPosts.map(post => String(post._id))
 
                         mongoose.startSession().then(session => {
                             session.startTransaction()
@@ -5454,6 +5473,8 @@ class TempController {
                                 ...imageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
                                 ImagePost.deleteMany({creatorId: {$eq: userId}}),
                                 Poll.deleteMany({creatorId: {$eq: userId}}),
+                                PollVote.deleteMany({userId: {$eq: userId}}),
+                                PollVote.deleteMany({postId: {$in: pollPostIds}}),
                                 ...threadImageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
                                 Thread.deleteMany({creatorId: {$eq: userId}}),
                                 Message.deleteMany({senderId: {$eq: userId}}),

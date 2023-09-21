@@ -1,6 +1,31 @@
 // mongodb
 require('./config/db').then(() => {
     console.log("DB Connected"); 
+
+    /*
+    const PollVote = require('./models/PollVote');
+    const mongoose = require('mongoose');
+
+    const votes = [];
+    const options = ["One", "Two", "Three", "Four", "Five", "Six"]
+
+    for (let i = 0; i < 2_000_000; i++) {
+        votes.push({
+            pollId: new mongoose.Types.ObjectId("6496bce8a735b4001dd34308"),
+            userId: new mongoose.Types.ObjectId(),
+            dateVoted: Date.now(),
+            vote: options[Math.floor(Math.random() * options.length)]
+        })
+    }
+
+    const time1 = performance.now()
+    PollVote.insertMany(votes).then(() => {
+        const time2 = performance.now()
+        console.log('SUCCESSFULLY ADDED 2 MILLION POLL VOTES TO DATABASE IN:', (time2 - time1) / 1000, 'SECONDS.')
+    }).catch(error => {
+        console.error('AN ERROR OCCURRED WHILE ADDING 2 MILLION VOTES TO DATABASE:', error)
+    })
+    */
 }).catch((err) => {
     console.error('ERROR CONNECTING TO DATABASE:')
     console.error(err)
