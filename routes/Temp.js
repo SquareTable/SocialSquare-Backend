@@ -879,7 +879,6 @@ const rateLimiters = {
 
 
 router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'sendnotificationkey',
@@ -888,12 +887,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/sendnotificationkey controller function returned data to be sent to the client but HTTP headers have already been sent!')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -903,7 +897,6 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
 });
 
 router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changedisplayname',
@@ -912,12 +905,7 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/changedisplayname controller function returned data to be sent to the client but HTTP headers have already been sent!')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -927,7 +915,6 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
 });
 
 router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changedisplayname',
@@ -936,12 +923,7 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/changeemail controller function returned data to be sent to the client but HTTP headers have already been sent!')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -951,7 +933,6 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
 });
 
 router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changepassword',
@@ -960,12 +941,7 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -975,7 +951,6 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
 });
 
 router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changeusername',
@@ -984,12 +959,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1007,12 +977,7 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1022,7 +987,6 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
 });
 
 router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpageusersearch',
@@ -1031,12 +995,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1046,7 +1005,6 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
 });
 
 router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots} = req.body;
 
     const worker = new Worker(workerPath, {
@@ -1075,12 +1033,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1090,7 +1043,6 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
 });
 
 router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollposts',
@@ -1099,12 +1051,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1114,7 +1061,6 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
 });
 
 router.post('/pollpostcomment', rateLimiters['/pollpostcomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'pollpostcomment',
@@ -1123,12 +1069,7 @@ router.post('/pollpostcomment', rateLimiters['/pollpostcomment'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1138,7 +1079,6 @@ router.post('/pollpostcomment', rateLimiters['/pollpostcomment'], (req, res) => 
 });
 
 router.post('/pollpostcommentreply', rateLimiters['/pollpostcommentreply'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'pollpostcommentreply',
@@ -1147,12 +1087,7 @@ router.post('/pollpostcommentreply', rateLimiters['/pollpostcommentreply'], (req
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1162,7 +1097,6 @@ router.post('/pollpostcommentreply', rateLimiters['/pollpostcommentreply'], (req
 });
 
 router.post('/searchforpollcomments', rateLimiters['/searchforpollcomments'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollcomments',
@@ -1171,12 +1105,7 @@ router.post('/searchforpollcomments', rateLimiters['/searchforpollcomments'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1186,7 +1115,6 @@ router.post('/searchforpollcomments', rateLimiters['/searchforpollcomments'], (r
 });
 
 router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'voteonpoll',
@@ -1195,12 +1123,7 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1210,7 +1133,6 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
 });
 
 router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'removevoteonpoll',
@@ -1219,12 +1141,7 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1234,7 +1151,6 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
 });
 
 router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollpostsbyid',
@@ -1243,12 +1159,7 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1258,7 +1169,6 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
 });
 
 router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'upvotepoll',
@@ -1267,12 +1177,7 @@ router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1282,7 +1187,6 @@ router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
 });
 
 router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'downvotepoll',
@@ -1291,12 +1195,7 @@ router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1306,7 +1205,6 @@ router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
 });
 
 router.post('/getsinglepollcomment', rateLimiters['/getsinglepollcomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getsinglepollcomment',
@@ -1315,12 +1213,7 @@ router.post('/getsinglepollcomment', rateLimiters['/getsinglepollcomment'], (req
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1330,7 +1223,6 @@ router.post('/getsinglepollcomment', rateLimiters['/getsinglepollcomment'], (req
 });
 
 router.post('/searchforpollcommentreplies', rateLimiters['/searchforpollcommentreplies'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollcommentreplies',
@@ -1339,12 +1231,7 @@ router.post('/searchforpollcommentreplies', rateLimiters['/searchforpollcommentr
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1354,7 +1241,6 @@ router.post('/searchforpollcommentreplies', rateLimiters['/searchforpollcommentr
 });
 
 router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deletepoll',
@@ -1363,12 +1249,7 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1378,7 +1259,6 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
 });
 
 router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postImage',
@@ -1387,12 +1267,7 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1402,7 +1277,6 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
 });
 
 router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postProfileImage',
@@ -1411,12 +1285,7 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1426,7 +1295,6 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
 });
 
 router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getImagesFromProfile',
@@ -1435,12 +1303,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1450,7 +1313,6 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
 });
 
 router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getProfilePic',
@@ -1459,12 +1321,7 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1474,7 +1331,6 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
 });
 
 router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'imagepostcomment',
@@ -1483,12 +1339,7 @@ router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1498,7 +1349,6 @@ router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) =
 });
 
 router.post('/imagepostcommentreply', rateLimiters['/imagepostcommentreply'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'imagepostcommentreply',
@@ -1507,12 +1357,7 @@ router.post('/imagepostcommentreply', rateLimiters['/imagepostcommentreply'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1522,7 +1367,6 @@ router.post('/imagepostcommentreply', rateLimiters['/imagepostcommentreply'], (r
 });
 
 router.post('/getimagepostcomments', rateLimiters['/getimagepostcomments'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getimagepostcomments',
@@ -1531,12 +1375,7 @@ router.post('/getimagepostcomments', rateLimiters['/getimagepostcomments'], (req
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1546,7 +1385,6 @@ router.post('/getimagepostcomments', rateLimiters['/getimagepostcomments'], (req
 });
 
 router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'upvoteimage',
@@ -1555,12 +1393,7 @@ router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1570,7 +1403,6 @@ router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
 });
 
 router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'downvoteimage',
@@ -1579,12 +1411,7 @@ router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1594,7 +1421,6 @@ router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
 });
 
 router.post('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getsingleimagecomment',
@@ -1603,12 +1429,7 @@ router.post('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1618,7 +1439,6 @@ router.post('/getsingleimagecomment', rateLimiters['/getsingleimagecomment'], (r
 });
 
 router.post('/searchforimagecommentreplies', rateLimiters['/searchforimagecommentreplies'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforimagecommentreplies',
@@ -1627,12 +1447,7 @@ router.post('/searchforimagecommentreplies', rateLimiters['/searchforimagecommen
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1642,7 +1457,6 @@ router.post('/searchforimagecommentreplies', rateLimiters['/searchforimagecommen
 });
 
 router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -1652,12 +1466,7 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1667,7 +1476,6 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
 });
 
 router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deleteimage',
@@ -1676,12 +1484,7 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1691,7 +1494,6 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
 });
 
 router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -1701,12 +1503,7 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1716,7 +1513,6 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
 });
 
 router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcategories'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpagesearchcategories',
@@ -1725,12 +1521,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1740,7 +1531,6 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
 });
 
 router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getcategoryimage',
@@ -1749,12 +1539,7 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1764,7 +1549,6 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
 });
 
 router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategorybyid',
@@ -1773,12 +1557,7 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1788,7 +1567,6 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
 });
 
 router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategoryfromprofile',
@@ -1797,12 +1575,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1812,7 +1585,6 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
 });
 
 router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'joincategory',
@@ -1821,12 +1593,7 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1836,7 +1603,6 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
 });
 
 router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
 
     const worker = new Worker(workerPath, {
@@ -1847,12 +1613,7 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1862,7 +1623,6 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
 });
 
 router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -1872,12 +1632,7 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1887,7 +1642,6 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
 });
 
 router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {categoryId} = req.body;
 
     const worker = new Worker(workerPath, {
@@ -1898,12 +1652,7 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1913,7 +1662,6 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
 });
 
 router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getthreadsfromprofile',
@@ -1922,12 +1670,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1937,7 +1680,6 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
 });
 
 router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'upvotethread',
@@ -1946,12 +1688,7 @@ router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1961,7 +1698,6 @@ router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
 });
 
 router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'downvotethread',
@@ -1970,12 +1706,7 @@ router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -1985,7 +1716,6 @@ router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
 });
 
 router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'threadpostcomment',
@@ -1994,12 +1724,7 @@ router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2009,7 +1734,6 @@ router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res)
 });
 
 router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'threadpostcommentreply',
@@ -2018,12 +1742,7 @@ router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2033,7 +1752,6 @@ router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], 
 });
 
 router.post('/searchforthreadcomments', rateLimiters['/searchforthreadcomments'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforthreadcomments',
@@ -2042,12 +1760,7 @@ router.post('/searchforthreadcomments', rateLimiters['/searchforthreadcomments']
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2057,7 +1770,6 @@ router.post('/searchforthreadcomments', rateLimiters['/searchforthreadcomments']
 });
 
 router.post('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getsinglethreadcomment',
@@ -2066,12 +1778,7 @@ router.post('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2081,7 +1788,6 @@ router.post('/getsinglethreadcomment', rateLimiters['/getsinglethreadcomment'], 
 });
 
 router.post('/searchforthreadcommentreplies', rateLimiters['/searchforthreadcommentreplies'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforthreadcommentreplies',
@@ -2090,12 +1796,7 @@ router.post('/searchforthreadcommentreplies', rateLimiters['/searchforthreadcomm
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2105,7 +1806,6 @@ router.post('/searchforthreadcommentreplies', rateLimiters['/searchforthreadcomm
 });
 
 router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getthreadbyid',
@@ -2114,12 +1814,7 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2129,7 +1824,6 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
 });
 
 router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deletethread',
@@ -2138,12 +1832,7 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2153,7 +1842,6 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
 });
 
 router.post('/upvotecomment', rateLimiters['/upvotecomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'upvotecomment',
@@ -2162,12 +1850,7 @@ router.post('/upvotecomment', rateLimiters['/upvotecomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2177,7 +1860,6 @@ router.post('/upvotecomment', rateLimiters['/upvotecomment'], (req, res) => {
 });
 
 router.post('/downvotecomment', rateLimiters['/downvotecomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'downvotecomment',
@@ -2186,12 +1868,7 @@ router.post('/downvotecomment', rateLimiters['/downvotecomment'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2201,7 +1878,6 @@ router.post('/downvotecomment', rateLimiters['/downvotecomment'], (req, res) => 
 });
 
 router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'toggleFollowOfAUser',
@@ -2210,12 +1886,7 @@ router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2225,7 +1896,6 @@ router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, 
 });
 
 router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'reloadUsersDetails',
@@ -2234,12 +1904,7 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2249,7 +1914,6 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
 });
 
 router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'earnSpecialBadge',
@@ -2258,12 +1922,7 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2273,7 +1932,6 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
 });
 
 router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getuserbyid',
@@ -2282,12 +1940,7 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2297,7 +1950,6 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
 });
 
 router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'makeaccountprivate',
@@ -2306,12 +1958,7 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2321,7 +1968,6 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
 });
 
 router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'makeaccountpublic',
@@ -2330,12 +1976,7 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2345,7 +1986,6 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
 });
 
 router.post('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getfollowrequests',
@@ -2354,12 +1994,7 @@ router.post('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2369,7 +2004,6 @@ router.post('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res)
 });
 
 router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'denyfollowrequest',
@@ -2378,12 +2012,7 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2393,7 +2022,6 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
 });
 
 router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'acceptfollowrequest',
@@ -2402,12 +2030,7 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2417,7 +2040,6 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
 });
 
 router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'removefollowerfromaccount',
@@ -2426,12 +2048,7 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2441,7 +2058,6 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
 });
 
 router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'blockaccount',
@@ -2450,12 +2066,7 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2465,7 +2076,6 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
 });
 
 router.get('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getuserblockedaccounts',
@@ -2474,12 +2084,7 @@ router.get('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2489,7 +2094,6 @@ router.get('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (
 });
 
 router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'unblockaccount',
@@ -2498,12 +2102,7 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2513,7 +2112,6 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
 });
 
 router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'enableAlgorithm',
@@ -2522,12 +2120,7 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2537,7 +2130,6 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
 });
 
 router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationFactorsEnabled'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getAuthenticationFactorsEnabled',
@@ -2546,12 +2138,7 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2561,7 +2148,6 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
 });
 
 router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'disableAlgorithm',
@@ -2570,12 +2156,7 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2585,7 +2166,6 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
 });
 
 router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'reloadProfileEssentials',
@@ -2594,12 +2174,7 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2609,7 +2184,6 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
 });
 
 router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmailMultiFactorAuthentication'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'turnOffEmailMultiFactorAuthentication',
@@ -2618,12 +2192,7 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2633,7 +2202,6 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
 });
 
 router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deleteaccount',
@@ -2642,12 +2210,7 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2657,7 +2220,6 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
 });
 
 router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'checkIfCategoryExists',
@@ -2666,12 +2228,7 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2681,7 +2238,6 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
 });
 
 router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'uploadNotificationsSettings',
@@ -2690,12 +2246,7 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2705,7 +2256,6 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
 });
 
 router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getUserNotificationSettings',
@@ -2714,12 +2264,7 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2729,7 +2274,6 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
 });
 
 router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {reportType, reporteePubId} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2739,12 +2283,7 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2754,7 +2293,6 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
 });
 
 router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {skip, voteType, postFormat} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2764,12 +2302,7 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2779,7 +2312,6 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
 });
 
 router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPartOf'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {skip = 0} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2789,12 +2321,7 @@ router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPa
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2804,7 +2331,6 @@ router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPa
 });
 
 router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
-    let HTTPHeadersSent = false;
     const {postId, postFormat, reason} = req.body
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2814,12 +2340,7 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2829,7 +2350,6 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
 });
 
 router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'userAlgorithmSettings',
@@ -2838,12 +2358,7 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2853,7 +2368,6 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
 });
 
 router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'uploadAlgorithmSettings',
@@ -2862,12 +2376,7 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2877,7 +2386,6 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
 });
 
 router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'privacySettings',
@@ -2886,12 +2394,7 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2901,7 +2404,6 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
 });
 
 router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'savePrivacySettings',
@@ -2910,12 +2412,7 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2925,7 +2422,6 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
 });
 
 router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getProfileStats',
@@ -2934,12 +2430,7 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2949,7 +2440,6 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
 });
 
 router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
-    let HTTPHeadersSent = false;
     const authRefreshTokenHeader = req.headers["auth-refresh-token"]
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2959,12 +2449,7 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2974,7 +2459,6 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
 });
 
 router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'logoutdevice',
@@ -2983,12 +2467,7 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -2998,7 +2477,6 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
 });
 
 router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'logoutallotherdevices',
@@ -3007,12 +2485,7 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -3022,7 +2495,6 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
 });
 
 router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'loginActivitySettings',
@@ -3031,12 +2503,7 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -3046,7 +2513,6 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
 });
 
 router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'uploadLoginActivitySettings',
@@ -3055,12 +2521,7 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -3070,7 +2531,6 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
 });
 
 router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginActivitySettingsOnSignup'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
-    let HTTPHeadersSent = false;
     const {newSettings, refreshTokenId} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -3080,12 +2540,7 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -3095,7 +2550,6 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
 });
 
 router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'followingFeedFilterSettings',
@@ -3104,12 +2558,7 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
@@ -3119,7 +2568,6 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
 });
 
 router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'logoutuser',
@@ -3128,12 +2576,7 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('')
-        }
+        res.status(result.statusCode).json(result.data)
     })
 
     worker.on('error', (error) => {
