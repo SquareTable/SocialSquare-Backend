@@ -1390,10 +1390,10 @@ class TempController {
                                     session.startTransaction();
 
                                     Promise.all([
-                                        Poll.deleteOne({_id: {$eq: pollId}}),
-                                        Upvote.deleteMany({postId: pollId, postFormat: "Poll"}),
-                                        Downvote.deleteMany({postId: pollId, postFormat: "Poll"}),
-                                        PollVote.deleteMany({pollId: {$eq: pollId}})
+                                        Poll.deleteOne({_id: {$eq: pollId}}, {session}),
+                                        Upvote.deleteMany({postId: pollId, postFormat: "Poll"}, {session}),
+                                        Downvote.deleteMany({postId: pollId, postFormat: "Poll"}, {session}),
+                                        PollVote.deleteMany({pollId: {$eq: pollId}}, {session})
                                     ]).then(() => {
                                         session.commitTransaction().then(() => {
                                             session.endSession().catch(error => {
@@ -4629,7 +4629,7 @@ class TempController {
                                     }
                                 ]
     
-                                User.bulkWrite(dbUpdates).then(() => {
+                                User.bulkWrite(dbUpdates, {session}).then(() => {
                                     session.commitTransaction().then(() => {
                                         session.endSession().catch(error => {
                                             console.error('An error occurred while ending Mongoose session:', error)
@@ -4707,7 +4707,7 @@ class TempController {
                                         }
                                     ]
     
-                                    User.bulkWrite(dbUpdates).then(() => {
+                                    User.bulkWrite(dbUpdates, {session}).then(() => {
                                         var notifMessage = {
                                             title: "New Follower",
                                             body: userFollowingFound[0].name + " has followed you."
@@ -4994,7 +4994,7 @@ class TempController {
                     mongoose.startSession().then(session => {
                         session.startTransaction();
 
-                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                        User.bulkWrite(dbUpdates, {session}).then(() => session.commitTransaction()).then(() => {
                             session.endSession().catch(error => {
                                 console.error('An error occurred while ending the Mongoose session:', error)
                             }).finally(() => {
@@ -5112,7 +5112,7 @@ class TempController {
                 mongoose.startSession().then(session => {
                     session.startTransaction();
 
-                    User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                    User.bulkWrite(dbUpdates, {session}).then(() => session.commitTransaction()).then(() => {
                         session.endSession().catch(error => {
                             console.error('An error occurred while ending Mongoose session. The error was:', error)
                         }).finally(() => {
@@ -5188,7 +5188,7 @@ class TempController {
                     mongoose.startSession().then(session => {
                         session.startTransaction();
 
-                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                        User.bulkWrite(dbUpdates, {session}).then(() => session.commitTransaction()).then(() => {
                             session.endSession().catch(error => {
                                 console.error('An error occurred while ending Mongoose session. The error was:', error)
                             }).finally(() => {
@@ -5259,7 +5259,7 @@ class TempController {
                     mongoose.startSession().then(session => {
                         session.startTransaction();
 
-                        User.bulkWrite(dbUpdates).then(() => session.commitTransaction()).then(() => {
+                        User.bulkWrite(dbUpdates, {session}).then(() => session.commitTransaction()).then(() => {
                             session.endSession().catch(error => {
                                 console.error('An error occurred while ending Mongoose session. The error was:', error)
                             }).finally(() => {
@@ -5468,16 +5468,16 @@ class TempController {
                             session.startTransaction()
     
                             Promise.all([
-                                popularPosts.length !== newPopularPosts.length ? PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}) : Promise.resolve('Popular posts do not need to be updated'),
+                                popularPosts.length !== newPopularPosts.length ? PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}, {session}) : Promise.resolve('Popular posts do not need to be updated'),
                                 userFound?.profileImageKey ? fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, userFound.profileImageKey)) : Promise.resolve('Profile Image Deleted'),
                                 ...imageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
-                                ImagePost.deleteMany({creatorId: {$eq: userId}}),
-                                Poll.deleteMany({creatorId: {$eq: userId}}),
-                                PollVote.deleteMany({userId: {$eq: userId}}),
-                                PollVote.deleteMany({postId: {$in: pollPostIds}}),
+                                ImagePost.deleteMany({creatorId: {$eq: userId}}, {session}),
+                                Poll.deleteMany({creatorId: {$eq: userId}}, {session}),
+                                PollVote.deleteMany({userId: {$eq: userId}}, {session}),
+                                PollVote.deleteMany({postId: {$in: pollPostIds}}, {session}),
                                 ...threadImageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
-                                Thread.deleteMany({creatorId: {$eq: userId}}),
-                                Message.deleteMany({senderId: {$eq: userId}}),
+                                Thread.deleteMany({creatorId: {$eq: userId}}, {session}),
+                                Message.deleteMany({senderId: {$eq: userId}}, {session}),
                                 User.bulkWrite([
                                     {
                                         updateMany: {
@@ -5508,13 +5508,13 @@ class TempController {
                                             filter: {_id: {$eq: userId}},
                                         }
                                     }
-                                ]),
-                                Downvote.deleteMany({userPublicId: userFound.secondId}),
-                                Upvote.deleteMany({userPublicId: userFound.secondId}),
-                                AccountReports.deleteMany({reporterId: {$eq: userId}}),
-                                PostReports.deleteMany({reporterId: {$eq: userId}}),
-                                RefreshToken.deleteMany({userId: {$eq: userId}}),
-                                Category.updateMany({}, {$pull: {members: userId}}),
+                                ], {session}),
+                                Downvote.deleteMany({userPublicId: userFound.secondId}, {session}),
+                                Upvote.deleteMany({userPublicId: userFound.secondId}, {session}),
+                                AccountReports.deleteMany({reporterId: {$eq: userId}}, {session}),
+                                PostReports.deleteMany({reporterId: {$eq: userId}}, {session}),
+                                RefreshToken.deleteMany({userId: {$eq: userId}}, {session}),
+                                Category.updateMany({}, {$pull: {members: userId}}, {session}),
                             ]).then(() => session.commitTransaction()).then(() => {
                                 console.log('User with id:', userId, 'has been successfully deleted along with all associated data.')
                                 session.endSession().catch(error => {
