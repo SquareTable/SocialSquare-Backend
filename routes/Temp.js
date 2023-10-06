@@ -1064,7 +1064,7 @@ router.post('/pollpostcomment', rateLimiters['/pollpostcomment'], (req, res) => 
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'pollpostcomment',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.pollId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId]
         }
     })
 
@@ -1082,7 +1082,7 @@ router.post('/pollpostcommentreply', rateLimiters['/pollpostcommentreply'], (req
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'pollpostcommentreply',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.pollId, req.body.commentId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId, req.body.commentId]
         }
     })
 
@@ -1334,7 +1334,7 @@ router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) =
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'imagepostcomment',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.imageId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId]
         }
     })
 
@@ -1352,7 +1352,7 @@ router.post('/imagepostcommentreply', rateLimiters['/imagepostcommentreply'], (r
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'imagepostcommentreply',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.imageId, req.body.commentId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId, req.body.commentId]
         }
     })
 
@@ -1719,7 +1719,7 @@ router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res)
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'threadpostcomment',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.threadId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId]
         }
     })
 
@@ -1737,7 +1737,7 @@ router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], 
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'threadpostcommentreply',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.threadId, req.body.commentId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId, req.body.commentId]
         }
     })
 

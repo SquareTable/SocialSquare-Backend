@@ -685,7 +685,7 @@ class TempController {
         })
     }
 
-    static #pollpostcomment = (userId, comment, userName, pollId) => {
+    static #pollpostcomment = (userId, comment, userName, postId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
@@ -695,8 +695,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
-            if (typeof pollId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             } 
         
             comment = comment.trim();
@@ -721,7 +721,7 @@ class TempController {
                             var objectId = new mongoose.Types.ObjectId()
                             console.log(objectId)
                             var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                            Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { comments: commentForPost } }).then(function(){
+                            Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
                                 return resolve(HTTPWTHandler.OK('Comment upload successful'))
                             })
                             .catch(err => {
@@ -744,7 +744,7 @@ class TempController {
         })
     }
 
-    static #pollpostcommentreply = (userId, comment, userName, pollId, commentId) => {
+    static #pollpostcommentreply = (userId, comment, userName, postId, commentId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
@@ -754,8 +754,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
-            if (typeof pollId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
         
             if (typeof commentId !== 'string') {
@@ -780,14 +780,14 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
                     if (result.name == userName) {
-                        Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
+                        Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
                             if (data) {
                                 var comments = data.comments
                                 async function findThreads(sentIndex) {
                                     var objectId = new mongoose.Types.ObjectId()
                                     console.log(objectId)
                                     var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                                    Poll.findOneAndUpdate({_id: {$eq: pollId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
+                                    Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
                                         return resolve(HTTPWTHandler.OK('Comment upload successful'))
                                     })
                                     .catch(err => {
@@ -819,7 +819,7 @@ class TempController {
                                 return resolve(HTTPWTHandler.notFound('Could not find poll'))
                             }
                         }).catch(error => {
-                            console.error('An error occurred while finding one poll with id:', pollId, '. The error was:', error)
+                            console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
                         })
                     } else {
@@ -1670,7 +1670,7 @@ class TempController {
         })
     }
 
-    static #imagepostcomment = (userId, comment, userName, imageId) => {
+    static #imagepostcomment = (userId, comment, userName, postId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
@@ -1680,8 +1680,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
-            if (typeof imageId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof imageId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof postId}`))
             }
         
             comment = comment.trim()
@@ -1694,8 +1694,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('userName must not be an empty string.'))
             }
         
-            if (imageId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('imageId must not be an empty string'))
+            if (postId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('postId must not be an empty string'))
             }
         
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
@@ -1714,12 +1714,12 @@ class TempController {
                             const objectId = new mongoose.Types.ObjectId()
                             console.log(objectId)
                             var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                            ImagePost.findOneAndUpdate({_id: {$eq: imageId}}, { $push: { comments: commentForPost } }).then(function(){
+                            ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
                                 console.log("SUCCESS1")
                                 return resolve(HTTPWTHandler.OK('Comment upload successful'))
                             })
                             .catch(err => {
-                                console.error('An error occurred while pushing comment object:', commentForPost, 'to comments field for image with id:', imageId, '. The error was:', err)
+                                console.error('An error occurred while pushing comment object:', commentForPost, 'to comments field for image with id:', postId, '. The error was:', err)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again.'))
                             });
                         }
@@ -1738,7 +1738,7 @@ class TempController {
         })
     }
 
-    static #imagepostcommentreply = (userId, comment, userName, imageId, commentId) => {
+    static #imagepostcommentreply = (userId, comment, userName, postId, commentId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
@@ -1748,8 +1748,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
-            if (typeof imageId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof imageId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
 
             if (typeof commentId !== 'string') {
@@ -1766,8 +1766,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('userName cannot be an empty string.'))
             }
         
-            if (imageId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('imageId cannot be an empty string.'))
+            if (postId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('postId cannot be an empty string.'))
             }
 
             if (commentId.length == 0) {
@@ -1786,19 +1786,19 @@ class TempController {
             User.findOne({_id: userId}).lean().then(result => {
                 if (result) {
                     if (result.name == userName) {
-                        ImagePost.findOne({_id: {$eq: imageId}}).lean().then(data => {
+                        ImagePost.findOne({_id: {$eq: postId}}).lean().then(data => {
                             if (data) {
                                 var comments = data.comments
                                 async function findThreads(sentIndex) {
                                     var objectId = new mongoose.Types.ObjectId()
                                     console.log(objectId)
                                     var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                                    ImagePost.findOneAndUpdate({_id: {$eq: imageId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
+                                    ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
                                         console.log("SUCCESS1")
                                         return resolve(HTTPWTHandler.OK('Comment upload successful'))
                                     })
                                     .catch(err => {
-                                        console.error('An error occurred while adding comment:', commentForPost, 'to:', `"comments.${sentIndex}.commentReplies`, 'of image post with id:', imageId, '. The error was:', err)
+                                        console.error('An error occurred while adding comment:', commentForPost, 'to:', `"comments.${sentIndex}.commentReplies`, 'of image post with id:', postId, '. The error was:', err)
                                         return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again later.'))
                                     });
                                 }
@@ -1826,7 +1826,7 @@ class TempController {
                                 return resolve(HTTPWTHandler.notFound('The image post could not be found'))
                             }
                         }).catch(error => {
-                            console.error('An error occurred while finding one image post with id:', imageId, '. The error was:', error)
+                            console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
                         })
                     } else {
@@ -3529,7 +3529,7 @@ class TempController {
         })
     }
 
-    static #threadpostcomment = (userId, comment, userName, threadId) => {
+    static #threadpostcomment = (userId, comment, userName, postId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
@@ -3539,8 +3539,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
-            if (typeof threadId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
         
             comment = comment.trim();
@@ -3564,12 +3564,12 @@ class TempController {
                         var objectId = new mongoose.Types.ObjectId()
                         console.log(objectId)
                         var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                        Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { comments: commentForPost } }).then(function(){
+                        Thread.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
                             console.log("SUCCESS1")
                             return resolve(HTTPWTHandler.OK('Comment upload successful'))
                         })
                         .catch(err => {
-                            console.error('An error occurred while adding comment object:', commentForPost, "to thread's comments with id:", threadId, '. The error was:', err)
+                            console.error('An error occurred while adding comment object:', commentForPost, "to thread's comments with id:", postId, '. The error was:', err)
                             return resolve(HTTPWTHandler.serverError('An error occurred while adding comment to post. Please try again.'))
                         });
                     } else {
@@ -3586,7 +3586,7 @@ class TempController {
         })
     }
 
-    static #threadpostcommentreply = (userId, comment, userName, threadId, commentId) => {
+    static #threadpostcommentreply = (userId, comment, userName, postId, commentId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
@@ -3596,8 +3596,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
-            if (typeof threadId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
         
             if (typeof commentId !== 'string') {
@@ -3622,7 +3622,7 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
                     if (result.name == userName) {
-                        Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+                        Thread.findOne({_id: {$eq: postId}}).lean().then(data => {
                             if (data) {
                                 const comments = data.comments;
 
@@ -3635,19 +3635,19 @@ class TempController {
                                 const objectId = new mongoose.Types.ObjectId()
                                 console.log(objectId)
                                 var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                                Thread.findOneAndUpdate({_id: {$eq: threadId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
+                                Thread.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
                                     console.log("SUCCESS1")
                                     return resolve(HTTPWTHandler.OK('Comment upload successful'))
                                 })
                                 .catch(err => {
-                                    console.error('An error occurred while pushing:', commentForPost, 'to:', `comments.${sentIndex}.commentReplies`, ' for thread with id:', threadId, '. The error was:', err)
+                                    console.error('An error occurred while pushing:', commentForPost, 'to:', `comments.${sentIndex}.commentReplies`, ' for thread with id:', postId, '. The error was:', err)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again.'))
                                 });
                             } else {
                                 return resolve(HTTPWTHandler.notFound('Could not find thread'))
                             }
                         }).catch(error => {
-                            console.error('An error occurred while finding thread with id:', threadId, '. The error was:', error)
+                            console.error('An error occurred while finding thread with id:', postId, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
                         })
                     } else {
@@ -6477,12 +6477,12 @@ class TempController {
         return await this.#searchforpollposts(userId, pubId, previousPostId)
     }
 
-    static pollpostcomment = async (userId, comment, userName, pollId) => {
-        return await this.#pollpostcomment(userId, comment, userName, pollId)
+    static pollpostcomment = async (userId, comment, userName, postId) => {
+        return await this.#pollpostcomment(userId, comment, userName, postId)
     }
 
-    static pollpostcommentreply = async (userId, comment, userName, pollId, commentId) => {
-        return await this.#pollpostcommentreply(userId, comment, userName, pollId, commentId)
+    static pollpostcommentreply = async (userId, comment, userName, postId, commentId) => {
+        return await this.#pollpostcommentreply(userId, comment, userName, postId, commentId)
     }
 
     static searchforpollcomments = async (userId, pollId) => {
@@ -6537,12 +6537,12 @@ class TempController {
         return await this.#getProfilePic(pubId)
     }
 
-    static imagepostcomment = async (userId, comment, userName, imageId) => {
-        return await this.#imagepostcomment(userId, comment, userName, imageId)
+    static imagepostcomment = async (userId, comment, userName, postId) => {
+        return await this.#imagepostcomment(userId, comment, userName, postId)
     }
 
-    static imagepostcommentreply = async (userId, comment, userName, imageId, commentId) => {
-        return await this.#imagepostcommentreply(userId, comment, userName, imageId, commentId)
+    static imagepostcommentreply = async (userId, comment, userName, postId, commentId) => {
+        return await this.#imagepostcommentreply(userId, comment, userName, postId, commentId)
     }
 
     static getimagepostcomments = async (userId, postId) => {
@@ -6621,12 +6621,12 @@ class TempController {
         return await this.#downvotethread(userId, threadId)
     }
 
-    static threadpostcomment = async (userId, comment, userName, threadId) => {
-        return await this.#threadpostcomment(userId, comment, userName, threadId)
+    static threadpostcomment = async (userId, comment, userName, postId) => {
+        return await this.#threadpostcomment(userId, comment, userName, postId)
     }
 
-    static threadpostcommentreply = async (userId, comment, userName, threadId, commentId) => {
-        return await this.#threadpostcommentreply(userId, comment, userName, threadId, commentId)
+    static threadpostcommentreply = async (userId, comment, userName, postId, commentId) => {
+        return await this.#threadpostcommentreply(userId, comment, userName, postId, commentId)
     }
 
     static searchforthreadcomments = async (userId, threadId) => {
