@@ -1850,7 +1850,7 @@ class TempController {
             }
         
             if (postId.length == 0) {
-                return HTTPHandler.badInput(res, 'imageKey cannot be an empty string.')
+                return HTTPHandler.badInput(res, 'postId cannot be an empty string.')
             }
         
             function sendResponse(nameSendBackObject) {
@@ -1864,9 +1864,8 @@ class TempController {
                 if (data) {
                     var nameSendBackObject = [];
                     var comments = data.comments;
-                    var itemsProcessed = 0;
                     if (comments.length == 0) {
-                        return resolve(HTTPWTHandler.notFound('No comments could not be found for image post'))
+                        return resolve(HTTPWTHandler.OK('Comment search successful', []))
                     } else {
                         const uniqueCommenters = Array.from(new Set(comments.map(comment => comment.commenterId)))
 
