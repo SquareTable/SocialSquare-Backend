@@ -42,7 +42,7 @@ class PollPost {
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 votedFor: pollVote?.vote || "None",
-                                comments: post.comments ? post.comments.length : 0
+                                comments: Array.isArray(post.comments) ? post.comments.length : 0
                             }
 
                             if (isUpvoted) {
