@@ -1334,7 +1334,7 @@ router.post('/imagepostcomment', rateLimiters['/imagepostcomment'], (req, res) =
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'imagepostcomment',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.postId]
         }
     })
 
