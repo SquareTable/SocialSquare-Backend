@@ -31,7 +31,8 @@ class ThreadPost {
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: String(post._id),
-                                threadCategory: category.categoryTitle
+                                threadCategory: category.categoryTitle,
+                                comments: post.comments.length
                             }
 
                             if (isUpvoted) {
