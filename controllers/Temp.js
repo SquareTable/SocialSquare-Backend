@@ -6460,8 +6460,8 @@ class TempController {
         return await this.#searchforpollposts(userId, pubId, previousPostId)
     }
 
-    static pollpostcomment = async (userId, comment, userName, postId) => {
-        return await this.#pollpostcomment(userId, comment, userName, postId)
+    static pollpostcomment = async (userId, comment, postId) => {
+        return await this.#pollpostcomment(userId, comment, postId)
     }
 
     static pollpostcommentreply = async (userId, comment, userName, postId, commentId) => {
