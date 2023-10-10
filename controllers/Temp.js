@@ -733,14 +733,10 @@ class TempController {
         })
     }
 
-    static #pollpostcommentreply = (userId, comment, userName, postId, commentId) => {
+    static #pollpostcommentreply = (userId, comment, postId, commentId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
-            }
-        
-            if (typeof userName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
             if (typeof postId !== 'string') {
@@ -768,52 +764,48 @@ class TempController {
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    if (result.name == userName) {
-                        Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
-                            if (data) {
-                                var comments = data.comments
-                                async function findThreads(sentIndex) {
-                                    var objectId = new mongoose.Types.ObjectId()
-                                    console.log(objectId)
-                                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                                    Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
-                                        return resolve(HTTPWTHandler.OK('Comment upload successful'))
-                                    })
-                                    .catch(err => {
-                                        console.error('An error occured while adding reply to poll comment. Comment reply was:', commentForPost, '. The error was:', err)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding comment reply. Please try again.'))
-                                    });
-                                }
-                                var itemsProcessed = 0
-                                comments.forEach(function (item, index) {
-                                    console.log(comments[index].commentId)
-                                    console.log(commentId)
-                                    if (comments[index].commentId == commentId) {
-                                        if (itemsProcessed !== null) {
-                                            console.log("Found at index:")
-                                            console.log(index)
-                                            findThreads(index)
-                                            itemsProcessed = null
-                                        }
-                                    } else {
-                                        if (itemsProcessed !== null) {
-                                            itemsProcessed++;
-                                            if(itemsProcessed == comments.length) {
-                                                return resolve(HTTPWTHandler.notFound("Couldn't find comment"))
-                                            }
+                    Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
+                        if (data) {
+                            var comments = data.comments
+                            async function findThreads(sentIndex) {
+                                var objectId = new mongoose.Types.ObjectId()
+                                console.log(objectId)
+                                var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
+                                Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
+                                    return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                                })
+                                .catch(err => {
+                                    console.error('An error occured while adding reply to poll comment. Comment reply was:', commentForPost, '. The error was:', err)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding comment reply. Please try again.'))
+                                });
+                            }
+                            var itemsProcessed = 0
+                            comments.forEach(function (item, index) {
+                                console.log(comments[index].commentId)
+                                console.log(commentId)
+                                if (comments[index].commentId == commentId) {
+                                    if (itemsProcessed !== null) {
+                                        console.log("Found at index:")
+                                        console.log(index)
+                                        findThreads(index)
+                                        itemsProcessed = null
+                                    }
+                                } else {
+                                    if (itemsProcessed !== null) {
+                                        itemsProcessed++;
+                                        if(itemsProcessed == comments.length) {
+                                            return resolve(HTTPWTHandler.notFound("Couldn't find comment"))
                                         }
                                     }
-                                });
-                            } else {
-                                return resolve(HTTPWTHandler.notFound('Could not find poll'))
-                            }
-                        }).catch(error => {
-                            console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                                }
+                            });
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('Could not find poll'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
                         })
-                    } else {
-                        return resolve(HTTPWTHandler.badInput('Provided userName does not match username in database.'))
-                    }
                 } else {
                     return resolve(HTTPWTHandler.badInput('Could not find user from userId provided'))
                 } 
@@ -6429,8 +6421,8 @@ class TempController {
         return await this.#pollpostcomment(userId, comment, postId)
     }
 
-    static pollpostcommentreply = async (userId, comment, userName, postId, commentId) => {
-        return await this.#pollpostcommentreply(userId, comment, userName, postId, commentId)
+    static pollpostcommentreply = async (userId, comment, postId, commentId) => {
+        return await this.#pollpostcommentreply(userId, comment, postId, commentId)
     }
 
     static searchforpollcomments = async (userId, pollId) => {
