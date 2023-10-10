@@ -768,11 +768,13 @@ class TempController {
                         if (data) {
                             var comments = data.comments
                             async function findThreads(sentIndex) {
-                                var objectId = new mongoose.Types.ObjectId()
+                                const objectId = new mongoose.Types.ObjectId()
                                 console.log(objectId)
-                                var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
+                                const commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
                                 Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
-                                    return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                                    commentForPost.commentId = String(commentForPost.commentId)
+                                    commentForPost.commenterId = String(commentForPost.commenterId)
+                                    return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                                 })
                                 .catch(err => {
                                     console.error('An error occured while adding reply to poll comment. Comment reply was:', commentForPost, '. The error was:', err)
