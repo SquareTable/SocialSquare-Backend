@@ -1749,7 +1749,9 @@ class TempController {
                                 var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
                                 ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
                                     console.log("SUCCESS1")
-                                    return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                                    commentForPost.commentId = String(commentForPost.commentId)
+                                    commentForPost.commenterId = String(commentForPost.commenterId)
+                                    return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                                 })
                                 .catch(err => {
                                     console.error('An error occurred while adding comment:', commentForPost, 'to:', `"comments.${sentIndex}.commentReplies`, 'of image post with id:', postId, '. The error was:', err)
