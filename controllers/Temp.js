@@ -821,18 +821,18 @@ class TempController {
         })
     }
 
-    static #searchforpollcomments = (userId, pollId) => {
+    static #searchforpollcomments = (userId, postId) => {
         return new Promise(resolve => {
-            if (typeof pollId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
         
             //Check Input fields
-            if (pollId == "") {
-                return resolve(HTTPWTHandler.badInput('pollId cannot be blank'))
+            if (postId == "") {
+                return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
             } else {
                 //Find User
-                console.log(pollId)
+                console.log(postId)
                 function sendResponse(nameSendBackObject) {
                     console.log("Params Recieved")
                     console.log(nameSendBackObject)
@@ -845,7 +845,7 @@ class TempController {
                     return resolve(HTTPWTHandler.OK('Comment search successful', modifiedNameSendBackObject))
                 }
 
-                Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
+                Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
                     if (data) {
                         var nameSendBackObject = [];
                         var comments = data.comments;
@@ -889,7 +889,7 @@ class TempController {
                                             commentDownVoted: commentDownVoted
                                         })
                                     } else {
-                                        console.error('A comment was found on poll with id:', pollId, 'by user with id:', comments[index].commenterId, '. This user could not be found in the database. This comment should be deleted')
+                                        console.error('A comment was found on poll with id:', postId, 'by user with id:', comments[index].commenterId, '. This user could not be found in the database. This comment should be deleted')
                                     }
                                 })
 
@@ -904,7 +904,7 @@ class TempController {
                     }
                 })
                 .catch(err => {
-                    console.error('An error occured while finding poll with id:', pollId, '. The error was:', err)
+                    console.error('An error occured while finding poll with id:', postId, '. The error was:', err)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
                 });
             }
@@ -6429,8 +6429,8 @@ class TempController {
         return await this.#pollpostcommentreply(userId, comment, postId, commentId)
     }
 
-    static searchforpollcomments = async (userId, pollId) => {
-        return await this.#searchforpollcomments(userId, pollId)
+    static searchforpollcomments = async (userId, postId) => {
+        return await this.#searchforpollcomments(userId, postId)
     }
 
     static voteonpoll = async (userId, optionSelected, pollId) => {
