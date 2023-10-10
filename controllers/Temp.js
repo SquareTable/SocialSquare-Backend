@@ -865,13 +865,8 @@ class TempController {
                         var nameSendBackObject = [];
                         var comments = data.comments;
                         if (comments.length == 0) {
-                            return resolve(HTTPWTHandler.notFound('No comments'))
+                            return resolve(HTTPWTHandler.OK('Comment search successful', []))
                         } else {
-                            var itemsProcessed = 0;
-                            console.log(comments)
-
-
-
                             const uniqueUsers = Array.from(new Set(comments.map(item => item.commenterId)))
 
                             User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
