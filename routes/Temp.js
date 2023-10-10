@@ -1100,7 +1100,7 @@ router.post('/searchforpollcomments', rateLimiters['/searchforpollcomments'], (r
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollcomments',
-            functionArgs: [req.tokenData, req.body.pollId]
+            functionArgs: [req.tokenData, req.body.postId]
         }
     })
 
