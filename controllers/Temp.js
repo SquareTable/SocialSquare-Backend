@@ -3608,14 +3608,14 @@ class TempController {
         })
     }
 
-    static #searchforthreadcomments = (userId, threadId) => {
+    static #searchforthreadcomments = (userId, postId) => {
         return new Promise(resolve => {
-            if (typeof threadId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
         
-            if (threadId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('threadId cannot be blank'))
+            if (postId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
             }
         
             //Find User
@@ -3625,7 +3625,7 @@ class TempController {
                 HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
             }
             
-            Thread.findOne({_id: {$eq: threadId}}).lean().then(data => {
+            Thread.findOne({_id: {$eq: postId}}).lean().then(data => {
                 if (data) {
                     var nameSendBackObject = [];
                     var comments = data.comments;
@@ -3650,7 +3650,7 @@ class TempController {
                                     }
                                     nameSendBackObject.push({commentId: String(data.comments[index].commentId), commenterName: result.name, commenterDisplayName: result.displayName, commentText: data.comments[index].commentsText, commentUpVotes: commentUpVotes, commentDownVotes: data.comments[index].commentDownVotes, commentReplies: data.comments[index].commentReplies.length, datePosted: data.comments[index].datePosted, profileImageKey: result.profileImageKey, commentUpVoted: commentUpVoted, commentDownVoted: commentDownVoted})
                                 } else {
-                                    console.error('A comment was found on thread post with id:', threadId, " and the comment creator cannot be found. The comment creator's id is:", comments[index].commenterId)
+                                    console.error('A comment was found on thread post with id:', postId, " and the comment creator cannot be found. The comment creator's id is:", comments[index].commenterId)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while checking for comment creator'))
                                 }
                                 itemsProcessed++;
@@ -3669,7 +3669,7 @@ class TempController {
                 }
             })
             .catch(err => {
-                console.error('An error occurred while finding thread with id:', threadId, '. The error was:', err)
+                console.error('An error occurred while finding thread with id:', postId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
             });
         })
@@ -6573,8 +6573,8 @@ class TempController {
         return await this.#threadpostcommentreply(userId, comment, postId, commentId)
     }
 
-    static searchforthreadcomments = async (userId, threadId) => {
-        return await this.#searchforthreadcomments(userId, threadId)
+    static searchforthreadcomments = async (userId, postId) => {
+        return await this.#searchforthreadcomments(userId, postId)
     }
 
     static getsinglethreadcomment = async (userId, threadId, commentId) => {

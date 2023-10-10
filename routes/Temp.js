@@ -1755,7 +1755,7 @@ router.post('/searchforthreadcomments', rateLimiters['/searchforthreadcomments']
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforthreadcomments',
-            functionArgs: [req.tokenData, req.body.threadId]
+            functionArgs: [req.tokenData, req.body.postId]
         }
     })
 
