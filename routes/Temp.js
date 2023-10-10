@@ -1737,7 +1737,7 @@ router.post('/threadpostcommentreply', rateLimiters['/threadpostcommentreply'], 
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'threadpostcommentreply',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId, req.body.commentId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.postId, req.body.commentId]
         }
     })
 
