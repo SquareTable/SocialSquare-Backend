@@ -685,14 +685,10 @@ class TempController {
         })
     }
 
-    static #pollpostcomment = (userId, comment, userName, postId) => {
+    static #pollpostcomment = (userId, comment, postId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
-            }
-        
-            if (typeof userName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
             if (typeof postId !== 'string') {
@@ -716,23 +712,16 @@ class TempController {
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    if (result.name == userName) {
-                        async function findPolls() {
-                            var objectId = new mongoose.Types.ObjectId()
-                            console.log(objectId)
-                            var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                            Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
-                                return resolve(HTTPWTHandler.OK('Comment upload successful'))
-                            })
-                            .catch(err => {
-                                console.error('An error occured while updating poll to have a new comment. The comment was:', commentForPost, '. THe error was:', err)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while posting comment. Please try again.'))
-                            });
-                        }
-                        findPolls()
-                    } else {
-                        return resolve(HTTPWTHandler.badInput('A name based error occurred. Username in the database does not match userName provided'))
-                    }
+                    var objectId = new mongoose.Types.ObjectId()
+                    console.log(objectId)
+                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
+                    Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
+                        return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                    })
+                    .catch(err => {
+                        console.error('An error occured while updating poll to have a new comment. The comment was:', commentForPost, '. THe error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while posting comment. Please try again.'))
+                    });
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find a user with your user id'))
                 } 
