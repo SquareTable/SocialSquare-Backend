@@ -3523,14 +3523,10 @@ class TempController {
         })
     }
 
-    static #threadpostcomment = (userId, comment, userName, postId) => {
+    static #threadpostcomment = (userId, comment, postId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
-            }
-        
-            if (typeof userName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
             if (typeof postId !== 'string') {
@@ -3554,21 +3550,17 @@ class TempController {
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    if (result.name == userName) {
-                        var objectId = new mongoose.Types.ObjectId()
-                        console.log(objectId)
-                        var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                        Thread.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
-                            console.log("SUCCESS1")
-                            return resolve(HTTPWTHandler.OK('Comment upload successful'))
-                        })
-                        .catch(err => {
-                            console.error('An error occurred while adding comment object:', commentForPost, "to thread's comments with id:", postId, '. The error was:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while adding comment to post. Please try again.'))
-                        });
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('name in database does not match up with provided userName'))
-                    }
+                    var objectId = new mongoose.Types.ObjectId()
+                    console.log(objectId)
+                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
+                    Thread.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
+                        console.log("SUCCESS1")
+                        return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                    })
+                    .catch(err => {
+                        console.error('An error occurred while adding comment object:', commentForPost, "to thread's comments with id:", postId, '. The error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while adding comment to post. Please try again.'))
+                    });
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 } 
@@ -6615,8 +6607,8 @@ class TempController {
         return await this.#downvotethread(userId, threadId)
     }
 
-    static threadpostcomment = async (userId, comment, userName, postId) => {
-        return await this.#threadpostcomment(userId, comment, userName, postId)
+    static threadpostcomment = async (userId, comment, postId) => {
+        return await this.#threadpostcomment(userId, comment, postId)
     }
 
     static threadpostcommentreply = async (userId, comment, userName, postId, commentId) => {

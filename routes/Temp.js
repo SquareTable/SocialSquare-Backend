@@ -1719,7 +1719,7 @@ router.post('/threadpostcomment', rateLimiters['/threadpostcomment'], (req, res)
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'threadpostcomment',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.postId]
         }
     })
 
