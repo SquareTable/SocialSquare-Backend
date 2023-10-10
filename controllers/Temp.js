@@ -1682,6 +1682,8 @@ class TempController {
                     const commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                     ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
                         console.log("SUCCESS1")
+                        commentForPost.commentId = String(commentForPost.commentId)
+                        commentForPost.commenterId = String(commentForPost.commenterId)
                         return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                     })
                     .catch(err => {
