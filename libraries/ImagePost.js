@@ -29,7 +29,7 @@ class ImagePostClass {
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: post._id.toString(),
-                                comments: post.comments ? post.comments.length : 0
+                                comments: Array.isArray(post.comments) ? post.comments.length : 0
                             }
 
                             if (isUpvoted) {

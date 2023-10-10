@@ -32,7 +32,7 @@ class ThreadPost {
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: String(post._id),
                                 threadCategory: category.categoryTitle,
-                                comments: post.comments.length
+                                comments: Array.isArray(post.comments) ? post.comments.length : 0
                             }
 
                             if (isUpvoted) {
