@@ -1733,14 +1733,10 @@ class TempController {
         })
     }
 
-    static #imagepostcommentreply = (userId, comment, userName, postId, commentId) => {
+    static #imagepostcommentreply = (userId, comment, postId, commentId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
-            }
-        
-            if (typeof userName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userName must be a string. Provided type: ${typeof userName}`))
             }
         
             if (typeof postId !== 'string') {
@@ -1755,10 +1751,6 @@ class TempController {
         
             if (comment.length == 0) {
                 return resolve(HTTPWTHandler.badInput('comment cannot be an empty string.'))
-            }
-        
-            if (userName.length == 0) {
-                return resolve(HTTPWTHandler.badInput('userName cannot be an empty string.'))
             }
         
             if (postId.length == 0) {
@@ -1780,53 +1772,49 @@ class TempController {
             //Find User
             User.findOne({_id: userId}).lean().then(result => {
                 if (result) {
-                    if (result.name == userName) {
-                        ImagePost.findOne({_id: {$eq: postId}}).lean().then(data => {
-                            if (data) {
-                                var comments = data.comments
-                                async function findThreads(sentIndex) {
-                                    var objectId = new mongoose.Types.ObjectId()
-                                    console.log(objectId)
-                                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                                    ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
-                                        console.log("SUCCESS1")
-                                        return resolve(HTTPWTHandler.OK('Comment upload successful'))
-                                    })
-                                    .catch(err => {
-                                        console.error('An error occurred while adding comment:', commentForPost, 'to:', `"comments.${sentIndex}.commentReplies`, 'of image post with id:', postId, '. The error was:', err)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again later.'))
-                                    });
-                                }
-                                var itemsProcessed = 0
-                                comments.forEach(function (item, index) {
-                                    console.log(comments[index].commentId)
-                                    console.log(commentId)
-                                    if (comments[index].commentId == commentId) {
-                                        if (itemsProcessed !== null) {
-                                            console.log("Found at index:")
-                                            console.log(index)
-                                            findThreads(index)
-                                            itemsProcessed = null
-                                        }
-                                    } else {
-                                        if (itemsProcessed !== null) {
-                                            itemsProcessed++;
-                                            if(itemsProcessed == comments.length) {
-                                                return resolve(HTTPWTHandler.notFound('Could not find comment.'))
-                                            }
+                    ImagePost.findOne({_id: {$eq: postId}}).lean().then(data => {
+                        if (data) {
+                            var comments = data.comments
+                            async function findThreads(sentIndex) {
+                                var objectId = new mongoose.Types.ObjectId()
+                                console.log(objectId)
+                                var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
+                                ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
+                                    console.log("SUCCESS1")
+                                    return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                                })
+                                .catch(err => {
+                                    console.error('An error occurred while adding comment:', commentForPost, 'to:', `"comments.${sentIndex}.commentReplies`, 'of image post with id:', postId, '. The error was:', err)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again later.'))
+                                });
+                            }
+                            var itemsProcessed = 0
+                            comments.forEach(function (item, index) {
+                                console.log(comments[index].commentId)
+                                console.log(commentId)
+                                if (comments[index].commentId == commentId) {
+                                    if (itemsProcessed !== null) {
+                                        console.log("Found at index:")
+                                        console.log(index)
+                                        findThreads(index)
+                                        itemsProcessed = null
+                                    }
+                                } else {
+                                    if (itemsProcessed !== null) {
+                                        itemsProcessed++;
+                                        if(itemsProcessed == comments.length) {
+                                            return resolve(HTTPWTHandler.notFound('Could not find comment.'))
                                         }
                                     }
-                                });
-                            } else {
-                                return resolve(HTTPWTHandler.notFound('The image post could not be found'))
-                            }
-                        }).catch(error => {
-                            console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
-                        })
-                    } else {
-                        return resolve(HTTPWTHandler.badInput('userName provided does not match username in the database.'))
-                    }
+                                }
+                            });
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('The image post could not be found'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                    })
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
                 } 
@@ -6535,8 +6523,8 @@ class TempController {
         return await this.#imagepostcomment(userId, comment, userName, postId)
     }
 
-    static imagepostcommentreply = async (userId, comment, userName, postId, commentId) => {
-        return await this.#imagepostcommentreply(userId, comment, userName, postId, commentId)
+    static imagepostcommentreply = async (userId, comment, postId, commentId) => {
+        return await this.#imagepostcommentreply(userId, comment, postId, commentId)
     }
 
     static getimagepostcomments = async (userId, postId) => {
