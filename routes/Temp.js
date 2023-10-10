@@ -1064,7 +1064,7 @@ router.post('/pollpostcomment', rateLimiters['/pollpostcomment'], (req, res) => 
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'pollpostcomment',
-            functionArgs: [req.tokenData, req.body.comment, req.body.userName, req.body.postId]
+            functionArgs: [req.tokenData, req.body.comment, req.body.postId]
         }
     })
 
