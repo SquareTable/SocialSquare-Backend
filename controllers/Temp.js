@@ -716,7 +716,9 @@ class TempController {
                     console.log(objectId)
                     var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
                     Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
-                        return resolve(HTTPWTHandler.OK('Comment upload successful'))
+                        commentForPost.commentId = String(commentForPost.commentId)
+                        commentForPost.commenterId = String(commentForPost.commenterId)
+                        return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                     })
                     .catch(err => {
                         console.error('An error occured while updating poll to have a new comment. The comment was:', commentForPost, '. THe error was:', err)
