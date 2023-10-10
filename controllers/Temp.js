@@ -3680,7 +3680,7 @@ class TempController {
                     var nameSendBackObject = [];
                     var comments = data.comments;
                     if (comments.length == 0) {
-                        return resolve(HTTPWTHandler.notFound('This thread post has no comments'))
+                        return resolve(HTTPWTHandler.OK('Comment search successful', []))
                     } else {
                         var itemsProcessed = 0;
                         console.log(comments)
