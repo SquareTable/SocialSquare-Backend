@@ -3865,7 +3865,8 @@ class TempController {
                                     datePosted: comment.datePosted,
                                     profileImageKey: commentCreator.profileImageKey,
                                     commentUpVoted: commentUpVoted,
-                                    commentDownVoted: commentDownVoted
+                                    commentDownVoted: commentDownVoted,
+                                    isOwner: String(comment.commenterId) === String(userId)
                                 })
                             }
                         })
