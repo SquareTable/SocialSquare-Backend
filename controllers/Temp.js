@@ -2253,7 +2253,8 @@ class TempController {
                                                         datePosted: comment.datePosted,
                                                         profileImageKey: creator.profileImageKey,
                                                         commentUpVoted: commentUpVoted,
-                                                        commentDownVoted: commentDownVoted
+                                                        commentDownVoted: commentDownVoted,
+                                                        isOwner: String(comment.commenterId) === String(userId)
                                                     })
                                                 } else {
                                                     console.error('A comment was found with id:', comment.commentId, 'that was from a user with id:', comment.commenterId, '. That user cannot be found in the database, and such this comment should be deleted immediately.')
