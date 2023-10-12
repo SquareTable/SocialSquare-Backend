@@ -777,6 +777,7 @@ class TempController {
                                 Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
                                     commentForPost.commentId = String(commentForPost.commentId)
                                     commentForPost.commenterId = String(commentForPost.commenterId)
+                                    commentForPost.isOwner = true;
                                     return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                                 })
                                 .catch(err => {
