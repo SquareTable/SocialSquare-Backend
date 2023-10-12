@@ -3662,7 +3662,20 @@ class TempController {
                                     if (data.comments[index].commentDownVotes.includes(userId)) {
                                         commentDownVoted = true
                                     }
-                                    nameSendBackObject.push({commentId: String(data.comments[index].commentId), commenterName: result.name, commenterDisplayName: result.displayName, commentText: data.comments[index].commentsText, commentUpVotes: commentUpVotes, commentDownVotes: data.comments[index].commentDownVotes, commentReplies: data.comments[index].commentReplies.length, datePosted: data.comments[index].datePosted, profileImageKey: result.profileImageKey, commentUpVoted: commentUpVoted, commentDownVoted: commentDownVoted})
+                                    nameSendBackObject.push({
+                                        commentId: String(data.comments[index].commentId), 
+                                        commenterName: result.name, 
+                                        commenterDisplayName: result.displayName, 
+                                        commentText: data.comments[index].commentsText, 
+                                        commentUpVotes: commentUpVotes, 
+                                        commentDownVotes: data.comments[index].commentDownVotes, 
+                                        commentReplies: data.comments[index].commentReplies.length, 
+                                        datePosted: data.comments[index].datePosted, 
+                                        profileImageKey: result.profileImageKey, 
+                                        commentUpVoted: commentUpVoted, 
+                                        commentDownVoted: commentDownVoted,
+                                        isOwner: String(data.comments[index].commenterId) === String(userId)
+                                    })
                                 } else {
                                     console.error('A comment was found on thread post with id:', postId, " and the comment creator cannot be found. The comment creator's id is:", comments[index].commenterId)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while checking for comment creator'))
