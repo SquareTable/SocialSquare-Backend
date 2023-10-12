@@ -718,6 +718,7 @@ class TempController {
                     Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
                         commentForPost.commentId = String(commentForPost.commentId)
                         commentForPost.commenterId = String(commentForPost.commenterId)
+                        commentForPost.isOwner = true;
                         return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                     })
                     .catch(err => {
@@ -776,6 +777,7 @@ class TempController {
                                 Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
                                     commentForPost.commentId = String(commentForPost.commentId)
                                     commentForPost.commenterId = String(commentForPost.commenterId)
+                                    commentForPost.isOwner = true;
                                     return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                                 })
                                 .catch(err => {
@@ -840,6 +842,7 @@ class TempController {
                     const modifiedNameSendBackObject = nameSendBackObject.map(item => {
                         item.commentId = String(item.commentId)
                         item.commenterId = String(item.commenterId)
+                        item.isOwner = String(userId) === String(item.commenterId)
                         return item
                     })
                     return resolve(HTTPWTHandler.OK('Comment search successful', modifiedNameSendBackObject))
@@ -1207,7 +1210,8 @@ class TempController {
                                             datePosted: comments[index].datePosted,
                                             profileImageKey: result.profileImageKey,
                                             commentUpVoted: commentUpVoted,
-                                            commentDownVoted: commentDownVoted
+                                            commentDownVoted: commentDownVoted,
+                                            isOwner: String(comments[index].commenterId) === String(userId)
                                         })
                                         sendResponse(nameSendBackObject)
                                     } else {
@@ -1307,12 +1311,15 @@ class TempController {
                                                 datePosted: item.datePosted,
                                                 profileImageKey: user.profileImageKey,
                                                 commentUpVoted: commentUpVoted,
-                                                commentDownVoted: commentDownVoted
+                                                commentDownVoted: commentDownVoted,
+                                                isOwner: String(item.commenterId) === String(userId)
                                             })
                                         } else {
                                             console.error("A comment exists but it's creator's account has been deleted. This comment must be deleted immediately. Comment id:", item._id, ' User Id:', item.commenterId)
                                         }
                                     }
+
+                                    sendResponse(nameSendBackObject)
                                 }).catch(error => {
                                     console.error('An error occurred while finding users with an id inside of this array:', uniqueUsers, '. The error was:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creators. Please try again.'))
@@ -1688,6 +1695,7 @@ class TempController {
                         console.log("SUCCESS1")
                         commentForPost.commentId = String(commentForPost.commentId)
                         commentForPost.commenterId = String(commentForPost.commenterId)
+                        commentForPost.isOwner = true;
                         return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                     })
                     .catch(err => {
@@ -1755,6 +1763,7 @@ class TempController {
                                     console.log("SUCCESS1")
                                     commentForPost.commentId = String(commentForPost.commentId)
                                     commentForPost.commenterId = String(commentForPost.commenterId)
+                                    commentForPost.isOwner = true;
                                     return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                                 })
                                 .catch(err => {
@@ -1856,7 +1865,8 @@ class TempController {
                                         datePosted: comment.datePosted,
                                         profileImageKey: commentCreator.profileImageKey,
                                         commentUpVoted: commentUpVoted,
-                                        commentDownVoted: commentDownVoted
+                                        commentDownVoted: commentDownVoted,
+                                        isOwner: String(comment.commenterId) === String(userId)
                                     })
                                 } else {
                                     console.error('A comment was found from user with id:', comment.commenterId, ' but the user with that id could not be found. This comment should be deleted immediately.')
@@ -2110,7 +2120,8 @@ class TempController {
                                             datePosted: comment.datePosted,
                                             profileImageKey: result.profileImageKey,
                                             commentUpVoted: commentUpVoted,
-                                            commentDownVoted: commentDownVoted
+                                            commentDownVoted: commentDownVoted,
+                                            isOwner: String(comment.commenterId) === String(userId)
                                         })
                                         sendResponse(nameSendBackObject)
                                     } else {
@@ -2242,7 +2253,8 @@ class TempController {
                                                         datePosted: comment.datePosted,
                                                         profileImageKey: creator.profileImageKey,
                                                         commentUpVoted: commentUpVoted,
-                                                        commentDownVoted: commentDownVoted
+                                                        commentDownVoted: commentDownVoted,
+                                                        isOwner: String(comment.commenterId) === String(userId)
                                                     })
                                                 } else {
                                                     console.error('A comment was found with id:', comment.commentId, 'that was from a user with id:', comment.commenterId, '. That user cannot be found in the database, and such this comment should be deleted immediately.')
@@ -3519,6 +3531,7 @@ class TempController {
                         console.log("SUCCESS1")
                         commentForPost.commentId = String(commentForPost.commentId)
                         commentForPost.commenterId = String(commentForPost.commenterId)
+                        commentForPost.isOwner = true;
                         return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                     })
                     .catch(err => {
@@ -3584,6 +3597,7 @@ class TempController {
                                 console.log("SUCCESS1")
                                 commentForPost.commentId = String(commentForPost.commentId)
                                 commentForPost.commenterId = String(commentForPost.commenterId)
+                                commentForPost.isOwner = true;
                                 return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
                             })
                             .catch(err => {
@@ -3648,7 +3662,20 @@ class TempController {
                                     if (data.comments[index].commentDownVotes.includes(userId)) {
                                         commentDownVoted = true
                                     }
-                                    nameSendBackObject.push({commentId: String(data.comments[index].commentId), commenterName: result.name, commenterDisplayName: result.displayName, commentText: data.comments[index].commentsText, commentUpVotes: commentUpVotes, commentDownVotes: data.comments[index].commentDownVotes, commentReplies: data.comments[index].commentReplies.length, datePosted: data.comments[index].datePosted, profileImageKey: result.profileImageKey, commentUpVoted: commentUpVoted, commentDownVoted: commentDownVoted})
+                                    nameSendBackObject.push({
+                                        commentId: String(data.comments[index].commentId), 
+                                        commenterName: result.name, 
+                                        commenterDisplayName: result.displayName, 
+                                        commentText: data.comments[index].commentsText, 
+                                        commentUpVotes: commentUpVotes, 
+                                        commentDownVotes: data.comments[index].commentDownVotes, 
+                                        commentReplies: data.comments[index].commentReplies.length, 
+                                        datePosted: data.comments[index].datePosted, 
+                                        profileImageKey: result.profileImageKey, 
+                                        commentUpVoted: commentUpVoted, 
+                                        commentDownVoted: commentDownVoted,
+                                        isOwner: String(data.comments[index].commenterId) === String(userId)
+                                    })
                                 } else {
                                     console.error('A comment was found on thread post with id:', postId, " and the comment creator cannot be found. The comment creator's id is:", comments[index].commenterId)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while checking for comment creator'))
@@ -3746,7 +3773,8 @@ class TempController {
                         datePosted: commentdatePosted,
                         profileImageKey: creator.profileImageKey,
                         commentUpVoted: commentUpVoted,
-                        commentDownVoted: commentDownVoted
+                        commentDownVoted: commentDownVoted,
+                        isOwner: String(comment.commenterId) === String(userId)
                     })
                     sendResponse(nameSendBackObject)
                 }).catch(error => {
@@ -3837,7 +3865,8 @@ class TempController {
                                     datePosted: comment.datePosted,
                                     profileImageKey: commentCreator.profileImageKey,
                                     commentUpVoted: commentUpVoted,
-                                    commentDownVoted: commentDownVoted
+                                    commentDownVoted: commentDownVoted,
+                                    isOwner: String(comment.commenterId) === String(userId)
                                 })
                             }
                         })
