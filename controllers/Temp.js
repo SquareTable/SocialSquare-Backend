@@ -1210,7 +1210,8 @@ class TempController {
                                             datePosted: comments[index].datePosted,
                                             profileImageKey: result.profileImageKey,
                                             commentUpVoted: commentUpVoted,
-                                            commentDownVoted: commentDownVoted
+                                            commentDownVoted: commentDownVoted,
+                                            isOwner: String(comments[index].commenterId) === String(userId)
                                         })
                                         sendResponse(nameSendBackObject)
                                     } else {
