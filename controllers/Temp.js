@@ -1311,12 +1311,15 @@ class TempController {
                                                 datePosted: item.datePosted,
                                                 profileImageKey: user.profileImageKey,
                                                 commentUpVoted: commentUpVoted,
-                                                commentDownVoted: commentDownVoted
+                                                commentDownVoted: commentDownVoted,
+                                                isOwner: String(item.commenterId) === String(userId)
                                             })
                                         } else {
                                             console.error("A comment exists but it's creator's account has been deleted. This comment must be deleted immediately. Comment id:", item._id, ' User Id:', item.commenterId)
                                         }
                                     }
+
+                                    sendResponse(nameSendBackObject)
                                 }).catch(error => {
                                     console.error('An error occurred while finding users with an id inside of this array:', uniqueUsers, '. The error was:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while finding comment creators. Please try again.'))
