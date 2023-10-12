@@ -842,6 +842,7 @@ class TempController {
                     const modifiedNameSendBackObject = nameSendBackObject.map(item => {
                         item.commentId = String(item.commentId)
                         item.commenterId = String(item.commenterId)
+                        item.isOwner = String(userId) === String(item.commenterId)
                         return item
                     })
                     return resolve(HTTPWTHandler.OK('Comment search successful', modifiedNameSendBackObject))
