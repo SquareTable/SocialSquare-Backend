@@ -576,7 +576,7 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/getfollowrequests': rateLimit({
+    '/followrequests': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
         standardHeaders: false,
@@ -1985,7 +1985,7 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
     })
 });
 
-router.post('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res) => {
+router.get('/followrequests', rateLimiters['/followrequests'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getfollowrequests',
@@ -1998,7 +1998,7 @@ router.post('/getfollowrequests', rateLimiters['/getfollowrequests'], (req, res)
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getfollowrequests:', error)
+        console.error('An error occurred from TempWorker for POST /followrequests:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });
