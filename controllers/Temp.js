@@ -6417,6 +6417,16 @@ class TempController {
 
     static #deletecomment = (userId, commentId) => {
         return new Promise(resolve => {
+
+            function deleteComment() {
+                Comment.deleteOne({_id: {$eq: commentId}}).then(() => {
+                    return resolve(HTTPWTHandler.OK('Comment has successfully been deleted'))
+                }).catch(error => {
+                    console.error('An error occurred while deleting one comment with id:', commentId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                })
+            }
+
             if (typeof commentId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Type provided: ${typeof commentId}`))
             }
@@ -6427,7 +6437,68 @@ class TempController {
                 Comment.findOne({_id: {$eq: commentId}}).lean(commentFound => {
                     if (String(commentFound.commenterId) !== userId) return resolve(HTTPWTHandler.unauthorized('You are not allowed to delete this comment.'))
 
-                    
+                    if (!commentFound.parentCommentId) {
+                        Comment.countDocuments({parentCommentId: commentId}).then(childrenCount => {
+                            //If there are any children comments, the comments will be soft deleted.
+                            //Their contents will be removed from the document (like text and user id)
+                            //but the document will remain and will have a deleted: true property
+                            //If there are no children comments, the comment document will be deleted
+
+                            if (childrenCount === 0) {
+                                deleteComment()
+                            } else {
+                                Comment.findOneAndUpdate({_id: {$eq: commentId}}, {$unset: {commenterId: "", text: "", datePosted: ""}, $set: {deleted: true}}).then(() => {
+                                    return resolve(HTTPWTHandler.OK('Comment has successfully been deleted'))
+                                }).catch(error => {
+                                    console.error('An error occurred while soft deleting comment with id:', commentId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                })
+                            }
+                        }).catch(error => {
+                            console.error('An error occurred while counting Comment documents with parentCommentId:', commentId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment replies. Please try again.'))
+                        })
+                    } else {
+                        Comment.findOne({_id: commentFound.parentCommentId}).then(parentComment => {
+                            if (!parentComment || !parent.deleted) return deleteComment()
+
+                            Comment.countDocuments({parentCommentId: commentFound.parentCommentId}).then(childrenCount => {
+                                if (childrenCount <= 1) {
+                                    mongoose.startSession().then(session => {
+                                        session.startTransaction();
+    
+                                        Promise.all(
+                                            Comment.deleteOne({_id: {$eq: commentFound.parentCommentId}}, {session}),
+                                            Comment.deleteOne({_id: {$eq: commentId}}, {session})
+                                        ).then(() => {
+                                            session.commitTransaction().then(() => {
+                                                session.endSession().catch(error => {
+                                                    console.error('An error occurred while ending mongoose session:', error)
+                                                }).finally(() => {
+                                                    return resolve(HTTPWTHandler.OK('Comment has been successfully deleted.'))
+                                                })
+                                            }).catch(error => {
+                                                session.endSession().catch(error => {
+                                                    console.error('An error occurred while ending Mongoose session:', error)
+                                                }).finally(() => {
+                                                    console.error('An error occurred while committing mongoose transaction:', error)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                                })
+                                            })
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while starting mongoose session:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                    })
+                                } else {
+                                    deleteComment()
+                                }
+                            }).catch(error => {
+                                console.error('An error occurred while counting Comment documents with parentCommentId:', commentFound.parentCommentId, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding comment replies. Please try again.'))
+                            })
+                        })
+                    }
                 }).catch(error => {
                     console.error('An error occurred while finding comment with id:', commentId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while comment. Please try again later.'))

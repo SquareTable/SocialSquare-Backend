@@ -7,7 +7,8 @@ const CommentSchema = new Schema({
     datePosted: Number,
     parentCommentId: mongoose.Schema.Types.ObjectId,
     postId: mongoose.Schema.Types.ObjectId,
-    postFormat: String
+    postFormat: String,
+    deleted: Boolean
 });
 
 const Comment = mongoose.model('Comment', CommentSchema);
