@@ -746,7 +746,7 @@ class TempController {
         })
     }
 
-    static #pollpostcommentreply = (userId, comment, postId, commentId) => {
+    static #pollpostcommentreply = (userId, comment, commentId) => {
         return new Promise(resolve => {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
@@ -776,55 +776,39 @@ class TempController {
         
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
-                    Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
-                        if (data) {
-                            var comments = data.comments
-                            async function findThreads(sentIndex) {
-                                const objectId = new mongoose.Types.ObjectId()
-                                console.log(objectId)
-                                const commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                                Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
-                                    commentForPost.commentId = String(commentForPost.commentId)
-                                    commentForPost.commenterId = String(commentForPost.commenterId)
-                                    commentForPost.isOwner = true;
-                                    return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
-                                })
-                                .catch(err => {
-                                    console.error('An error occured while adding reply to poll comment. Comment reply was:', commentForPost, '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding comment reply. Please try again.'))
-                                });
-                            }
-                            var itemsProcessed = 0
-                            comments.forEach(function (item, index) {
-                                console.log(comments[index].commentId)
-                                console.log(commentId)
-                                if (comments[index].commentId == commentId) {
-                                    if (itemsProcessed !== null) {
-                                        console.log("Found at index:")
-                                        console.log(index)
-                                        findThreads(index)
-                                        itemsProcessed = null
-                                    }
-                                } else {
-                                    if (itemsProcessed !== null) {
-                                        itemsProcessed++;
-                                        if(itemsProcessed == comments.length) {
-                                            return resolve(HTTPWTHandler.notFound("Couldn't find comment"))
-                                        }
-                                    }
-                                }
-                            });
-                        } else {
-                            return resolve(HTTPWTHandler.notFound('Could not find poll'))
+                if (!result) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
+                    if (!data) return resolve(HTTPWTHandler.notFound('Could not find poll'))
+
+                    Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
+                        if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment'))
+
+                        const newComment = {
+                            commenterId: userId,
+                            text: comment,
+                            datePosted: Date.now(),
+                            parentCommentId: commentId,
+                            postId: commentFound.postId,
+                            postFormat: "Poll"
                         }
-                    }).catch(error => {
-                        console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+
+                        const commentDocument = new Comment(newComment)
+                        commentDocument.save().then(comment => {
+                            comment.isOwner = true;
+                            return resolve(HTTPWTHandler.OK('Successfully saved comment', comment))
+                        }).catch(error => {
+                            console.error('An error occurred while saving comment:', newComment, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while saving comment. Please try again.'))
                         })
-                } else {
-                    return resolve(HTTPWTHandler.badInput('Could not find user from userId provided'))
-                } 
+                    }).catch(error => {
+                        console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment to reply to. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                })
             })
             .catch(err => {
                 console.error('An error occured while finding user with user id:', userId, '. The error was:', err)
