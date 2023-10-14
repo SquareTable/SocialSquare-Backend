@@ -713,19 +713,23 @@ class TempController {
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    var objectId = new mongoose.Types.ObjectId()
-                    console.log(objectId)
-                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                    Poll.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
-                        commentForPost.commentId = String(commentForPost.commentId)
-                        commentForPost.commenterId = String(commentForPost.commenterId)
-                        commentForPost.isOwner = true;
-                        return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
+                    const newComment = {
+                        commenterId: userId,
+                        text: comment,
+                        datePosted: Date.now(),
+                        postId,
+                        postFormat: "Poll"
+                    }
+
+                    const commentDocument = new Comment(newComment);
+
+                    commentDocument.save().then(comment => {
+                        comment.isOwner = true
+                        return resolve(HTTPWTHandler.OK('Comment saved', comment))
+                    }).catch(error => {
+                        console.error('An error occurred while saving comment document:', newComment, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while saving comment. Please try again.'))
                     })
-                    .catch(err => {
-                        console.error('An error occured while updating poll to have a new comment. The comment was:', commentForPost, '. THe error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while posting comment. Please try again.'))
-                    });
                 } else {
                     return resolve(HTTPWTHandler.notFound('Could not find a user with your user id'))
                 } 
