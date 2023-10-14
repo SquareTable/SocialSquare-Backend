@@ -714,7 +714,7 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (!result) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
 
-                Poll.findOne({_id: postId}).lean().then(pollFound => {
+                Poll.findOne({_id: {$eq: postId}}).lean().then(pollFound => {
                     if (!pollFound) return resolve(HTTPWTHandler.notFound('Could not find poll post.'))
 
                     const newComment = {
