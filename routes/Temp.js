@@ -874,6 +874,15 @@ const rateLimiters = {
         message: {status: "FAILED", message: "Too many accounts have been logged out from this account in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/deletecomment': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 10,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have deleted too many comments in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
 
@@ -2581,6 +2590,24 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /logoutuser:', error)
+        HTTPHandler.serverError(res, String(error))
+    })
+});
+
+router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'deletecomment',
+            functionArgs: [req.tokenData, req.body.commentId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /deletecomment:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });

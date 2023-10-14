@@ -9,7 +9,8 @@ const PopularPosts = require('../models/PopularPosts');
 const AccountReports = require('../models/AccountReports')
 const PostReports = require('../models/PostReports');
 const RefreshToken = require('../models/RefreshToken');
-const Message = require('../models/Message')
+const Message = require('../models/Message');
+const Comment = require('../models/Comment');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -6414,6 +6415,30 @@ class TempController {
         })
     }
 
+    static #deletecomment = (userId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Type provided: ${typeof commentId}`))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Comment.findOne({_id: {$eq: commentId}}).lean(commentFound => {
+                    if (String(commentFound.commenterId) !== userId) return resolve(HTTPWTHandler.unauthorized('You are not allowed to delete this comment.'))
+
+                    
+                }).catch(error => {
+                    console.error('An error occurred while finding comment with id:', commentId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while comment. Please try again later.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6784,6 +6809,10 @@ class TempController {
 
     static logoutuser = async (userId, refreshTokenId) => {
         return await this.#logoutuser(userId, refreshTokenId)
+    }
+
+    static deletecomment = async (userId, commentId) => {
+        return await this.#deletecomment(userId, commentId);
     }
 }
 
