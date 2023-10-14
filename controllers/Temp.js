@@ -712,7 +712,11 @@ class TempController {
         
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
+                if (!result) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Poll.findOne({_id: postId}).lean().then(pollFound => {
+                    if (!pollFound) return resolve(HTTPWTHandler.notFound('Could not find poll post.'))
+
                     const newComment = {
                         commenterId: userId,
                         text: comment,
@@ -730,9 +734,10 @@ class TempController {
                         console.error('An error occurred while saving comment document:', newComment, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while saving comment. Please try again.'))
                     })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find a user with your user id'))
-                } 
+                }).catch(error => {
+                    console.error('An error occurred while finding poll with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll post. Please try again.'))
+                })
             })
             .catch(err => {
                 console.error('An error occured while finding user with id:', userId, '. The error was:', err)
