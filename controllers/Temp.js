@@ -791,7 +791,7 @@ class TempController {
                             commenterId: userId,
                             text: comment,
                             datePosted: Date.now(),
-                            parentCommentId: commentId,
+                            parentCommentId: commentFound.parentCommentId || commentId,
                             postId: commentFound.postId,
                             postFormat: "Poll"
                         }
