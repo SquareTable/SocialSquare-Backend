@@ -38,6 +38,9 @@ const arrayHelper = new ArrayLibrary();
 const UserLibrary = require('../libraries/User')
 const userHandler = new UserLibrary();
 
+const CommentLibrary = require('../libraries/Comment')
+const commentHandler = new CommentLibrary();
+
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
@@ -822,89 +825,53 @@ class TempController {
             if (typeof postId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
-        
-            //Check Input fields
-            if (postId == "") {
+
+            if (postId.length === 0) {
                 return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
-            } else {
-                //Find User
-                console.log(postId)
-                function sendResponse(nameSendBackObject) {
-                    console.log("Params Recieved")
-                    console.log(nameSendBackObject)
-                    //Convert the objectIds to strings so then they don't get messed up while serializing and deserializing while sending data to main thread to be sent to requesting client
-                    const modifiedNameSendBackObject = nameSendBackObject.map(item => {
-                        item.commentId = String(item.commentId)
-                        item.commenterId = String(item.commenterId)
-                        item.isOwner = String(userId) === String(item.commenterId)
-                        return item
-                    })
-                    return resolve(HTTPWTHandler.OK('Comment search successful', modifiedNameSendBackObject))
-                }
-
-                Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
-                    if (data) {
-                        var nameSendBackObject = [];
-                        var comments = data.comments;
-                        if (comments.length == 0) {
-                            return resolve(HTTPWTHandler.OK('Comment search successful', []))
-                        } else {
-                            const uniqueUsers = Array.from(new Set(comments.map(item => item.commenterId)))
-
-                            User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
-                                const users = {};
-
-                                usersFromDatabase.forEach(function (item, index) {
-                                    users[usersFromDatabase[index]._id] = usersFromDatabase[index]
-                                })
-
-                                const uniqueUserIds = Array.from(new Set(Object.keys(users)))
-                                comments.forEach(function (item, index) {
-                                    if (uniqueUserIds.includes(comments[index].commenterId)) {
-                                        var commentUpVotes = (comments[index].commentUpVotes.length - comments[index].commentDownVotes.length)
-                                        var commentUpVoted = false
-                                        if (comments[index].commentUpVotes.includes(userId)) {
-                                            commentUpVoted = true
-                                        }
-                                        var commentDownVoted = false
-                                        if (comments[index].commentDownVotes.includes(userId)) {
-                                            commentDownVoted = true
-                                        }
-
-                                        const creatorOfComment = users[comments[index].commenterId]
-
-                                        nameSendBackObject.push({
-                                            commentId: comments[index].commentId,
-                                            commenterName: creatorOfComment.name,
-                                            commenterDisplayName: creatorOfComment.displayName,
-                                            commentText: comments[index].commentsText,
-                                            commentUpVotes: commentUpVotes,
-                                            commentReplies: comments[index].commentReplies.length,
-                                            datePosted: comments[index].datePosted,
-                                            profileImageKey: creatorOfComment.profileImageKey,
-                                            commentUpVoted: commentUpVoted,
-                                            commentDownVoted: commentDownVoted
-                                        })
-                                    } else {
-                                        console.error('A comment was found on poll with id:', postId, 'by user with id:', comments[index].commenterId, '. This user could not be found in the database. This comment should be deleted')
-                                    }
-                                })
-
-                                sendResponse(nameSendBackObject)
-                            }).catch(error => {
-                                console.error('An error occurred while finding users with ids inside of array:', uniqueUsers, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while finding the creators of the comments. Please try again.'))
-                            })
-                        }
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('Poll could not be found'))
-                    }
-                })
-                .catch(err => {
-                    console.error('An error occured while finding poll with id:', postId, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
-                });
             }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Poll.findOne({_id: {$eq: postId}}).lean().then(pollFound => {
+                    if (!pollFound) return resolve(HTTPWTHandler.notFound('Could not find poll'))
+    
+                    Comment.find({postId: {$eq: postId}, postFormat: "Poll"}).lean().then(comments => {
+                        const uniqueUsers = Array.from(new Set(comments.map(item => String(item.commenterId))))
+
+                        User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
+                            const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(comments, usersFromDatabase, 'commenterId')
+
+                            if (postsWithNoOwners.length > 0) {
+                                console.error('Comments have been found that do not have their owners in the database. Comments array:', postsWithNoOwners)
+                            }
+
+                            Promise.all(
+                                ownerPostPairs.map(pair => {
+                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                                })
+                            ).then(processedComments => {
+                                return resolve(HTTPWTHandler.OK('Comment search successful', processedComments))
+                            }).catch(error => {
+                                console.error('An error occurred while processing poll comments:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while getting comments data. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while finding users with ids in array:', uniqueUsers, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding comments from poll post with id:', postId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 
