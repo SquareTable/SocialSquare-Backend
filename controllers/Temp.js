@@ -1559,32 +1559,38 @@ class TempController {
             if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
                 return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
             }
-        
-            //Find User
-            User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
-                    const objectId = new mongoose.Types.ObjectId()
-                    console.log(objectId)
-                    const commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                    ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
-                        console.log("SUCCESS1")
-                        commentForPost.commentId = String(commentForPost.commentId)
-                        commentForPost.commenterId = String(commentForPost.commenterId)
-                        commentForPost.isOwner = true;
-                        return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                ImagePost.findOne({_id: {$eq: postId}}).lean().then(imagePostFound => {
+                    if (!imagePostFound) return resolve(HTTPWTHandler.notFound('Could not find image post'))
+
+                    const newComment = {
+                        commenterId: userId,
+                        text: comment,
+                        datePosted: Date.now(),
+                        postId,
+                        postFormat: "Image"
+                    };
+
+                    const commentDocument = new Comment(newComment)
+
+                    commentDocument.save().then(comment => {
+                        comment.isOwner = true;
+                        return resolve(HTTPWTHandler.OK('Successfully created comment', comment))
+                    }).catch(error => {
+                        console.error('An error occurred while saving comment with data:', newComment, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while creating comment. Please try again.'))
                     })
-                    .catch(err => {
-                        console.error('An error occurred while pushing comment object:', commentForPost, 'to comments field for image with id:', postId, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again.'))
-                    });
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
-                } 
-            })
-            .catch(err => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                }).catch(error => {
+                    console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            });
+            })
         })
     }
 
