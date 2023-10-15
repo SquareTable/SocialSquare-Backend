@@ -2989,32 +2989,37 @@ class TempController {
             if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
                 return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
             }
-        
-            //Find User
-            User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
-                    var objectId = new mongoose.Types.ObjectId()
-                    console.log(objectId)
-                    var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], commentReplies: [], datePosted: Date.now()}
-                    Thread.findOneAndUpdate({_id: {$eq: postId}}, { $push: { comments: commentForPost } }).then(function(){
-                        console.log("SUCCESS1")
-                        commentForPost.commentId = String(commentForPost.commentId)
-                        commentForPost.commenterId = String(commentForPost.commenterId)
-                        commentForPost.isOwner = true;
-                        return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Thread.findOne({_id: {$eq: postId}}).lean().then(threadFound => {
+                    if (!threadFound) return resolve(HTTPWTHandler.notFound('Could not find thread.'))
+
+                    const newComment = {
+                        commenterId: userId,
+                        text: comment,
+                        datePosted: Date.now(),
+                        postId,
+                        postFormat: "Thread"
+                    };
+
+                    const commentDocument = new Comment(newComment);
+                    commentDocument.save().then(comment => {
+                        comment.isOwner = true;
+                        return resolve(HTTPWTHandler.OK('Comment was successfully created', comment))
+                    }).catch(error => {
+                        console.error('An error occurred while creating new comment document with data:', newComment, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while creating comment. Please try again.'))
                     })
-                    .catch(err => {
-                        console.error('An error occurred while adding comment object:', commentForPost, "to thread's comments with id:", postId, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while adding comment to post. Please try again.'))
-                    });
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                } 
-            })
-            .catch(err => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                }).catch(error => {
+                    console.error('An error occurred while finding one thread with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            });
+            })
         })
     }
 
