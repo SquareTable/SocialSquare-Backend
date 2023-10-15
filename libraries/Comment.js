@@ -11,11 +11,11 @@ class CommentLibrary {
                     delete comment.commenterId
                     return new Promise((resolve, reject) => {
                         Promise.all([
-                            Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Comment"}),
-                            Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Comment"}),
-                            Upvote.findOne({postId: {$eq: post._id}, postFormat: "Comment", userPublicId: userRequesting.secondId}),
-                            Downvote.findOne({postId: {$eq: post._id}, postFormat: "Comment", userPublicId: userRequesting.secondId}),
-                            Comment.countDocuments({parentCommentId: post._id})
+                            Upvote.countDocuments({postId: {$eq: comment._id}, postFormat: "Comment"}),
+                            Downvote.countDocuments({postId: {$eq: comment._id}, postFormat: "Comment"}),
+                            Upvote.findOne({postId: {$eq: comment._id}, postFormat: "Comment", userPublicId: userRequesting.secondId}),
+                            Downvote.findOne({postId: {$eq: comment._id}, postFormat: "Comment", userPublicId: userRequesting.secondId}),
+                            Comment.countDocuments({parentCommentId: comment._id})
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, replies]) => {
                             const commentObject = {
                                 ...comment,
