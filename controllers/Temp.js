@@ -3101,74 +3101,51 @@ class TempController {
             if (postId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
             }
-        
-            //Find User
-            function sendResponse(nameSendBackObject) {
-                console.log("Params Recieved")
-                console.log(nameSendBackObject)
-                HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
-            }
-            
-            Thread.findOne({_id: {$eq: postId}}).lean().then(data => {
-                if (data) {
-                    var nameSendBackObject = [];
-                    var comments = data.comments;
-                    if (comments.length == 0) {
-                        return resolve(HTTPWTHandler.OK('Comment search successful', []))
-                    } else {
-                        var itemsProcessed = 0;
-                        console.log(comments)
-                        comments.forEach(function (item, index) {
-                            User.findOne({_id: comments[index].commenterId}).lean().then(result => {
-                                if (result) {
-                                    console.log(data)
-                                    console.log(data.comments[index].commentText)
-                                    var commentUpVotes = (data.comments[index].commentUpVotes.length - data.comments[index].commentDownVotes.length)
-                                    var commentUpVoted = false
-                                    if (data.comments[index].commentUpVotes.includes(userId)) {
-                                        commentUpVoted = true
-                                    }
-                                    var commentDownVoted = false
-                                    if (data.comments[index].commentDownVotes.includes(userId)) {
-                                        commentDownVoted = true
-                                    }
-                                    nameSendBackObject.push({
-                                        commentId: String(data.comments[index].commentId), 
-                                        commenterName: result.name, 
-                                        commenterDisplayName: result.displayName, 
-                                        commentText: data.comments[index].commentsText, 
-                                        commentUpVotes: commentUpVotes, 
-                                        commentDownVotes: data.comments[index].commentDownVotes, 
-                                        commentReplies: data.comments[index].commentReplies.length, 
-                                        datePosted: data.comments[index].datePosted, 
-                                        profileImageKey: result.profileImageKey, 
-                                        commentUpVoted: commentUpVoted, 
-                                        commentDownVoted: commentDownVoted,
-                                        isOwner: String(data.comments[index].commenterId) === String(userId)
-                                    })
-                                } else {
-                                    console.error('A comment was found on thread post with id:', postId, " and the comment creator cannot be found. The comment creator's id is:", comments[index].commenterId)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while checking for comment creator'))
-                                }
-                                itemsProcessed++;
-                                if(itemsProcessed === comments.length) {
-                                    console.log("Before Function")
-                                    console.log(nameSendBackObject)
-                                    sendResponse(nameSendBackObject);
-                                }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+
+                Thread.findOne({_id: {$eq: postId}}).lean().then(threadFound => {
+                    if (!threadFound) return resolve(HTTPWTHandler.notFound('Could not find thread'))
+
+                    Comment.find({postId: {$eq: postId}, postFormat: "Thread"}).lean().then(comments => {
+                        if (comments.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comments', []))
+
+                        const uniqueUsers = Array.from(new Set(comments.map(comment => String(comment.commenterId))))
+
+                        User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
+                            const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(comments, commentOwners, 'commenterId')
+
+                            if (postsWithNoOwners.length > 0) {
+                                console.error('Found comments with no owners:', postsWithNoOwners)
+                            }
+
+                            Promise.all(
+                                ownerPostPairs.map(pair => {
+                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                                })
+                            ).then(processedComments => {
+                                return resolve(HTTPWTHandler.OK('Successfully found comments', processedComments))
                             }).catch(error => {
-                                console.error('An error occurred whole finding user with id:', comments[index].commenterId, '. The error was:', error)
+                                console.error('An error occurred while processing comments:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while getting comment data. Please try again.'))
                             })
+                        }).catch(error => {
+                            console.error('An error occurred while finding users with an id in:', uniqueUsers, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
                         })
-                    }
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Thread could not be found'))
-                }
+                    }).catch(error => {
+                        console.error('An error occurred while finding comments from thread post with id:', postId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one thread with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding the thread. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
-            .catch(err => {
-                console.error('An error occurred while finding thread with id:', postId, '. The error was:', err)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
-            });
         })
     }
 
