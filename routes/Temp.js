@@ -839,6 +839,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getcommentreplies': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 30,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have requested too many comment replies in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -2473,6 +2482,24 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getsinglecomment:', error)
+        HTTPHandler.serverError(res, String(error))
+    })
+});
+
+router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getcommentreplies',
+            functionArgs: [req.tokenData, req.body.commentId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /getcommentreplies:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });

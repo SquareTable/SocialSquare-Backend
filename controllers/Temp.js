@@ -5863,6 +5863,56 @@ class TempController {
         })
     }
 
+    static #getcommentreplies = async (userId, commentId) => {
+        return new Promise(resolve => {
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Type provided: ${typeof commentId}`))
+            }
+
+            if (commentId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.badInput('User with provided userId could not be found.'))
+
+                Comment.find({parentCommentId: {$eq: commentId}}).lean().then(commentsFound => {
+                    if (commentsFound.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comment replies', []))
+
+                    const uniqueUsers = Array.from(new Set(commentsFound.map(comment => String(comment.commenterId))))
+
+                    User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
+                        const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(commentsFound, commentOwners);
+
+                        if (postsWithNoOwners.length > 0) {
+                            console.error('Found comments without owners:', postsWithNoOwners)
+                        }
+
+                        Promise.all(
+                            ownerPostPairs.map(pair => {
+                                return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                            })
+                        ).then(replies => {
+                            return resolve(HTTPWTHandler.OK('Successfully found comment replies', replies))
+                        }).catch(error => {
+                            console.error('An error occurred while processing comments:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding users with their ids in:', uniqueUsers, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding comments with parentCommentId:', commentId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment replies. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6217,6 +6267,10 @@ class TempController {
 
     static getsinglecomment = async (userId, commentId) => {
         return await this.#getsinglecomment(userId, commentId);
+    }
+
+    static getcommentreplies = async (userId, commentId) => {
+        return await this.#getcommentreplies(userId, commentId);
     }
 }
 
