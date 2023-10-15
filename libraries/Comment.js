@@ -3,7 +3,7 @@ const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 
 class CommentLibrary {
-    processMultipleCommentsFromOneOwner(comments, commentOwner, userRequesting) {
+    processMultipleCommentsFromOneOwner(commentOwner, comments, userRequesting) {
         return new Promise((resolve, reject) => {
 
             Promise.all(
