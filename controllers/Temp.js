@@ -848,7 +848,7 @@ class TempController {
 
                             Promise.all(
                                 ownerPostPairs.map(pair => {
-                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[1], pair[0], userFound)
                                 })
                             ).then(processedComments => {
                                 return resolve(HTTPWTHandler.OK('Comment search successful', processedComments))
@@ -1205,7 +1205,7 @@ class TempController {
 
                             Promise.all(
                                 ownerPostPairs.map(pair => {
-                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[1], pair[0], userFound)
                                 })
                             ).then(processedComments => {
                                 return resolve(HTTPWTHandler.OK('Comments search successful', processedComments))
