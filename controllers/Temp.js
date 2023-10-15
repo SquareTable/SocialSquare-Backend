@@ -55,6 +55,12 @@ const PollVote = require('../models/PollVote');
 
 const { Expo } = require('expo-server-sdk')
 
+const POST_DATABASE_MODELS = {
+    Image: ImagePost,
+    Poll,
+    Thread
+}
+
 class TempController {
     static #sendnotificationkey = (userId, notificationKey, refreshTokenId) => {
         return new Promise(resolve => {
@@ -5791,6 +5797,72 @@ class TempController {
         })
     }
 
+    static #getsinglecomment = (userId, commentId) => {
+        return new Promise(async resolve => {
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+
+            if (commentId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
+                    if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
+
+                    let commentOwner;
+
+                    try {
+                        commentOwner = commentFound.commenterId == userId ? userFound : User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
+                    } catch (error) {
+                        console.log('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
+                    }
+
+                    const requesterIsBlockedByCommentOwner = commentOwner.blockedAccounts.includes(userFound.secondId)
+                    if (requesterIsBlockedByCommentOwner) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
+
+                    const postDatabaseModel = POST_DATABASE_MODELS[commentFound.postFormat]
+                    postDatabaseModel.findOne({_id: {$eq: commentFound.postId}}).lean().then(postFound => {
+                        let postOwner;
+
+                        try {
+                            postOwner = postFound.creatorId == userId ? userFound : User.findOne({_id: {$eq: postFound.creatorId}}).lean()
+                        } catch (error) {
+                            console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding user that owns the post that the comment was made on. Please try again.'))
+                        }
+
+                        const requesterIsBlockedByPostOwner = postOwner.blockedAccounts.includes(userFound.secondId);
+                        if (requesterIsBlockedByPostOwner) return resolve(HTTPWTHandler.notFound('Comment not found.'))
+
+                        const postOwnerAccountIsPrivateAndRequesterDoesNotFollowAccount = postOwner.privateAccount === true && !postOwner.followers.includes(userFound.secondId)
+                        if (postOwnerAccountIsPrivateAndRequesterDoesNotFollowAccount) return resolve(HTTPWTHandler.notFound('Comment not found.'))
+
+                        commentHandler.processMultipleCommentsFromOneOwner([commentFound], commentOwner, userFound).then(comments => {
+                            return resolve(HTTPWTHandler.OK('Successfully found comment', comments))
+                        }).catch(error => {
+                            console.error('An error occurred while processing comment data:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while getting comment data. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding', commentFound.postFormat, 'post with id:', commentFound.postId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding the post that is associated with the comment. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6141,6 +6213,10 @@ class TempController {
 
     static deletecomment = async (userId, commentId) => {
         return await this.#deletecomment(userId, commentId);
+    }
+
+    static getsinglecomment = async (userId, commentId) => {
+        return await this.#getsinglecomment(userId, commentId);
     }
 }
 
