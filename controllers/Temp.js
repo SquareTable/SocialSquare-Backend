@@ -1629,64 +1629,46 @@ class TempController {
             if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
                 return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
             }
-        
-            //Find User
-            User.findOne({_id: userId}).lean().then(result => {
-                if (result) {
-                    ImagePost.findOne({_id: {$eq: postId}}).lean().then(data => {
-                        if (data) {
-                            var comments = data.comments
-                            async function findThreads(sentIndex) {
-                                var objectId = new mongoose.Types.ObjectId()
-                                console.log(objectId)
-                                var commentForPost = {commentId: objectId, commenterId: userId, commentsText: comment, commentUpVotes: [], commentDownVotes: [], datePosted: Date.now()}
-                                ImagePost.findOneAndUpdate({_id: {$eq: postId}}, { $push: { [`comments.${sentIndex}.commentReplies`]: commentForPost } }).then(function(){
-                                    console.log("SUCCESS1")
-                                    commentForPost.commentId = String(commentForPost.commentId)
-                                    commentForPost.commenterId = String(commentForPost.commenterId)
-                                    commentForPost.isOwner = true;
-                                    return resolve(HTTPWTHandler.OK('Comment upload successful', commentForPost))
-                                })
-                                .catch(err => {
-                                    console.error('An error occurred while adding comment:', commentForPost, 'to:', `"comments.${sentIndex}.commentReplies`, 'of image post with id:', postId, '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding comment. Please try again later.'))
-                                });
-                            }
-                            var itemsProcessed = 0
-                            comments.forEach(function (item, index) {
-                                console.log(comments[index].commentId)
-                                console.log(commentId)
-                                if (comments[index].commentId == commentId) {
-                                    if (itemsProcessed !== null) {
-                                        console.log("Found at index:")
-                                        console.log(index)
-                                        findThreads(index)
-                                        itemsProcessed = null
-                                    }
-                                } else {
-                                    if (itemsProcessed !== null) {
-                                        itemsProcessed++;
-                                        if(itemsProcessed == comments.length) {
-                                            return resolve(HTTPWTHandler.notFound('Could not find comment.'))
-                                        }
-                                    }
-                                }
-                            });
-                        } else {
-                            return resolve(HTTPWTHandler.notFound('The image post could not be found'))
-                        }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                ImagePost.findOne({_id: {$eq: postId}}).lean().then(imagePostFound => {
+                    if (!imagePostFound) return resolve(HTTPWTHandler.notFound('Could not find image post.'))
+
+                    Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
+                        if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment'))
+
+                        const newComment = {
+                            commenterId: userId,
+                            text: comment,
+                            datePosted: Date.now(),
+                            parentCommentId: commentFound.parentCommentId || commentId,
+                            postId,
+                            postFormat: "Image"
+                        };
+
+                        const commentDocument = new Comment(newComment);
+
+                        commentDocument.save().then(comment => {
+                            comment.isOwner = true;
+                            return resolve(HTTPWTHandler.OK('Comment was successfully created', comment))
+                        }).catch(error => {
+                            console.error('An error occurred while saving comment with data:', newComment, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while saving comment. Please try again.'))
+                        })
                     }).catch(error => {
-                        console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                        console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment to reply too. Please try again.'))
                     })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
-                } 
-            })
-            .catch(err => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
+                }).catch(error => {
+                    console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            });
+            })
         })
     }
 
