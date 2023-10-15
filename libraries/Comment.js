@@ -8,7 +8,7 @@ class CommentLibrary {
 
             Promise.all(
                 comments.map(comment => {
-                    delete comment.creatorId
+                    delete comment.commenterId
                     return new Promise((resolve, reject) => {
                         Promise.all([
                             Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Comment"}),
@@ -20,9 +20,9 @@ class CommentLibrary {
                             const commentObject = {
                                 ...comment,
                                 votes: upvotes - downvotes,
-                                creatorName: commentOwner.name,
-                                creatorDisplayName: commentOwner.displayName,
-                                creatorPfpKey: commentOwner.profileImageKey,
+                                commenterName: commentOwner.name,
+                                commenterDisplayName: commentOwner.displayName,
+                                profileImageKey: commentOwner.profileImageKey,
                                 upvoted: !!isUpvoted,
                                 downvoted: !!isDownvoted,
                                 isOwner: commentOwner._id.toString() === userRequesting._id.toString(),

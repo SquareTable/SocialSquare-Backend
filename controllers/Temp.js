@@ -1128,78 +1128,40 @@ class TempController {
             if (commentId.length == 0) {
                 return resolve(HTTPWTHandler.badInput(`commentId must not be an empty string`))
             }
-        
-            function sendResponse(nameSendBackObject) {
-                console.log("Params Recieved")
-                console.log(nameSendBackObject)
-                HTTPHandler.OK(res, 'Comment search successful', nameSendBackObject)
-            }
-
+            
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) {
-                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
-                }
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
 
-                Poll.findOne({_id: {$eq: postId}}).lean().then(data => {
-                    if (data) {
-                        const comments = data.comments
-                        const nameSendBackObject = [];
+                Poll.findOne({_id: {$eq: postId}}).lean().then(pollFound => {
+                    if (!pollFound) return resolve(HTTPWTHandler.notFound('Poll could not be found'))
 
-                        if (comments.length == 0) {
-                            return resolve(HTTPWTHandler.notFound('No comments found on poll'))
-                        } else {
-                            function forAwaits(index) {
-                                User.findOne({_id: comments[index].commenterId}).lean().then(result => {
-                                    if (result) {
-                                        var commentUpVotes = (comments[index].commentUpVotes.length - comments[index].commentDownVotes.length)
-                                        var commentUpVoted = false
-                                        if (comments[index].commentUpVotes.includes(userId)) {
-                                            commentUpVoted = true
-                                        }
-                                        var commentDownVoted = false
-                                        if (comments[index].commentDownVotes.includes(userId)) {
-                                            commentDownVoted = true
-                                        }
-                                        nameSendBackObject.push({
-                                            commentId: String(comments[index].commentId),
-                                            commenterName: result.name,
-                                            commenterDisplayName: result.displayName,
-                                            commentText: comments[index].commentsText,
-                                            commentUpVotes: commentUpVotes,
-                                            commentDownVotes: comments[index].commentDownVotes,
-                                            commentReplies: comments[index].commentReplies.length,
-                                            datePosted: comments[index].datePosted,
-                                            profileImageKey: result.profileImageKey,
-                                            commentUpVoted: commentUpVoted,
-                                            commentDownVoted: commentDownVoted,
-                                            isOwner: String(comments[index].commenterId) === String(userId)
-                                        })
-                                        sendResponse(nameSendBackObject)
-                                    } else {
-                                        console.error('There is a comment with id:', commentId, "and it's owner is not found in the database. This comment should be deleted immediately.")
-                                    }
-                                }).catch(error => {
-                                    console.error('An error occurred while finding one user with id:', comments[index].commenterId, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
-                                })
-                            }
-                            var itemsProcessed  = 0
-                            const index = comments.findIndex(comment => comment.commentId == commentId)
+                    Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
+                        if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment'))
 
-                            if (index === -1) {
-                                return resolve(HTTPWTHandler.notFound('Comment could not be found'))
+                        User.findOne({_id: {$eq: commentFound.commenterId}}).lean().then(commentOwnerFound => {
+                            if (!commentOwnerFound) {
+                                console.error('Found a comment that does not have an owner in the database. Comment document data:', commentFound)
+                                return resolve(HTTPWTHandler.notFound('Could not find comment owner.'))
                             }
 
-                            forAwaits(index)
-                        }
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('Poll could not be found'))
-                    }
-                })
-                .catch(err => {
-                    console.error('An error occured while finding poll with id:', postId, '. The error was:', err)
+                            commentHandler.processMultipleCommentsFromOneOwner([commentFound], commentOwner, userFound).then(comments => {
+                                return resolve(HTTPWTHandler.OK('Successfully found comment', comments))
+                            }).catch(error => {
+                                console.error('An error occurred while processing comments:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while getting comment data. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
-                });
+                })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
