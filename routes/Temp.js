@@ -450,24 +450,6 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/upvotecomment': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many comments in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/downvotecomment': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 60,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many comments in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/toggleFollowOfAUser': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 6,
@@ -845,6 +827,15 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested too many comment replies in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/voteoncomment': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 60,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have voted on too many comments in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -1706,42 +1697,6 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
     })
 });
 
-router.post('/upvotecomment', rateLimiters['/upvotecomment'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'upvotecomment',
-            functionArgs: [req.tokenData, req.body.commentId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
-    })
-
-    worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /upvotecomment:', error)
-        HTTPHandler.serverError(res, String(error))
-    })
-});
-
-router.post('/downvotecomment', rateLimiters['/downvotecomment'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'downvotecomment',
-            functionArgs: [req.tokenData, req.body.format, req.body.postId, req.body.commentId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
-    })
-
-    worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /downvotecomment:', error)
-        HTTPHandler.serverError(res, String(error))
-    })
-});
-
 router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2500,6 +2455,24 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /getcommentreplies:', error)
+        HTTPHandler.serverError(res, String(error))
+    })
+});
+
+router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'voteoncomment',
+            functionArgs: [req.tokenData, req.body.commentId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /voteoncomment:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });
