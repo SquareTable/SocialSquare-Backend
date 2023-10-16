@@ -5106,13 +5106,13 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
 
-                Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
+                Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
                     if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
                     let commentOwner;
 
                     try {
-                        commentOwner = commentFound.commenterId == userId ? userFound : User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
+                        commentOwner = commentFound.commenterId == userId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
                     } catch (error) {
                         console.log('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
@@ -5122,11 +5122,11 @@ class TempController {
                     if (requesterIsBlockedByCommentOwner) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
                     const postDatabaseModel = POST_DATABASE_MODELS[commentFound.postFormat]
-                    postDatabaseModel.findOne({_id: {$eq: commentFound.postId}}).lean().then(postFound => {
+                    postDatabaseModel.findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
                         let postOwner;
 
                         try {
-                            postOwner = postFound.creatorId == userId ? userFound : User.findOne({_id: {$eq: postFound.creatorId}}).lean()
+                            postOwner = postFound.creatorId == userId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean()
                         } catch (error) {
                             console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while finding user that owns the post that the comment was made on. Please try again.'))
@@ -5232,13 +5232,13 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
 
-                Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
+                Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
                     if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
                     let commentOwner;
 
                     try {
-                        commentOwner = userId == commentFound.commenterId ? userFound : User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
+                        commentOwner = userId == commentFound.commenterId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
                     } catch (error) {
                         console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
@@ -5246,7 +5246,7 @@ class TempController {
 
                     if (userId != commentFound.commenterId && commentOwner.blockedAccounts.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
 
-                    POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(postFound => {
+                    POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
                         if (!postFound) {
                             console.error('A comment was found without an associating post. Comment data:', commentFound)
                             return resolve(HTTPWTHandler.notFound('Could not find post that comment is associated with.'))
@@ -5255,7 +5255,7 @@ class TempController {
                         let postOwner;
 
                         try {
-                            postOwner = userId == postFound.creatorId ? userFound : User.findOne({_id: {$eq: postFound.creatorId}}).lean()
+                            postOwner = userId == postFound.creatorId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean()
                         } catch (error) {
                             console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while finding user that owns post that the comment is associated with. Please try again.'))
