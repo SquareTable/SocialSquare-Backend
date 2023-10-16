@@ -1710,7 +1710,7 @@ router.post('/upvotecomment', rateLimiters['/upvotecomment'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'upvotecomment',
-            functionArgs: [req.tokenData, req.body.format, req.body.postId, req.body.commentId]
+            functionArgs: [req.tokenData, req.body.commentId]
         }
     })
 
