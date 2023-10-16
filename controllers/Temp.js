@@ -5684,11 +5684,47 @@ class TempController {
         return new Promise(resolve => {
 
             function deleteComment() {
-                Comment.deleteOne({_id: {$eq: commentId}}).then(() => {
-                    return resolve(HTTPWTHandler.OK('Comment has successfully been deleted'))
+                mongoose.startSession().then(session => {
+                    session.startTransaction();
+
+                    Promise.all(
+                        Comment.deleteOne({_id: {$eq: commentId}}, {session}),
+                        Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}),
+                        Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session})
+                    ).then(() => {
+                        session.commitTransaction().then(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending Mongoose session:', error)
+                            }).finally(() => {
+                                return resolve(HTTPWTHandler.OK('Successfully deleted comment'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while committing Mongoose transaction:', error)
+                            session.abortTransaction().catch(error => {
+                                console.error('An error occurred while aborting Mongoose transaction:', error)
+                            }).finally(() => {
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending Mongoose session. The error was:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                })
+                            })
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while deleting comment and related votes of comment with id:', commentId, '. The error was:', error)
+                        session.abortTransaction().catch(error => {
+                            console.error('An error occurred while aborting Mongoose transaction:', error)
+                        }).finally(() => {
+                            session.endSession().catch(error => {
+                                console.error('An error occurred while ending Mongoose session:', error)
+                            }).finally(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                            })
+                        })
+                    })
                 }).catch(error => {
-                    console.error('An error occurred while deleting one comment with id:', commentId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                    console.error('An error occurred while starting Mongoose session. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while starting to delete the comment. Please try again.'))
                 })
             }
 
@@ -5712,11 +5748,43 @@ class TempController {
                             if (childrenCount === 0) {
                                 deleteComment()
                             } else {
-                                Comment.findOneAndUpdate({_id: {$eq: commentId}}, {$unset: {commenterId: "", text: "", datePosted: ""}, $set: {deleted: true}}).then(() => {
-                                    return resolve(HTTPWTHandler.OK('Comment has successfully been deleted'))
+                                mongoose.startSession().then(session => {
+                                    session.startTransaction();
+
+                                    Promise.all(
+                                        Comment.findOneAndUpdate({_id: {$eq: commentId}}, {$unset: {commenterId: "", text: "", datePosted: ""}, $set: {deleted: true}}, {session}),
+                                        Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}),
+                                        Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session})
+                                    ).then(() => {
+                                        session.commitTransaction().then(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session:', error)
+                                            }).finally(() => {
+                                                return resolve(HTTPWTHandler.OK('Comment was successfully deleted.'))
+                                            })
+                                        }).catch(error => {
+                                            console.error('An error occurred while committing Mongoose session:', error)
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session:', error)
+                                            }).finally(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                            })
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while performing delete operations on comment with id:', commentId, '. The error was:', error)
+                                        session.abortTransaction().catch(error => {
+                                            console.error('An error occurred while aborting Mongoose transaction:', error)
+                                        }).finally(() => {
+                                            session.endSession().catch(error => {
+                                                console.error('An error occurred while ending Mongoose session:', error)
+                                            }).finally(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                            })
+                                        })
+                                    })
                                 }).catch(error => {
-                                    console.error('An error occurred while soft deleting comment with id:', commentId, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                    console.error('An error occurred while starting Mongoose session:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while starting to delete comment. Please try again.'))
                                 })
                             }
                         }).catch(error => {
@@ -5734,7 +5802,9 @@ class TempController {
     
                                         Promise.all(
                                             Comment.deleteOne({_id: {$eq: commentFound.parentCommentId}}, {session}),
-                                            Comment.deleteOne({_id: {$eq: commentId}}, {session})
+                                            Comment.deleteOne({_id: {$eq: commentId}}, {session}),
+                                            Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}),
+                                            Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session})
                                         ).then(() => {
                                             session.commitTransaction().then(() => {
                                                 session.endSession().catch(error => {
@@ -5743,11 +5813,27 @@ class TempController {
                                                     return resolve(HTTPWTHandler.OK('Comment has been successfully deleted.'))
                                                 })
                                             }).catch(error => {
+                                                console.error('An error occurred while committing Mongoose transaction:', error)
+                                                session.abortTransaction().catch(error => {
+                                                    console.error('An error occurred while aborting Mongoose transaction:', error)
+                                                }).finally(() => {
+                                                    session.endSession().catch(error => {
+                                                        console.error('An error occurred while ending Mongoose session:', error)
+                                                    }).finally(() => {
+                                                        console.error('An error occurred while committing mongoose transaction:', error)
+                                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                                    })
+                                                })
+                                            })
+                                        }).catch(error => {
+                                            console.error('An error occurred while applying delete operations to a comment with id:', commentId, '. The error was:', error)
+                                            session.abortTransaction().catch(error => {
+                                                console.error('An error occurred while aborting Mongoose session:', error)
+                                            }).finally(() => {
                                                 session.endSession().catch(error => {
                                                     console.error('An error occurred while ending Mongoose session:', error)
                                                 }).finally(() => {
-                                                    console.error('An error occurred while committing mongoose transaction:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
+                                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
                                                 })
                                             })
                                         })
