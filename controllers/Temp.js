@@ -695,61 +695,6 @@ class TempController {
         })
     }
 
-    static #searchforpollcomments = (userId, postId) => {
-        return new Promise(resolve => {
-            if (typeof postId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
-            }
-
-            if (postId.length === 0) {
-                return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-
-                Poll.findOne({_id: {$eq: postId}}).lean().then(pollFound => {
-                    if (!pollFound) return resolve(HTTPWTHandler.notFound('Could not find poll'))
-    
-                    Comment.find({postId: {$eq: postId}, postFormat: "Poll"}).lean().then(comments => {
-                        const uniqueUsers = Array.from(new Set(comments.map(item => String(item.commenterId))))
-
-                        User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
-                            const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(comments, usersFromDatabase, 'commenterId')
-
-                            if (postsWithNoOwners.length > 0) {
-                                console.error('Comments have been found that do not have their owners in the database. Comments array:', postsWithNoOwners)
-                            }
-
-                            Promise.all(
-                                ownerPostPairs.map(pair => {
-                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
-                                })
-                            ).then(processedComments => {
-                                return resolve(HTTPWTHandler.OK('Comment search successful', processedComments))
-                            }).catch(error => {
-                                console.error('An error occurred while processing poll comments:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while getting comments data. Please try again.'))
-                            })
-                        }).catch(error => {
-                            console.error('An error occurred while finding users with ids in array:', uniqueUsers, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
-                        })
-                    }).catch(error => {
-                        console.error('An error occurred while finding comments from poll post with id:', postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments. Please try again.'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding one poll with id:', postId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
     static #voteonpoll = (userId, optionSelected, pollId) => {
         return new Promise(resolve => {
             if (typeof optionSelected !== 'string') {
@@ -1283,60 +1228,6 @@ class TempController {
                 console.error('An error occurred while finding one user with secondId:', pubId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
             });
-        })
-    }
-
-    static #getimagepostcomments = (userId, postId) => {
-        return new Promise(resolve => {
-            if (typeof postId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
-            }
-        
-            if (postId.length == 0) {
-                return HTTPHandler.badInput(res, 'postId cannot be an empty string.')
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-
-                ImagePost.findOne({_id: {$eq: postId}}).lean().then(imagePostFound => {
-                    if (!imagePostFound) return resolve(HTTPWTHandler.notFound('Image post could not be found'))
-
-                    Comment.find({postId: {$eq: postId}, postFormat: "Image"}).lean().then(comments => {
-                        const uniqueUsers = Array.from(new Set(comments.map(comment => String(comment.commenterId))))
-
-                        User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
-                            const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(comments, usersFromDatabase, 'commenterId')
-
-                            if (postsWithNoOwners.length > 0) {
-                                console.error("Found comments with their owners' accounts not in the database. Comments array:", postsWithNoOwners)
-                            }
-
-                            Promise.all(
-                                ownerPostPairs.map(pair => {
-                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
-                                })
-                            ).then(comments => {
-                                return resolve(HTTPWTHandler.OK('Successfully found comments', comments))
-                            }).catch(error => {
-                                console.error('An error occurred while processing comment data:', error)
-                            })
-                        }).catch(error => {
-                            console.error('An error occurred while finding users with ids in this array:', uniqueUsers, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
-                        })
-                    }).catch(error => {
-                        console.error('An error occurred while finding comments from image post with id:', postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments. Please try again.'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
         })
     }
 
@@ -2690,63 +2581,6 @@ class TempController {
                 }
             }).catch(error => {
                 console.error('An error occured while finding a user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
-    static #searchforthreadcomments = (userId, postId) => {
-        return new Promise(resolve => {
-            if (typeof postId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
-            }
-        
-            if (postId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
-
-                Thread.findOne({_id: {$eq: postId}}).lean().then(threadFound => {
-                    if (!threadFound) return resolve(HTTPWTHandler.notFound('Could not find thread'))
-
-                    Comment.find({postId: {$eq: postId}, postFormat: "Thread"}).lean().then(comments => {
-                        if (comments.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comments', []))
-
-                        const uniqueUsers = Array.from(new Set(comments.map(comment => String(comment.commenterId))))
-
-                        User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
-                            const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(comments, commentOwners, 'commenterId')
-
-                            if (postsWithNoOwners.length > 0) {
-                                console.error('Found comments with no owners:', postsWithNoOwners)
-                            }
-
-                            Promise.all(
-                                ownerPostPairs.map(pair => {
-                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
-                                })
-                            ).then(processedComments => {
-                                return resolve(HTTPWTHandler.OK('Successfully found comments', processedComments))
-                            }).catch(error => {
-                                console.error('An error occurred while processing comments:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while getting comment data. Please try again.'))
-                            })
-                        }).catch(error => {
-                            console.error('An error occurred while finding users with an id in:', uniqueUsers, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
-                        })
-                    }).catch(error => {
-                        console.error('An error occurred while finding comments from thread post with id:', postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments. Please try again.'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding one thread with id:', postId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding the thread. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -5301,7 +5135,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
 
-            if (!CONSTANTS.POST_COMMENT_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
+            if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
                 return resolve(HTTPWTHandler.badInput(`postFormat must be either: ${postFormat.join(', ')}`))
             }
         
@@ -5368,6 +5202,76 @@ class TempController {
         })
     }
 
+    static #searchforpostcomments = (userId, postId, postFormat) => {
+        return new Promise(resolve => {
+            if (typeof postId !== 'string') return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
+
+            if (postId.length === 0) return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
+
+            if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(postFormat)) return resolve(HTTPWTHandler.badInput(`postFormat must be one of these: ${CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.join(', ')}`))
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                POST_DATABASE_MODELS[postFormat].findOne({_id: {$eq: postId}}).lean().then(async postFound => {
+                    if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post.'))
+
+                    let postOwner;
+
+                    try {
+                        postOwner = userId == postFound.creatorId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean()
+                    } catch (error) {
+                        console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post owner. Please try again.'))
+                    }
+
+                    if (userId != postFound.creatorId && (
+                        postOwner.blockedAccounts.includes(userFound.secondId) && (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                    )) {
+                        return resolve(HTTPWTHandler.notFound('Could not find post.'))
+                    }
+
+                    Comment.find({postId: {$eq: postId}, postFormat: {$eq: postFormat}}).lean().then(comments => {
+                        if (comments.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comments', []))
+
+                        const uniqueUsers = Array.from(new Set(comments.map(comment => String(comment.commenterId))));
+
+                        User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
+                            const {postsWithNoOwners, ownerPostPairs} = arrayHelper.returnOwnerPostPairs(comments, usersFromDatabase, 'commenterId')
+
+                            if (postsWithNoOwners.length > 0) {
+                                console.error('Found comments with no owners:', postsWithNoOwners)
+                            }
+
+                            Promise.all(
+                                ownerPostPairs.map(pair => {
+                                    return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                                })
+                            ).then(comments => {
+                                return resolve(HTTPWTHandler.OK('Comments were found successfully', comments))
+                            }).catch(error => {
+                                console.error('An error occurred while processing comments:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while finding users with ids in this array:', uniqueUsers, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding comments with postId:', postId, 'and postFormat:', postFormat, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one', postFormat, 'post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -5402,10 +5306,6 @@ class TempController {
 
     static searchforpollposts = async (userId, pubId, previousPostId) => {
         return await this.#searchforpollposts(userId, pubId, previousPostId)
-    }
-
-    static searchforpollcomments = async (userId, postId) => {
-        return await this.#searchforpollcomments(userId, postId)
     }
 
     static voteonpoll = async (userId, optionSelected, pollId) => {
@@ -5446,10 +5346,6 @@ class TempController {
 
     static getProfilePic = async (pubId) => {
         return await this.#getProfilePic(pubId)
-    }
-
-    static getimagepostcomments = async (userId, postId) => {
-        return await this.#getimagepostcomments(userId, postId)
     }
 
     static upvoteimage = async (userId, imageId) => {
@@ -5514,10 +5410,6 @@ class TempController {
 
     static downvotethread = async (userId, threadId) => {
         return await this.#downvotethread(userId, threadId)
-    }
-
-    static searchforthreadcomments = async (userId, postId) => {
-        return await this.#searchforthreadcomments(userId, postId)
     }
 
     static getthreadbyid = async (userId, threadId) => {
@@ -5706,6 +5598,10 @@ class TempController {
 
     static postcomment = async (userId, comment,postId, postFormat) => {
         return await this.#postcomment(userId, comment,postId, postFormat)
+    }
+
+    static searchforpostcomments = async (userId, postId, postFormat) => {
+        return await this.#searchforpostcomments(userId, postId, postFormat);
     }
 }
 

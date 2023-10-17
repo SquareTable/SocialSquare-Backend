@@ -117,15 +117,6 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/searchforpollcomments': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many comments on poll posts too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/voteonpoll': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -213,15 +204,6 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many profile pictures in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/getimagepostcomments': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many comments on image posts too many times in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -366,15 +348,6 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have downvoted too many threads in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/searchforthreadcomments': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 30,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have searched for too many comments on thread posts too many times in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -803,6 +776,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/searchforpostcomments': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 30,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have searched for comments on posts too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -988,24 +970,6 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
     })
 });
 
-router.post('/searchforpollcomments', rateLimiters['/searchforpollcomments'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'searchforpollcomments',
-            functionArgs: [req.tokenData, req.body.postId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
-    })
-
-    worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /searchforpollcomments:', error)
-        HTTPHandler.serverError(res, String(error))
-    })
-});
-
 router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
@@ -1182,24 +1146,6 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for GET /getProfilePic/:pubId:', error)
-        HTTPHandler.serverError(res, String(error))
-    })
-});
-
-router.post('/getimagepostcomments', rateLimiters['/getimagepostcomments'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'getimagepostcomments',
-            functionArgs: [req.tokenData, req.body.postId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
-    })
-
-    worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getimagepostcomments:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });
@@ -1495,24 +1441,6 @@ router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /downvotethread:', error)
-        HTTPHandler.serverError(res, String(error))
-    })
-});
-
-router.post('/searchforthreadcomments', rateLimiters['/searchforthreadcomments'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'searchforthreadcomments',
-            functionArgs: [req.tokenData, req.body.postId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
-    })
-
-    worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /searchforthreadcomments:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });
@@ -2365,6 +2293,24 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /postcomment:', error)
+        HTTPHandler.serverError(res, String(error))
+    })
+});
+
+router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'searchforpostcomments',
+            functionArgs: [req.tokenData, req.body.postId, req.body.postFormat]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /searchforpostcomments:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });
