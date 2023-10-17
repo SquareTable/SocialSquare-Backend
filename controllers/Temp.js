@@ -4589,12 +4589,12 @@ class TempController {
                 mongoose.startSession().then(session => {
                     session.startTransaction();
 
-                    Promise.all(
+                    Promise.all([
                         Comment.deleteOne({_id: {$eq: commentId}}, {session}),
                         Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}),
                         Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}),
                         parentCommentId ? Comment.findOneAndUpdate({_id: {$eq: parentCommentId}}, {$inc: {replies: -1}}, {session}) : Promise.resolve()
-                    ).then(() => {
+                    ]).then(() => {
                         session.commitTransaction().then(() => {
                             session.endSession().catch(error => {
                                 console.error('An error occurred while ending Mongoose session:', error)
@@ -4647,11 +4647,11 @@ class TempController {
                         mongoose.startSession().then(session => {
                             session.startTransaction();
 
-                            Promise.all(
+                            Promise.all([
                                 Comment.findOneAndUpdate({_id: {$eq: commentId}}, {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}, {session}),
                                 Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}),
                                 Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session})
-                            ).then(() => {
+                            ]).then(() => {
                                 session.commitTransaction().then(() => {
                                     session.endSession().catch(error => {
                                         console.error('An error occurred while ending Mongoose session:', error)
@@ -4691,12 +4691,12 @@ class TempController {
                                 mongoose.startSession().then(session => {
                                     session.startTransaction();
 
-                                    Promise.all(
+                                    Promise.all([
                                         Comment.deleteOne({_id: {$eq: commentFound.parentCommentId}}, {session}),
                                         Comment.deleteOne({_id: {$eq: commentId}}, {session}),
                                         Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}),
                                         Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session})
-                                    ).then(() => {
+                                    ]).then(() => {
                                         session.commitTransaction().then(() => {
                                             session.endSession().catch(error => {
                                                 console.error('An error occurred while ending mongoose session:', error)
@@ -5071,10 +5071,10 @@ class TempController {
                         mongoose.startSession().then(session => {
                             session.startTransaction();
 
-                            Promise.all(
+                            Promise.all([
                                 newComment.save({session}),
                                 Comment.findOneAndUpdate({_id: {$eq: commentReply.parentCommentId}}, {$inc: {replies: 1}}, {session})
-                            ).then(([newComment]) => {
+                            ]).then(([newComment]) => {
                                 session.commitTransaction().then(() => {
                                     session.endSession().catch(error => {
                                         console.error('An error occuirred while ending Mongoose session:', error)
