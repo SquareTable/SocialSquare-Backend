@@ -9,11 +9,11 @@ const mongoose = require('mongoose');
 //Usually we would have to implement functionality for comment replies, but as of writing this code, no comment replies have been made.
 //For the sake of simplicity, comment reply transfers will be ignored (since there are none)
 
-Promise.all(
+Promise.all([
     ImagePost.find({"comments.0": {$exists: true}}).lean(),
     Poll.find({"comments.0": {$exists: true}}).lean(),
     Thread.find({"comments.0": {$exists: true}}).lean()
-).then(([images, polls, threads]) => {
+]).then(([images, polls, threads]) => {
     const updates = [];
 
     for (const image of images) {
@@ -58,12 +58,12 @@ Promise.all(
     mongoose.startSession().then(session => {
         session.startTransaction();
 
-        Promise.all(
+        Promise.all([
             Comment.insertMany(updates, {session}),
             ImagePost.findOneAndUpdate({"comments.0": {$exists: true}}, {$unset: {comments: ""}}, {session}),
             Poll.findOneAndUpdate({"comments.0": {$exists: true}}, {$unset: {comments: ""}}, {session}),
             Thread.findOneAndUpdate({"comments.0": {$exists: true}}, {$unset: {comments: ""}}, {session})
-        ).then(() => {
+        ]).then(() => {
             session.commitTransaction().then(() => {
                 session.endSession().then(() => {
                     console.log('Successfully transferred', updates.length, 'comments into the Comment collection!')
