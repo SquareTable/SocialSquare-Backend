@@ -4993,35 +4993,78 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.badInput('User with provided userId could not be found.'))
 
-                Comment.find({parentCommentId: {$eq: commentId}}).lean().then(commentsFound => {
-                    if (commentsFound.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comment replies', []))
+                Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
+                    if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
-                    const uniqueUsers = Array.from(new Set(commentsFound.map(comment => String(comment.commenterId))))
+                    let commentOwner;
 
-                    User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
-                        const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(commentsFound, commentOwners);
+                    try {
+                        commentOwner = userId == commentFound.commenterId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
+                    } catch (error) {
+                        console.error('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
+                    }
 
-                        if (postsWithNoOwners.length > 0) {
-                            console.error('Found comments without owners:', postsWithNoOwners)
+                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
+
+                    POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
+                        if (!postFound) {
+                            console.error('A comment was found with no corresponding post:', commentFound)
+                            return resolve(HTTPWTHandler.notFound('Post that associates with comment could not be found'))
                         }
 
-                        Promise.all(
-                            ownerPostPairs.map(pair => {
-                                return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                        let postOwner;
+
+                        try {
+                            postOwner = userId == postFound.creatorId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean()
+                        } catch (error) {
+                            console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding user that made the post that is associated with the comment. Please try again.'))
+                        }
+
+                        if (userId != postFound.creatorId && (
+                            postOwner.blockedAccounts.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                        )) {
+                            return resolve(HTTPWTHandler.notFound('Could not find comment.'))
+                        }
+
+                        Comment.find({parentCommentId: {$eq: commentId}}).lean().then(commentsFound => {
+                            if (commentsFound.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comment replies', []))
+        
+                            const uniqueUsers = Array.from(new Set(commentsFound.map(comment => String(comment.commenterId))))
+        
+                            User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
+                                const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(commentsFound, commentOwners);
+        
+                                if (postsWithNoOwners.length > 0) {
+                                    console.error('Found comments without owners:', postsWithNoOwners)
+                                }
+        
+                                Promise.all(
+                                    ownerPostPairs.map(pair => {
+                                        return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
+                                    })
+                                ).then(replies => {
+                                    return resolve(HTTPWTHandler.OK('Successfully found comment replies', replies))
+                                }).catch(error => {
+                                    console.error('An error occurred while processing comments:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while finding users with their ids in:', uniqueUsers, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
                             })
-                        ).then(replies => {
-                            return resolve(HTTPWTHandler.OK('Successfully found comment replies', replies))
                         }).catch(error => {
-                            console.error('An error occurred while processing comments:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
+                            console.error('An error occurred while finding comments with parentCommentId:', commentId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment replies. Please try again.'))
                         })
                     }).catch(error => {
-                        console.error('An error occurred while finding users with their ids in:', uniqueUsers, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
+                        console.error('An error occurred while finding one', commentFound.postFormat, 'post with id:', commentFound.postId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post that comment is associated with. Please try again.'))
                     })
                 }).catch(error => {
-                    console.error('An error occurred while finding comments with parentCommentId:', commentId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment replies. Please try again.'))
+                    console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
