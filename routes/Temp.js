@@ -2075,11 +2075,11 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
     })
 });
 
-router.get('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (req, res) => {
+router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getuserblockedaccounts',
-            functionArgs: [req.tokenData]
+            functionArgs: [req.tokenData, req.body.skip]
         }
     })
 
@@ -2088,7 +2088,7 @@ router.get('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /getuserblockedaccounts:', error)
+        console.error('An error occurred from TempWorker for POST /getuserblockedaccounts:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });
