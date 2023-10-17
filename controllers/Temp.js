@@ -5274,7 +5274,7 @@ class TempController {
 
                 if (blockedAccounts.length === 0) return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', []))
 
-                User.find({secondId: {$in: blockedAccounts}}).lean(blockedUsers => {
+                User.find({secondId: {$in: blockedAccounts}}).lean().then(blockedUsers => {
                     const publicInformation = blockedUsers.map(user => {
                         return userHandler.returnPublicInformation(user, userFound)
                     })
