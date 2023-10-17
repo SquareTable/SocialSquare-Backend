@@ -5268,11 +5268,22 @@ class TempController {
     static #getuserblockedaccounts = (userId) => {
         return new Promise(resolve => {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (userFound) {
-                    return resolve(HTTPWTHandler.OK('Found blocked accounts', userFound?.blockedAccounts || []))
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                const blockedAccounts = userFound?.blockedAccounts || [];
+
+                if (blockedAccounts.length === 0) return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', []))
+
+                User.find({secondId: {$in: blockedAccounts}}).lean(blockedUsers => {
+                    const publicInformation = blockedUsers.map(user => {
+                        return userHandler.returnPublicInformation(user, userFound)
+                    })
+
+                    return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', publicInformation))
+                }).catch(error => {
+                    console.error('An error occurred while finding users with secondIds in this array:', blockedAccounts, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
+                })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
