@@ -2,6 +2,8 @@
 require('./config/db').then(() => {
     console.log("DB Connected"); 
 
+    require('./OneTimeExecuteCode/CommentCollection')
+
     /*
     const PollVote = require('./models/PollVote');
     const mongoose = require('mongoose');

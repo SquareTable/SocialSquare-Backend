@@ -60,9 +60,9 @@ Promise.all([
 
         Promise.all([
             Comment.insertMany(updates, {session}),
-            ImagePost.findOneAndUpdate({"comments.0": {$exists: true}}, {$unset: {comments: ""}}, {session}),
-            Poll.findOneAndUpdate({"comments.0": {$exists: true}}, {$unset: {comments: ""}}, {session}),
-            Thread.findOneAndUpdate({"comments.0": {$exists: true}}, {$unset: {comments: ""}}, {session})
+            ImagePost.findOneAndUpdate({}, {$unset: {comments: ""}}, {session}),
+            Poll.findOneAndUpdate({}, {$unset: {comments: ""}}, {session}),
+            Thread.findOneAndUpdate({}, {$unset: {comments: ""}}, {session})
         ]).then(() => {
             session.commitTransaction().then(() => {
                 session.endSession().then(() => {
