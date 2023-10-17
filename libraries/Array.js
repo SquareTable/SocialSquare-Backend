@@ -1,4 +1,4 @@
-class Array {
+class ArrayClass {
     returnSomeItems(array, skip, limit) {
         return {items: array.splice(skip, limit), noMoreItems: skip >= array.length}
     }
@@ -34,4 +34,4 @@ class Array {
     }
 }
 
-module.exports = Array;
+module.exports = ArrayClass;
