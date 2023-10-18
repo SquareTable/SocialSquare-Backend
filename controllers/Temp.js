@@ -1589,59 +1589,102 @@ class TempController {
         })
     }
 
-    static #deleteimage = (userId, imageId) => {
+    static #deleteimage = (userId, postId) => {
         return new Promise(resolve => {
-            if (typeof imageId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof imageId}`))
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof postId}`))
             }
         
-            if (imageId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('imageId cannot be an empty string'))
+            if (postId.length == 0) {
+                return resolve(HTTPWTHandler.badInput('postId cannot be an empty string'))
             }
-        
-            //Confirm User
-            User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
-                    //User exists
-                    ImagePost.findOne({_id: {$eq: imageId}}).lean().then(data => {
-                        var findUser = data
-                        if (findUser.creatorId.toString() === userId) {
-                            ImagePost.deleteOne({_id: {$eq: imageId}}).then(function(){
-                                Upvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}).catch(error => {
-                                    console.error('An error occured while deleting all upvotes for post with id:', imageId)
-                                })
-                                Downvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}).catch(error => {
-                                    console.error('An error occured while deleting all downvotes for post with id:', imageId)
-                                })
 
-                                imageHandler.deleteImageByKey(data.imageKey)
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
 
-                                Promise.all([
-                                    Upvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"}),
-                                    Downvote.deleteMany({postId: {$eq: imageId}, postFormat: "Image"})
-                                ]).then(() => {
-                                    console.log('Upvotes and downvotes were successfully deleted for image post with id:', imageId)
+                ImagePost.findOne({_id: {$eq: postId}}).lean().then(postFound => {
+                    if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find image post.'))
+
+                    if (String(postFound.creatorId) !== userId) return resolve(HTTPWTHandler.forbidden('You are not authorised to delete this post.'))
+
+                    Comment.find({postId: {$eq: postId}, postFormat: "Image"}, '_id').lean().then(commentsFound => {
+                        const commentIds = commentsFound.map(comment => comment._id)
+
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
+
+                            Promise.all([
+                                ImagePost.deleteOne({_id: {$eq: postId}}, {session}),
+                                Upvote.bulkWrite([
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$eq: postId}, postFormat: "Image"}
+                                        }
+                                    },
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                        }
+                                    }
+                                ], {session}),
+                                Downvote.bulkWrite([
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$eq: postId}, postFormat: "Image"}
+                                        }
+                                    },
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                        }
+                                    }
+                                ], {session}),
+                                Comment.deleteMany({postId: {$eq: postId}, postFormat: "Image"}, {session})
+                            ]).then(() => {
+                                session.commitTransaction().then(() => {
+                                    session.endSession().catch(error => {
+                                        console.error('An error occurred while ending Mongoose session:', error)
+                                    }).finally(() => {
+                                        return resolve(HTTPWTHandler.OK('Successfully deleted image post'))
+                                    })
                                 }).catch(error => {
-                                    console.error('An error occurred while removing upvotes and downvotes for image post with id:', imageId, '. The error was:', error)
-                                }).finally(() => {
-                                    return resolve(HTTPWTHandler.OK('Post was successfully deleted.'))
+                                    console.error('An error occurred while committing Mongoose transaction:', error)
+                                    session.abortTransaction().catch(error => {
+                                        console.error('An error occurred while aborting Mongoose transaction:', error)
+                                    }).finally(() => {
+                                        session.endSession().catch(error => {
+                                            console.error('An error occurred while ending Mongoose session:', error)
+                                        }).finally(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again.'))
+                                        })
+                                    })
                                 })
-                            }).catch(err => {
-                                console.error('An error occurred while deleting image post with id:', imageId, '. The error was:', err)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again later.'))
-                            });
-                        } else {
-                            return resolve(HTTPWTHandler.forbidden('This is not your image post. You cannot delete it.'))
-                        }
+                            }).catch(error => {
+                                console.error('An error occurred while carrying out inage post delete operations on image post with id:', postId, '. The error was:', error)
+                                session.abortTransaction().catch(error => {
+                                    console.error('An error occurred while aborting Mongoose transaction:', error)
+                                }).finally(() => {
+                                    session.endSession().catch(error => {
+                                        console.error('An error occurred while ending Mongoose session:', error)
+                                    }).finally(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again.'))
+                                    })
+                                })
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while starting Mongoose session:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to delete post. Please try again.'))
+                        })
                     }).catch(error => {
-                        console.error('An error occurred while finding image post with id:', imageId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again.'))
+                        console.error('An error occurred while finding comments from image post with id:', postId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments to delete. Please try again.'))
                     })
-                } else {
-                    return resolve(HTTPWTHandler.badInput('Could not find user with your id'))
-                }
+                }).catch(error => {
+                    console.error('An error occurred while finding one image post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding image post. Please try again.'))
+                })
             }).catch(error => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -5498,8 +5541,8 @@ class TempController {
         return await this.#postcategorywithimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file)
     }
 
-    static deleteimage = async (userId, imageId) => {
-        return await this.#deleteimage(userId, imageId)
+    static deleteimage = async (userId, postId) => {
+        return await this.#deleteimage(userId, postId)
     }
 
     static postcategorywithoutimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots) => {

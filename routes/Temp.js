@@ -1209,7 +1209,7 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deleteimage',
-            functionArgs: [req.tokenData, req.body.imageId]
+            functionArgs: [req.tokenData, req.body.postId]
         }
     })
 
