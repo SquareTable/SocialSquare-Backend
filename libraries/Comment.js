@@ -22,7 +22,8 @@ class CommentLibrary {
                     downvoted: !!isDownvoted,
                     isOwner: commentOwner._id.toString() === userRequesting._id.toString(),
                     interacted: !!isUpvoted || !!isDownvoted,
-                    _id: comment._id.toString()
+                    _id: String(comment._id),
+                    commenterId: String(comment.commenterId)
                 }
 
                 if (isUpvoted) {
@@ -31,6 +32,10 @@ class CommentLibrary {
 
                 if (isDownvoted) {
                     commentObject.voteId = isDownvoted._id.toString()
+                }
+
+                if (comment.parentCommentId) {
+                    commentObject.parentCommentId = String(commentObject.parentCommentId)
                 }
                 
                 resolve(commentObject)
