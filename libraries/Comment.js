@@ -14,9 +14,8 @@ class CommentLibrary {
                             Upvote.countDocuments({postId: {$eq: comment._id}, postFormat: "Comment"}),
                             Downvote.countDocuments({postId: {$eq: comment._id}, postFormat: "Comment"}),
                             Upvote.findOne({postId: {$eq: comment._id}, postFormat: "Comment", userPublicId: userRequesting.secondId}),
-                            Downvote.findOne({postId: {$eq: comment._id}, postFormat: "Comment", userPublicId: userRequesting.secondId}),
-                            Comment.countDocuments({parentCommentId: comment._id})
-                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, replies]) => {
+                            Downvote.findOne({postId: {$eq: comment._id}, postFormat: "Comment", userPublicId: userRequesting.secondId})
+                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
                             const commentObject = {
                                 ...comment,
                                 votes: upvotes - downvotes,
@@ -27,8 +26,7 @@ class CommentLibrary {
                                 downvoted: !!isDownvoted,
                                 isOwner: commentOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
-                                _id: comment._id.toString(),
-                                replies
+                                _id: comment._id.toString()
                             }
 
                             if (isUpvoted) {
