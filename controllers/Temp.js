@@ -5186,6 +5186,7 @@ class TempController {
 
                     const commentDocument = new Comment(newComment);
                     commentDocument.save().then(comment => {
+                        comment = comment.toObject(); //Convert comment Mongoose document to POJO
                         commentHandler.processOneCommentFromOneOwner(userFound, comment, userFound).then(comment => {
                             return resolve(HTTPWTHandler.OK('Comment was successfully created', comment))
                         }).catch(error => {
