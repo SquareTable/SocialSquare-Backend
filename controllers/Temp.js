@@ -5278,7 +5278,7 @@ class TempController {
                         return resolve(HTTPWTHandler.notFound('Could not find post.'))
                     }
 
-                    Comment.find({postId: {$eq: postId}, postFormat: {$eq: postFormat}}).lean().then(comments => {
+                    Comment.find({postId: {$eq: postId}, postFormat: {$eq: postFormat}, parentCommentId: {$exists: false}}).lean().then(comments => {
                         if (comments.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comments', []))
 
                         const uniqueUsers = Array.from(new Set(comments.map(comment => String(comment.commenterId))));
