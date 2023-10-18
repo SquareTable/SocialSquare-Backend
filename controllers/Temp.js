@@ -2753,46 +2753,97 @@ class TempController {
             if (threadId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('threadId cannot be blank.'))
             }
-        
-        
-            User.findOne({_id: {$eq: userId}}).lean().then(user => {
-                if (user) {
-                    //User exists
-                    Thread.findOne({_id: {$eq: threadId}}).lean().then(thread => {
-                        if (thread) {
-                            if (String(thread.creatorId) === String(userId)) {
-                                if (thread.threadType === 'Images') {
-                                    imageHandler.deleteImageByKey(thread.threadImageKey)
-                                }
 
-                                Thread.deleteOne({_id: thread._id}).then(function(){
-                                    Promise.all([
-                                        Upvote.deleteMany({postId: thread._id, postFormat: 'Thread'}),
-                                        Downvote.deleteMany({postId: thread._id, postFormat: 'Thread'})
-                                    ]).catch(error => {
-                                        console.error('An error occured while deleting all votes from thread post with id:', thread._id, '. The error was:', error)
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Thread.findOne({_id: {$eq: threadId}}).lean().then(threadFound => {
+                    if (!threadFound) return resolve(HTTPWTHandler.notFound('Thread could not be found'))
+
+                    if (String(threadFound.creatorId) !== userId) return resolve(HTTPWTHandler.forbidden('You are not authorised to delete this post.'))
+
+                    Comment.find({postId: {$eq: threadId}, postFormat: "Thread"}, '_id').lean().then(commentsFound => {
+                        const commentIds = commentsFound.map(comment => comment._id)
+
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
+
+                            Promise.all([
+                                Thread.deleteOne({_id: {$eq: threadId}}, {session}),
+                                Upvote.bulkWrite([
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$eq: threadId}, postFormat: "Thread"}
+                                        }
+                                    },
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                        }
+                                    }
+                                ], {session}),
+                                Downvote.bulkWrite([
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$eq: threadId}, postFormat: "Thread"}
+                                        }
+                                    },
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                        }
+                                    }
+                                ], {session}),
+                                Comment.deleteMany({postId: {$eq: threadId}, postFormat: "Thread"})
+                            ]).then(() => {
+                                session.commitTransaction().then(() => {
+                                    if (threadFound.threadType === 'Images') {
+                                        imageHandler.deleteImageByKey(threadFound.threadImageKey)
+                                    }
+
+                                    session.endSession().catch(error => {
+                                        console.error('An error occurred while ending Mongoose session:', error)
                                     }).finally(() => {
-                                        return resolve(HTTPWTHandler.OK('Deleted'))
+                                        return resolve(HTTPWTHandler.OK("Successfully deleted thread post"))
                                     })
-                                }).catch(err => {
-                                    console.error('An error occurred while deleting thread with id:', thread._id, '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread. Please try again.'))
-                                });
-                            } else {
-                                return resolve(HTTPWTHandler.forbidden("You cannot delete someone else's posts"))
-                            }
-                        } else {
-                            return resolve(HTTPWTHandler.notFound('Could not find thread'))
-                        }
+                                }).catch(error => {
+                                    console.error('An error occurred while committing Mongoose transaction:', error)
+                                    session.abortTransaction().catch(error => {
+                                        console.error('An error occurred while aborting Mongoose transaction:', error)
+                                    }).finally(() => {
+                                        session.endSession().catch(error => {
+                                            console.error('An error occurred while ending Mongoose session:', error)
+                                        }).finally(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread. Please try again.'))
+                                        })
+                                    })
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while carrying out delete operations on thread with id:', threadId, '. The error was:', error)
+                                session.abortTransaction().catch(error => {
+                                    console.error('An error occurred while aborting Mongoose transaction:', error)
+                                }).finally(() => {
+                                    session.endSession().catch(error => {
+                                        console.error('An error occurred while ending Mongoose session:', error)
+                                    }).finally(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread. Please try again.'))
+                                    })
+                                })
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while starting Mongoose session:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to delete thread post. Please try again.'))
+                        })
                     }).catch(error => {
-                        console.error('An error occurred while finding thread with id:', threadId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+                        console.error('An error occurred while finding comments from thread post with id:', threadId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comments to delete. Please try again.'))
                     })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
+                }).catch(error => {
+                    console.error('An error occurred while finding one thread with id:', threadId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding thread. Please try again.'))
+                })
             }).catch(error => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
