@@ -4910,10 +4910,8 @@ class TempController {
 
     static #voteoncomment = (userId, commentId, voteType) => {
         return new Promise(resolve => {
-            const supportedFormats = ["Image", "Poll", "Thread"]
-
-            if (!supportedFormats.includes(format)) {
-                return resolve(HTTPWTHandler.badInput(`format must be either ${supportedFormats.join(', ')}`))
+            if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(format)) {
+                return resolve(HTTPWTHandler.badInput(`format must be either ${CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.join(', ')}`))
             }
 
             if (voteType !== "Down" && voteType !== "Up") {
@@ -4966,20 +4964,45 @@ class TempController {
                             return resolve(HTTPWTHandler.notFound('Comment could not be found.'))
                         }
 
-                        const newVote = {
-                            postId: commentId,
-                            postFormat: "Comment",
-                            interactionDate: Date.now(),
-                            userPublicId: userFound.secondId
-                        }
+                        const voteTypeToAdd = voteType === "Down" ? Downvote : Upvote
+                        const voteTypeToRemove = voteType === "Down" ? Upvote : Downvote
 
-                        const voteDocument = voteType === "Down" ? new Downvote(newVote) : new Upvote(newVote)
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
 
-                        voteDocument.save().then(() => {
-                            return resolve(HTTPWTHandler.OK('Vote on comment was successful.'))
+                            Promise.all(
+                                voteTypeToAdd.findOneAndUpdate({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: {$eq: userFound.secondId}}, {interactionDate: Date.now()}, {session, upsert: true}),
+                                voteTypeToRemove.deleteMany({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: userFound.secondId}, {session})
+                            ).then(() => {
+                                session.commitTransaction().then(() => {
+                                    session.endSession().catch(error => {
+                                        console.error('An error occurred while ending Mongoose session:', error)
+                                    }).finally(() => {
+                                        return resolve(HTTPWTHandler.OK('Successfully added vote to comment.'))
+                                    })
+                                }).catch(error => {
+                                    console.error('An error occurred while committing Mongoose transaction:', error)
+                                    session.abortTransaction().catch(error => {
+                                        console.error('An error occurred while aborting Mongoose transaction:', error)
+                                    }).finally(() => {
+                                        session.endSession().catch(error => {
+                                            console.error('An error occurred while ending Mongoose session:', error)
+                                        }).finally(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving vote. Please try again.'))
+                                        })
+                                    })
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while making vote on comment database operations:', error)
+                                session.endSession().catch(error => {
+                                    console.error('An error occurred while ending Mongoose session:', error)
+                                }).finally(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
+                                })
+                            })
                         }).catch(error => {
-                            console.error(`An error occurred while making ${voteType}vote with data:`, newVote, '. The erorr was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while saving vote. Please try again.'))
+                            console.error('An error occurred while starting Mongoose session. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to add vote. Please try again.'))
                         })
                     }).catch(error => {
                         console.error('An error occurred while finding a', commentFound.postFormat, 'post with id:', commentFound.postId, '. The error was:', error)
