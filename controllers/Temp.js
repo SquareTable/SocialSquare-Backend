@@ -949,7 +949,7 @@ class TempController {
                             if (String(userId) === String(poll.creatorId)) {
                                 Comment.find({postId: {$eq: pollId}, postFormat: "Poll"}, '_id').lean().then(commentsFound => {
                                     const commentIds = commentsFound.map(comment => comment._id);
-                                    
+
                                     mongoose.startSession().then(session => {
                                         session.startTransaction();
     
@@ -3678,11 +3678,11 @@ class TempController {
                         const pollPostIds = pollPosts.map(post => String(post._id))
                         const threadPostIds = threadPosts.map(post => String(post._id))
 
-                        Promise.all(
+                        Promise.all([
                             Comment.find({postId: {$in: imagePostIds}, postFormat: "Image"}, '_id').lean(),
                             Comment.find({postId: {$in: pollPostIds}, postFormat: "Poll"}, '_id').lean(),
                             Comment.find({postId: {$in: threadPostIds}, postFormat: "Thread"}, '_id').lean()
-                        ).then(([imageCommentIds, pollCommentIds, threadCommentIds]) => {
+                        ]).then(([imageCommentIds, pollCommentIds, threadCommentIds]) => {
                             const imageKeys = imagePosts.map(post => post.imageKey)
                             const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
 
@@ -5125,10 +5125,10 @@ class TempController {
                         mongoose.startSession().then(session => {
                             session.startTransaction();
 
-                            Promise.all(
+                            Promise.all([
                                 voteTypeToAdd.findOneAndUpdate({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: {$eq: userFound.secondId}}, {interactionDate: Date.now()}, {session, upsert: true}),
                                 voteTypeToRemove.deleteMany({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: userFound.secondId}, {session})
-                            ).then(() => {
+                            ]).then(() => {
                                 session.commitTransaction().then(() => {
                                     session.endSession().catch(error => {
                                         console.error('An error occurred while ending Mongoose session:', error)
