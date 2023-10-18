@@ -3590,7 +3590,10 @@ class TempController {
                     ]).then(([imagePosts, threadPosts, pollPosts]) => {
                         const imageKeys = imagePosts.map(post => post.imageKey)
                         const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
+
+                        const imagePostIds = imagePosts.map(post => String(post._id))
                         const pollPostIds = pollPosts.map(post => String(post._id))
+                        const threadPostIds = threadPosts.map(post => String(post._id))
 
                         mongoose.startSession().then(session => {
                             session.startTransaction()
@@ -3653,6 +3656,21 @@ class TempController {
                                         updateMany: {
                                             filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
                                             update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
+                                        }
+                                    },
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$in: imagePostIds}}
+                                        }
+                                    },
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$in: pollPostIds}}
+                                        }
+                                    },
+                                    {
+                                        deleteMany: {
+                                            filter: {postId: {$in: threadPostIds}}
                                         }
                                     }
                                 ], {session})
