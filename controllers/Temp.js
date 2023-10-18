@@ -947,7 +947,9 @@ class TempController {
                     Poll.findOne({_id: {$eq: pollId}}).lean().then(poll => {
                         if (poll) {
                             if (String(userId) === String(poll.creatorId)) {
-                                Comment.find({postId: {$eq: pollId}, postFormat: "Poll"}, '_id').lean().then(commentIds => {
+                                Comment.find({postId: {$eq: pollId}, postFormat: "Poll"}, '_id').lean().then(commentsFound => {
+                                    const commentIds = commentsFound.map(comment => comment._id);
+                                    
                                     mongoose.startSession().then(session => {
                                         session.startTransaction();
     
@@ -1642,7 +1644,7 @@ class TempController {
                                 Comment.deleteMany({postId: {$eq: postId}, postFormat: "Image"}, {session})
                             ]).then(() => {
                                 imageHandler.deleteImageByKey(data.imageKey)
-                                
+
                                 session.commitTransaction().then(() => {
                                     session.endSession().catch(error => {
                                         console.error('An error occurred while ending Mongoose session:', error)
