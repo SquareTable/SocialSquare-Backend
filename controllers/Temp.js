@@ -4879,7 +4879,8 @@ class TempController {
                                         return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
                                     })
                                 ).then(replies => {
-                                    return resolve(HTTPWTHandler.OK('Successfully found comment replies', replies))
+                                    const flattenedReplies = replies.flat()
+                                    return resolve(HTTPWTHandler.OK('Successfully found comment replies', flattenedReplies))
                                 }).catch(error => {
                                     console.error('An error occurred while processing comments:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
@@ -5248,7 +5249,8 @@ class TempController {
                                     return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
                                 })
                             ).then(comments => {
-                                return resolve(HTTPWTHandler.OK('Comments were found successfully', comments))
+                                const flattenedComments = comments.flat()
+                                return resolve(HTTPWTHandler.OK('Comments were found successfully', flattenedComments))
                             }).catch(error => {
                                 console.error('An error occurred while processing comments:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))

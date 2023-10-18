@@ -18,7 +18,7 @@ class ArrayClass {
 
             if (owner) {
                 if (postOwnerPairMap.has(owner)) {
-                    postOwnerPairMap.set(owner, postOwnerPairMap.get(owner).push(post))
+                    postOwnerPairMap.get(owner).push(post)
                 } else {
                     postOwnerPairMap.set(owner, [post])
                 }
