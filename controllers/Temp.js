@@ -4793,8 +4793,8 @@ class TempController {
                         const postOwnerAccountIsPrivateAndRequesterDoesNotFollowAccount = postOwner.privateAccount === true && !postOwner.followers.includes(userFound.secondId)
                         if (postOwnerAccountIsPrivateAndRequesterDoesNotFollowAccount) return resolve(HTTPWTHandler.notFound('Comment not found.'))
 
-                        commentHandler.processMultipleCommentsFromOneOwner([commentFound], commentOwner, userFound).then(comments => {
-                            return resolve(HTTPWTHandler.OK('Successfully found comment', comments))
+                        commentHandler.processOneCommentFromOneOwner(commentOwner, commentFound, userFound).then(comment => {
+                            return resolve(HTTPWTHandler.OK('Successfully found comment', comment))
                         }).catch(error => {
                             console.error('An error occurred while processing comment data:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while getting comment data. Please try again.'))
@@ -5186,8 +5186,12 @@ class TempController {
 
                     const commentDocument = new Comment(newComment);
                     commentDocument.save().then(comment => {
-                        comment.isOwner = true;
-                        return resolve(HTTPWTHandler.OK('Comment was successfully created', comment))
+                        commentHandler.processOneCommentFromOneOwner(userFound, comment, userFound).then(comment => {
+                            return resolve(HTTPWTHandler.OK('Comment was successfully created', comment))
+                        }).catch(error => {
+                            console.error('An error occurred while processing comment:', error)
+                            return resolve(HTTPWTHandler.serverError("Comment has been successfully saved. An error occurred while loading new comment. Please try loading the post's comments again."))
+                        })
                     }).catch(error => {
                         console.error('An error occurred while saving comment with data:', newComment, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while saving comment. Please try again.'))
