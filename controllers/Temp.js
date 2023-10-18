@@ -1643,9 +1643,9 @@ class TempController {
                                 ], {session}),
                                 Comment.deleteMany({postId: {$eq: postId}, postFormat: "Image"}, {session})
                             ]).then(() => {
-                                imageHandler.deleteImageByKey(data.imageKey)
-
                                 session.commitTransaction().then(() => {
+                                    imageHandler.deleteImageByKey(data.imageKey)
+                                    
                                     session.endSession().catch(error => {
                                         console.error('An error occurred while ending Mongoose session:', error)
                                     }).finally(() => {
