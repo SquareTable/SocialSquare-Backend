@@ -947,37 +947,76 @@ class TempController {
                     Poll.findOne({_id: {$eq: pollId}}).lean().then(poll => {
                         if (poll) {
                             if (String(userId) === String(poll.creatorId)) {
-                                mongoose.startSession().then(session => {
-                                    session.startTransaction();
-
-                                    Promise.all([
-                                        Poll.deleteOne({_id: {$eq: pollId}}, {session}),
-                                        Upvote.deleteMany({postId: pollId, postFormat: "Poll"}, {session}),
-                                        Downvote.deleteMany({postId: pollId, postFormat: "Poll"}, {session}),
-                                        PollVote.deleteMany({pollId: {$eq: pollId}}, {session})
-                                    ]).then(() => {
-                                        session.commitTransaction().then(() => {
-                                            session.endSession().catch(error => {
-                                                console.error('An error occurred while ending Mongoose session:', error)
+                                Comment.find({postId: {$eq: pollId}, postFormat: "Poll"}, '_id').lean().then(commentIds => {
+                                    mongoose.startSession().then(session => {
+                                        session.startTransaction();
+    
+                                        Promise.all([
+                                            Poll.deleteOne({_id: {$eq: pollId}}, {session}),
+                                            Upvote.bulkWrite([
+                                                {
+                                                    deleteMany: {
+                                                        filter: {postId: pollId, postFormat: "Poll"}
+                                                    }
+                                                },
+                                                {
+                                                    deleteMany: {
+                                                        filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                                    }
+                                                }
+                                            ], {session}),
+                                            Downvote.bulkWrite([
+                                                {
+                                                    deleteMany: {
+                                                        filter: {postId: pollId, postFormat: "Poll"}
+                                                    }
+                                                },
+                                                {
+                                                    deleteMany: {
+                                                        filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                                    }
+                                                }
+                                            ], {session}),
+                                            PollVote.deleteMany({pollId: {$eq: pollId}}, {session}),
+                                            Comment.deleteMany({postId: {$eq: pollId}, postFormat: "Poll"}, {session})
+                                        ]).then(() => {
+                                            session.commitTransaction().then(() => {
+                                                session.endSession().catch(error => {
+                                                    console.error('An error occurred while ending Mongoose session:', error)
+                                                }).finally(() => {
+                                                    return resolve(HTTPWTHandler.OK('Successfully deleted poll'))
+                                                })
+                                            }).catch(error => {
+                                                console.error('An error occurred while committing Mongoose transaction:', error)
+                                                session.abortTransaction().catch(error => {
+                                                    console.error('An error occurred while aborting Mongoose transaction:', error)
+                                                }).finally(() => {
+                                                    session.endSession().catch(error => {
+                                                        console.error('An error occurred while ending Mongoose session:', error)
+                                                    }).finally(() => {
+                                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll and associated data. Please try again.'))
+                                                    })
+                                                })
+                                            })
+                                        }).catch(error => {
+                                            session.abortTransaction().catch(error => {
+                                                console.error('An error occurred while aborting Mongoose transaction:', error)
                                             }).finally(() => {
-                                                return resolve(HTTPWTHandler.OK('Successfully deleted poll'))
+                                                session.endSession().catch(error => {
+                                                    console.error('An error occurred while ending Mongoose session:', error)
+                                                }).finally(() => {
+                                                    console.error('An error occurred while deleting poll and associated data from poll with id:', pollId, '. The error was:', error)
+                                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
+                                                })
                                             })
                                         })
                                     }).catch(error => {
-                                        session.abortTransaction().catch(error => {
-                                            console.error('An error occurred while aborting Mongoose transaction:', error)
-                                        }).finally(() => {
-                                            session.endSession().catch(error => {
-                                                console.error('An error occurred while ending Mongoose session:', error)
-                                            }).finally(() => {
-                                                console.error('An error occurred while deleting poll and associated data from poll with id:', pollId, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
-                                            })
-                                        })
+                                        console.error('An error occurred while starting a mongoose session:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
                                     })
                                 }).catch(error => {
-                                    console.error('An error occurred while starting a mongoose session:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll. Please try again.'))
+                                    console.error('An error occurred while finding comments from a poll post with id:', pollId, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comments to delete. Please try again.'))
                                 })
                             } else {
                                 return resolve(HTTPWTHandler.forbidden('You are not authorised to delete this post.'))
