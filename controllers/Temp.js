@@ -3709,143 +3709,304 @@ class TempController {
                             const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
 
                             mongoose.startSession().then(session => {
-                                session.startTransaction()
-        
-                                Promise.all([
-                                    popularPosts.length !== newPopularPosts.length ? PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}, {session}) : Promise.resolve('Popular posts do not need to be updated'),
-                                    userFound?.profileImageKey ? fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, userFound.profileImageKey)) : Promise.resolve('Profile Image Deleted'),
-                                    ...imageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
-                                    ImagePost.deleteMany({creatorId: {$eq: userId}}, {session}),
-                                    Poll.deleteMany({creatorId: {$eq: userId}}, {session}),
-                                    PollVote.deleteMany({userId: {$eq: userId}}, {session}),
-                                    PollVote.deleteMany({postId: {$in: pollPostIds}}, {session}),
-                                    ...threadImageKeys.map(key => fs.promises.unlink(path.resolve(process.env.UPLOADED_PATH, key))),
-                                    Thread.deleteMany({creatorId: {$eq: userId}}, {session}),
-                                    Message.deleteMany({senderId: {$eq: userId}}, {session}),
-                                    User.bulkWrite([
-                                        {
-                                            updateMany: {
-                                                filter: {followers: userFound.secondId},
-                                                update: {$pull: {followers: userFound.secondId}}
-                                            }
-                                        },
-                                        {
-                                            updateMany: {
-                                                filter: {following: userFound.secondId},
-                                                update: {$pull: {following: userFound.secondId}}
-                                            }
-                                        },
-                                        {
-                                            updateMany: {
-                                                filter: {blockedAccounts: userFound.secondId},
-                                                update: {$pull: {blockedAccounts: userFound.secondId}}
-                                            }
-                                        },
-                                        {
-                                            updateMany: {
-                                                filter: {accountFollowRequests: userFound.secondId},
-                                                update: {$pull: {accountFollowRequests: userFound.secondId}}
-                                            }
-                                        },
-                                        {
-                                            deleteOne: {
-                                                filter: {_id: {$eq: userId}},
-                                            }
-                                        }
-                                    ], {session}),
-                                    Downvote.bulkWrite([
-                                        {
-                                            deleteMany: {
-                                                filter: {userPublicId: userFound.secondId}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {postId: {$in: imageCommentIds}, postFormat: "Image"}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {postId: {$in: pollCommentIds}, postFormat: "Poll"}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {postId: {$in: threadCommentIds}, postFormat: "Thread"}
-                                            }
-                                        }
-                                    ], {session}),
-                                    Upvote.bulkWrite([
-                                        {
-                                            deleteMany: {
-                                                filter: {userPublicId: userFound.secondId}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {postId: {$in: imageCommentIds}, postFormat: "Image"}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {postId: {$in: pollCommentIds}, postFormat: "Poll"}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {postId: {$in: threadCommentIds}, postFormat: "Thread"}
-                                            }
-                                        }
-                                    ], {session}),
-                                    AccountReports.deleteMany({reporterId: {$eq: userId}}, {session}),
-                                    PostReports.deleteMany({reporterId: {$eq: userId}}, {session}),
-                                    RefreshToken.deleteMany({userId: {$eq: userId}}, {session}),
-                                    Category.updateMany({}, {$pull: {members: userId}}, {session}),
-                                    Comment.bulkWrite([
-                                        {
-                                            deleteMany: {
-                                                filter: {commenterId: {$eq: userId}, replies: 0}
-                                            }
-                                        },
-                                        {
-                                            updateMany: {
-                                                filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
-                                                update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {_id: {$in: imageCommentIds}}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {_id: {$in: pollCommentIds}}
-                                            }
-                                        },
-                                        {
-                                            deleteMany: {
-                                                filter: {_id: {$in: threadCommentIds}}
-                                            }
-                                        }
-                                    ], {session})
-                                ]).then(() => session.commitTransaction()).then(() => {
-                                    console.log('User with id:', userId, 'has been successfully deleted along with all associated data.')
-                                    session.endSession().catch(error => {
-                                        console.error('An error occurred while ending session after deleting account. The error was:', error)
-                                    }).finally(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                session.startTransaction();
+
+                                (popularPosts.length !== newPopularPosts.length ? PopularPosts.findOneAndUpdate({}, {popularPosts: newPopularPosts}, {session}) : Promise.resolve('Popular posts do not need to be updated')).then(() => {
+                                    ImagePost.deleteMany({creatorId: {$eq: userId}}, {session}).then(() => {
+                                        Poll.deleteMany({creatorId: {$eq: userId}}, {session}).then(() => {
+                                            const pollVoteBulkWrites = [
+                                                {
+                                                    deleteMany: {
+                                                        filter: {userId: {$eq: userId}}
+                                                    }
+                                                },
+                                                {
+                                                    deleteMany: {
+                                                        filter: {postId: {$in: pollPostIds}}
+                                                    }
+                                                }
+                                            ]
+
+                                            PollVote.bulkWrite(pollVoteBulkWrites, {session}).then(() => {
+                                                Thread.deleteMany({creatorId: {$eq: userId}}, {session}).then(() => {
+                                                    Message.deleteMany({senderId: {$eq: userId}}, {session}).then(() => {
+                                                        const userBulkWrites = [
+                                                            {
+                                                                updateMany: {
+                                                                    filter: {followers: userFound.secondId},
+                                                                    update: {$pull: {followers: userFound.secondId}}
+                                                                }
+                                                            },
+                                                            {
+                                                                updateMany: {
+                                                                    filter: {following: userFound.secondId},
+                                                                    update: {$pull: {following: userFound.secondId}}
+                                                                }
+                                                            },
+                                                            {
+                                                                updateMany: {
+                                                                    filter: {blockedAccounts: userFound.secondId},
+                                                                    update: {$pull: {blockedAccounts: userFound.secondId}}
+                                                                }
+                                                            },
+                                                            {
+                                                                updateMany: {
+                                                                    filter: {accountFollowRequests: userFound.secondId},
+                                                                    update: {$pull: {accountFollowRequests: userFound.secondId}}
+                                                                }
+                                                            },
+                                                            {
+                                                                deleteOne: {
+                                                                    filter: {_id: {$eq: userId}},
+                                                                }
+                                                            }
+                                                        ];
+
+                                                        User.bulkWrite(userBulkWrites, {session}).then(() => {
+                                                            const downvoteBulkWrites = [
+                                                                {
+                                                                    deleteMany: {
+                                                                        filter: {userPublicId: userFound.secondId}
+                                                                    }
+                                                                },
+                                                                {
+                                                                    deleteMany: {
+                                                                        filter: {postId: {$in: imageCommentIds}, postFormat: "Comment"}
+                                                                    }
+                                                                },
+                                                                {
+                                                                    deleteMany: {
+                                                                        filter: {postId: {$in: pollCommentIds}, postFormat: "Comment"}
+                                                                    }
+                                                                },
+                                                                {
+                                                                    deleteMany: {
+                                                                        filter: {postId: {$in: threadCommentIds}, postFormat: "Comment"}
+                                                                    }
+                                                                },
+                                                                {
+                                                                    deleteMany: {
+                                                                        filter: {postId: {$in: imagePostIds}, postFormat: "Image"}
+                                                                    }
+                                                                },
+                                                                {
+                                                                    deleteMany: {
+                                                                        filter: {postId: {$in: pollPostIds}, postFormat: "Poll"}
+                                                                    }
+                                                                },
+                                                                {
+                                                                    deleteMany: {
+                                                                        filter: {postId: {$in: threadPostIds}, postFormat: "Thread"}
+                                                                    }
+                                                                }
+                                                            ];
+
+                                                            Downvote.bulkWrite(downvoteBulkWrites, {session}).then(() => {
+                                                                const upvoteBulkWrites = [
+                                                                    {
+                                                                        deleteMany: {
+                                                                            filter: {userPublicId: userFound.secondId}
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        deleteMany: {
+                                                                            filter: {postId: {$in: imageCommentIds}, postFormat: "Comment"}
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        deleteMany: {
+                                                                            filter: {postId: {$in: pollCommentIds}, postFormat: "Comment"}
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        deleteMany: {
+                                                                            filter: {postId: {$in: threadCommentIds}, postFormat: "Comment"}
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        deleteMany: {
+                                                                            filter: {postId: {$in: imagePostIds}, postFormat: "Image"}
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        deleteMany: {
+                                                                            filter: {postId: {$in: pollPostIds}, postFormat: "Poll"}
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        deleteMany: {
+                                                                            filter: {postId: {$in: threadPostIds}, postFormat: "Thread"}
+                                                                        }
+                                                                    }
+                                                                ];
+
+                                                                Upvote.bulkWrite(upvoteBulkWrites, {session}).then(() => {
+                                                                    const accountReportsBulkWrite = [
+                                                                        {
+                                                                            deleteMany: {
+                                                                                filter: {}
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            deleteMany: {
+                                                                                filter: {reportedAccountPubId: {$eq: userFound.secondId}}
+                                                                            }
+                                                                        }
+                                                                    ];
+
+                                                                    AccountReports.bulkWrite(accountReportsBulkWrite, {session}).then(() => {
+                                                                        const postReportsBulkWrite = [
+                                                                            {
+                                                                                deleteMany: {
+                                                                                    filter: {reporterId: {$eq: userId}}
+                                                                                }
+                                                                            },
+                                                                            {
+                                                                                deleteMany: {
+                                                                                    filter: {postId: {$in: imagePostIds}}
+                                                                                }
+                                                                            },
+                                                                            {
+                                                                                deleteMany: {
+                                                                                    filter: {postId: {$in: pollPostIds}}
+                                                                                }
+                                                                            },
+                                                                            {
+                                                                                deleteMany: {
+                                                                                    filter: {postId: {$in: threadPostIds}}
+                                                                                }
+                                                                            }
+                                                                        ];
+
+                                                                        PostReports.bulkWrite(postReportsBulkWrite, {session}).then(() => {
+                                                                            RefreshToken.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
+                                                                                Category.updateMany({}, {$pull: {members: userId}}, {session}).then(() => {
+                                                                                    const commentBulkWrites = [
+                                                                                        {
+                                                                                            deleteMany: {
+                                                                                                filter: {commenterId: {$eq: userId}, replies: 0}
+                                                                                            }
+                                                                                        },
+                                                                                        {
+                                                                                            updateMany: {
+                                                                                                filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
+                                                                                                update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
+                                                                                            }
+                                                                                        },
+                                                                                        {
+                                                                                            deleteMany: {
+                                                                                                filter: {_id: {$in: imageCommentIds}}
+                                                                                            }
+                                                                                        },
+                                                                                        {
+                                                                                            deleteMany: {
+                                                                                                filter: {_id: {$in: pollCommentIds}}
+                                                                                            }
+                                                                                        },
+                                                                                        {
+                                                                                            deleteMany: {
+                                                                                                filter: {_id: {$in: threadCommentIds}}
+                                                                                            }
+                                                                                        }
+                                                                                    ];
+
+                                                                                    Comment.bulkWrite(commentBulkWrites, {session}).then(() => {
+                                                                                        if (userFound.profileImageKey) {
+                                                                                            imageHandler.deleteImageByKey(userFound.profileImageKey)
+                                                                                        }
+
+                                                                                        for (const imageKey of imageKeys) {
+                                                                                            imageHandler.deleteImageByKey(imageKey)
+                                                                                        }
+
+                                                                                        for (const imageKey of threadImageKeys) {
+                                                                                            imageHandler.deleteImageByKey(imageKey)
+                                                                                        }
+
+                                                                                        mongooseSessionHelper.commitTransaction(session).then(() => {
+                                                                                            return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                                                                        }).catch(() => {
+                                                                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting your account and associated data. Please try again.'))
+                                                                                        })
+                                                                                    }).catch(error => {
+                                                                                        console.error('An error occurred while making a bulkWrite operation on Comment collection:', commentBulkWrites, '. The error was:', error)
+                                                                                    })
+                                                                                }).catch(error => {
+                                                                                    console.error('An error occurred while pulling:', userId, 'from all member fields from all Category documents. The error was:', error)
+                                                                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing you from all categories. Please try again.'))
+                                                                                    })
+                                                                                })
+                                                                            }).catch(error => {
+                                                                                console.error('An error occurred while deleting all refresh tokens with userId:', userId, '. The error was:', error)
+                                                                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                                    return resolve(HTTPWTHandler.serverError('An error occurred while logging out all devices from your account. Please try again.'))
+                                                                                })
+                                                                            })
+                                                                        }).catch(error => {
+                                                                            console.error('An error occurred while making a bulkWrite operation on the PostReports collection:', postReportsBulkWrite, '. The error was:', error)
+                                                                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting post reports. Please try again.'))
+                                                                            })
+                                                                        })
+                                                                    }).catch(error => {
+                                                                        console.error('An error occurred while making a bulkWrite operation on the AccountReports collection:', accountReportsBulkWrite, '. The error was:', error)
+                                                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting account reports. Please try again.'))
+                                                                        })
+                                                                    })
+                                                                }).catch(error => {
+                                                                    console.error('An error occurred while making a bulkWrite operation on the Upvote collection:', upvoteBulkWrites, '. The error was:', error)
+                                                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting your upvotes and upvotes from your posts and comments. Please try again.'))
+                                                                    })
+                                                                })
+                                                            }).catch(error => {
+                                                                console.error('An error occurred while making a bulkWrite operation on the Downvote collection:', downvoteBulkWrites, '. The error was:', error)
+                                                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting your downvotes and downvotes from your posts and comments. Please try again.'))
+                                                                })
+                                                            })
+                                                        }).catch(error => {
+                                                            console.error('An error occurred while making a bulkWrite operation to the User collection:', userBulkWrites, '. The error was:', error)
+                                                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting account, blocked accounts, and followers. Please try again.'))
+                                                            })
+                                                        })
+                                                    }).catch(error => {
+                                                        console.error('An error occurred while deleting all messages with senderId:', userId, '. The error was:', error)
+                                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting chat messages. Please try again.'))
+                                                        })
+                                                    })
+                                                }).catch(error => {
+                                                    console.error('An error occurred while deleting all thread posts with creatorId:', userId, '. The error was:', error)
+                                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread posts. Please try again.'))
+                                                    })
+                                                })
+                                            }).catch(error => {
+                                                console.error('An error occurred while making a bulkWrite operation to the PollVote collection:', pollVoteBulkWrites, '. The error was:', error)
+                                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                    return resolve(HTTPWTHandler.serverError('An error occurred while removing poll votes. Please try again.'))
+                                                })
+                                            })
+                                        }).catch(error => {
+                                            console.error('An error occurred while deleting all poll posts with creatorId:', userId, '. The error was:', error)
+                                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting poll posts. Please try again.'))
+                                            })
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while deleting all image posts with creatorId:', userId, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting image posts. Please try again.'))
+                                        })
                                     })
                                 }).catch(error => {
-                                    session.abortTransaction().catch(error => {
-                                        console.error('An error occurred while aborting transaction after deleting account. The error was:', error)
-                                    }).finally(() => {
-                                        session.endSession().catch(error => {
-                                            console.error('An error occurred while ending session after deleting account data. The error was:', error)
-                                        }).finally(() => {
-                                            console.error('An error occured while deleting account data for user with id:', userId, '. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting data. Please try again.'))
-                                        })
+                                    console.error('An error occurred while updating popularPosts:', error)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing popular post. Please try again.'))
                                     })
                                 })
                             }).catch(error => {
