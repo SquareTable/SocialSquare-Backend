@@ -785,6 +785,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/removevoteoncomment': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 60,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have removed votes from comments too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    })
 }
 
 
@@ -2311,6 +2320,24 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
 
     worker.on('error', (error) => {
         console.error('An error occurred from TempWorker for POST /searchforpostcomments:', error)
+        HTTPHandler.serverError(res, String(error))
+    })
+});
+
+router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'removevoteoncomment',
+            functionArgs: [req.tokenData, req.body.commentId, req.body.voteType]
+        }
+    })
+
+    worker.on('message', (result) => {
+        res.status(result.statusCode).json(result.data)
+    })
+
+    worker.on('error', (error) => {
+        console.error('An error occurred from TempWorker for POST /removevoteoncomment:', error)
         HTTPHandler.serverError(res, String(error))
     })
 });
