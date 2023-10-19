@@ -2901,26 +2901,15 @@ class TempController {
                                 ]
     
                                 User.bulkWrite(dbUpdates, {session}).then(() => {
-                                    session.commitTransaction().then(() => {
-                                        session.endSession().catch(error => {
-                                            console.error('An error occurred while ending Mongoose session:', error)
-                                        }).finally(() => {
-                                            return resolve(HTTPWTHandler.OK('UnFollowed user'))
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while commiting transaction and ending session. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
+                                    mongooseSessionHelper.commitTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                    }).catch(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
                                     })
                                 }).catch(error => {
-                                    session.abortTransaction().catch(error => {
-                                        console.error('An error occurred while aborting transaction:', error)
-                                    }).finally(() => {
-                                        session.endSession().catch(error => {
-                                            console.error('An error occurred while ending mongoose session:', error)
-                                        }).finally(() => {
-                                            console.error('An error occurred while unfollowing account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
-                                        })
+                                    console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
                                     })
                                 })
                             }).catch(error => {
@@ -2989,26 +2978,15 @@ class TempController {
                                         }
                                         sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
 
-                                        session.commitTransaction().then(() => {
-                                            session.endSession().catch(error => {
-                                                console.error('An error occurred while ending mongoose session:', error)
-                                            }).finally(() => {
-                                                return resolve(HTTPWTHandler.OK('Followed User'))
-                                            })
-                                        }).catch(error => {
-                                            console.error('An error occurred while commiting transaction and ending session. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
+                                        mongooseSessionHelper.commitTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.OK('Followed User'))
+                                        }).catch(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
                                         })
                                     }).catch(error => {
-                                        session.abortTransaction().catch(error => {
-                                            console.error('An error occurred while aborting transaction:', error)
-                                        }).finally(() => {
-                                            session.endSession().catch(error => {
-                                                console.error('An error occurred while ending Mongoose session. The error was:', error)
-                                            }).finally(() => {
-                                                console.error('An error occurred while following not-private account using bulkWrite on the User collection. The updates array was:', dbUpdates, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
-                                            })
+                                        console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
                                         })
                                     })
                                 }).catch(error => {
