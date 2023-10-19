@@ -2776,10 +2776,9 @@ class TempController {
 
                         mongoose.startSession().then(session => {
                             session.startTransaction();
-
-                            Promise.all([
-                                Thread.deleteOne({_id: {$eq: threadId}}, {session}),
-                                Upvote.bulkWrite([
+                            
+                            Thread.deleteOne({_id: {$eq: threadId}}, {session}).then(() => {
+                                const upvoteBulkUpdates = [
                                     {
                                         deleteMany: {
                                             filter: {postId: {$eq: threadId}, postFormat: "Thread"}
@@ -2790,53 +2789,51 @@ class TempController {
                                             filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                         }
                                     }
-                                ], {session}),
-                                Downvote.bulkWrite([
-                                    {
-                                        deleteMany: {
-                                            filter: {postId: {$eq: threadId}, postFormat: "Thread"}
-                                        }
-                                    },
-                                    {
-                                        deleteMany: {
-                                            filter: {postId: {$in: commentIds}, postFormat: "Comment"}
-                                        }
-                                    }
-                                ], {session}),
-                                Comment.deleteMany({postId: {$eq: threadId}, postFormat: "Thread"})
-                            ]).then(() => {
-                                session.commitTransaction().then(() => {
-                                    if (threadFound.threadType === 'Images') {
-                                        imageHandler.deleteImageByKey(threadFound.threadImageKey)
-                                    }
+                                ];
 
-                                    session.endSession().catch(error => {
-                                        console.error('An error occurred while ending Mongoose session:', error)
-                                    }).finally(() => {
-                                        return resolve(HTTPWTHandler.OK("Successfully deleted thread post"))
+                                Upvote.bulkWrite(upvoteBulkUpdates, {session}).then(() => {
+                                    const downvoteBulkUpdates = [
+                                        {
+                                            deleteMany: {
+                                                filter: {postId: {$eq: threadId}, postFormat: "Thread"}
+                                            }
+                                        },
+                                        {
+                                            deleteMany: {
+                                                filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                            }
+                                        }
+                                    ];
+
+                                    Downvote.bulkWrite(downvoteBulkUpdates, {session}).then(() => {
+                                        Comment.deleteMany({postId: {$eq: threadId}, postFormat: "Thread"}, {session}).then(() => {
+                                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.OK('Successfully deleted thread post'))
+                                            }).catch(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread post and associated data. Please try again.'))
+                                            })
+                                        }).catch(error => {
+                                            console.error('An error occurred while deleting all comments from thread post with id:', threadId, '. The error was:', error)
+                                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread post comments. Please try again.'))
+                                            })
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while deleting thread (making bulk updates on the Downvote collection):', downvoteBulkUpdates, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread downvotes. Please try again.'))
+                                        })
                                     })
                                 }).catch(error => {
-                                    console.error('An error occurred while committing Mongoose transaction:', error)
-                                    session.abortTransaction().catch(error => {
-                                        console.error('An error occurred while aborting Mongoose transaction:', error)
-                                    }).finally(() => {
-                                        session.endSession().catch(error => {
-                                            console.error('An error occurred while ending Mongoose session:', error)
-                                        }).finally(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread. Please try again.'))
-                                        })
+                                    console.error('An error occurred while deleting thread (making bulk updates on the Upvote collection):', upvoteBulkUpdates, '. The error was:', error)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread upvotes. Please try again.'))
                                     })
                                 })
                             }).catch(error => {
-                                console.error('An error occurred while carrying out delete operations on thread with id:', threadId, '. The error was:', error)
-                                session.abortTransaction().catch(error => {
-                                    console.error('An error occurred while aborting Mongoose transaction:', error)
-                                }).finally(() => {
-                                    session.endSession().catch(error => {
-                                        console.error('An error occurred while ending Mongoose session:', error)
-                                    }).finally(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread. Please try again.'))
-                                    })
+                                console.error('An error occurred while deleting one thread with id:', threadId, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting thread. Please try again.'))
                                 })
                             })
                         }).catch(error => {
