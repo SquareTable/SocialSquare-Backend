@@ -5104,7 +5104,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
                     }
 
-                    const requesterIsBlockedByCommentOwner = commentOwner.blockedAccounts.includes(userFound.secondId)
+                    const requesterIsBlockedByCommentOwner = commentOwner.blockedAccounts?.includes(userFound.secondId)
                     if (requesterIsBlockedByCommentOwner) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
                     const postDatabaseModel = POST_DATABASE_MODELS[commentFound.postFormat]
@@ -5118,7 +5118,7 @@ class TempController {
                             return resolve(HTTPWTHandler.serverError('An error occurred while finding user that owns the post that the comment was made on. Please try again.'))
                         }
 
-                        const requesterIsBlockedByPostOwner = postOwner.blockedAccounts.includes(userFound.secondId);
+                        const requesterIsBlockedByPostOwner = postOwner.blockedAccounts?.includes(userFound.secondId);
                         if (requesterIsBlockedByPostOwner) return resolve(HTTPWTHandler.notFound('Comment not found.'))
 
                         const postOwnerAccountIsPrivateAndRequesterDoesNotFollowAccount = postOwner.privateAccount === true && !postOwner.followers.includes(userFound.secondId)
@@ -5170,7 +5170,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
                     }
 
-                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
+                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
 
                     POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
                         if (!postFound) {
@@ -5188,7 +5188,7 @@ class TempController {
                         }
 
                         if (userId != postFound.creatorId && (
-                            postOwner.blockedAccounts.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                            postOwner.blockedAccounts?.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
                         )) {
                             return resolve(HTTPWTHandler.notFound('Could not find comment.'))
                         }
@@ -5241,6 +5241,7 @@ class TempController {
 
     static #voteoncomment = (userId, commentId, voteType) => {
         return new Promise(resolve => {
+            console.log('VOTE TYPE:', voteType)
             if (voteType !== "Down" && voteType !== "Up") {
                 return resolve(HTTPWTHandler.badInput("voteType must be either Down or Up."))
             }
@@ -5268,7 +5269,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
                     }
 
-                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
+                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
 
                     POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
                         if (!postFound) {
@@ -5286,7 +5287,7 @@ class TempController {
                         }
 
                         if (userId != postFound.creatorId && (
-                            postOwner.blockedAccounts.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                            postOwner.blockedAccounts?.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
                         )) {
                             return resolve(HTTPWTHandler.notFound('Comment could not be found.'))
                         }
@@ -5374,7 +5375,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
                     }
 
-                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Comment could not be found.'))
+                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Comment could not be found.'))
 
                     POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
                         if (!postFound) {
@@ -5392,7 +5393,7 @@ class TempController {
                         }
 
                         if (userId != postFound.creatorId && (
-                            postOwner.blockedAccounts.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                            postOwner.blockedAccounts?.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
                         )) {
                             return resolve(HTTPWTHandler.notFound('Comment could not be found'))
                         }
@@ -5493,7 +5494,7 @@ class TempController {
                     }
 
                     if (postFound.creatorId != userId && (
-                        postOwner.blockedAccounts.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                        postOwner.blockedAccounts?.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
                     )) {
                         return resolve(HTTPWTHandler.notFound('Could not find post.'))
                     }
@@ -5555,7 +5556,7 @@ class TempController {
                     }
 
                     if (userId != postFound.creatorId && (
-                        postOwner.blockedAccounts.includes(userFound.secondId) && (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                        postOwner.blockedAccounts?.includes(userFound.secondId) && (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
                     )) {
                         return resolve(HTTPWTHandler.notFound('Could not find post.'))
                     }
@@ -5631,7 +5632,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
                     }
 
-                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
+                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
                     POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
                         if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post that comment is associated with'))
@@ -5646,7 +5647,7 @@ class TempController {
                         }
 
                         if (userId != postFound.creatorId && (
-                            postOwner.blockedAccounts.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
+                            postOwner.blockedAccounts?.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
                         )) {
                             return resolve(HTTPWTHandler.notFound('Could not find comment.'))
                         }
