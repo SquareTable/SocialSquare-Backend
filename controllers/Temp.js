@@ -1625,9 +1625,8 @@ class TempController {
                         mongoose.startSession().then(session => {
                             session.startTransaction();
 
-                            Promise.all([
-                                ImagePost.deleteOne({_id: {$eq: postId}}, {session}),
-                                Upvote.bulkWrite([
+                            ImagePost.deleteOne({_id: {$eq: postId}}, {session}).then(() => {
+                                const upvoteBulkUpdates = [
                                     {
                                         deleteMany: {
                                             filter: {postId: {$eq: postId}, postFormat: "Image"}
@@ -1638,51 +1637,51 @@ class TempController {
                                             filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                         }
                                     }
-                                ], {session}),
-                                Downvote.bulkWrite([
-                                    {
-                                        deleteMany: {
-                                            filter: {postId: {$eq: postId}, postFormat: "Image"}
+                                ];
+
+                                Upvote.bulkWrite(upvoteBulkUpdates, {session}).then(() => {
+                                    const downvoteBulkUpdates = [
+                                        {
+                                            deleteMany: {
+                                                filter: {postId: {$eq: postId}, postFormat: "Image"}
+                                            }
+                                        },
+                                        {
+                                            deleteMany: {
+                                                filter: {postId: {$in: commentIds}, postFormat: "Comment"}
+                                            }
                                         }
-                                    },
-                                    {
-                                        deleteMany: {
-                                            filter: {postId: {$in: commentIds}, postFormat: "Comment"}
-                                        }
-                                    }
-                                ], {session}),
-                                Comment.deleteMany({postId: {$eq: postId}, postFormat: "Image"}, {session})
-                            ]).then(() => {
-                                session.commitTransaction().then(() => {
-                                    imageHandler.deleteImageByKey(data.imageKey)
-                                    
-                                    session.endSession().catch(error => {
-                                        console.error('An error occurred while ending Mongoose session:', error)
-                                    }).finally(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully deleted image post'))
+                                    ];
+
+                                    Downvote.bulkWrite(downvoteBulkUpdates, {session}).then(() => {
+                                        Comment.deleteMany({postId: {$eq: postId}, postFormat: "Image"}, {session}).then(() => {
+                                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.OK('Successfully deleted image post.'))
+                                            }).catch(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again.'))
+                                            })
+                                        }).catch(error => {
+                                            console.error('An error occurred while deleting all comments from image post with id:', postId, '. The error was:', error)
+                                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post comments. Please try again.'))
+                                            })
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while deleting image post (making bulk updates on Downvote collection):', downvoteBulkUpdates, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post downvotes. Please try again.'))
+                                        })
                                     })
                                 }).catch(error => {
-                                    console.error('An error occurred while committing Mongoose transaction:', error)
-                                    session.abortTransaction().catch(error => {
-                                        console.error('An error occurred while aborting Mongoose transaction:', error)
-                                    }).finally(() => {
-                                        session.endSession().catch(error => {
-                                            console.error('An error occurred while ending Mongoose session:', error)
-                                        }).finally(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again.'))
-                                        })
+                                    console.error('An error occurred while deleting image post (making bulk updates on Upvote collection):', upvoteBulkUpdates, '. The error was:', error)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post upvotes. Please try again.'))
                                     })
                                 })
                             }).catch(error => {
-                                console.error('An error occurred while carrying out inage post delete operations on image post with id:', postId, '. The error was:', error)
-                                session.abortTransaction().catch(error => {
-                                    console.error('An error occurred while aborting Mongoose transaction:', error)
-                                }).finally(() => {
-                                    session.endSession().catch(error => {
-                                        console.error('An error occurred while ending Mongoose session:', error)
-                                    }).finally(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting image post. Please try again.'))
-                                    })
+                                console.error('An error occurred while deleting image post with id:', postId, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting image. Please try again.'))
                                 })
                             })
                         }).catch(error => {
