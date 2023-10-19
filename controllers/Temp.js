@@ -5410,39 +5410,23 @@ class TempController {
                         mongoose.startSession().then(session => {
                             session.startTransaction();
 
-                            Promise.all([
-                                newComment.save({session}),
-                                Comment.findOneAndUpdate({_id: {$eq: commentReply.parentCommentId}}, {$inc: {replies: 1}}, {session})
-                            ]).then(([newComment]) => {
-                                session.commitTransaction().then(() => {
-                                    session.endSession().catch(error => {
-                                        console.error('An error occuirred while ending Mongoose session:', error)
-                                    }).finally(() => {
-                                        newComment.isOwner = true;
-                                        return resolve(HTTPWTHandler.OK('Successfully made comment reply', comment))
+                            newComment.save({session}).then(() => {
+                                Comment.findOneAndUpdate({_id: {$eq: commentReply.parentCommentId}}, {$inc: {replies: 1}}, {session}).then(() => {
+                                    mongooseSessionHelper.commitTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.OK('Successfully replied to comment'))
+                                    }).catch(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while creating comment reply. Please try again.'))
                                     })
                                 }).catch(error => {
-                                    console.error('An error occurred while committing Mongoose transaction:', error)
-                                    session.abortTransaction().catch(error => {
-                                        console.error('An error occurred while aborting Mongoose transaction:', error)
-                                    }).finally(() => {
-                                        session.endSession().catch(error => {
-                                            console.error('An error occurred while ending Mongoose session:', error)
-                                        }).finally(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving new comment reply. Please try again.'))
-                                        })
+                                    console.error('An error occurred while finding comment with id:', commentReply.parentCommentId, 'and incrementing replies by 1. The error was:', error)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding reply to parent comment. Please try again.'))
                                     })
                                 })
                             }).catch(error => {
-                                console.error('An error occurred while performing comment reply database operations:', error)
-                                session.abortTransaction().catch(error => {
-                                    console.error('An error occurred while aborting Mongoose transaction:', error)
-                                }).finally(() => {
-                                    session.endSession().catch(error => {
-                                        console.error('An error occurred while ending Mongoose session:', error)
-                                    }).finally(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while saving comment reply. Please try again.'))
-                                    })
+                                console.error('An error occurred while saving comment with data:', commentReply, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while saving comment. Please try again.'))
                                 })
                             })
                         }).catch(error => {
