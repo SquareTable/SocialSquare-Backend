@@ -5241,10 +5241,6 @@ class TempController {
 
     static #voteoncomment = (userId, commentId, voteType) => {
         return new Promise(resolve => {
-            if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(format)) {
-                return resolve(HTTPWTHandler.badInput(`format must be either ${CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.join(', ')}`))
-            }
-
             if (voteType !== "Down" && voteType !== "Up") {
                 return resolve(HTTPWTHandler.badInput("voteType must be either Down or Up."))
             }
@@ -5608,10 +5604,6 @@ class TempController {
     
     static #removevoteoncomment = (userId, commentId, voteType) => {
         return new Promise(resolve => {
-            if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(format)) {
-                return resolve(HTTPWTHandler.badInput(`format must be either ${CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.join(', ')}`))
-            }
-
             if (voteType !== "Down" && voteType !== "Up") {
                 return resolve(HTTPWTHandler.badInput("voteType must be either Down or Up."))
             }
