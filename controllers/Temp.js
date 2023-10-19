@@ -5296,33 +5296,22 @@ class TempController {
                         mongoose.startSession().then(session => {
                             session.startTransaction();
 
-                            Promise.all([
-                                voteTypeToAdd.findOneAndUpdate({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: {$eq: userFound.secondId}}, {interactionDate: Date.now()}, {session, upsert: true}),
-                                voteTypeToRemove.deleteMany({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: userFound.secondId}, {session})
-                            ]).then(() => {
-                                session.commitTransaction().then(() => {
-                                    session.endSession().catch(error => {
-                                        console.error('An error occurred while ending Mongoose session:', error)
-                                    }).finally(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully added vote to comment.'))
+                            voteTypeToAdd.findOneAndUpdate({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: {$eq: userFound.secondId}}, {interactionDate: Date.now()}, {session, upsert: true}).then(() => {
+                                voteTypeToRemove.deleteMany({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: userFound.secondId}, {session}).then(() => {
+                                    mongooseSessionHelper.commitTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.OK('Successfully made vote on comment'))
+                                    }).catch(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote to comment. Please try again.'))
                                     })
                                 }).catch(error => {
-                                    console.error('An error occurred while committing Mongoose transaction:', error)
-                                    session.abortTransaction().catch(error => {
-                                        console.error('An error occurred while aborting Mongoose transaction:', error)
-                                    }).finally(() => {
-                                        session.endSession().catch(error => {
-                                            console.error('An error occurred while ending Mongoose session:', error)
-                                        }).finally(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving vote. Please try again.'))
-                                        })
+                                    console.error('An error occurred while deleting all', voteType, 'votes from comment with id:', commentId, 'and user with secondId:', userFound.secondId, '. The error was:', error)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError(` An error occurred while removing ${voteType}vote from comment. Please try again.`))
                                     })
                                 })
                             }).catch(error => {
-                                console.error('An error occurred while making vote on comment database operations:', error)
-                                session.endSession().catch(error => {
-                                    console.error('An error occurred while ending Mongoose session:', error)
-                                }).finally(() => {
+                                console.error('An error occurred while adding', voteType, 'vote to comment with id:', commentId, '. The vote is being made by user with secondId:', userFound.secondId, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
                                     return resolve(HTTPWTHandler.serverError('An error occurred while adding vote. Please try again.'))
                                 })
                             })
