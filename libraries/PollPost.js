@@ -2,6 +2,7 @@ const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 const Poll = require('../models/Poll')
 const PollVote = require('../models/PollVote')
+const Comment = require('../models/Comment')
 
 class PollPost {
     processMultiplePostDataFromOneOwner(posts, postOwner, userRequesting) {
@@ -22,8 +23,9 @@ class PollPost {
                             PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Three'}),
                             PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Four'}),
                             PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Five'}),
-                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Six'})
-                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, pollVote, optionOnesVotes, optionTwosVotes, optionThreesVotes, optionFoursVotes, optionFivesVotes, optionSixesVotes]) => {
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Six'}),
+                            Comment.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"})
+                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, pollVote, optionOnesVotes, optionTwosVotes, optionThreesVotes, optionFoursVotes, optionFivesVotes, optionSixesVotes, comments]) => {
                             const postObject = {
                                 ...post,
                                 optionOnesVotes,
@@ -42,7 +44,7 @@ class PollPost {
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 votedFor: pollVote?.vote || "None",
-                                comments: Array.isArray(post.comments) ? post.comments.length : 0
+                                comments
                             }
 
                             if (isUpvoted) {
