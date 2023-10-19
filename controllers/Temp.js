@@ -3425,22 +3425,16 @@ class TempController {
                     mongoose.startSession().then(session => {
                         session.startTransaction();
 
-                        User.bulkWrite(dbUpdates, {session}).then(() => session.commitTransaction()).then(() => {
-                            session.endSession().catch(error => {
-                                console.error('An error occurred while ending Mongoose session. The error was:', error)
-                            }).finally(() => {
-                                return resolve(HTTPWTHandler.OK('Follower has been removed.'))
+                        User.bulkWrite(dbUpdates, {session}).then(() => {
+                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                return resolve(HTTPWTHandler.OK('Successfully removed follower from account'))
+                            }).catch(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while removing follower from account. Please try again.'))
                             })
                         }).catch(error => {
-                            console.error('An error occurred while making a bulkWrite operation to the database on the User collection and committing transaction. The dbUpdates to be made were:', dbUpdates, '. The error was:', error)
-                            session.abortTransaction().catch(error => {
-                                console.error('An error occurred while aborting Mongoose transaction. The error was:', error)
-                            }).finally(() => {
-                                session.endSession().catch(error => {
-                                    console.error('An error occurred while ending Mongoose session. The error was:', error)
-                                }).finally(() => {
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while removing follower. Please try again.'))
-                                })
+                            console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
+                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while removing follower from account. Please try again.'))
                             })
                         })
                     }).catch(error => {
