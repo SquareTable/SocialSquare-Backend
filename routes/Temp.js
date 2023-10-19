@@ -2256,7 +2256,7 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'voteoncomment',
-            functionArgs: [req.tokenData, req.body.commentId]
+            functionArgs: [req.tokenData, req.body.commentId, req.body.voteType]
         }
     })
 
