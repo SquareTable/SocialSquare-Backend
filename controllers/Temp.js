@@ -3517,8 +3517,11 @@ class TempController {
         })
     }
 
-    static #getuserblockedaccounts = (userId) => {
+    static #getuserblockedaccounts = (userId, skip) => {
         return new Promise(resolve => {
+            if (skip === undefined) skip = 0;
+            if (typeof skip !== 'number') return resolve(HTTPWTHandler.badInput(`skip must be either undefined or a number. Type provided: ${typeof skip}`));
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
 
@@ -3526,12 +3529,14 @@ class TempController {
 
                 if (blockedAccounts.length === 0) return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', []))
 
-                User.find({secondId: {$in: blockedAccounts}}).lean().then(blockedUsers => {
+                const {items, noMoreItems} = arrayHelper.returnSomeItems(blockedAccounts, skip, CONSTANTS.NUM_BLOCKED_ACCOUNTS_TO_SEND_PER_API_CALL);
+
+                User.find({secondId: {$in: items}}).lean().then(blockedUsers => {
                     const publicInformation = blockedUsers.map(user => {
                         return userHandler.returnPublicInformation(user, userFound)
                     })
 
-                    return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', publicInformation))
+                    return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', {blockedAccounts: publicInformation, noMoreItems}))
                 }).catch(error => {
                     console.error('An error occurred while finding users with secondIds in this array:', blockedAccounts, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
@@ -5793,8 +5798,8 @@ class TempController {
         return await this.#blockaccount(userId, userToBlockPubId)
     }
 
-    static getuserblockedaccounts = async (userId) => {
-        return await this.#getuserblockedaccounts(userId)
+    static getuserblockedaccounts = async (userId, skip) => {
+        return await this.#getuserblockedaccounts(userId, skip)
     }
 
     static unblockaccount = async (userId, userToUnblockPubId) => {
