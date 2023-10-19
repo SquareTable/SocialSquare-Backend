@@ -4023,7 +4023,7 @@ class TempController {
                     })
                 }).catch(error => {
                     console.error('An error occurred while finding popular posts. The error was:', error)
-                    return resolve(HTPWTHandler.serverError('An error occurred while finding popular posts. Please try again.'))
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding popular posts. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occured while finding user with id:', userID + '. The error was:', error)
