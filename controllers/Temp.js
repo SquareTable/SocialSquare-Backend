@@ -3355,22 +3355,16 @@ class TempController {
                 mongoose.startSession().then(session => {
                     session.startTransaction();
 
-                    User.bulkWrite(dbUpdates, {session}).then(() => session.commitTransaction()).then(() => {
-                        session.endSession().catch(error => {
-                            console.error('An error occurred while ending Mongoose session. The error was:', error)
-                        }).finally(() => {
-                            return resolve(HTTPWTHandler.OK('Follow request accepted.'))
+                    User.bulkWrite(dbUpdates, {session}).then(() => {
+                        mongooseSessionHelper.commitTransaction(session).then(() => {
+                            return resolve(HTTPWTHandler.OK('Successfully accepted follow request'))
+                        }).catch(() => {
+                            return resolve(HTTPWTHandler.serverError('An error occurred while accepting follow request. Please try again.'))
                         })
                     }).catch(error => {
-                        session.abortTransaction().catch(error => {
-                            console.error('An error occurred while aborting Mongoose transaction. The error was:', error)
-                        }).finally(() => {
-                            session.endSession().catch(error => {
-                                console.error('An error occurred while ending Mongoose session. The error was:', error)
-                            }).finally(() => {
-                                console.error('An error occurred while making the following bulkWrite database updates on the User collection:', dbUpdates, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while accepting the follow request. Please try again.'))
-                            })
+                        console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
+                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                            return resolve(HTTPWTHandler.serverError('An error occurred while accepting follow request. Please try again.'))
                         })
                     })
                 }).catch(error => {
