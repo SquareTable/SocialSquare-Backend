@@ -5021,7 +5021,7 @@ class TempController {
                     } else {
                         Comment.findOne({_id: commentFound.parentCommentId}).then(parentComment => {
                             if (!parentComment) return deleteComment()
-                            if (!parent.deleted) return deleteComment(commentFound.parentCommentId)
+                            if (!parentComment.deleted) return deleteComment(commentFound.parentCommentId)
 
                             if (parentComment.replies <= 1) {
                                 mongoose.startSession().then(session => {
