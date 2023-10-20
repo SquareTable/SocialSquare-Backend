@@ -5200,7 +5200,7 @@ class TempController {
                             const uniqueUsers = Array.from(new Set(commentsFound.map(comment => String(comment.commenterId))))
         
                             User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
-                                const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(commentsFound, commentOwners);
+                                const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(commentsFound, commentOwners, 'commenterId');
         
                                 if (postsWithNoOwners.length > 0) {
                                     console.error('Found comments without owners:', postsWithNoOwners)
