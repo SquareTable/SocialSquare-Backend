@@ -1,6 +1,7 @@
 const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 const ImagePost = require('../models/ImagePost')
+const Comment = require('../models/Comment')
 const ImageLibrary = require('../libraries/Image')
 const imageLib = new ImageLibrary()
 
@@ -17,7 +18,8 @@ class ImagePostClass {
                             Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Image"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Image", userPublicId: userRequesting.secondId}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Image", userPublicId: userRequesting.secondId}),
-                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
+                            Comment.countDocuments({postId: {$eq: post._id}, postFormat: "Image"})
+                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, comments]) => {
                             const postObject = {
                                 ...post,
                                 votes: upvotes - downvotes,
@@ -29,7 +31,7 @@ class ImagePostClass {
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: post._id.toString(),
-                                comments: post.comments ? post.comments.map(comment => ({...comment, commentId: String(comment.commentId)})) : []
+                                comments
                             }
 
                             if (isUpvoted) {

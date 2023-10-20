@@ -3,6 +3,7 @@ const Downvote = require('../models/Downvote')
 const Thread = require('../models/Thread')
 const ImageLibrary = require('./Image')
 const Category = require('../models/Category')
+const Comment = require('../models/Comment')
 const imageLib = new ImageLibrary()
 
 class ThreadPost {
@@ -18,8 +19,9 @@ class ThreadPost {
                             Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Thread"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
-                            Category.findOne({_id: {$eq: post.threadCategoryId}}, {categoryTitle: 1})
-                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, category]) => {
+                            Category.findOne({_id: {$eq: post.threadCategoryId}}, {categoryTitle: 1}),
+                            Comment.countDocuments({postId: {$eq: post._id}, postFormat: "Thread"})
+                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, category, comments]) => {
                             const postObject = {
                                 ...post,
                                 votes: upvotes - downvotes,
@@ -31,7 +33,8 @@ class ThreadPost {
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: String(post._id),
-                                threadCategory: category.categoryTitle
+                                threadCategory: category.categoryTitle,
+                                comments
                             }
 
                             if (isUpvoted) {
