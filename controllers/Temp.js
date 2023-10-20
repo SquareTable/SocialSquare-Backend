@@ -5163,16 +5163,18 @@ class TempController {
                 Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
                     if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
-                    let commentOwner;
+                    if (!commentFound.deleted) {
+                        let commentOwner;
 
-                    try {
-                        commentOwner = userId == commentFound.commenterId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
-                    } catch (error) {
-                        console.error('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
+                        try {
+                            commentOwner = userId == commentFound.commenterId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
+                        } catch (error) {
+                            console.error('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
+                        }
+
+                        if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
                     }
-
-                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
 
                     POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
                         if (!postFound) {
@@ -5197,11 +5199,26 @@ class TempController {
 
                         Comment.find({parentCommentId: {$eq: commentId}}).lean().then(commentsFound => {
                             if (commentsFound.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comment replies', []))
+
+                            const deletedComments = [];
+                            const notDeletedComments = [];
+
+                            for (const comment of commentsFound) {
+                                if (comment.deleted) {
+                                    delete comment.__v;
+                                    comment.postId = String(comment.postId)
+                                    comment._id = String(comment._id)
+
+                                    deletedComments.push(comment)
+                                } else {
+                                    notDeletedComments.push(comment)
+                                }
+                            }
         
-                            const uniqueUsers = Array.from(new Set(commentsFound.map(comment => String(comment.commenterId))))
+                            const uniqueUsers = Array.from(new Set(notDeletedComments.map(comment => String(comment.commenterId))))
         
                             User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
-                                const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(commentsFound, commentOwners, 'commenterId');
+                                const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(notDeletedComments, commentOwners, 'commenterId');
         
                                 if (postsWithNoOwners.length > 0) {
                                     console.error('Found comments without owners:', postsWithNoOwners)
@@ -5213,7 +5230,8 @@ class TempController {
                                     })
                                 ).then(replies => {
                                     const flattenedReplies = replies.flat()
-                                    return resolve(HTTPWTHandler.OK('Successfully found comment replies', flattenedReplies))
+                                    const toSend = flattenedReplies.concat(deletedComments)
+                                    return resolve(HTTPWTHandler.OK('Successfully found comment replies', toSend))
                                 }).catch(error => {
                                     console.error('An error occurred while processing comments:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
