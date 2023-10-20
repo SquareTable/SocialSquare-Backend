@@ -3005,7 +3005,6 @@ class TempController {
             }).catch(err => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                HTTPHandler.serverError(res, 'An error occurred while finding user. Please try again later.')
             })
         })
     }
