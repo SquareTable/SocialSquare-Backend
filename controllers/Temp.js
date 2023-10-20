@@ -5260,6 +5260,8 @@ class TempController {
                 Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
                     if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
+                    if (commentFound.commenterId == userId) return resolve(HTTPWTHandler.forbidden('You cannot add votes to your own comments.'))
+
                     let commentOwner;
 
                     try {
@@ -5622,6 +5624,8 @@ class TempController {
 
                 Comment.findOne({_id: {$eq: commentId}}).then(async commentFound => {
                     if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
+
+                    if (commentFound.commenterId == userId) return resolve(HTTPWTHandler.forbidden('You cannot modify votes on your own comments.'))
 
                     let commentOwner;
 
