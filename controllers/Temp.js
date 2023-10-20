@@ -4938,7 +4938,7 @@ class TempController {
                             Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
                                 (parentCommentId ? Comment.findOneAndUpdate({_id: {$eq: parentCommentId}}, {$inc: {replies: -1}}, {session}) : Promise.resolve()).then(() => {
                                     mongooseSessionHelper.commitTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully deleted comment'))
+                                        return resolve(HTTPWTHandler.OK('Successfully deleted comment', {softDelete: false}))
                                     }).catch(() => {
                                         return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
                                     })
@@ -4993,7 +4993,7 @@ class TempController {
                                 Upvote.deleteMany({postId: {$eq: commentId}, postFormat: "Comment"}, {session}).then(() => {
                                     Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
                                         mongooseSessionHelper.commitTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.OK('Successfully deleted comment'))
+                                            return resolve(HTTPWTHandler.OK('Successfully deleted comment', {softDelete: true}))
                                         }).catch(() => {
                                             return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
                                         })
@@ -5033,7 +5033,7 @@ class TempController {
                                             Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
                                                 Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
                                                     mongooseSessionHelper.commitTransaction(session).then(() => {
-                                                        return resolve(HTTPWTHandler.OK('Successfully deleted comment'))
+                                                        return resolve(HTTPWTHandler.OK('Successfully deleted comment', {parentDeleted: true, softDelete: false}))
                                                     }).catch(() => {
                                                         return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
                                                     })
