@@ -4980,7 +4980,7 @@ class TempController {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
 
                 Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
-                    if (!commentFound) return resolve(HTTPWTHandler.OK('Comment is already deleted.'))
+                    if (!commentFound) return resolve(HTTPWTHandler.OK('Comment is already deleted.', {softDelete: false}))
                     if (String(commentFound.commenterId) !== userId) return resolve(HTTPWTHandler.unauthorized('You are not allowed to delete this comment.'))
 
                     if (!commentFound.parentCommentId) {
