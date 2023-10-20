@@ -1133,7 +1133,7 @@ class TempController {
 
     static #postProfileImage = (userId, file) => {
         return new Promise(resolve => {
-            if (file) {
+            if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file was sent.'))
             }
         
