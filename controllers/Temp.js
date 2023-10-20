@@ -5415,12 +5415,20 @@ class TempController {
                         mongoose.startSession().then(session => {
                             session.startTransaction();
 
-                            newComment.save({session}).then(() => {
+                            newComment.save({session}).then(comment => {
                                 Comment.findOneAndUpdate({_id: {$eq: commentReply.parentCommentId}}, {$inc: {replies: 1}}, {session}).then(() => {
-                                    mongooseSessionHelper.commitTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully replied to comment'))
-                                    }).catch(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while creating comment reply. Please try again.'))
+                                    comment = comment.toObject();
+                                    commentHandler.processOneCommentFromOneOwner(userFound, comment, userFound).then(processedComment => {
+                                        mongooseSessionHelper.commitTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.OK('Successfully replied to comment', processedComment))
+                                        }).catch(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while creating comment reply. Please try again.'))
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while processing one comment:', comment, 'from one owner:', userFound, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while creating and getting comment reply. Please try again.'))
+                                        })
                                     })
                                 }).catch(error => {
                                     console.error('An error occurred while finding comment with id:', commentReply.parentCommentId, 'and incrementing replies by 1. The error was:', error)
