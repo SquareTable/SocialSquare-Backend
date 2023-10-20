@@ -5576,10 +5576,25 @@ class TempController {
                     Comment.find({postId: {$eq: postId}, postFormat: {$eq: postFormat}, parentCommentId: {$exists: false}}).lean().then(comments => {
                         if (comments.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comments', []))
 
-                        const uniqueUsers = Array.from(new Set(comments.map(comment => String(comment.commenterId))));
+                        const notDeletedComments = [];
+                        const deletedComments = [];
+
+                        for (const comment of comments) {
+                            if (comment.deleted) {
+                                delete comment.__v;
+                                comment.postId = String(comment.postId)
+                                comment._id = String(comment._id)
+                                
+                                deletedComments.push(comment)
+                            } else {
+                                notDeletedComments.push(comment)
+                            }
+                        }
+
+                        const uniqueUsers = Array.from(new Set(notDeletedComments.map(comment => String(comment.commenterId))));
 
                         User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
-                            const {postsWithNoOwners, ownerPostPairs} = arrayHelper.returnOwnerPostPairs(comments, usersFromDatabase, 'commenterId')
+                            const {postsWithNoOwners, ownerPostPairs} = arrayHelper.returnOwnerPostPairs(notDeletedComments, usersFromDatabase, 'commenterId')
 
                             if (postsWithNoOwners.length > 0) {
                                 console.error('Found comments with no owners:', postsWithNoOwners)
@@ -5591,7 +5606,8 @@ class TempController {
                                 })
                             ).then(comments => {
                                 const flattenedComments = comments.flat()
-                                return resolve(HTTPWTHandler.OK('Comments were found successfully', flattenedComments))
+                                const toSend = flattenedComments.concat(deletedComments)
+                                return resolve(HTTPWTHandler.OK('Comments were found successfully', toSend))
                             }).catch(error => {
                                 console.error('An error occurred while processing comments:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
