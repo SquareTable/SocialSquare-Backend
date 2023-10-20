@@ -8,7 +8,8 @@ const RefreshTokenSchema = new Schema({
     IP: String,
     createdAt: Date,
     userId: mongoose.Schema.Types.ObjectId,
-    admin: Boolean
+    admin: Boolean,
+    notificationKey: String
 });
 
 const RefreshToken = mongoose.model('RefreshToken', RefreshTokenSchema);

@@ -1,6 +1,8 @@
 const Upvote = require('../models/Upvote')
 const Downvote = require('../models/Downvote')
 const Poll = require('../models/Poll')
+const PollVote = require('../models/PollVote')
+const Comment = require('../models/Comment')
 
 class PollPost {
     processMultiplePostDataFromOneOwner(posts, postOwner, userRequesting) {
@@ -13,17 +15,25 @@ class PollPost {
                         Promise.all([
                             Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
                             Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
-                            Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
-                            Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}),
-                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted]) => {
+                            Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
+                            Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
+                            PollVote.findOne({pollId: {$eq: post._id}, userId: {$eq: userRequesting._id}}, 'vote').lean(),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'One'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Two'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Three'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Four'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Five'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Six'}),
+                            Comment.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"})
+                        ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, pollVote, optionOnesVotes, optionTwosVotes, optionThreesVotes, optionFoursVotes, optionFivesVotes, optionSixesVotes, comments]) => {
                             const postObject = {
                                 ...post,
-                                optionOnesVotes: post.optionOnesVotes.length,
-                                optionTwosVotes: post.optionTwosVotes.length,
-                                optionThreesVotes: post.optionThreesVotes.length,
-                                optionFoursVotes: post.optionFoursVotes.length,
-                                optionFivesVotes: post.optionFivesVotes.length,
-                                optionSixesVotes: post.optionSixesVotes.length,
+                                optionOnesVotes,
+                                optionTwosVotes,
+                                optionThreesVotes,
+                                optionFoursVotes,
+                                optionFivesVotes,
+                                optionSixesVotes,
                                 _id: post._id.toString(),
                                 votes: upvotes - downvotes,
                                 creatorName: postOwner.name,
@@ -32,7 +42,9 @@ class PollPost {
                                 upvoted: !!isUpvoted,
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
-                                interacted: !!isUpvoted || !!isDownvoted
+                                interacted: !!isUpvoted || !!isDownvoted,
+                                votedFor: pollVote?.vote || "None",
+                                comments
                             }
 
                             if (isUpvoted) {
