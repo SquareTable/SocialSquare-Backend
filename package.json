@@ -4,7 +4,7 @@
   "description": "Backend for a login system",
   "main": "server.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --detectOpenHandles"
   },
   "author": "",
   "license": "ISC",
