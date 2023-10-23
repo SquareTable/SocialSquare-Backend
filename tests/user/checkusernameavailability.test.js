@@ -10,9 +10,9 @@ test('user/checkusernameavailability says available when username is available',
         await mongoose.connect(uri);
 
         UserController.checkusernameavailability('seb').then(data => {
-            expect(data.message).toBe('Username is available')
+            DB.stopServer().then(() => {
+                expect(data.message).toBe('Username is available')
+            })
         })
-    }).finally(() => {
-        DB.stopServer();
     })
 })
