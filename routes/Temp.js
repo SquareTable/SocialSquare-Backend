@@ -811,7 +811,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('POST temp/sendnotificationkey controller function returned data to be sent to the client but HTTP headers have already been sent!')
+            console.error('POST temp/sendnotificationkey controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -835,7 +835,7 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('POST temp/changedisplayname controller function returned data to be sent to the client but HTTP headers have already been sent!')
+            console.error('POST temp/changedisplayname controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -859,7 +859,7 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('POST temp/changeemail controller function returned data to be sent to the client but HTTP headers have already been sent!')
+            console.error('POST temp/changeemail controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -883,7 +883,7 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/changepassword controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -907,7 +907,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/changeusername controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -930,7 +930,7 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/changebio controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -954,7 +954,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/searchpageusersearch controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -998,7 +998,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/createpollpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1022,7 +1022,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/searchforpollposts controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1046,7 +1046,7 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/voteonpoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1070,7 +1070,7 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/removevoteonpoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1094,7 +1094,7 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/searchforpollpostsbyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1118,7 +1118,7 @@ router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/upvotepoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1142,7 +1142,7 @@ router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/downvotepoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1166,7 +1166,7 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/deletepoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1190,7 +1190,7 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/postImage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1214,7 +1214,7 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/postProfileImage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1238,7 +1238,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POSST temp/getImagesFromProfile controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1262,7 +1262,7 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/getProfilePic/:pubId controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1286,7 +1286,7 @@ router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/upvoteimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1310,7 +1310,7 @@ router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/downvoteimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1335,7 +1335,7 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/postcategorywithimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1359,7 +1359,7 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/deleteimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1384,7 +1384,7 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/postcategorywithoutimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1408,7 +1408,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/searchpagesearchcategories controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1432,7 +1432,7 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getcategoryimage  controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1456,7 +1456,7 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/fimdcategorybyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1480,7 +1480,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/findcategoryfromprofile controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1504,7 +1504,7 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/joincategory controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1530,7 +1530,7 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/posttextthread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1555,7 +1555,7 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/postimagethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1581,7 +1581,7 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getthreadsfromcategory controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1605,7 +1605,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getthreadsfromprofile controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1629,7 +1629,7 @@ router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/upvotethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1653,7 +1653,7 @@ router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/downvotethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1677,7 +1677,7 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getthreadbyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1701,7 +1701,7 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/deletethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1725,7 +1725,7 @@ router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/toggleFollowOfAUser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1749,7 +1749,7 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/reloadUsersDetails controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1773,7 +1773,7 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/earnSpecialBadge controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1797,7 +1797,7 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getuserbyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1821,7 +1821,7 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/makeaccountprivate controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1845,7 +1845,7 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/makeaccountpublic controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1869,7 +1869,7 @@ router.get('/followrequests', rateLimiters['/followrequests'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/followrequests controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1893,7 +1893,7 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/denyfollowrequest controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1917,7 +1917,7 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/acceptfollowrequest controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1941,7 +1941,7 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/removefollowerfromaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1965,7 +1965,7 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/blockaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -1989,7 +1989,7 @@ router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getuserblockedaccounts controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2013,7 +2013,7 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/unblockaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2037,7 +2037,7 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/enableAlgorithm controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2061,7 +2061,7 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/getAuthenticationFactorsEnabled controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2085,7 +2085,7 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/disableAlgorithm controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2109,7 +2109,7 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/reloadProfileEssentials controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2133,7 +2133,7 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/turnOffEmailMultiFactorAuthentication controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2157,7 +2157,7 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/deleteaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2181,7 +2181,7 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/checkIfCategoryExists controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2205,7 +2205,7 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/uploadNotificationsSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2229,7 +2229,7 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/getUserNotificationSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2254,7 +2254,7 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/reportUser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2279,7 +2279,7 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getUserActivity controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2304,7 +2304,7 @@ router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPa
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getCategoriesUserIsAPartOf controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2329,7 +2329,7 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/reportPost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2353,7 +2353,7 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/userAlgorithmSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2377,7 +2377,7 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/uploadAlgorithmSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2401,7 +2401,7 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/privacySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2425,7 +2425,7 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/savePrivacySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2449,7 +2449,7 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/getProfileStats controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2474,7 +2474,7 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/loginactivity controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2498,7 +2498,7 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/logoutdevice controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2522,7 +2522,7 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/logoutallotherdevices controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2546,7 +2546,7 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/loginActivitySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2570,7 +2570,7 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/uploadLoginActivitySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2595,7 +2595,7 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/updateLoginActivitySettingsOnSignup controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2619,7 +2619,7 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('GET temp/followingFeedFilterSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2643,7 +2643,7 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('')
+            console.error('POST temp/logoutuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
@@ -2662,7 +2662,12 @@ router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/deletecomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
@@ -2680,7 +2685,12 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/getsinglecomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
@@ -2698,7 +2708,12 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/getcommentreplies controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
@@ -2716,7 +2731,12 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/voteoncomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
@@ -2734,7 +2754,12 @@ router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/replytocomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
@@ -2752,7 +2777,12 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/postcomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
@@ -2770,7 +2800,12 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/searchforpostcomments controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
@@ -2788,7 +2823,12 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/removevoteoncomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
     })
 
     worker.on('error', (error) => {
