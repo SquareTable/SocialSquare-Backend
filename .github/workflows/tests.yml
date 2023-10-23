@@ -24,8 +24,5 @@ jobs:
       - name: Install packages
         run: npm ci
 
-      - name: Install Jest and required test packages
-        run: npm install jest mongodb mongodb-memory-server
-
       - name: Run tests
         run: npm test
