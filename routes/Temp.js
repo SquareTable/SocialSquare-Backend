@@ -816,8 +816,12 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /sendnotificationkey:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /sendnotificationkey:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/sendnotificationkey controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -840,8 +844,12 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /changedisplayname:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /changedisplayname:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/changedisplayname controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -864,8 +872,12 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /changeemail:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /changeemail:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/changeemail controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -888,8 +900,12 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /changeemail:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /changeemail:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/changepassword controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -912,8 +928,12 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /changeusername:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /changeusername:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/changeusername controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -935,8 +955,12 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /changebio:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /changebio:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/changebio controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -959,8 +983,12 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /searchpageusersearch:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /searchpageusersearch:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/searchpageusersearch controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1003,8 +1031,12 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /createpollpost:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /createpollpost:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/createpollpost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1027,8 +1059,12 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /searchforpollposts:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /searchforpollposts:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/searchforpollposts controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1051,8 +1087,12 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /voteonpoll:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /voteonpoll:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/voteonpoll controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1075,8 +1115,12 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /removevoteonpoll:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /removevoteonpoll:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/removevoteonpoll controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1099,8 +1143,12 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /searchforpollpostsbyid:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /searchforpollpostsbyid:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/searchforpollpostsbyid controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1123,8 +1171,12 @@ router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /upvotepoll:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /upvotepoll:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/upvotepoll controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1147,8 +1199,12 @@ router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /downvotepoll:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /downvotepoll:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/downvotepoll controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1171,8 +1227,12 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /deletepoll:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /deletepoll:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/deletepoll controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1195,8 +1255,12 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /postImage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /postImage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/deleteImage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1219,8 +1283,12 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /postProfileImage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /postProfileImage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/postProfileImage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1243,8 +1311,12 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getImagesFromProfile:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getImagesFromProfile:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getImagesFromProfile controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1267,8 +1339,12 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /getProfilePic/:pubId:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /getProfilePic/:pubId:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/getProfilePic/:pubId controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1291,8 +1367,12 @@ router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /upvoteimage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /upvoteimage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/upvoteimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1315,8 +1395,12 @@ router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /downvoteimage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /downvoteimage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/downvoteimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1340,8 +1424,12 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /postcategorywithimage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /postcategorywithimage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/postcategorywithimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1364,8 +1452,12 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /deleteimage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /deleteimage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/deleteimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1389,8 +1481,12 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /postcategorywithoutimage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /postcategorywithoutimage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/postcategorywithoutimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1413,8 +1509,12 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /searchpagesearchcategories:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /searchpagesearchcategories:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/searchpagesearchcategories controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1437,8 +1537,12 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getcategoryimage:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getcategoryimage:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getcategoryimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1461,8 +1565,12 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /findcategorybyid:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /findcategorybyid:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/findcategorybyid controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1485,8 +1593,12 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /findcategoryfromprofile:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /findcategoryfromprofile:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/findcategoryfromprofile controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1509,8 +1621,12 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /joincategory:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /joincategory:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/joincategory controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1535,8 +1651,12 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /posttextthread:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /posttextthread:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/posttextthread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1560,8 +1680,12 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /postimagethread:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /postimagethread:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/postimagethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1586,8 +1710,12 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getthreadsfromcategory:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getthreadsfromcategory:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getthreadsfromcategory controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1610,8 +1738,12 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getthreadsfromprofile:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getthreadsfromprofile:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getthreadsfromprofile controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1634,8 +1766,12 @@ router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /upvotethread:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /upvotethread:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/upvotethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1658,8 +1794,12 @@ router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /downvotethread:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /downvotethread:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/downvotethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1682,8 +1822,12 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getthreadbyid:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getthreadbyid:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getthreadbyid controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1706,8 +1850,12 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /deletethread:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /deletethread:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/deletethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1730,8 +1878,12 @@ router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /toggleFollowOfAUser:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /toggleFollowOfAUser:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/toggleFollowOfAUser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1754,8 +1906,12 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /reloadUsersDetails:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /reloadUsersDetails:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/reloadUsersDetails controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1778,8 +1934,12 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /earnSpecialBadge:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /earnSpecialBadge:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/earnSpecialBadge controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1802,8 +1962,12 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getuserbyid:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getuserbyid:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getuserbyid controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1826,8 +1990,12 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /makeaccountprivate:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /makeaccountprivate:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/makeaccountprivate controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1850,8 +2018,12 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /makeaccountpublic:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /makeaccountpublic:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/makeaccountpublic controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1874,8 +2046,12 @@ router.get('/followrequests', rateLimiters['/followrequests'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /followrequests:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /followrequests:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/followrequests controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1898,8 +2074,12 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /denyfollowrequest:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /denyfollowrequest:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/denyfollowrequest controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1922,8 +2102,12 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /acceptfollowrequest:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /acceptfollowrequest:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/acceptfollowrequest controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1946,8 +2130,12 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /removefollowerfromaccount:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /removefollowerfromaccount:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/removefollowerfromaccount controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1970,8 +2158,12 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /blockaccount:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /blockaccount:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/blockaccount controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -1994,8 +2186,12 @@ router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getuserblockedaccounts:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getuserblockedaccounts:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getuserblockedaccounts controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2018,8 +2214,12 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /unblockaccount:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /unblockaccount:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/unblockaccount controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2042,8 +2242,12 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /enableAlgorithm:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /enableAlgorithm:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/enableAlgorithm controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2066,8 +2270,12 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /getAuthenticationFactorsEnabled:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /getAuthenticationFactorsEnabled:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/getAuthenticationFactorsEnabled controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2090,8 +2298,12 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /disableAlgorithm:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /disableAlgorithm:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/disableAlgorithm controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2114,8 +2326,12 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /reloadProfileEssentials:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /reloadProfileEssentials:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/reloadProfileEssentials controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2138,8 +2354,12 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /turnOffEmailMultiFactorAuthentication:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /turnOffEmailMultiFactorAuthentication:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/turnOffEmailMultiFactorAuthentication controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2162,8 +2382,12 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /deleteaccount:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /deleteaccount:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/deleteaccount controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2186,8 +2410,12 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /checkIfCategoryExists:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /checkIfCategoryExists:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/checkIfCategoryExists controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2210,8 +2438,12 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /uploadNotificationsSettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /uploadNotificationsSettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/uploadNotificationsSettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2234,8 +2466,12 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /getUserNotificationSettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /getUserNotificationSettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/getUserNotificationSettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2259,8 +2495,12 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /reportUser:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /reportUser:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/reportUser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2284,8 +2524,12 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getUserActivity:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getUserActivity:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getUserActivity controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2309,8 +2553,12 @@ router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPa
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getCategoriesUserIsAPartOf:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getCategoriesUserIsAPartOf:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getCategoriesUserIsAPartOf controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2334,8 +2582,12 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /reportPost:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /reportPost:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/reportPost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2358,8 +2610,12 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /userAlgorithmSettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /userAlgorithmSettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/userAlgorithmSettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2382,8 +2638,12 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /uploadAlgorithmSettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /uploadAlgorithmSettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/uploadAlgorithmSettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2406,8 +2666,12 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /privacySettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /privacySettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/privacySettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2430,8 +2694,12 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /savePrivacySettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /savePrivacySettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/savePrivacySettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2454,8 +2722,12 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getProfileStats:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getProfileStats:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getProfileStats controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2479,8 +2751,12 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /loginactivity:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /loginactivity:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/loginactivity controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2503,8 +2779,12 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /logoutdevice:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /logoutdevice:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/logoutdevice controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2527,8 +2807,12 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /logoutallotherdevices:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /logoutallotherdevices:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/logoutallotherdevices controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2551,8 +2835,12 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /loginActivitySettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /loginActivitySettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/loginActivitySettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2575,8 +2863,12 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /uploadLoginActivitySettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /uploadLoginActivitySettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/uploadLoginActivitySettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2600,8 +2892,12 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /updateLoginActivitySettingsOnSignup:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /updateLoginActivitySettingsOnSignup:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/updateLoginActivitySettingsOnSignup controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2624,8 +2920,12 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for GET /followingFeedFilterSettings:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for GET /followingFeedFilterSettings:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET temp/followingFeedFilterSettings controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
@@ -2648,12 +2948,17 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /logoutuser:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /logoutuser:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/logoutuser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deletecomment',
@@ -2671,12 +2976,17 @@ router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /deletecomment:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /deletecomment:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/deletecomment controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getsinglecomment',
@@ -2694,12 +3004,17 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getsinglecomment:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getsinglecomment:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getsinglecomment controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getcommentreplies',
@@ -2717,12 +3032,17 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /getcommentreplies:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /getcommentreplies:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getcommentreplies controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'voteoncomment',
@@ -2740,12 +3060,17 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /voteoncomment:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /voteoncomment:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/voteoncomment controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'replytocomment',
@@ -2763,12 +3088,17 @@ router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /replytocomment:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /replytocomment:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/replytocomment controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postcomment',
@@ -2786,12 +3116,17 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /postcomment:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /postcomment:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/postcomment controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpostcomments',
@@ -2809,12 +3144,17 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /searchforpostcomments:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /searchforpostcomments:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/searchforpostcomments controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
 router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'removevoteoncomment',
@@ -2832,8 +3172,12 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from TempWorker for POST /removevoteoncomment:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /removevoteoncomment:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/removevoteoncomment controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
     })
 });
 
