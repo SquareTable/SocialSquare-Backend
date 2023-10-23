@@ -5397,6 +5397,8 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
                     }
 
+                    if (comment.search(`@${commentOwner.name} `) !== 0) return resolve(HTTPWTHandler.badInput('Comment must have an @ followed by the username of the user that made the comment that you are trying to reply too.'))
+
                     if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Comment could not be found.'))
 
                     POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
