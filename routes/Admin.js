@@ -20,6 +20,7 @@ router.post('/login', (req, res) => {
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST admin/login controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -28,6 +29,7 @@ router.post('/login', (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from AdminWorker for POST /login:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -51,6 +53,7 @@ router.get('/assignReports', (req, res) => {
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET admin/assignReports controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -59,6 +62,7 @@ router.get('/assignReports', (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from AdminWorker for GET /assignReports:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -78,6 +82,7 @@ router.delete('/dismissPostReport', (req, res) => {
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('DELETE admin/dismissPostReport controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -86,6 +91,7 @@ router.delete('/dismissPostReport', (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from AdminWorker for DELETE /dismissPostReport:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -105,6 +111,7 @@ router.delete('/postAndReport', (req, res) => {
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('DELETE admin/postAndReport controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -113,6 +120,7 @@ router.delete('/postAndReport', (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from AdminWorker for DELETE /postAndReport:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
