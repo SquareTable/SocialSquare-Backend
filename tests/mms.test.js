@@ -35,7 +35,7 @@ describe('multi-member replica set', () => {
     const con = await MongoClient.connect(replSet.getUri(), {});
 
     // await while all SECONDARIES will be ready
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 10000));
 
     const db = await con.db('admin');
     const admin = db.admin();
