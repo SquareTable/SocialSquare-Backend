@@ -26,3 +26,22 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  calc-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Calculate coverage
+        run: jest --coverage=true
