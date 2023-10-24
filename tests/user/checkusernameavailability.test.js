@@ -37,7 +37,7 @@ test('user/checkusernameavailability says not available when username is not ava
     expect(returned.data.message).toBe('Username is not available')
 })
 
-test('user/checkusernameavailability says not available when uppercased username is not available', async () => {
+test('user/checkusernameavailability says not available when lowercase username is queried and uppercase username is in db', async () => {
     const DB = new MockMongoDBServer()
     const uri = await DB.startServer();
 
@@ -47,6 +47,40 @@ test('user/checkusernameavailability says not available when uppercased username
     await newUser.save();
 
     const returned = await UserController.checkusernameavailability('seb')
+
+    await mongoose.disconnect();
+    await DB.stopServer();
+
+    expect(returned.data.message).toBe('Username is not available')
+})
+
+test('user/checkusernameavailability says not available when uppercase username is queried and uppercase username is in db', async () => {
+    const DB = new MockMongoDBServer()
+    const uri = await DB.startServer();
+
+    await mongoose.connect(uri);
+    
+    const newUser = new User({name: 'seb'});
+    await newUser.save();
+
+    const returned = await UserController.checkusernameavailability('SEB')
+
+    await mongoose.disconnect();
+    await DB.stopServer();
+
+    expect(returned.data.message).toBe('Username is not available')
+})
+
+test('user/checkusernameavailability says not available when query and db name are multicase', async () => {
+    const DB = new MockMongoDBServer()
+    const uri = await DB.startServer();
+
+    await mongoose.connect(uri);
+    
+    const newUser = new User({name: 'sEbasTiaN'});
+    await newUser.save();
+
+    const returned = await UserController.checkusernameavailability('sebasTiAN')
 
     await mongoose.disconnect();
     await DB.stopServer();
