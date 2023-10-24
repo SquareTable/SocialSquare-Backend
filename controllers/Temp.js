@@ -3933,69 +3933,62 @@ class TempController {
 
                                                                         PostReports.bulkWrite(postReportsBulkWrite, {session}).then(() => {
                                                                             RefreshToken.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
-                                                                                Category.updateMany({}, {$pull: {members: userId}}, {session}).then(() => {
-                                                                                    const commentBulkWrites = [
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {commenterId: {$eq: userId}, replies: 0}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            updateMany: {
-                                                                                                filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
-                                                                                                update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {_id: {$in: imageCommentIds}}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {_id: {$in: pollCommentIds}}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {_id: {$in: threadCommentIds}}
-                                                                                            }
+                                                                                const commentBulkWrites = [
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {commenterId: {$eq: userId}, replies: 0}
                                                                                         }
-                                                                                    ];
+                                                                                    },
+                                                                                    {
+                                                                                        updateMany: {
+                                                                                            filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
+                                                                                            update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {_id: {$in: imageCommentIds}}
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {_id: {$in: pollCommentIds}}
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {_id: {$in: threadCommentIds}}
+                                                                                        }
+                                                                                    }
+                                                                                ];
 
-                                                                                    Comment.bulkWrite(commentBulkWrites, {session}).then(() => {
-                                                                                        CategoryMember.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
-                                                                                            if (userFound.profileImageKey) {
-                                                                                                imageHandler.deleteImageByKey(userFound.profileImageKey)
-                                                                                            }
-    
-                                                                                            for (const imageKey of imageKeys) {
-                                                                                                imageHandler.deleteImageByKey(imageKey)
-                                                                                            }
-    
-                                                                                            for (const imageKey of threadImageKeys) {
-                                                                                                imageHandler.deleteImageByKey(imageKey)
-                                                                                            }
-    
-                                                                                            mongooseSessionHelper.commitTransaction(session).then(() => {
-                                                                                                return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
-                                                                                            }).catch(() => {
-                                                                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting your account and associated data. Please try again.'))
-                                                                                            })
-                                                                                        }).catch(error => {
-                                                                                            console.error('An error occurred while deleting all CategoryMember documents with userId:', userId, '. The error was:', error)
-                                                                                            mongooseSessionHelper.abortTransaction(session).then(() => {
-                                                                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing you from categories. Please try again.'))
-                                                                                            })
+                                                                                Comment.bulkWrite(commentBulkWrites, {session}).then(() => {
+                                                                                    CategoryMember.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
+                                                                                        if (userFound.profileImageKey) {
+                                                                                            imageHandler.deleteImageByKey(userFound.profileImageKey)
+                                                                                        }
+
+                                                                                        for (const imageKey of imageKeys) {
+                                                                                            imageHandler.deleteImageByKey(imageKey)
+                                                                                        }
+
+                                                                                        for (const imageKey of threadImageKeys) {
+                                                                                            imageHandler.deleteImageByKey(imageKey)
+                                                                                        }
+
+                                                                                        mongooseSessionHelper.commitTransaction(session).then(() => {
+                                                                                            return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                                                                        }).catch(() => {
+                                                                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting your account and associated data. Please try again.'))
                                                                                         })
                                                                                     }).catch(error => {
-                                                                                        console.error('An error occurred while making a bulkWrite operation on Comment collection:', commentBulkWrites, '. The error was:', error)
+                                                                                        console.error('An error occurred while deleting all CategoryMember documents with userId:', userId, '. The error was:', error)
+                                                                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                                            return resolve(HTTPWTHandler.serverError('An error occurred while removing you from categories. Please try again.'))
+                                                                                        })
                                                                                     })
                                                                                 }).catch(error => {
-                                                                                    console.error('An error occurred while pulling:', userId, 'from all member fields from all Category documents. The error was:', error)
-                                                                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                                                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing you from all categories. Please try again.'))
-                                                                                    })
+                                                                                    console.error('An error occurred while making a bulkWrite operation on Comment collection:', commentBulkWrites, '. The error was:', error)
                                                                                 })
                                                                             }).catch(error => {
                                                                                 console.error('An error occurred while deleting all refresh tokens with userId:', userId, '. The error was:', error)
