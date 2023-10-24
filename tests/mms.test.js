@@ -29,7 +29,7 @@ describe('multi-member replica set', () => {
     await replSet.stop();
   }, 40000);
 
-  it('should be possible to connect replicaset after waitUntilRunning resolveds', async () => {
+  it('should be possible to connect replicaset after waitUntilRunning resolves', async () => {
     const replSet = await MongoMemoryReplSet.create({ replSet: { count: 3 } });
 
     const con = await MongoClient.connect(replSet.getUri(), {});
