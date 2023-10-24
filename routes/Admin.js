@@ -10,6 +10,7 @@ const workerPath = path.resolve('workers', 'AdminWorker.js')
 
 //login route bypasses JWT verification
 router.post('/login', (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'login',
@@ -18,12 +19,20 @@ router.post('/login', (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST admin/login controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
+        }
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from AdminWorker for POST /login:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from AdminWorker for POST /login:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST admin/login controller function encountered an error and tried to return it to the client but HTTP headers have already been sent! Error to be returned:', error)
+        }
     })
 });
 
@@ -32,6 +41,7 @@ router.all("*", [tokenValidation]); // the * just makes it that it affects them 
 
 
 router.get('/assignReports', (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getAssignedReports',
@@ -40,16 +50,25 @@ router.get('/assignReports', (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('GET admin/assignReports controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
+        }
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from AdminWorker for GET /assignReports:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from AdminWorker for GET /assignReports:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('GET admin/assignReports controller function encountered an error and tried to return it to the client but HTTP headers have already been sent! Error to be returned:', error)
+        }
     })
 })
 
 router.delete('/dismissPostReport', (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'dismissPostReport',
@@ -58,16 +77,25 @@ router.delete('/dismissPostReport', (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('DELETE admin/dismissPostReport controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
+        }
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from AdminWorker for DELETE /dismissPostReport:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from AdminWorker for DELETE /dismissPostReport:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('DELETE admin/dismissPostReport controller function encountered an error and tried to return it to the client but HTTP headers have already been sent! Error to be returned:', error)
+        }
     })
 })
 
 router.delete('/postAndReport', (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deletePostAndReport',
@@ -76,12 +104,20 @@ router.delete('/postAndReport', (req, res) => {
     })
 
     worker.on('message', (result) => {
-        res.status(result.statusCode).json(result.data)
+        if (!HTTPHeadersSent) {
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('DELETE admin/postAndReport controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
+        }
     })
 
     worker.on('error', (error) => {
-        console.error('An error occurred from AdminWorker for DELETE /postAndReport:', error)
-        HTTPHandler.serverError(res, String(error))
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from AdminWorker for DELETE /postAndReport:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('DELETE admin/postAndReport controller function encountered an error and tried to return it to the client but HTTP headers have already been sent! Error to be returned:', error)
+        }
     })
 })
 
