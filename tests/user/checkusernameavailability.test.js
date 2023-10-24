@@ -25,7 +25,7 @@ test('user/checkusernameavailability says not available when username is not ava
 
     await mongoose.connect(uri);
     
-    const newUser = {name: 'seb'};
+    const newUser = new User({name: 'seb'});
     await newUser.save();
 
     const returned = await UserController.checkusernameavailability('seb')
