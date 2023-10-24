@@ -18,7 +18,7 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient } = require('mongodb');
 
-jest.setTimeout(100000); // 10s
+jest.setTimeout(100000); // 100s
 
 describe('multi-member replica set', () => {
   it('should enter running state', async () => {

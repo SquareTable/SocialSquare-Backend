@@ -4,6 +4,8 @@ const User = require('../../models/User');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const UserController = require('../../controllers/User')
 
+jest.setTimeout(100000); // 100s
+
 test('user/checkusernameavailability says available when username is available', async () => {
     const DB = new MockMongoDBServer()
     const uri = await DB.startServer();
