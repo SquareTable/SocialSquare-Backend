@@ -17,6 +17,7 @@ test('user/checkusernameavailability says available when username is available',
     await DB.stopServer();
 
     expect(returned.data.message).toBe('Username is available')
+    expect(returned.statusCode).toBe(200)
 })
 
 
@@ -35,6 +36,7 @@ test('user/checkusernameavailability says not available when username is not ava
     await DB.stopServer();
 
     expect(returned.data.message).toBe('Username is not available')
+    expect(returned.statusCode).toBe(200)
 })
 
 test('user/checkusernameavailability says not available when lowercase username is queried and uppercase username is in db', async () => {
@@ -52,6 +54,7 @@ test('user/checkusernameavailability says not available when lowercase username 
     await DB.stopServer();
 
     expect(returned.data.message).toBe('Username is not available')
+    expect(returned.statusCode).toBe(200)
 })
 
 test('user/checkusernameavailability says not available when uppercase username is queried and uppercase username is in db', async () => {
@@ -69,6 +72,7 @@ test('user/checkusernameavailability says not available when uppercase username 
     await DB.stopServer();
 
     expect(returned.data.message).toBe('Username is not available')
+    expect(returned.statusCode).toBe(200)
 })
 
 test('user/checkusernameavailability says not available when query and db name are multicase', async () => {
@@ -86,4 +90,5 @@ test('user/checkusernameavailability says not available when query and db name a
     await DB.stopServer();
 
     expect(returned.data.message).toBe('Username is not available')
+    expect(returned.statusCode).toBe(200)
 })
