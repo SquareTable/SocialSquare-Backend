@@ -71,6 +71,7 @@ router.post('/signup', rateLimiters['/signup'], HTTPHandler.getDeviceTypeMiddlew
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST user/signup controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -79,6 +80,7 @@ router.post('/signup', rateLimiters['/signup'], HTTPHandler.getDeviceTypeMiddlew
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from UserWorker for POST /signup:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -98,6 +100,7 @@ router.post('/signin', rateLimiters['/signin'], HTTPHandler.getDeviceTypeMiddlew
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST user/signin controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -106,6 +109,7 @@ router.post('/signin', rateLimiters['/signin'], HTTPHandler.getDeviceTypeMiddlew
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from UserWorker for POST /signin:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -125,6 +129,7 @@ router.post('/checkusernameavailability', rateLimiters['/checkusernameavailabili
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST user/checkusernameavailability controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -133,6 +138,7 @@ router.post('/checkusernameavailability', rateLimiters['/checkusernameavailabili
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from UserWorker for POST /checkusernameavailability:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -154,6 +160,7 @@ router.post('/sendemailverificationcode', rateLimiters['/sendemailverificationco
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST user/sendemailverificationcode controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -162,6 +169,7 @@ router.post('/sendemailverificationcode', rateLimiters['/sendemailverificationco
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from UserWorker for POST /sendemailverificationcode:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -183,6 +191,7 @@ router.post('/checkverificationcode', rateLimiters['/checkverificationcode'], HT
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST user/checkverificationcode controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -191,6 +200,7 @@ router.post('/checkverificationcode', rateLimiters['/checkverificationcode'], HT
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from UserWorker for POST /checkverificationcode:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -212,6 +222,7 @@ router.post('/changepasswordwithverificationcode', rateLimiters['/changepassword
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST user/changepasswordwithverificationcode controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -220,6 +231,7 @@ router.post('/changepasswordwithverificationcode', rateLimiters['/changepassword
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from UserWorker for POST /changepasswordwithverificationcode:', error)
             HTTPHandler.serverError(res, String(error))
         } else {

@@ -817,6 +817,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /sendnotificationkey:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -845,6 +846,7 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /changedisplayname:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -873,6 +875,7 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /changeemail:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -901,6 +904,7 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /changeemail:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -929,6 +933,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /changeusername:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -956,6 +961,7 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /changebio:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -984,6 +990,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /searchpageusersearch:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1032,6 +1039,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /createpollpost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1060,6 +1068,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /searchforpollposts:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1088,6 +1097,7 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /voteonpoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1116,6 +1126,7 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /removevoteonpoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1144,6 +1155,7 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /searchforpollpostsbyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1172,6 +1184,7 @@ router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /upvotepoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1200,6 +1213,7 @@ router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /downvotepoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1228,6 +1242,7 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /deletepoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1256,6 +1271,7 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /postImage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1284,6 +1300,7 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /postProfileImage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1312,6 +1329,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getImagesFromProfile:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1340,6 +1358,7 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /getProfilePic/:pubId:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1368,6 +1387,7 @@ router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /upvoteimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1396,6 +1416,7 @@ router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /downvoteimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1425,6 +1446,7 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /postcategorywithimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1453,6 +1475,7 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /deleteimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1482,6 +1505,7 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /postcategorywithoutimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1510,6 +1534,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /searchpagesearchcategories:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1538,6 +1563,7 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getcategoryimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1566,6 +1592,7 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /findcategorybyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1594,6 +1621,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /findcategoryfromprofile:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1622,6 +1650,7 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /joincategory:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1652,6 +1681,7 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /posttextthread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1681,6 +1711,7 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /postimagethread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1711,6 +1742,7 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getthreadsfromcategory:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1739,6 +1771,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getthreadsfromprofile:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1767,6 +1800,7 @@ router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /upvotethread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1795,6 +1829,7 @@ router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /downvotethread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1823,6 +1858,7 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getthreadbyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1851,6 +1887,7 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /deletethread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1879,6 +1916,7 @@ router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /toggleFollowOfAUser:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1907,6 +1945,7 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /reloadUsersDetails:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1935,6 +1974,7 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /earnSpecialBadge:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1963,6 +2003,7 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getuserbyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1991,6 +2032,7 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /makeaccountprivate:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2019,6 +2061,7 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /makeaccountpublic:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2047,6 +2090,7 @@ router.get('/followrequests', rateLimiters['/followrequests'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /followrequests:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2075,6 +2119,7 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /denyfollowrequest:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2103,6 +2148,7 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /acceptfollowrequest:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2131,6 +2177,7 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /removefollowerfromaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2159,6 +2206,7 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /blockaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2187,6 +2235,7 @@ router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getuserblockedaccounts:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2215,6 +2264,7 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /unblockaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2243,6 +2293,7 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /enableAlgorithm:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2271,6 +2322,7 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /getAuthenticationFactorsEnabled:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2299,6 +2351,7 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /disableAlgorithm:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2327,6 +2380,7 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /reloadProfileEssentials:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2355,6 +2409,7 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /turnOffEmailMultiFactorAuthentication:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2383,6 +2438,7 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /deleteaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2411,6 +2467,7 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /checkIfCategoryExists:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2439,6 +2496,7 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /uploadNotificationsSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2467,6 +2525,7 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /getUserNotificationSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2496,6 +2555,7 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /reportUser:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2525,6 +2585,7 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getUserActivity:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2554,6 +2615,7 @@ router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPa
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getCategoriesUserIsAPartOf:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2583,6 +2645,7 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /reportPost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2611,6 +2674,7 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /userAlgorithmSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2639,6 +2703,7 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /uploadAlgorithmSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2667,6 +2732,7 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /privacySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2695,6 +2761,7 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /savePrivacySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2723,6 +2790,7 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getProfileStats:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2752,6 +2820,7 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /loginactivity:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2780,6 +2849,7 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /logoutdevice:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2808,6 +2878,7 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /logoutallotherdevices:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2836,6 +2907,7 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /loginActivitySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2864,6 +2936,7 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /uploadLoginActivitySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2893,6 +2966,7 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /updateLoginActivitySettingsOnSignup:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2921,6 +2995,7 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for GET /followingFeedFilterSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2949,6 +3024,7 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /logoutuser:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2977,6 +3053,7 @@ router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /deletecomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3005,6 +3082,7 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getsinglecomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3033,6 +3111,7 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /getcommentreplies:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3061,6 +3140,7 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /voteoncomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3089,6 +3169,7 @@ router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /replytocomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3117,6 +3198,7 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /postcomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3145,6 +3227,7 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /searchforpostcomments:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3173,6 +3256,7 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from TempWorker for POST /removevoteoncomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
