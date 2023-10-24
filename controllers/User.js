@@ -306,8 +306,7 @@ class UserController {
                 return resolve(HTTPWTHandler.badInput('Username must be 20 or less characters'))
             }
         
-        
-            User.findOne({name: {$eq: username}}).lean().then(userFound => {
+            User.findOne({name: {$regex: `^${username}$`, $options: 'i'}}).lean().then(userFound => {
                 if (userFound) {
                     return resolve(HTTPWTHandler.OK('Username is not available'))
                 } else {
