@@ -9,8 +9,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x, 21.x]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        node-version: [16.x, 18.x, 20.x]
+        os: [ubuntu-20.04, ubuntu-22.04, windows-2019, windows-2022, macos-11, macos-12, macos-13]
 
     steps:
       - name: Checkout Repository
