@@ -21,6 +21,7 @@ router.post('/viewedPostInFeed', (req, res) => {
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST feed/viewedPostInFeed controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -29,6 +30,7 @@ router.post('/viewedPostInFeed', (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from FeedWorker for POST /viewedPostInFeed:', error)
             HTTPHandler.serverError(res, 'A server error occurred. Please try again.')
         } else {
@@ -48,6 +50,7 @@ router.post('/followerFeed', (req, res) => {
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST feed/followerFeed controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -56,6 +59,7 @@ router.post('/followerFeed', (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from FeedWorker for POST /followerFeed:', error)
             HTTPHandler.serverError(res, 'A server error occurred. Please try again.')
         } else {
@@ -75,6 +79,7 @@ router.post('/forYouFeed', (req, res) => {
 
     worker.on('message', (result) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST feed/forYouFeed controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -83,6 +88,7 @@ router.post('/forYouFeed', (req, res) => {
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
             console.error('An error occurred from FeedWorker for POST /forYouFeed:', error)
             HTTPHandler.serverError(res, 'A server error occurred. Please try again.')
         } else {
