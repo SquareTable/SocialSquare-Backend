@@ -4,7 +4,8 @@
   "description": "Backend for a login system",
   "main": "server.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test-coverage": "jest --coverage=true"
   },
   "author": "",
   "license": "ISC",
