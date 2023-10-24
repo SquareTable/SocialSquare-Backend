@@ -1,4 +1,3 @@
-const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 const User = require('../../models/User');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
