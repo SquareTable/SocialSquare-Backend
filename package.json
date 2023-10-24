@@ -4,7 +4,8 @@
   "description": "Backend for a login system",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test-coverage": "jest --coverage=true"
   },
   "author": "",
   "license": "ISC",
@@ -34,5 +35,9 @@
     "string-similarity": "^4.0.4",
     "swagger-ui-express": "^4.5.0",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^9.0.1"
   }
 }
