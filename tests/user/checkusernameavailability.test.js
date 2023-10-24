@@ -4,17 +4,34 @@ const User = require('../../models/User');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const UserController = require('../../controllers/User')
 
-test('user/checkusernameavailability says available when username is available', () => {
+test('user/checkusernameavailability says available when username is available', async () => {
     const DB = new MockMongoDBServer()
-    DB.startServer().then(async uri => {
-        await mongoose.connect(uri);
+    const uri = await DB.startServer();
 
-        UserController.checkusernameavailability('seb').then(returned => {
-            mongoose.disconnect().then(() => {
-                DB.stopServer().then(() => {
-                    expect(returned.data.message).toBe('Username is available')
-                })
-            })
-        })
-    })
+    await mongoose.connect(uri);
+
+    const returned = await UserController.checkusernameavailability('seb')
+
+    await mongoose.disconnect();
+    await DB.stopServer();
+
+    expect(returned.data.message).toBe('Username is available')
+})
+
+
+test('user/checkusernameavailability says not available when username is not available', async () => {
+    const DB = new MockMongoDBServer()
+    const uri = await DB.startServer();
+
+    await mongoose.connect(uri);
+    
+    const newUser = {name: 'seb'};
+    await newUser.save();
+
+    const returned = await UserController.checkusernameavailability('seb')
+
+    await mongoose.disconnect();
+    await DB.stopServer();
+
+    expect(returned.data.message).toBe('Username is not available')
 })
