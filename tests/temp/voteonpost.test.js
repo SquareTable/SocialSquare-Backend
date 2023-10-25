@@ -25,23 +25,22 @@ const VOTE_DATABASE_MODELS = {
 }
 
 /*
-TODO:
-Test if votes work for non-private non-blocked accounts -- DONE
-Test if votes work for private accounts where the voter is following the private account -- DONE
-Test if voting fails if userId is not a string -- DONE
-Test if voting fails if userId is not an objectId -- DONE
-Test if voting fails if postId is not a string -- DONE
-Test if voting fails if postId is not an objectId -- DONE
-Test if voting fails if postFormat is not a valid format -- DONE
-Test if voting fails if voteType is not a valid type -- DONE
-Test if voting fails if voter's account could not be found -- DONE
-Test if voting fails if post could not be found -- DONE
-Test if voting fails when post owner could not be found -- DONE
-Test if voting fails if the account is blocked -- DONE
-Test if voting fails if the post owner account is private and the user is not following them -- DONE
-Test votes do not get duplicated in database -- DONE
-Test downvotes get removed from database when making an upvote
-Test upvotes get removed from database when making a downvote
+API Tests:
+Test if votes work for non-private non-blocked accounts
+Test if votes work for private accounts where the voter is following the private account
+Test if voting fails if userId is not a string
+Test if voting fails if userId is not an objectId
+Test if voting fails if postId is not a string
+Test if voting fails if postId is not an objectId
+Test if voting fails if postFormat is not a valid format
+Test if voting fails if voteType is not a valid type
+Test if voting fails if voter's account could not be found
+Test if voting fails if post could not be found
+Test if voting fails when post owner could not be found
+Test if voting fails if the account is blocked
+Test if voting fails if the post owner account is private and the user is not following them
+Test votes do not get duplicated in database
+Test opposite vote types get removed from database when making a vote (upvote gets deleted when making a downvote and vice versa)
 */
 
 const formats = ["Image", "Poll", "Thread"]
@@ -49,6 +48,8 @@ const votes = ["Up", "Down"]
 
 for (const format of formats) {
     for (const voteType of votes) {
+        const oppositeVoteType = voteType === "Up" ? "Down" : "Up";
+
         test(`${voteType}vote on ${format} post is successful when post owner account is public and has no blocked accounts`, async () => {
             const DB = new MockMongoDBServer()
             const uri = await DB.startServer();
@@ -383,6 +384,56 @@ for (const format of formats) {
                 postFormat: format,
                 userPublicId: requester.secondId
             })
+
+            await mongoose.disconnect();
+            await DB.stopServer();
+        })
+
+        test(`${oppositeVoteType}votes on ${format} post get deleted when making a ${voteType}vote`, async () => {
+            const DB = new MockMongoDBServer()
+            const uri = await DB.startServer();
+
+            await mongoose.connect(uri);
+
+            const postOwner = new User({
+                _id: "6537d7c2519e591b466c198f",
+                blockedAccounts: [],
+                privateAccount: false
+            })
+
+            const requester = new User({
+                _id: "6537dd49d1866f60dbf58d1f",
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+            })
+
+            await postOwner.save();
+            await requester.save();
+
+            const postData = {_id: "6537f617a17d1f6a636e7d39"};
+            postData.creatorId = postOwner._id;
+
+            const post = new POST_DATABASE_MODELS[format](postData)
+            await post.save();
+
+            const voteData = {
+                postId: postData._id,
+                postFormat: format,
+                interactionDate: 1,
+                userPublicId: requester.secondId
+            }
+
+            const dbVote = new VOTE_DATABASE_MODELS[oppositeVoteType](voteData)
+            await dbVote.save()
+
+            const returned = await TempController.voteonpost(requester._id, postData._id, format, voteType)
+
+            expect(returned.statusCode).toBe(200);
+
+            const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
+            const oppositeVotes = await VOTE_DATABASE_MODELS[oppositeVoteType].find({}).lean();
+
+            expect(votes).toHaveLength(1)
+            expect(oppositeVotes).toHaveLength(0)
 
             await mongoose.disconnect();
             await DB.stopServer();
