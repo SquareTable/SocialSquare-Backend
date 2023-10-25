@@ -28,7 +28,8 @@ jest.setTimeout(20_000); //20 seconds per test
 
 /*
 API Tests:
-Test if votes work for non-private non-blocked accounts
+Test if votes work for non-private non-blocked accounts when voter is not the post creator
+Test if voting fails if the voter is the post creator
 Test if votes work for private accounts where the voter is following the private account
 Test if voting fails if userId is not a string
 Test if voting fails if userId is not an objectId
@@ -38,11 +39,12 @@ Test if voting fails if postFormat is not a valid format
 Test if voting fails if voteType is not a valid type
 Test if voting fails if voter's account could not be found
 Test if voting fails if post could not be found
-Test if voting fails when post owner could not be found
+Test if voting fails when post creator could not be found
 Test if voting fails if the account is blocked
-Test if voting fails if the post owner account is private and the user is not following them
+Test if voting fails if the post creator account is private and the user is not following them
 Test votes do not get duplicated in database
 Test opposite vote types get removed from database when making a vote (upvote gets deleted when making a downvote and vice versa)
+Test that votes already in the database do not get modified by someone else adding a vote
 */
 
 const formats = ["Image", "Poll", "Thread"]
@@ -52,7 +54,7 @@ for (const format of formats) {
     for (const voteType of votes) {
         const oppositeVoteType = voteType === "Up" ? "Down" : "Up";
 
-        test(`${voteType}vote on ${format} post is successful when post owner account is public and has no blocked accounts`, async () => {
+        test(`${voteType}vote on ${format} post is successful when post creator account is public and has no blocked accounts`, async () => {
             expect.assertions(5);
 
             const DB = new MockMongoDBServer()
@@ -60,31 +62,31 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const postOwnerData = {
+            const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
                 privateAccount: false
             };
 
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const postOwner = new User(postOwnerData)
+            const postcreator = new User(postcreatorData)
 
-            const requester = new User(requesterData)
+            const voter = new User(voterData)
 
-            await postOwner.save();
-            await requester.save();
+            await postcreator.save();
+            await voter.save();
 
             const postData = {_id: "6537f617a17d1f6a636e7d39"};
-            postData.creatorId = postOwner._id;
+            postData.creatorId = postcreator._id;
 
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
-            const returned = await TempController.voteonpost(requesterData._id, postData._id, format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
@@ -94,6 +96,7 @@ for (const format of formats) {
 
             delete newVote._id;
             delete newVote.interactionDate;
+            newVote.postId = String(newVote.postId);
 
             await mongoose.disconnect();
             await DB.stopServer();
@@ -102,16 +105,56 @@ for (const format of formats) {
             expect(votes).toHaveLength(1);
             expect(vote).toHaveProperty('_id');
             expect(vote.interactionDate < Date.now() && vote.interactionDate > Date.now() - 1000 * 100).toBe(true); //interaction date is between now and 100 seconds before - gives plenty of time for test to run
-            expect(newVote).toBe({
+            expect(newVote).toStrictEqual({
                 __v: 0,
                 postId: postData._id,
                 postFormat: format,
-                userPublicId: requester.secondId
+                userPublicId: voter.secondId
             });
         })
 
+        test(`${voteType}vote on ${format} post fails when the voter is the post creator`, async () => {
+            expect.assertions(3);
 
-        test(`${voteType}vote on ${format} post is successful when post owner account has no blocked accounts and is private, but voter is following post owner account`, async () => {
+            const DB = new MockMongoDBServer()
+            const uri = await DB.startServer();
+
+            await mongoose.connect(uri);
+
+            const voterData = {
+                _id: "6537d7c2519e591b466c198f",
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                blockedAccounts: [],
+                privateAccount: false
+            };
+
+            const voter = new User(voterData)
+
+            await voter.save();
+
+            const postData = {
+                _id: "6537f617a17d1f6a636e7d39",
+                creatorId: voterData._id
+            };
+
+            const post = new POST_DATABASE_MODELS[format](postData)
+            await post.save();
+
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
+
+            const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
+
+
+            await mongoose.disconnect();
+            await DB.stopServer();
+
+            expect(returned.statusCode).toBe(403);
+            expect(returned.data.message).toBe("You cannot vote on your own post.")
+            expect(votes).toHaveLength(0);
+        })
+
+
+        test(`${voteType}vote on ${format} post is successful when post creator account has no blocked accounts and is private, but voter is following post creator account`, async () => {
             expect.assertions(5);
 
             const DB = new MockMongoDBServer()
@@ -119,7 +162,7 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const postOwnerData = {
+            const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
                 privateAccount: true,
@@ -128,25 +171,25 @@ for (const format of formats) {
                 ]
             };
 
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const postOwner = new User(postOwnerData)
+            const postcreator = new User(postcreatorData)
 
-            const requester = new User(requesterData)
+            const voter = new User(voterData)
 
-            await postOwner.save();
-            await requester.save();
+            await postcreator.save();
+            await voter.save();
 
             const postData = {_id: "6537f617a17d1f6a636e7d39"};
-            postData.creatorId = postOwnerData._id;
+            postData.creatorId = postcreatorData._id;
 
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
-            const returned = await TempController.voteonpost(requesterData._id, postData._id, format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
@@ -156,6 +199,7 @@ for (const format of formats) {
 
             delete newVote._id;
             delete newVote.interactionDate;
+            newVote.postId = String(newVote.postId)
 
             await mongoose.disconnect();
             await DB.stopServer();
@@ -164,11 +208,11 @@ for (const format of formats) {
             expect(votes).toHaveLength(1);
             expect(vote).toHaveProperty('_id');
             expect(vote.interactionDate < Date.now() && vote.interactionDate > Date.now() - 1000 * 100).toBe(true); //interaction date is between now and 100 seconds before - gives plenty of time for test to run
-            expect(vote).toBe({
+            expect(newVote).toStrictEqual({
                 __v: 0,
                 postId: postData._id,
                 postFormat: format,
-                userPublicId: requester.secondId
+                userPublicId: voter.secondId
             });
         })
 
@@ -200,16 +244,16 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const requester = new User(requesterData)
+            const voter = new User(voterData)
 
-            await requester.save();
+            await voter.save();
 
-            const returned = await TempController.voteonpost(requesterData._id, "6537f617a17d1f6a636e7d39", format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, "6537f617a17d1f6a636e7d39", format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
@@ -221,7 +265,7 @@ for (const format of formats) {
             expect(votes).toHaveLength(0);
         })
 
-        test(`${voteType}vote on ${format} post fails when post owner could not be found`, async () => {
+        test(`${voteType}vote on ${format} post fails when post creator could not be found`, async () => {
             expect.assertions(3);
 
             const DB = new MockMongoDBServer()
@@ -229,14 +273,14 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const requester = new User()
+            const voter = new User(voterData)
 
-            await requester.save();
+            await voter.save();
 
             const postData = {
                 _id: "6537f617a17d1f6a636e7d39",
@@ -246,19 +290,19 @@ for (const format of formats) {
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
-            const returned = await TempController.voteonpost(requesterData._id, postData._id, format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
             await mongoose.disconnect();
             await DB.stopServer();
 
-            expect(returned.statusCode).toBe(200);
-            expect(returned.data.message).toBe("Could not find post owner");
+            expect(returned.statusCode).toBe(404);
+            expect(returned.data.message).toBe("Could not find post creator");
             expect(votes).toHaveLength(0);
         })
 
-        test(`${voteType}vote on ${format} post fails when the voter is blocked by the post owner`, async () => {
+        test(`${voteType}vote on ${format} post fails when the voter is blocked by the post creator`, async () => {
             expect.assertions(3);
 
             const DB = new MockMongoDBServer()
@@ -266,33 +310,33 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const postOwnerData = {
-                _id: "6537d7c2519e591b466c198f",
+            const postcreatorData = {
+                _id: "6537d7c2519e591b466c197f",
                 blockedAccounts: ["c709e918-f43a-4b90-a35a-36d8a6193431"],
                 privateAccount: false
             };
 
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const postOwner = new User(postOwnerData)
+            const postcreator = new User(postcreatorData)
 
-            const requester = new User(requesterData)
+            const voter = new User(voterData)
 
-            await postOwner.save();
-            await requester.save();
+            await postcreator.save();
+            await voter.save();
 
             const postData = {
                 _id: "6537f617a17d1f6a636e7d39",
-                creatorId: postOwnerData._id
+                creatorId: postcreatorData._id
             };
 
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
-            const returned = await TempController.voteonpost(requesterData._id, postData._id, format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
@@ -304,7 +348,7 @@ for (const format of formats) {
             expect(votes).toHaveLength(0);
         })
 
-        test(`${voteType}vote on ${format} post fails when the post owner has a private account and the voter is not following them`, async () => {
+        test(`${voteType}vote on ${format} post fails when the post creator has a private account and the voter is not following them`, async () => {
             expect.assertions(3);
 
             const DB = new MockMongoDBServer()
@@ -312,34 +356,34 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const postOwnerData = {
+            const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
                 privateAccount: true,
                 followers: []
             };
             
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const postOwner = new User(postOwnerData)
+            const postcreator = new User(postcreatorData)
 
-            const requester = new User(requesterData)
+            const voter = new User(voterData)
 
-            await postOwner.save();
-            await requester.save();
+            await postcreator.save();
+            await voter.save();
 
             const postData = {
                 _id: "6537f617a17d1f6a636e7d39",
-                creatorId: postOwnerData._id
+                creatorId: postcreatorData._id
             };
 
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
-            const returned = await TempController.voteonpost(requesterData._id, postData._id, format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
@@ -359,26 +403,26 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const postOwnerData = {
+            const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
                 privateAccount: false
             };
 
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const postOwner = new User(postOwnerData);
+            const postcreator = new User(postcreatorData);
 
-            const requester = new User(requesterData);
+            const voter = new User(voterData);
 
-            await postOwner.save();
-            await requester.save();
+            await postcreator.save();
+            await voter.save();
 
             const postData = {_id: "6537f617a17d1f6a636e7d39"};
-            postData.creatorId = postOwner._id;
+            postData.creatorId = postcreator._id;
 
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
@@ -387,13 +431,13 @@ for (const format of formats) {
                 postId: postData._id,
                 postFormat: format,
                 interactionDate: 1,
-                userPublicId: requester.secondId
+                userPublicId: voter.secondId
             }
 
             const dbVote = new VOTE_DATABASE_MODELS[voteType](voteData)
             await dbVote.save()
 
-            const returned = await TempController.voteonpost(requesterData._id, postData._id, format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
@@ -403,6 +447,7 @@ for (const format of formats) {
 
             delete newVote._id;
             delete newVote.interactionDate;
+            newVote.postId = String(newVote.postId);
 
             await mongoose.disconnect();
             await DB.stopServer();
@@ -411,11 +456,11 @@ for (const format of formats) {
             expect(votes).toHaveLength(1);
             expect(vote).toHaveProperty('_id')
             expect(vote.interactionDate < Date.now() && vote.interactionDate > Date.now() - 1000 * 100).toBe(true) //interaction date is between now and 100 seconds before - gives plenty of time for test to run        
-            expect(newVote).toBe({
+            expect(newVote).toStrictEqual({
                 __v: 0,
                 postId: postData._id,
                 postFormat: format,
-                userPublicId: requester.secondId
+                userPublicId: voter.secondId
             })
         })
 
@@ -427,26 +472,26 @@ for (const format of formats) {
 
             await mongoose.connect(uri);
 
-            const postOwnerData = {
+            const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
                 privateAccount: false
             };
 
-            const requesterData = {
+            const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
                 secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
             };
 
-            const postOwner = new User(postOwnerData)
+            const postcreator = new User(postcreatorData)
 
-            const requester = new User(requesterData)
+            const voter = new User(voterData)
 
-            await postOwner.save();
-            await requester.save();
+            await postcreator.save();
+            await voter.save();
 
             const postData = {_id: "6537f617a17d1f6a636e7d39"};
-            postData.creatorId = postOwner._id;
+            postData.creatorId = postcreator._id;
 
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
@@ -455,13 +500,13 @@ for (const format of formats) {
                 postId: postData._id,
                 postFormat: format,
                 interactionDate: 1,
-                userPublicId: requester.secondId
+                userPublicId: voter.secondId
             }
 
             const dbVote = new VOTE_DATABASE_MODELS[oppositeVoteType](voteData)
             await dbVote.save()
 
-            const returned = await TempController.voteonpost(requesterData._id, postData._id, format, voteType)
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
             const oppositeVotes = await VOTE_DATABASE_MODELS[oppositeVoteType].find({}).lean();
@@ -472,6 +517,111 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(1);
             expect(oppositeVotes).toHaveLength(0);
+        })
+
+        test(`${voteType}vote on ${format} post does not modify other votes in the database`, async () => {
+            expect.assertions(3);
+
+            const DB = new MockMongoDBServer()
+            const uri = await DB.startServer();
+
+            await mongoose.connect(uri);
+
+            const postcreatorData = {
+                _id: "6537d7c2519e591b466c198f",
+                blockedAccounts: [],
+                privateAccount: false
+            };
+
+            const voterData = {
+                _id: "6537dd49d1866f60dbf58d1f",
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+            };
+
+            const postcreator = new User(postcreatorData)
+
+            const voter = new User(voterData)
+
+            await postcreator.save();
+            await voter.save();
+
+            const postData = {_id: "6537f617a17d1f6a636e7d39"};
+            postData.creatorId = postcreator._id;
+
+            const post = new POST_DATABASE_MODELS[format](postData)
+            await post.save();
+
+            const upvotesToInsert = [
+                {
+                    postId: "6537f617a17d1f6a636e7d39",
+                    postFormat: format,
+                    interactionDate: 1,
+                    userPublicId: "d709e918-f43a-4b90-a35a-36d8a6193432",
+                    __v: 0,
+                    _id: "65390ffcae8a0231facea8de"
+                },
+                {
+                    postId: "6537f617a17d1f6a636e7d39",
+                    postFormat: format,
+                    interactionDate: 2,
+                    userPublicId: "e709e918-f43a-4b90-a35a-36d8a6193433",
+                    __v: 0,
+                    _id: "65390ffcae8a0231facea8df"
+                },
+                {
+                    postId: "6537f617a17d1f6a636e7d39",
+                    postFormat: format,
+                    interactionDate: 3,
+                    userPublicId: "f709e918-f43a-4b90-a35a-36d8a6193434",
+                    __v: 0,
+                    _id: "65390ffcae8a0231facea8d0"
+                },
+            ]
+
+            const downvotesToInsert = [
+                {
+                    postId: "6537f617a17d1f6a636e7d39",
+                    postFormat: format,
+                    interactionDate: 1,
+                    userPublicId: "a709e918-f43a-4b90-a35a-36d8a6193434",
+                    __v: 0,
+                    _id: "65390ffcae8a0231facea8d1"
+                },
+                {
+                    postId: "6537f617a17d1f6a636e7d39",
+                    postFormat: format,
+                    interactionDate: 2,
+                    userPublicId: "b709e918-f43a-4b90-a35a-36d8a6193435",
+                    __v: 0,
+                    _id: "65390ffcae8a0231facea8d2"
+                },
+                {
+                    postId: "6537f617a17d1f6a636e7d39",
+                    postFormat: format,
+                    interactionDate: 3,
+                    userPublicId: "c709e918-f43a-4b90-a35a-36d8a6193436",
+                    __v: 0,
+                    _id: "65390ffcae8a0231facea8d3"
+                },
+            ]
+
+            await Upvote.insertMany(upvotesToInsert)
+            await Downvote.insertMany(downvotesToInsert)
+
+            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
+
+            const upvotes = await Upvote.find({interactionDate: {$lt: 100}}).sort({interactionDate: 1}).lean();
+            const downvotes = await Downvote.find({interactionDate: {$lt: 100}}).sort({interactionDate: 1}).lean();
+
+            objectIdStringifiedUpvotes = upvotes.map(vote => ({...vote, _id: String(vote._id), postId: String(vote.postId)}))
+            objectIdStringifiedDownvotes = downvotes.map(vote => ({...vote, _id: String(vote._id), postId: String(vote.postId)}))
+
+            await mongoose.disconnect();
+            await DB.stopServer();
+
+            expect(returned.statusCode).toBe(200);
+            expect(objectIdStringifiedUpvotes).toStrictEqual(upvotesToInsert);
+            expect(objectIdStringifiedDownvotes).toStrictEqual(downvotesToInsert);
         })
     }
 }

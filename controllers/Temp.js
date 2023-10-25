@@ -64,6 +64,11 @@ const POST_DATABASE_MODELS = {
     Thread
 }
 
+const VOTE_DATABASE_MODELS = {
+    Up: Upvote,
+    Down: Downvote
+}
+
 class TempController {
     static #sendnotificationkey = (userId, notificationKey, refreshTokenId) => {
         return new Promise(resolve => {
@@ -5430,7 +5435,55 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`voteType is invalid. Valid vote types: ${CONSTANTS.VOTE_API_ALLOWED_VOTE_TYPES.join(', ')}`))
             }
 
-            return resolve(HTTPWTHandler.notImplemented('Further code is not implemented yet'))
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                POST_DATABASE_MODELS[postFormat].findOne({_id: {$eq: postId}}).lean().then(async postFound => {
+                    if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post'));
+                    if (postFound.creatorId == userId) return resolve(HTTPWTHandler.forbidden('You cannot vote on your own post.'))
+
+                    User.findOne({_id: {$eq: postFound.creatorId}}).lean().then(postCreator => {
+                        if (!postCreator) {
+                            console.error(`Found ${postFormat} post with id:`, postId, 'that does not have its creator with id:', postFound.creatorId, 'in the database. This post should get deleted immediately.')
+                            return resolve(HTTPWTHandler.notFound('Could not find post creator'))
+                        }
+
+                        if (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Could not find post'))
+
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
+
+                            const oppositeVote = voteType === "Up" ? "Down" : "Up";
+
+                            VOTE_DATABASE_MODELS[oppositeVote].deleteMany({userPublicId: {$eq: userFound.secondId}, postId: {$eq: postId}, postFormat: {$eq: postFormat}}, {session}).then(() => {
+                                VOTE_DATABASE_MODELS[voteType].findOneAndUpdate({userPublicId: {$eq: userFound.secondId}, postId: {$eq: postId}, postFormat: {$eq: postFormat}}, {interactionDate: Date.now()}, {session, upsert: true}).then(() => {
+                                    mongooseSessionHelper.commitTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.OK('Success'))
+                                    }).catch(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while saving vote. Please try again.'))
+                                    })
+                                }).catch(error => {
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        console.error('An error occurred while finding one', voteType, 'vote with userPublicId:', userFound.secondId, ', postId:', postId, ', and postFormat:', postFormat, 'and upserting with current interactionDate. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while creating vote. Please try again.'))
+                                    })
+                                })
+                            }).catch(error => {
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    console.error('An error occurred while deleting many', oppositeVote, 'votes with userPublicId:', userFound.secondId, ', postId:', postId, ', and postFormat:', postFormat, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting previous vote. Please try again.'))
+                                })
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while starting Mongoose session:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to add vote to post. Please try again.'))
+                        })
+                    })
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 
