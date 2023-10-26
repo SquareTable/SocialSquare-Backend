@@ -5487,6 +5487,65 @@ class TempController {
         })
     }
 
+    static #removevoteonpost = (userId, postId, postFormat, voteType) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
+            }
+
+            if (!CONSTANTS.VOTE_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
+                return resolve(HTTPWTHandler.badInput(`Invalid post format provided. Valid post formats: ${CONSTANTS.VOTE_API_ALLOWED_POST_FORMATS.join(', ')}`))
+            }
+
+            if (!CONSTANTS.VOTE_API_ALLOWED_VOTE_TYPES.includes(voteType)) {
+                return resolve(HTTPWTHandler.badInput(`Invalid vote type provided. Valid vote types: ${CONSTANTS.VOTE_API_ALLOWED_VOTE_TYPES.join(', ')}`))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound("Could not find user with provided userId."))
+
+                POST_DATABASE_MODELS[postFormat].findOne({_id: {$eq: postId}}).lean().then(postFound => {
+                    if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post with postId.'))
+                    if (postFound.creatorId == userId) return resolve(HTTPWTHandler.forbidden('You cannot remove a vote on your own post.'))
+
+                    User.findOne({_id: {$eq: postFound.creatorId}}).lean().then(postCreator => {
+                        if (!postCreator) return resolve(HTTPWTHandler.notFound('Could not find post creator.'))
+
+                        if (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Post could not be found.'))
+
+                        VOTE_DATABASE_MODELS[voteType].deleteMany({userPublicId: {$eq: userFound.secondId}, postId: {$eq: postId}, postFormat: {$eq: postFormat}}).then(() => {
+                            return resolve(HTTPWTHandler.OK('Removing vote was a success'))
+                        }).catch(error => {
+                            console.error('An error occurred while deleting many', voteType, 'votes with userPublicId:', userFound.secondId, ', postId:', postId, ', and postFormat:', postFormat, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while removing vote. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post creator. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding', postFormat, 'post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -5801,6 +5860,10 @@ class TempController {
 
     static voteonpost = async (userId, postId, postFormat, voteType) => {
         return await this.#voteonpost(userId, postId, postFormat, voteType);
+    }
+
+    static removevoteonpost = async (userId, postId, postFormat, voteType) => {
+        return await this.#removevoteonpost(userId, postId, postFormat, voteType);
     }
 }
 
