@@ -694,7 +694,7 @@ for (const invalidPostId of NOT_STRINGS) {
         await DB.stopServer();
     
         expect(returned.statusCode).toBe(400)
-        expect(returned.data.message).toBe(`postId must be a string. Provided type: ${invalidPostId}`)
+        expect(returned.data.message).toBe(`postId must be a string. Provided type: ${typeof invalidPostId}`)
         expect(downvotes).toHaveLength(0);
         expect(upvotes).toHaveLength(0);
     })
