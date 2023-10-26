@@ -50,6 +50,10 @@ Test that votes already in the database do not get modified by someone else addi
 const formats = ["Image", "Poll", "Thread"]
 const votes = ["Up", "Down"]
 
+const NOT_STRINGS = [true, false, undefined, null, {}, [], 1, -1];
+const invalidPostFormats = ["IMAGE", "POLL", "THREAD", "image", "poll", "thread", "iMage", "pOll", "tHread", 'not a post at all']
+const invalidVoteTypes = ["UP", "DOWN", 'up', 'down', 'not a type at all']
+
 for (const format of formats) {
     for (const voteType of votes) {
         const oppositeVoteType = voteType === "Up" ? "Down" : "Up";
@@ -626,27 +630,29 @@ for (const format of formats) {
     }
 }
 
-test(`Vote on post should fail when userId is not a string`, async () => {
-    expect.assertions(4);
-
-    const DB = new MockMongoDBServer()
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
-    const returned = await TempController.voteonpost(true, '', '', '')
-
-    const downvotes = await Downvote.find({}).lean();
-    const upvotes = await Upvote.find({}).lean();
-
-    await mongoose.disconnect();
-    await DB.stopServer();
-
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe(`userId must be a string. Provided type: boolean`)
-    expect(downvotes).toHaveLength(0);
-    expect(upvotes).toHaveLength(0);
-})
+for (const invalidUserId of NOT_STRINGS) {
+    test(`Vote on post should fail when userId is not a string. Testing: ${JSON.stringify(invalidUserId)}`, async () => {
+        expect.assertions(4);
+    
+        const DB = new MockMongoDBServer()
+        const uri = await DB.startServer();
+    
+        await mongoose.connect(uri);
+    
+        const returned = await TempController.voteonpost(invalidUserId, '', '', '')
+    
+        const downvotes = await Downvote.find({}).lean();
+        const upvotes = await Upvote.find({}).lean();
+    
+        await mongoose.disconnect();
+        await DB.stopServer();
+    
+        expect(returned.statusCode).toBe(400);
+        expect(returned.data.message).toBe(`userId must be a string. Provided type: ${typeof invalidUserId}`)
+        expect(downvotes).toHaveLength(0);
+        expect(upvotes).toHaveLength(0);
+    })
+}
 
 test(`Vote on post should fail when userId is not an objectId`, async () => {
     expect.assertions(4);
@@ -670,27 +676,29 @@ test(`Vote on post should fail when userId is not an objectId`, async () => {
     expect(upvotes).toHaveLength(0);
 })
 
-test(`Vote on post should fail when postId is not a string`, async () => {
-    expect.assertions(4);
-
-    const DB = new MockMongoDBServer()
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
-    const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", true, '', '')
-
-    const downvotes = await Downvote.find({}).lean();
-    const upvotes = await Upvote.find({}).lean();
-
-    await mongoose.disconnect();
-    await DB.stopServer();
-
-    expect(returned.statusCode).toBe(400)
-    expect(returned.data.message).toBe(`postId must be a string. Provided type: boolean`)
-    expect(downvotes).toHaveLength(0);
-    expect(upvotes).toHaveLength(0);
-})
+for (const invalidPostId of NOT_STRINGS) {
+    test(`Vote on post should fail when postId is not a string. Testing: ${JSON.stringify(invalidPostId)}`, async () => {
+        expect.assertions(4);
+    
+        const DB = new MockMongoDBServer()
+        const uri = await DB.startServer();
+    
+        await mongoose.connect(uri);
+    
+        const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", invalidPostId, '', '')
+    
+        const downvotes = await Downvote.find({}).lean();
+        const upvotes = await Upvote.find({}).lean();
+    
+        await mongoose.disconnect();
+        await DB.stopServer();
+    
+        expect(returned.statusCode).toBe(400)
+        expect(returned.data.message).toBe(`postId must be a string. Provided type: ${invalidPostId}`)
+        expect(downvotes).toHaveLength(0);
+        expect(upvotes).toHaveLength(0);
+    })
+}
 
 
 test(`Vote on post should fail when postId is not an objectId`, async () => {
@@ -715,7 +723,7 @@ test(`Vote on post should fail when postId is not an objectId`, async () => {
     expect(returned.data.message).toBe("postId must be an objectId");
 })
 
-for (const invalidFormat of ["image", "poll", "thread", "non-existent-post", "IMAGE", 'POLL', 'THREAD']) {
+for (const invalidFormat of invalidPostFormats) {
     test(`Vote on post should fail when postFormat is invalid. Invalid format: ${invalidFormat}`, async () => {
         expect.assertions(4);
 
@@ -739,7 +747,7 @@ for (const invalidFormat of ["image", "poll", "thread", "non-existent-post", "IM
     })
 }
 
-for (const invalidVoteType of ["UP", "DOWN", "up", "down", "invalidtype"]) {
+for (const invalidVoteType of invalidVoteTypes) {
     test(`Vote on post should fail when voteType is invalid. Invalid type: ${invalidVoteType}`, async () => {
         expect.assertions(4);
 
