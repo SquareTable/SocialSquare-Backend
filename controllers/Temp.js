@@ -72,6 +72,14 @@ const VOTE_DATABASE_MODELS = {
 class TempController {
     static #sendnotificationkey = (userId, notificationKey, refreshTokenId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+            }
+
             if (typeof notificationKey !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`notificationKey must be a string. Provided type: ${typeof notificationKey}`))
             }
@@ -84,14 +92,18 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`refreshTokenId must be a string. Provided type: ${typeof refreshTokenId}`))
             }
 
+            if (!mongoose.isObjectIdOrHexString(refreshTokenId)) {
+                return resolve(HTTPWTHandler.badInput('refreshTokenId must be an objectId.'))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userData => {
                 if (!userData) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                 }
 
                 RefreshToken.findOne({_id: {$eq: refreshTokenId}}).lean().then(refreshTokenFound => {
                     if (!refreshTokenFound) {
-                        return resolve(HTTPWTHandler.notFound('Could not find refresh token with provided id.'))
+                        return resolve(HTTPWTHandler.notFound('Could not find refresh token.'))
                     }
 
                     RefreshToken.findOneAndUpdate({_id: {$eq: refreshTokenId}}, {notificationKey}).then(() => {

@@ -12,7 +12,8 @@ const Downvote = require('../../models/Downvote');
 
 const {v4: uuidv4} = require('uuid');
 
-const {expect} = require('@jest/globals')
+const {expect} = require('@jest/globals');
+const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const POST_DATABASE_MODELS = {
     'Image': ImagePost,
@@ -26,7 +27,6 @@ const VOTE_DATABASE_MODELS = {
     Down: Downvote
 }
 
-const NOT_STRINGS = [true, false, undefined, null, {}, [], 1, -1];
 const invalidPostFormats = ["IMAGE", "POLL", "THREAD", "image", "poll", "thread", "iMage", "pOll", "tHread", 'not a post at all']
 const invalidVoteTypes = ["UP", "DOWN", 'up', 'down', 'not a type at all']
 
@@ -488,7 +488,7 @@ for (const postFormat of formats) {
     }
 }
 
-for (const invalidUserId of NOT_STRINGS) {
+for (const invalidUserId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`if removing votes fails if userId is not a string. Testing: ${JSON.stringify(invalidUserId)}`, async () => {
         expect.assertions(2);
 
@@ -508,7 +508,7 @@ test('if removing votes fails if userId is not an ObjectId', async () => {
     expect(returned.data.message).toBe("userId must be an ObjectId.")
 })
 
-for (const invalidPostId of NOT_STRINGS) {
+for (const invalidPostId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`if removing votes fails if postId is not a string. Testing: ${JSON.stringify(invalidPostId)}`, async () => {
         expect.assertions(2);
 
