@@ -147,6 +147,8 @@ test('If upload successfully modifies refresh token', async () => {
     await new User(userData).save();
     await new RefreshToken(refreshTokenData).save();
 
+    const savedUser = await User.findOne({}).lean();
+
     const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, String(refreshTokenData._id));
 
     const tokens = await RefreshToken.find({}).lean();
@@ -161,7 +163,7 @@ test('If upload successfully modifies refresh token', async () => {
     expect(tokens).toHaveLength(1);
     expect(users).toHaveLength(1);
     expect(token).toStrictEqual(refreshTokenData);
-    expect(user).toStrictEqual(userData);
+    expect(user).toStrictEqual(savedUser);
 })
 
 test('If successful upload does not modify other refresh tokens in the database', async () => {

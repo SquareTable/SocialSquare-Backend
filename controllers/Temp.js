@@ -86,12 +86,12 @@ class TempController {
 
             User.findOne({_id: {$eq: userId}}).lean().then(userData => {
                 if (!userData) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                 }
 
                 RefreshToken.findOne({_id: {$eq: refreshTokenId}}).lean().then(refreshTokenFound => {
                     if (!refreshTokenFound) {
-                        return resolve(HTTPWTHandler.notFound('Could not find refresh token with provided id.'))
+                        return resolve(HTTPWTHandler.notFound('Could not find refresh token.'))
                     }
 
                     RefreshToken.findOneAndUpdate({_id: {$eq: refreshTokenId}}, {notificationKey}).then(() => {
