@@ -159,6 +159,9 @@ test('If upload successfully modifies refresh token', async () => {
 
     refreshTokenData.notificationKey = validPushToken;
 
+    await mongoose.disconnect();
+    await DB.stopServer();
+
     expect(returned.statusCode).toBe(200);
     expect(tokens).toHaveLength(1);
     expect(users).toHaveLength(1);
@@ -213,6 +216,9 @@ test('If successful upload does not modify other refresh tokens in the database'
     const dbRefreshTokens = await RefreshToken.find({}).sort({createdAt: 1}).lean();
 
     dbRefreshTokens.splice(dbRefreshTokens.length - 1, 1); //remove newly added refresh token
+
+    await mongoose.disconnect();
+    await DB.stopServer();
 
     expect(returned.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(users);
