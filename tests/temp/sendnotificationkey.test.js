@@ -134,12 +134,14 @@ test('If upload successfully modifies refresh token', async () => {
     await mongoose.connect(uri);
 
     const userData = {
-        _id: new mongoose.Types.ObjectId()
+        _id: new mongoose.Types.ObjectId(),
+        __v: 0
     }
 
     const refreshTokenData = {
         _id: new mongoose.Types.ObjectId(),
-        userId: userData._id
+        userId: userData._id,
+        __v: 0
     }
 
     await new User(userData).save();
