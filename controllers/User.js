@@ -38,8 +38,16 @@ class UserController {
             let badges = [];
             password = password.trim();
 
-            if (name == "" || email == "" || password == "") {
-                return resolve(HTTPWTHandler.badInput('Empty input fields!'))
+            if (name.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Name input field cannot be empty!'))
+            }
+
+            if (email.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Email input field cannot be empty!'))
+            }
+
+            if (password.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Password input field cannot be empty!'))
             }
 
             if (!CONSTANTS.VALID_USERNAME_TEST.test(name)) {
