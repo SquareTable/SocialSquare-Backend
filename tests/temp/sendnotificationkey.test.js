@@ -52,7 +52,7 @@ for (const invalidNotificationKey of TEST_CONSTANTS.NOT_STRINGS) {
         const returned = await TempController.sendnotificationkey("653bcdd1ab9cf6186dde00cf", invalidNotificationKey, undefined);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`notificationKey must be a string. Provided type: ${typeof invalidUserId}`)
+        expect(returned.data.message).toBe(`notificationKey must be a string. Provided type: ${typeof invalidNotificationKey}`)
     })
 }
 
