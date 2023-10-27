@@ -202,7 +202,8 @@ test('If successful upload does not modify other refresh tokens in the database'
     const refreshTokenData = {
         _id: new mongoose.Types.ObjectId(),
         userId: userData._id,
-        __v: 0
+        __v: 0,
+        createdAt: Date.now()
     }
 
     await User.insertMany(users);
