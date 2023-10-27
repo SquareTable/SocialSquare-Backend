@@ -9,16 +9,16 @@ const {expect} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 /*
-TODO:
-Test if upload fails if notification key is not a string -- Done
-Test if upload fails if notification key is not an expo push token -- Done
-Test if upload fails if refreshTokenId is not a string -- Done
-Test if upload fails if refreshTokenId is not an objectId -- Done
-Test if upload fails if userId is not a string -- Done
-Test if upload fails if userId is not an objectId -- Done
-Test if upload fails if user could not be found -- Done
-Test if upload fails if refresh token could not be found -- Done
-Test upload successfully modifies refresh token -- Done
+Tests:
+Test if upload fails if notification key is not a string
+Test if upload fails if notification key is not an expo push token
+Test if upload fails if refreshTokenId is not a string
+Test if upload fails if refreshTokenId is not an objectId
+Test if upload fails if userId is not a string
+Test if upload fails if userId is not an objectId
+Test if upload fails if user could not be found
+Test if upload fails if refresh token could not be found
+Test upload successfully modifies refresh token
 Test upload does not modify other refresh tokens
 */
 
