@@ -12,7 +12,8 @@ const Downvote = require('../../models/Downvote');
 
 const {v4: uuidv4} = require('uuid');
 
-const {expect} = require('@jest/globals')
+const {expect} = require('@jest/globals');
+const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const POST_DATABASE_MODELS = {
     'Image': ImagePost,

@@ -10,7 +10,8 @@ const Comment = require('../../models/Comment');
 const Upvote = require('../../models/Upvote');
 const Downvote = require('../../models/Downvote');
 
-const {expect} = require('@jest/globals')
+const {expect} = require('@jest/globals');
+const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const POST_DATABASE_MODELS = {
     'Image': ImagePost,
