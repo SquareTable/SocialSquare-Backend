@@ -207,7 +207,7 @@ test('If successful upload does not modify other refresh tokens in the database'
 
     await User.insertMany(users);
     await RefreshToken.insertMany(refreshTokens);
-    await new Uaer(userData).save();
+    await new User(userData).save();
     await new RefreshToken(refreshTokenData).save();
 
     const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, String(refreshTokenData._id));
