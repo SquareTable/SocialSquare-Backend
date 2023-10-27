@@ -210,6 +210,9 @@ test('If successful upload does not modify other refresh tokens in the database'
     await new User(userData).save();
     await new RefreshToken(refreshTokenData).save();
 
+    const savedUsers = await User.find({}).lean();
+    const savedRefreshTokens = await RefreshToken.find({}).lean();
+
     const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, String(refreshTokenData._id));
 
     const dbUsers = await User.find({}).lean();
@@ -221,6 +224,6 @@ test('If successful upload does not modify other refresh tokens in the database'
     await DB.stopServer();
 
     expect(returned.statusCode).toBe(200);
-    expect(dbUsers).toStrictEqual(users);
-    expect(dbRefreshTokens).toStrictEqual(refreshTokens);
+    expect(dbUsers).toStrictEqual(savedUsers);
+    expect(dbRefreshTokens).toStrictEqual(savedRefreshTokens);
 })
