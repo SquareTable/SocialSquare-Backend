@@ -209,17 +209,16 @@ test('If successful upload does not modify other refresh tokens in the database'
     await User.insertMany(users);
     await RefreshToken.insertMany(refreshTokens);
     await new User(userData).save();
-    await new RefreshToken(refreshTokenData).save();
 
     const savedUsers = await User.find({}).lean();
     const savedRefreshTokens = await RefreshToken.find({}).lean();
 
+    await new RefreshToken(refreshTokenData).save();
+
     const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, String(refreshTokenData._id));
 
     const dbUsers = await User.find({}).lean();
-    const dbRefreshTokens = await RefreshToken.find({}).sort({createdAt: 1}).lean();
-
-    dbRefreshTokens.splice(dbRefreshTokens.length - 1, 1); //remove newly added refresh token
+    const dbRefreshTokens = await RefreshToken.find({_id: {$ne: refreshTokenData._id}}).lean();
 
     await mongoose.disconnect();
     await DB.stopServer();
