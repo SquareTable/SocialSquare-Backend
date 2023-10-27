@@ -8,6 +8,8 @@ const RefreshToken = require('../../models/RefreshToken');
 const {expect} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
+jest.setTimeout(20_000); //20 seconds per test
+
 /*
 Tests:
 Test if upload fails if notification key is not a string
@@ -170,7 +172,8 @@ test('If successful upload does not modify other refresh tokens in the database'
 
     const users = [...new Array(10)].map(() => {
         return {
-            _id: new mongoose.Types.ObjectId()
+            _id: new mongoose.Types.ObjectId(),
+            __v: 0
         }
     })
 
@@ -179,17 +182,20 @@ test('If successful upload does not modify other refresh tokens in the database'
             _id: new mongoose.Types.ObjectId(),
             userId: users[index].userId,
             notificationKey: 'i am totally valid token ' + index,
-            createdAt: Date.now() - 10_000
+            createdAt: Date.now() - 10_000,
+            __v: 0
         }
     })
 
     const userData = {
-        _id: new mongoose.Types.ObjectId()
+        _id: new mongoose.Types.ObjectId(),
+        __v: 0
     }
 
     const refreshTokenData = {
         _id: new mongoose.Types.ObjectId(),
-        userId: userData._id
+        userId: userData._id,
+        __v: 0
     }
 
     await User.insertMany(users);
