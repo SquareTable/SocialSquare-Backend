@@ -257,6 +257,11 @@ for (const validUserEmail of VALID_EMAILS) {
 
         const userIdIsObjectId = mongoose.isObjectIdOrHexString(savedUser._id)
         const splitSecondId = savedUser.secondId.split('-');
+        const savedUserBadges = savedUser.badges;
+
+        delete savedUser._id;
+        delete savedUser.secondId;
+        delete savedUser.badges;
     
         benchmarkUser.password = savedUser.password;
     
@@ -297,9 +302,9 @@ for (const validUserEmail of VALID_EMAILS) {
     
         expect(returned.statusCode).toBe(200);
         expect(bcrypt.compareSync(benchmarkUserData.password, savedUser.password)).toBe(true);
-        expect(savedUser.badges).toHaveLength(1);
-        expect(savedUser.badges[0].badgeName).toBe("onSignUpBadge")
-        expect(savedUser.badges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
+        expect(savedUserBadges).toHaveLength(1);
+        expect(savedUserBadges[0].badgeName).toBe("onSignUpBadge")
+        expect(savedUserBadges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
         expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
         expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
         expect(userIdIsObjectId).toBe(true);
