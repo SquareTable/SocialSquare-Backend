@@ -240,7 +240,7 @@ test('if user account creation is successful with correct inputs', async () => {
     const benchmarkUser = {...await User.findOne({}).lean()};
     await User.deleteMany({});
 
-    const returned = await UserController.signup(vaildName, validEmail, benchmarkUserData.password, validIP, validDeviceName);
+    const returned = await UserController.signup(validName, validEmail, benchmarkUserData.password, validIP, validDeviceName);
 
     const savedUsers = await User.find({}).lean();
     const savedRefreshTokens = await RefreshToken.find({}).lean();
@@ -307,7 +307,7 @@ test('if user account creation is successful with correct inputs', async () => {
 
 test('user creation does not modify other users in the database', async () => {
     expect.assertions(2);
-    
+
     const DB = new MockMongoDBServer();
     const uri = await DB.startServer();
 
