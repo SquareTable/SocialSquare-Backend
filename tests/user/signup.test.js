@@ -115,7 +115,7 @@ test('If signup fails if password is an empty string', async () => {
     const returned = await UserController.signup(validName, validEmail, '', validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Password field cannot be empty!")
+    expect(returned.data.message).toBe("Password input field cannot be empty!")
 })
 
 for (const invalidName of INVALID_NAMES) {
