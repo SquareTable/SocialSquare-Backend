@@ -152,7 +152,7 @@ test('If signup fails if password is less than 8 characters long', async () => {
 test('if signup fails if name is longer than 20 characters', async () => {
     expect.assertions(2);
 
-    const returned = await UserController.signup('this is 21 characters', validEmail, validPassword, validIP, validDeviceName);
+    const returned = await UserController.signup('thisis21characters111', validEmail, validPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Username is too long! Please keep your username at 20 characters or less.")
