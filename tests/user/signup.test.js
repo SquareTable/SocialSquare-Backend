@@ -221,91 +221,93 @@ test('if signup fails if a user with the same name already exists', async () => 
     expect(returned.data.message).toBe("User with the provided username already exists")
 })
 
-test('if user account creation is successful with correct inputs', async () => {
-    expect.assertions(18);
-
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
-    const benchmarkUserData = {
-        name: validName,
-        email: validEmail,
-        password: 'notasecurepasswordatall',
-        _id: new mongoose.Types.ObjectId(),
-        __v: 0
-    }
-
-    await new User(benchmarkUserData).save();
-
-    const benchmarkUser = {...await User.findOne({}).lean()};
-    await User.deleteMany({});
-
-    const returned = await UserController.signup(validName, validEmail, benchmarkUserData.password, validIP, validDeviceName);
-
-    const savedUsers = await User.find({}).lean();
-    const savedRefreshTokens = await RefreshToken.find({}).lean();
-
-    const savedUser = savedUsers[0];
-    const savedRefreshToken = savedRefreshTokens[0];
-
-    benchmarkUser.password = savedUser;
-
-    const JWTVerifier = (secret, token) => {
-        return new Promise(resolve => {
-            jwt.verify(token, secret, (err, decoded) => {
-                if (err) return resolve(false);
-                if (decoded) return resolve(true);
-                resolve(false);
-            })
-        })
-    }
-
-    const notIncludedKeys = [
-        'notificationKeys',
-        'password',
-        'refreshTokens',
-        'algorithmData',
-        'accountFollowRequests',
-        'blockedAccounts',
-        'authenticationFactorsEnabled',
-        'MFAEmail',
-        'followers',
-        'following'
-    ]
-    let includesNotIncludedKey = false;
-    const returnedUserDataKeys = Object.keys(returned.data.data)
-
-    for (const key of notIncludedKeys) {
-        if (returnedUserDataKeys.includes(key)) {
-            includesNotIncludedKey = true;
-            break;
+for (const validUserEmail of VALID_EMAILS) {
+    test(`if user account creation is successful with correct inputs. Email tested: ${validUserEmail}`, async () => {
+        expect.assertions(18);
+    
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+    
+        await mongoose.connect(uri);
+    
+        const benchmarkUserData = {
+            name: validName,
+            email: validUserEmail,
+            password: 'notasecurepasswordatall',
+            _id: new mongoose.Types.ObjectId(),
+            __v: 0
         }
-    }
-
-    await mongoose.disconnect();
-    await DB.stopServer();
-
-    expect(returned.statusCode).toBe(200);
-    expect(bcrypt.compareSync(benchmarkUserData.password, savedUser.password)).toBe(true);
-    expect(savedUser.badges).toHaveLength(1);
-    expect(savedUser.badges[0].badgeName).toBe("onSignUpBadge")
-    expect(savedUser.badges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
-    expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.token.replace('Bearer ', ''))).resolves.toBe(true);
-    expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.refreshToken.replace('Bearer', ''))).resolves.toBe(true)
-    expect(savedUser).toStrictEqual(benchmarkUser);
-    expect(savedUsers).toHaveLength(1);
-    expect(savedRefreshTokens).toHaveLength(1);
-    expect(savedRefreshToken.userId).toBe(benchmarkUserData._id)
-    expect(savedRefreshToken.admin).toBe(false)
-    expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.refreshToken)
-    expect(returned.refreshTokenId).toBe(String(savedRefreshToken._id))
-    expect(includesNotIncludedKey).toBe(false);
-    expect(typeof returned.data.data.followers).toBe("number");
-    expect(typeof returned.data.data.following).toBe("number");
-    expect(typeof returned.data.data._id).toBe("string");
-})
+    
+        await new User(benchmarkUserData).save();
+    
+        const benchmarkUser = {...await User.findOne({}).lean()};
+        await User.deleteMany({});
+    
+        const returned = await UserController.signup(validName, validUserEmail, benchmarkUserData.password, validIP, validDeviceName);
+    
+        const savedUsers = await User.find({}).lean();
+        const savedRefreshTokens = await RefreshToken.find({}).lean();
+    
+        const savedUser = savedUsers[0];
+        const savedRefreshToken = savedRefreshTokens[0];
+    
+        benchmarkUser.password = savedUser;
+    
+        const JWTVerifier = (secret, token) => {
+            return new Promise(resolve => {
+                jwt.verify(token, secret, (err, decoded) => {
+                    if (err) return resolve(false);
+                    if (decoded) return resolve(true);
+                    resolve(false);
+                })
+            })
+        }
+    
+        const notIncludedKeys = [
+            'notificationKeys',
+            'password',
+            'refreshTokens',
+            'algorithmData',
+            'accountFollowRequests',
+            'blockedAccounts',
+            'authenticationFactorsEnabled',
+            'MFAEmail',
+            'followers',
+            'following'
+        ]
+        let includesNotIncludedKey = false;
+        const returnedUserDataKeys = Object.keys(returned.data.data)
+    
+        for (const key of notIncludedKeys) {
+            if (returnedUserDataKeys.includes(key)) {
+                includesNotIncludedKey = true;
+                break;
+            }
+        }
+    
+        await mongoose.disconnect();
+        await DB.stopServer();
+    
+        expect(returned.statusCode).toBe(200);
+        expect(bcrypt.compareSync(benchmarkUserData.password, savedUser.password)).toBe(true);
+        expect(savedUser.badges).toHaveLength(1);
+        expect(savedUser.badges[0].badgeName).toBe("onSignUpBadge")
+        expect(savedUser.badges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
+        expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.token.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.refreshToken.replace('Bearer', ''))).resolves.toBe(true)
+        expect(savedUser).toStrictEqual(benchmarkUser);
+        expect(savedUsers).toHaveLength(1);
+        expect(savedRefreshTokens).toHaveLength(1);
+        expect(savedRefreshToken.userId).toBe(benchmarkUserData._id)
+        expect(savedRefreshToken.admin).toBe(false)
+        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.refreshToken)
+        expect(returned.refreshTokenId).toBe(String(savedRefreshToken._id))
+        expect(includesNotIncludedKey).toBe(false);
+        expect(typeof returned.data.data.followers).toBe("number");
+        expect(typeof returned.data.data.following).toBe("number");
+        expect(typeof returned.data.data._id).toBe("string");
+    })
+}
 
 test('user creation does not modify other users in the database', async () => {
     expect.assertions(2);
