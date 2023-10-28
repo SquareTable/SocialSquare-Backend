@@ -335,6 +335,9 @@ test('user creation does not modify other users in the database', async () => {
 
     const savedUsers = User.find({email: {$ne: validEmail}}).lean();
 
+    await mongoose.disconnect();
+    await DB.stopServer();
+
     expect(returned.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(savedUsers);
 })
