@@ -1,5 +1,7 @@
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const {v4: uuidv4} = require('uuid')
 
 
 const User = require('../../models/User');
@@ -7,6 +9,8 @@ const UserController = require('../../controllers/User');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const {expect} = require('@jest/globals');
+const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
+const RefreshToken = require('../../models/RefreshToken');
 
 const INVALID_NAMES = ["abc12!", "abc._.abc", "abc!@#$%^&*()", "(", ")", "$%^&*wegyf"]
 const INVALID_EMAILS = ["notanemail", "notanemail@gmail.com.com", "notanemail@gmail.notanemail"]
@@ -39,15 +43,15 @@ Test if signup fails if a user with the same username already exists -- Done
 
 
 Test if user gets made successfully
-    - Badge added
-    - Password is hashed
-    - Password can be verified with bcrypt
-    - Test JWT token gets generated and is correct and usable
-    - Test JWT refresh token gets generated and is correct and usable
-    - Test encrypted refresh token gets generated and can be turned back into regular refresh tokens
-    - Test refresh token gets made successfully (with admin set to false)
-    - Test API returns correct token, refresh token, and refreshTokenId
-    - Test API returns correct user data
+    - Badge added -- Done
+    - Password is hashed -- Done
+    - Password can be verified with bcrypt -- Done
+    - Test JWT token gets generated and is correct and usable -- Done
+    - Test JWT refresh token gets generated and is correct and usable -- Done
+    - Test encrypted refresh token gets generated and can be turned back into regular refresh tokens -- Done
+    - Test refresh token gets made successfully (with admin set to false) -- Done
+    - Test API returns correct token, refresh token, and refreshTokenId -- Done
+    - Test API returns correct user data -- Done
 
 Test that user creation does not modify other users in the database
 */
@@ -213,4 +217,119 @@ test('if signup fails if a user with the same name already exists', async () => 
     expect(users).toHaveLength(1);
     expect(returned.statusCode).toBe(409);
     expect(returned.data.message).toBe("User with the provided username already exists")
+})
+
+test('if user account creation is successful with correct inputs', async () => {
+    expect.assertions(18);
+
+    const DB = new MockMongoDBServer();
+    const uri = await DB.startServer();
+
+    await mongoose.connect(uri);
+
+    const benchmarkUserData = {
+        name: validName,
+        email: validEmail,
+        password: 'notasecurepasswordatall',
+        _id: new mongoose.Types.ObjectId(),
+        __v: 0
+    }
+
+    await new User(benchmarkUserData).save();
+
+    const benchmarkUser = {...await User.findOne({}).lean()};
+    await User.deleteMany({});
+
+    const returned = await UserController.signup(vaildName, validEmail, benchmarkUserData.password, validIP, validDeviceName);
+
+    const savedUsers = await User.find({}).lean();
+    const savedRefreshTokens = await RefreshToken.find({}).lean();
+
+    const savedUser = savedUsers[0];
+    const savedRefreshToken = savedRefreshTokens[0];
+
+    benchmarkUser.password = savedUser;
+
+    const JWTVerifier = (secret, token) => {
+        return new Promise(resolve => {
+            jwt.verify(token, secret, (err, decoded) => {
+                if (err) return resolve(false);
+                if (decoded) return resolve(true);
+                resolve(false);
+            })
+        })
+    }
+
+    const notIncludedKeys = [
+        'notificationKeys',
+        'password',
+        'refreshTokens',
+        'algorithmData',
+        'accountFollowRequests',
+        'blockedAccounts',
+        'authenticationFactorsEnabled',
+        'MFAEmail',
+        'followers',
+        'following'
+    ]
+    let includesNotIncludedKey = false;
+    const returnedUserDataKeys = Object.keys(returned.data.data)
+
+    for (const key of notIncludedKeys) {
+        if (returnedUserDataKeys.includes(key)) {
+            includesNotIncludedKey = true;
+            break;
+        }
+    }
+
+    await mongoose.disconnect();
+    await DB.stopServer();
+
+    expect(returned.statusCode).toBe(200);
+    expect(bcrypt.compareSync(benchmarkUserData.password, savedUser.password)).toBe(true);
+    expect(savedUser.badges).toHaveLength(1);
+    expect(savedUser.badges[0].badgeName).toBe("onSignUpBadge")
+    expect(savedUser.badges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
+    expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.token.replace('Bearer ', ''))).resolves.toBe(true);
+    expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.refreshToken.replace('Bearer', ''))).resolves.toBe(true)
+    expect(savedUser).toStrictEqual(benchmarkUser);
+    expect(savedUsers).toHaveLength(1);
+    expect(savedRefreshTokens).toHaveLength(1);
+    expect(savedRefreshToken.userId).toBe(benchmarkUserData._id)
+    expect(savedRefreshToken.admin).toBe(false)
+    expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.refreshToken)
+    expect(returned.refreshTokenId).toBe(String(savedRefreshToken._id))
+    expect(includesNotIncludedKey).toBe(false);
+    expect(typeof returned.data.data.followers).toBe("number");
+    expect(typeof returned.data.data.following).toBe("number");
+    expect(typeof returned.data.data._id).toBe("string");
+})
+
+test('user creation does not modify other users in the database', async () => {
+    expect.assertions(2);
+    
+    const DB = new MockMongoDBServer();
+    const uri = await DB.startServer();
+
+    await mongoose.connect(uri);
+
+    const users = [...new Array(10)].map((item, index) => {
+        return {
+            _id: new mongoose.Types.ObjectId(),
+            name: 'name' + index,
+            displayName: 'displayname' + index,
+            secondId: uuidv4()
+        }
+    })
+
+    await User.insertMany(users);
+
+    const dbUsers = await User.find({}).lean();
+
+    const returned = await UserController.signup(validName, validEmail, validPassword, validIP, validDeviceName);
+
+    const savedUsers = User.find({email: {$ne: validEmail}}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(dbUsers).toStrictEqual(savedUsers);
 })
