@@ -298,8 +298,8 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(savedUser.badges).toHaveLength(1);
         expect(savedUser.badges[0].badgeName).toBe("onSignUpBadge")
         expect(savedUser.badges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
-        expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.token.replace('Bearer ', ''))).resolves.toBe(true);
-        expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.refreshToken.replace('Bearer', ''))).resolves.toBe(true)
+        expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer', ''))).resolves.toBe(true)
         expect(savedUser).toStrictEqual(benchmarkUser);
         expect(savedUsers).toHaveLength(1);
         expect(savedRefreshTokens).toHaveLength(1);
