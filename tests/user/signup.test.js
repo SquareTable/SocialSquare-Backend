@@ -258,6 +258,7 @@ for (const validUserEmail of VALID_EMAILS) {
         const userIdIsObjectId = mongoose.isObjectIdOrHexString(savedUser._id)
         const splitSecondId = savedUser.secondId.split('-');
         const savedUserBadges = savedUser.badges;
+        const savedUserId = savedUser._id;
 
         delete savedUser._id;
         delete savedUser.secondId;
@@ -322,7 +323,7 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(savedUser).toStrictEqual(benchmarkUser);
         expect(savedUsers).toHaveLength(1);
         expect(savedRefreshTokens).toHaveLength(1);
-        expect(savedRefreshToken.userId).toBe(benchmarkUserData._id)
+        expect(savedRefreshToken.userId).toBe(savedUserId);
         expect(savedRefreshToken.admin).toBe(false)
         expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.refreshToken)
         expect(returned.refreshTokenId).toBe(String(savedRefreshToken._id))
