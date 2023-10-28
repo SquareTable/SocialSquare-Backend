@@ -325,7 +325,7 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(savedRefreshTokens).toHaveLength(1);
         expect(String(savedRefreshToken.userId)).toBe(String(savedUserId));
         expect(savedRefreshToken.admin).toBe(false)
-        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken)
+        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
         expect(returned.refreshTokenId).toBe(String(savedRefreshToken._id))
         expect(includesNotIncludedKey).toBe(false);
         expect(typeof returned.data.data.followers).toBe("number");
