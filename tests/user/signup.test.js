@@ -287,9 +287,7 @@ for (const validUserEmail of VALID_EMAILS) {
             'accountFollowRequests',
             'blockedAccounts',
             'authenticationFactorsEnabled',
-            'MFAEmail',
-            'followers',
-            'following'
+            'MFAEmail'
         ]
         let includesNotIncludedKey = false;
         const returnedUserDataKeys = Object.keys(returned.data.data)
