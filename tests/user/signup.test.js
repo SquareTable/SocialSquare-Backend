@@ -242,7 +242,7 @@ for (const validUserEmail of VALID_EMAILS) {
     
         await new User(benchmarkUserData).save();
     
-        const benchmarkUser = {...await User.findOne({}).lean()};
+        const benchmarkUser = await User.findOne({}).lean();
         await User.deleteMany({});
     
         const returned = await UserController.signup(validName, validUserEmail, benchmarkUserData.password, validIP, validDeviceName);
@@ -253,7 +253,7 @@ for (const validUserEmail of VALID_EMAILS) {
         const savedUser = savedUsers[0];
         const savedRefreshToken = savedRefreshTokens[0];
     
-        benchmarkUser.password = savedUser;
+        benchmarkUser.password = savedUser.password;
     
         const JWTVerifier = (secret, token) => {
             return new Promise(resolve => {
