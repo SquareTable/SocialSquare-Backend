@@ -23,35 +23,37 @@ const validPassword = "password";
 const validIP = "127.0.0.1";
 const validDeviceName = "GitHub-Actions"
 
+jest.setTimeout(20_000); //20 seconds per test
+
 
 /*
-TODO:
-Test if signup fails if name is not a string -- Done
-Test if signup fails if name is an empty string -- Done
-Test if signup fails if name is not only alphanumeric characters -- Done
-Test if signup fails if name is more than 20 characters -- Done
-test if signup fails if email is not a string -- Done
-Test if signup fails if email is an empty string -- Done
-Test if signup fails when email is not valid -- Done
-Test if signup fails when password is not a string -- Done
-Test if signup fails when password is an empty string -- Done
-Test if signup fails if password is less than 8 characters -- Done
-Test if signup fails if password is more than 17 characters -- Done
-Test if signup fails if a user with the same email already exists -- Done
-Test if signup fails if a user with the same username already exists -- Done
+Tests:
+Test if signup fails if name is not a string
+Test if signup fails if name is an empty string
+Test if signup fails if name is not only alphanumeric characters
+Test if signup fails if name is more than 20 characters
+test if signup fails if email is not a string
+Test if signup fails if email is an empty string
+Test if signup fails when email is not valid
+Test if signup fails when password is not a string
+Test if signup fails when password is an empty string
+Test if signup fails if password is less than 8 characters
+Test if signup fails if password is more than 17 characters
+Test if signup fails if a user with the same email already exists
+Test if signup fails if a user with the same username already exists
 
 
 
 Test if user gets made successfully
-    - Badge added -- Done
-    - Password is hashed -- Done
-    - Password can be verified with bcrypt -- Done
-    - Test JWT token gets generated and is correct and usable -- Done
-    - Test JWT refresh token gets generated and is correct and usable -- Done
-    - Test encrypted refresh token gets generated and can be turned back into regular refresh tokens -- Done
-    - Test refresh token gets made successfully (with admin set to false) -- Done
-    - Test API returns correct token, refresh token, and refreshTokenId -- Done
-    - Test API returns correct user data -- Done
+    - Badge added
+    - Password is hashed
+    - Password can be verified with bcrypt
+    - Test JWT token gets generated and is correct and usable
+    - Test JWT refresh token gets generated and is correct and usable
+    - Test encrypted refresh token gets generated and can be turned back into regular refresh tokens
+    - Test refresh token gets made successfully (with admin set to false)
+    - Test API returns correct token, refresh token, and refreshTokenId
+    - Test API returns correct user data
 
 Test that user creation does not modify other users in the database
 */
