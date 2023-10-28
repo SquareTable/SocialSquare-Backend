@@ -225,7 +225,7 @@ test('if signup fails if a user with the same name already exists', async () => 
 
 for (const validUserEmail of VALID_EMAILS) {
     test(`if user account creation is successful with correct inputs. Email tested: ${validUserEmail}`, async () => {
-        expect.assertions(18);
+        expect.assertions(24);
     
         const DB = new MockMongoDBServer();
         const uri = await DB.startServer();
@@ -237,7 +237,9 @@ for (const validUserEmail of VALID_EMAILS) {
             email: validUserEmail,
             password: 'nonsecurepassword',
             _id: new mongoose.Types.ObjectId(),
-            __v: 0
+            __v: 0,
+            profileImageKey: "",
+            displayName: ""
         }
     
         await new User(benchmarkUserData).save();
@@ -252,6 +254,9 @@ for (const validUserEmail of VALID_EMAILS) {
     
         const savedUser = savedUsers[0];
         const savedRefreshToken = savedRefreshTokens[0];
+
+        const userIdIsObjectId = mongoose.isObjectIdOrHexString(savedUser._id)
+        const splitSecondId = savedUser.secondId.split('-');
     
         benchmarkUser.password = savedUser.password;
     
@@ -297,6 +302,15 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(savedUser.badges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
         expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
         expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
+        expect(userIdIsObjectId).toBe(true);
+
+        //Make sure secondId (uuidv4) follows UUID format 8-4-4-4-12
+        expect(splitSecondId[0]).toHaveLength(8);
+        expect(splitSecondId[1]).toHaveLength(4);
+        expect(splitSecondId[2]).toHaveLength(4);
+        expect(splitSecondId[3]).toHaveLength(4);
+        expect(splitSecondId[4]).toHaveLength(12);
+
         expect(savedUser).toStrictEqual(benchmarkUser);
         expect(savedUsers).toHaveLength(1);
         expect(savedRefreshTokens).toHaveLength(1);
