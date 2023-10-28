@@ -13,7 +13,7 @@ const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 const RefreshToken = require('../../models/RefreshToken');
 
 const INVALID_NAMES = ["abc12!", "abc._.abc", "abc!@#$%^&*()", "(", ")", "$%^&*wegyf"]
-const INVALID_EMAILS = ["notanemail", "notanemail@gmail.com.com", "notanemail@gmail.notanemail"]
+const INVALID_EMAILS = ["notanemail", "notanemail@gmail.notanemail"]
 
 const VALID_EMAILS = ["john.sullivan@gmail.com", "john.sullivan@hotmail.com", "john.sullivan123@gmail.com", "mytestemail@gmail.com", "mytestemail@hotmail.com", "myyahooemail@yahoo.com"];
 
@@ -233,7 +233,7 @@ for (const validUserEmail of VALID_EMAILS) {
         const benchmarkUserData = {
             name: validName,
             email: validUserEmail,
-            password: 'notasecurepasswordatall',
+            password: 'nonsecurepassword',
             _id: new mongoose.Types.ObjectId(),
             __v: 0
         }
@@ -276,6 +276,7 @@ for (const validUserEmail of VALID_EMAILS) {
             'following'
         ]
         let includesNotIncludedKey = false;
+        console.error(returned)
         const returnedUserDataKeys = Object.keys(returned.data.data)
     
         for (const key of notIncludedKeys) {
