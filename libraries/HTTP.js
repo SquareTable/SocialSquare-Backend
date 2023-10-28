@@ -82,11 +82,7 @@ class HTTP {
     }
 
     formatIP(IP) {
-        if (IP.slice(0, 7) === '::ffff:') {
-            IP = IP.slice(7)
-        }
-
-        return IP;
+        return IP.replace("::ffff:", "");
     }
 
     getDeviceTypeMiddleware() {
