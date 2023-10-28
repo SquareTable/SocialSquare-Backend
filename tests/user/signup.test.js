@@ -23,6 +23,10 @@ const validPassword = "password";
 const validIP = "127.0.0.1";
 const validDeviceName = "GitHub-Actions"
 
+//These are not actual secrets. They are dummy test values for these tests.
+process.env.SECRET_FOR_TOKENS = "specialtokensecret";
+process.env.SECRET_FOR_REFRESH_TOKENS = "specialrefreshtokensecret";
+
 jest.setTimeout(20_000); //20 seconds per test
 
 
