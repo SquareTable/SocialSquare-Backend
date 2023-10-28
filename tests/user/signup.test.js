@@ -94,7 +94,7 @@ for (const invalidPassword of TEST_CONSTANTS.NOT_STRINGS) {
 test('If signup fails if name is an empty string', async () => {
     expect.assertions(2);
 
-    const returned = await UserController.signup('', validEmail, invalidPassword, validIP, validDeviceName);
+    const returned = await UserController.signup('', validEmail, validPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Name input field cannot be empty!");
