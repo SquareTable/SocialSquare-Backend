@@ -1,7 +1,9 @@
+require('dotenv').config({path: '../.env'})
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const {v4: uuidv4} = require('uuid')
+const {v4: uuidv4} = require('uuid');
+const jwt = require('jsonwebtoken');
 
 
 const User = require('../../models/User');
@@ -22,10 +24,6 @@ const validEmail = "johnsullivan@gmail.com";
 const validPassword = "password";
 const validIP = "127.0.0.1";
 const validDeviceName = "GitHub-Actions"
-
-//These are not actual secrets. They are dummy test values for these tests.
-process.env.SECRET_FOR_TOKENS = "specialtokensecret";
-process.env.SECRET_FOR_REFRESH_TOKENS = "specialrefreshtokensecret";
 
 jest.setTimeout(20_000); //20 seconds per test
 
@@ -280,7 +278,6 @@ for (const validUserEmail of VALID_EMAILS) {
             'following'
         ]
         let includesNotIncludedKey = false;
-        console.error(returned)
         const returnedUserDataKeys = Object.keys(returned.data.data)
     
         for (const key of notIncludedKeys) {
@@ -337,7 +334,7 @@ test('user creation does not modify other users in the database', async () => {
 
     const returned = await UserController.signup(validName, validEmail, validPassword, validIP, validDeviceName);
 
-    const savedUsers = User.find({email: {$ne: validEmail}}).lean();
+    const savedUsers = await User.find({email: {$ne: validEmail}}).lean();
 
     await mongoose.disconnect();
     await DB.stopServer();
