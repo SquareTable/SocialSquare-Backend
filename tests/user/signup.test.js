@@ -262,6 +262,9 @@ for (const validUserEmail of VALID_EMAILS) {
         delete savedUser._id;
         delete savedUser.secondId;
         delete savedUser.badges;
+
+        delete benchmarkUser.badges;
+        delete benchmarkUser._id;
     
         benchmarkUser.password = savedUser.password;
     
