@@ -7,7 +7,7 @@ const RefreshToken = require('../../models/RefreshToken');
 
 const UserController = require('../../controllers/User');
 
-const {expect} = require('@jest/globals');
+const {expect, describe} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const validEmail = "john.sullivan@gmail.com";
@@ -104,7 +104,7 @@ test('If signin fails if user with specified email could not be found', async ()
 })
 
 test('If signin fails if password is wrong', async () => {
-    expect.assertions(2);
+    expect.assertions(6);
 
     const DB = new MockMongoDBServer();
     const uri = await DB.startServer();
