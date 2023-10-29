@@ -25,7 +25,7 @@ Test if signin fails if user with specified email could not be found -- Done
 Test if signin fails if password is wrong (testing if user/signin carries out correct authentication) -- Done
 
 Tests if email 2FA is enabled:
-    - Test if email gets blurred
+    - Test if email gets blurred -- Done
     - Test fromAddress is the value of process.env.SMTP_EMAIL
     - Test secondId is the user's secondId
     - Test EmailVerificationCode gets created
@@ -129,4 +129,29 @@ test('If signin fails if password is wrong', async () => {
     expect(returned.data.token).toBe(undefined);
     expect(returned.data.refreshToken).toBe(undefined);
     expect(returned.data.refreshTokenId).toBe(undefined);
+})
+
+describe('When Email 2FA is enabled', () => {
+    test('If email gets blurred', async () => {
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validPassword,
+            authenticationFactorsEnabled: ["Email"]
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(returned.data.data.email).toBe("jo**.s**li**n@gm**l.com")
+    })
 })
