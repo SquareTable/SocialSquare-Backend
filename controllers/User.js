@@ -192,7 +192,7 @@ class UserController {
                 bcrypt.compare(password, hashedPassword).then(async result => {
                     if (!result) return resolve(HTTPWTHandler.unauthorized('Invalid password entered!'))
 
-                    if (data.authenticationFactorsEnabled?.includes('Email')) {
+                    if (userFound.authenticationFactorsEnabled?.includes('Email')) {
                         try {
                             var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
                             randomString = String(randomString.data).trim();
@@ -214,7 +214,7 @@ class UserController {
                             return resolve(HTTPWTHandler.serverError('An error occurred while hashing the random string. Please try again'))
                         }
 
-                        const userId = data._id
+                        const userId = userFound._id
 
                         const emailVerificationCodeData = {
                             userId,
@@ -227,7 +227,7 @@ class UserController {
 
                             var emailData = {
                                 from: process.env.SMTP_EMAIL,
-                                to: data.MFAEmail,
+                                to: userFound.MFAEmail,
                                 subject: "Code to login to your SocialSquare account",
                                 text: `Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.`,
                                 html: `<p>Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.</p>`
@@ -240,7 +240,7 @@ class UserController {
                                 }
 
                                 console.log('Sent random string to user.')
-                                return resolve(HTTPWTHandler.OK('Email', {email: blurEmailFunction(data.MFAEmail), fromAddress: process.env.SMTP_EMAIL, secondId: data.secondId}))
+                                return resolve(HTTPWTHandler.OK('Email', {email: blurEmailFunction(userFound.MFAEmail), fromAddress: process.env.SMTP_EMAIL, secondId: userFound.secondId}))
                             });
                         }).catch(error => {
                             console.error('An error occurred while doing findOneAndReplace for EmailVerificationCode querying {userId:', userId, '}. emailVerificationCodeData is:', emailVerificationCodeData, '. Options: {upsert: true}. The error was:', error)
@@ -248,34 +248,34 @@ class UserController {
                         })
                 
                     } else {
-                        const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(data._id)
+                        const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userFound._id)
 
                         const newRefreshTokenObject = {
                             encryptedRefreshToken,
-                            userId: data._id,
+                            userId: userFound._id,
                             createdAt: Date.now(),
                             admin: false
                         }
 
                         const formattedIP = HTTPHandler.formatIP(IP)
 
-                        if (data?.settings?.loginActivitySettings?.getIP) {
+                        if (userFound?.settings?.loginActivitySettings?.getIP) {
                             newRefreshTokenObject.IP = formattedIP
                         }
 
-                        if (data?.settings?.loginActivitySettings?.getLocation) {
+                        if (userFound?.settings?.loginActivitySettings?.getLocation) {
                             const location = geoIPLite.lookup(formattedIP)
                             newRefreshTokenObject.location = location?.city + ', ' + location?.country
                         }
 
-                        if (data?.settings?.loginActivitySettings?.getDeviceType) {
+                        if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
                             newRefreshTokenObject.deviceType = deviceName
                         }
 
                         const newRefreshToken = new RefreshToken(newRefreshTokenObject)
 
                         newRefreshToken.save().then(refreshTokenSaved => {
-                            const dataToSend = userHandler.filterUserInformationToSend(data)
+                            const dataToSend = userHandler.filterUserInformationToSend(userFound)
                             return resolve(HTTPWTHandler.OK('Signin successful', dataToSend, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
                         }).catch(error => {
                             console.error('An error occurred while saving new refresh token. The error was:', error)
