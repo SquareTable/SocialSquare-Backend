@@ -16,7 +16,9 @@ const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 const validEmail = "john.sullivan@gmail.com";
 const validPassword = "securepassword";
 const validIP = "127.0.0.1";
-const validDeviceName = "GitHub-Actions"
+const validDeviceName = "GitHub-Actions";
+
+const validHashedPassword = "$2b$10$34gQut./qmo7HoG1aKkQeOQWeZzCjwwMMgk8nsLpwb3snlKK0wRKy";
 
 /*
 TODO:
@@ -138,7 +140,7 @@ test('If signin fails if password is wrong', async () => {
 describe('When Email 2FA is enabled', () => {
     const userData = {
         email: validEmail,
-        password: validPassword,
+        password: validHashedPassword,
         authenticationFactorsEnabled: ["Email"],
         secondId: uuidv4(),
         _id: new mongoose.Types.ObjectId()
@@ -154,7 +156,7 @@ describe('When Email 2FA is enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         await mongoose.disconnect();
         await DB.stopServer();
@@ -173,7 +175,7 @@ describe('When Email 2FA is enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         await mongoose.disconnect();
         await DB.stopServer();
@@ -192,7 +194,7 @@ describe('When Email 2FA is enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         await mongoose.disconnect();
         await DB.stopServer();
@@ -211,7 +213,7 @@ describe('When Email 2FA is enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const EmailVerificationCodes = await EmailVerificationCode.find({}).lean();
 
@@ -247,7 +249,7 @@ describe('When Email 2FA is enabled', () => {
         await new User(userData).save();
         await EmailVerificationCode.insertMany(codesToInsert);
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const codesInDatabase = await EmailVerificationCode.find({hashedVerificationCode: 'hashed'}).lean();
 
@@ -268,9 +270,9 @@ describe('When Email 2FA is enabled', () => {
 
         await new User(userData).save();
 
-        const returnedOne = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returnedOne = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
         const codesOne = await EmailVerificationCode.find({}).lean();
-        const returnedTwo = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returnedTwo = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
         const codesTwo = await EmailVerificationCode.find({}).lean();
 
         await mongoose.disconnect();
@@ -293,7 +295,7 @@ describe('When Email 2FA is enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const RefreshTokens = await RefreshToken.find({}).lean();
 
@@ -313,7 +315,7 @@ describe('When Email 2FA is enabled', () => {
 
         const user = await User.findOne({}).lean();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const userAfterSignin = await User.findOne({}).lean();
 
@@ -328,7 +330,7 @@ describe('When Email 2FA is enabled', () => {
 describe('When Email 2FA is not enabled', () => {
     const userData = {
         email: validEmail,
-        password: validPassword,
+        password: validHashedPassword,
         authenticationFactorsEnabled: [],
         secondId: uuidv4(),
         _id: new mongoose.Types.ObjectId()
@@ -354,7 +356,7 @@ describe('When Email 2FA is not enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         await mongoose.disconnect();
         await DB.stopServer();
@@ -373,7 +375,7 @@ describe('When Email 2FA is not enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         await mongoose.disconnect();
         await DB.stopServer();
@@ -392,7 +394,7 @@ describe('When Email 2FA is not enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const refreshTokens = await RefreshToken.find({}).lean();
 
@@ -404,5 +406,27 @@ describe('When Email 2FA is not enabled', () => {
         expect(returned.statusCode).toBe(200);
         expect(refreshTokens).toHaveLength(1);
         expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
+    })
+
+    test('if RefreshToken document gets created and admin is set to false', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.admin).toBe(false);
+        expect(refreshToken.createdAt).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway for test
     })
 })
