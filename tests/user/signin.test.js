@@ -44,7 +44,7 @@ Tests if email 2FA is not enabled:
     - Test if token gets created and is correct and usable -- Done
     - Test if refreshToken gets created and is correct and usable -- Done
     - Test if encryptedRefreshToken gets created and can be decrypted back to refreshToken -- Done
-    - Test if RefreshToken document gets created (and admin is set to false)
+    - Test if RefreshToken document gets created (and admin is set to false) -- Done
     - Test if IP is added to RefreshToken ONLY IF THE USER ALLOWS IT
     - Test if IP-derived location is added to RefreshToken ONLY IF THE USER ALLOWS IT
     - Test if device name is added to RefreshToken ONLY IF THE USER ALLOWS IT
