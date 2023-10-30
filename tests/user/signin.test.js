@@ -1,14 +1,17 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const {v4: uuidv4} = require('uuid')
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 
 const User = require('../../models/User');
 const RefreshToken = require('../../models/RefreshToken');
+const EmailVerificationCode = require('../../models/EmailVerificationCode');
 
 const UserController = require('../../controllers/User');
 
 const {expect, describe} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
+const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 
 const validEmail = "john.sullivan@gmail.com";
 const validPassword = "securepassword";
@@ -26,19 +29,19 @@ Test if signin fails if password is wrong (testing if user/signin carries out co
 
 Tests if email 2FA is enabled:
     - Test if email gets blurred -- Done
-    - Test fromAddress is the value of process.env.SMTP_EMAIL
-    - Test secondId is the user's secondId
-    - Test EmailVerificationCode gets created
-    - Test login does not interfere with other EmailVerificationCodes in the database
-    - Test that there can only be one EmailVerificationCode per user and that the code gets updated
-    - Test that a refresh token is not made
-    - Test that user document does not get modified
+    - Test fromAddress is the value of process.env.SMTP_EMAIL -- Done
+    - Test secondId is the user's secondId -- Done
+    - Test EmailVerificationCode gets created -- Done
+    - Test login does not interfere with other EmailVerificationCodes in the database -- Done
+    - Test that there can only be one EmailVerificationCode per user and that the code gets updated -- Done
+    - Test that a refresh token is not made -- Done
+    - Test that user document does not get modified -- Done
 
 
 Tests if email 2FA is not enabled:
-    - Test if token gets created and is correct and usable
-    - Test if refreshToken gets created and is correct and usable
-    - Test if encryptedRefreshToken gets created and can be decrypted back to refreshToken
+    - Test if token gets created and is correct and usable -- Done
+    - Test if refreshToken gets created and is correct and usable -- Done
+    - Test if encryptedRefreshToken gets created and can be decrypted back to refreshToken -- Done
     - Test if RefreshToken document gets created (and admin is set to false)
     - Test if IP is added to RefreshToken ONLY IF THE USER ALLOWS IT
     - Test if IP-derived location is added to RefreshToken ONLY IF THE USER ALLOWS IT
@@ -46,6 +49,7 @@ Tests if email 2FA is not enabled:
     - Test if correct user data gets returned
     - Test if already existing RefreshToken documents do not get modified
     - Test if already existing User documents do not get modified
+    - Test that user document does not get modified
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -132,17 +136,21 @@ test('If signin fails if password is wrong', async () => {
 })
 
 describe('When Email 2FA is enabled', () => {
+    const userData = {
+        email: validEmail,
+        password: validPassword,
+        authenticationFactorsEnabled: ["Email"],
+        secondId: uuidv4(),
+        _id: new mongoose.Types.ObjectId()
+    }
+
     test('If email gets blurred', async () => {
+        expect.assertions(2);
+
         const DB = new MockMongoDBServer();
         const uri = await DB.startServer();
 
         await mongoose.connect(uri);
-
-        const userData = {
-            email: validEmail,
-            password: validPassword,
-            authenticationFactorsEnabled: ["Email"]
-        }
 
         await new User(userData).save();
 
@@ -153,5 +161,248 @@ describe('When Email 2FA is enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(returned.data.data.email).toBe("jo**.s**li**n@gm**l.com")
+    })
+
+    test('if fromAddress is the value of process.env.SMTP_EMAIL', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(returned.data.data.fromAddress).toBe(process.env.SMTP_EMAIL)
+    })
+
+    test("if returned secondId is the same as the user's secondId", async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(returned.data.data.secondId).toBe(userData.secondId)
+    })
+
+    test('that email verification code gets created', async () => {
+        expect.assertions(5);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        const EmailVerificationCodes = await EmailVerificationCode.find({}).lean();
+
+        const verificationCode = EmailVerificationCodes[0];
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(EmailVerificationCodes).toHaveLength(1);
+        expect(verificationCode.userId).toBe(userData._id)
+        expect(typeof verificationCode.hashedVerificationCode).toBe('string');
+        expect(verificationCode.createdAt).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway
+    })
+
+    test('that login does not interfere with other email verification codes in the database', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const codesToInsert = [...new Array(10)].map(() => {
+            return {
+                createdAt: Date.now(),
+                userId: new mongoose.Types.ObjectId(),
+                hashedVerificationCode: 'hashed',
+                _id: new mongoose.Types.ObjectId()
+            }
+        })
+
+        await new User(userData).save();
+        await EmailVerificationCode.insertMany(codesToInsert);
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        const codesInDatabase = await EmailVerificationCode.find({hashedVerificationCode: 'hashed'}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(codesInDatabase).toStrictEqual(codesToInsert);
+    })
+
+    test('that there can only be one EmailVerificationCode document per user and the document gets updated for each new code', async () => {
+        expect.assertions(5);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returnedOne = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const codesOne = await EmailVerificationCode.find({}).lean();
+        const returnedTwo = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+        const codesTwo = await EmailVerificationCode.find({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returnedOne.statusCode).toBe(200);
+        expect(returnedTwo.statusCode).toBe(200);
+        expect(codesOne).toHaveLength(1);
+        expect(codesTwo).toHaveLength(1);
+        expect(codesOne[0].createdAt !== codesTwo[1].createdAt).toBe(true);
+    })
+
+    test('that a RefreshToken document is NOT made', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        const RefreshTokens = await RefreshToken.find({}).lean();
+
+        expect(returned.statusCode).toBe(200);
+        expect(RefreshTokens).toHaveLength(0);
+    })
+
+    test('that the user document does not get modified', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const user = await User.findOne({}).lean();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        const userAfterSignin = await User.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(user).toStrictEqual(userAfterSignin);
+    })
+})
+
+describe('When Email 2FA is not enabled', () => {
+    const userData = {
+        email: validEmail,
+        password: validPassword,
+        authenticationFactorsEnabled: [],
+        secondId: uuidv4(),
+        _id: new mongoose.Types.ObjectId()
+    }
+
+    const JWTVerifier = (secret, token) => {
+        return new Promise(resolve => {
+            jwt.verify(token, secret, (err, decoded) => {
+                if (err) return resolve(false);
+                if (decoded) return resolve(true);
+                resolve(false);
+            })
+        })
+    }
+
+    test('if token gets created and is usable', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token)).resolves.toBe(true);
+    })
+
+    test('if refresh token gets created and is usable', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken));
+    })
+
+    test('if encrypted refresh token gets created and can be decrypted back to refresh token', async () => {
+        expect.assertions(3);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, userData.password, validIP, validDeviceName);
+
+        const refreshTokens = await RefreshToken.find({}).lean();
+
+        const savedRefreshToken = refreshTokens[0];
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshTokens).toHaveLength(1);
+        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
     })
 })
