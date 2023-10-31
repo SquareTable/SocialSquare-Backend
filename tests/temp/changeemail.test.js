@@ -154,3 +154,14 @@ test('If change fails if user with desired email already exists', async () => {
     expect(returned.statusCode).toBe(403);
     expect(returned.data.message).toBe('User with the desired email already exists')
 })
+
+test('if change fails if password is wrong', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changeemail(String(userData._id), 'notmypassword', validEmail);
+
+    expect(returned.stautsCode).toBe(401);
+    expect(returned.data.message).toBe('Wrong password entered!')
+})
