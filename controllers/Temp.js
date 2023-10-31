@@ -196,7 +196,7 @@ class TempController {
                 User.findOne({ email: {$eq: desiredEmail} }).lean().then(result => {
                     // A email exists
                     if (result) {
-                        return resolve(HTTPWTHandler.badInput('User with the desired email already exists'))
+                        return resolve(HTTPWTHandler.forbidden('User with the desired email already exists'))
                     } else {
                         const hashedPassword = userFound.password;
                         bcrypt.compare(password, hashedPassword).then((result) => {
@@ -210,7 +210,7 @@ class TempController {
                                     return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
                                 });
                             } else {
-                                return resolve(HTTPWTHandler.badInput('Invalid password entered'))
+                                return resolve(HTTPWTHandler.unauthorized('Invalid password entered'))
                             }
                         })
                         .catch(err => {
