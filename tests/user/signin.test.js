@@ -716,10 +716,10 @@ describe('When Email 2FA is not enabled', () => {
                 location: 'location',
                 deviceType: 'device',
                 IP: 'IP',
-                createdAt: Date.now(),
+                createdAt: new Date(),
                 userId: new mongoose.Types.ObjectId(),
                 admin: Math.random() > 0.5,
-                notificationKey: false,
+                notificationKey: 'notification key',
                 __v: 0
             }
         })
