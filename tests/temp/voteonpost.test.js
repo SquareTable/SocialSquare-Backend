@@ -10,7 +10,7 @@ const Comment = require('../../models/Comment');
 const Upvote = require('../../models/Upvote');
 const Downvote = require('../../models/Downvote');
 
-const {expect} = require('@jest/globals');
+const {expect, beforeEach, afterEach} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const POST_DATABASE_MODELS = {
@@ -26,6 +26,16 @@ const VOTE_DATABASE_MODELS = {
 }
 
 jest.setTimeout(20_000); //20 seconds per test
+
+const DB = new MockMongoDBServer();
+
+beforeEach(async () => {
+    await DB.startTest();
+})
+
+afterEach(async () => {
+    await DB.stopTest();
+})
 
 /*
 API Tests:
@@ -60,11 +70,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post is successful when post creator account is public and has no blocked accounts`, async () => {
             expect.assertions(5);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -102,9 +107,6 @@ for (const format of formats) {
             delete newVote.interactionDate;
             newVote.postId = String(newVote.postId);
 
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(1);
             expect(vote).toHaveProperty('_id');
@@ -119,11 +121,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post fails when the voter is the post creator`, async () => {
             expect.assertions(3);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const voterData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -148,10 +145,6 @@ for (const format of formats) {
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
-
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(403);
             expect(returned.data.message).toBe("You cannot vote on your own post.")
             expect(votes).toHaveLength(0);
@@ -160,11 +153,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post is successful when post creator account has no blocked accounts and is private, but voter is following post creator account`, async () => {
             expect.assertions(5);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -204,10 +192,6 @@ for (const format of formats) {
             delete newVote._id;
             delete newVote.interactionDate;
             newVote.postId = String(newVote.postId)
-
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(1);
             expect(vote).toHaveProperty('_id');
@@ -223,17 +207,9 @@ for (const format of formats) {
         test(`${voteType}vote on ${format} post fails when voter account could not be found`, async () => {
             expect.assertions(3);
 
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
-
             const returned = await TempController.voteonpost("6537dd49d1866f60dbf58d1f", '6537f617a17d1f6a636e7d39', format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
-
-            await mongoose.disconnect();
-            await DB.stopServer();
 
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find user with provided userId");
@@ -242,11 +218,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post fails if post could not be found`, async () => {
             expect.assertions(3);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
@@ -261,9 +232,6 @@ for (const format of formats) {
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post");
             expect(votes).toHaveLength(0);
@@ -271,11 +239,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post fails when post creator could not be found`, async () => {
             expect.assertions(3);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
@@ -297,10 +260,6 @@ for (const format of formats) {
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
-
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post creator");
             expect(votes).toHaveLength(0);
@@ -308,11 +267,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post fails when the voter is blocked by the post creator`, async () => {
             expect.assertions(3);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c197f",
@@ -344,9 +298,6 @@ for (const format of formats) {
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post");
             expect(votes).toHaveLength(0);
@@ -354,11 +305,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post fails when the post creator has a private account and the voter is not following them`, async () => {
             expect.assertions(3);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -391,9 +337,6 @@ for (const format of formats) {
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post");
             expect(votes).toHaveLength(0);
@@ -401,11 +344,6 @@ for (const format of formats) {
 
         test(`${voteType}votes on ${format} post do not get duplicated`, async () => {
             expect.assertions(5);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -453,9 +391,6 @@ for (const format of formats) {
             delete newVote.interactionDate;
             newVote.postId = String(newVote.postId);
 
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(1);
             expect(vote).toHaveProperty('_id')
@@ -470,11 +405,6 @@ for (const format of formats) {
 
         test(`${oppositeVoteType}votes on ${format} post get deleted when making a ${voteType}vote`, async () => {
             expect.assertions(3);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -515,9 +445,6 @@ for (const format of formats) {
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
             const oppositeVotes = await VOTE_DATABASE_MODELS[oppositeVoteType].find({}).lean();
 
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(1);
             expect(oppositeVotes).toHaveLength(0);
@@ -525,11 +452,6 @@ for (const format of formats) {
 
         test(`${voteType}vote on ${format} post does not modify other votes in the database`, async () => {
             expect.assertions(3);
-
-            const DB = new MockMongoDBServer()
-            const uri = await DB.startServer();
-
-            await mongoose.connect(uri);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -620,9 +542,6 @@ for (const format of formats) {
             objectIdStringifiedUpvotes = upvotes.map(vote => ({...vote, _id: String(vote._id), postId: String(vote.postId)}))
             objectIdStringifiedDownvotes = downvotes.map(vote => ({...vote, _id: String(vote._id), postId: String(vote.postId)}))
 
-            await mongoose.disconnect();
-            await DB.stopServer();
-
             expect(returned.statusCode).toBe(200);
             expect(objectIdStringifiedUpvotes).toStrictEqual(upvotesToInsert);
             expect(objectIdStringifiedDownvotes).toStrictEqual(downvotesToInsert);
@@ -634,18 +553,10 @@ for (const invalidUserId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`Vote on post should fail when userId is not a string. Testing: ${JSON.stringify(invalidUserId)}`, async () => {
         expect.assertions(4);
     
-        const DB = new MockMongoDBServer()
-        const uri = await DB.startServer();
-    
-        await mongoose.connect(uri);
-    
         const returned = await TempController.voteonpost(invalidUserId, '', '', '')
     
         const downvotes = await Downvote.find({}).lean();
         const upvotes = await Upvote.find({}).lean();
-    
-        await mongoose.disconnect();
-        await DB.stopServer();
     
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userId must be a string. Provided type: ${typeof invalidUserId}`)
@@ -656,19 +567,11 @@ for (const invalidUserId of TEST_CONSTANTS.NOT_STRINGS) {
 
 test(`Vote on post should fail when userId is not an objectId`, async () => {
     expect.assertions(4);
-
-    const DB = new MockMongoDBServer()
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
     
     const returned = await TempController.voteonpost('i am not an objectId', '', '', '')
 
     const downvotes = await Downvote.find({}).lean();
     const upvotes = await Upvote.find({}).lean();
-
-    await mongoose.disconnect();
-    await DB.stopServer();
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe(`userId must be an objectId`)
@@ -680,18 +583,10 @@ for (const invalidPostId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`Vote on post should fail when postId is not a string. Testing: ${JSON.stringify(invalidPostId)}`, async () => {
         expect.assertions(4);
     
-        const DB = new MockMongoDBServer()
-        const uri = await DB.startServer();
-    
-        await mongoose.connect(uri);
-    
         const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", invalidPostId, '', '')
     
         const downvotes = await Downvote.find({}).lean();
         const upvotes = await Upvote.find({}).lean();
-    
-        await mongoose.disconnect();
-        await DB.stopServer();
     
         expect(returned.statusCode).toBe(400)
         expect(returned.data.message).toBe(`postId must be a string. Provided type: ${typeof invalidPostId}`)
@@ -704,18 +599,10 @@ for (const invalidPostId of TEST_CONSTANTS.NOT_STRINGS) {
 test(`Vote on post should fail when postId is not an objectId`, async () => {
     expect.assertions(4);
 
-    const DB = new MockMongoDBServer()
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
     const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", "i am not an objectId", '', '')
 
     const downvotes = await Downvote.find({}).lean();
     const upvotes = await Upvote.find({}).lean();
-
-    await mongoose.disconnect();
-    await DB.stopServer();
 
     expect(downvotes).toHaveLength(0);
     expect(upvotes).toHaveLength(0);
@@ -727,18 +614,10 @@ for (const invalidFormat of invalidPostFormats) {
     test(`Vote on post should fail when postFormat is invalid. Invalid format: ${invalidFormat}`, async () => {
         expect.assertions(4);
 
-        const DB = new MockMongoDBServer()
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", "6537f617a17d1f6a636e7d39", invalidFormat, '')
 
         const downvotes = await Downvote.find({}).lean();
         const upvotes = await Upvote.find({}).lean();
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(downvotes).toHaveLength(0);
         expect(upvotes).toHaveLength(0);
@@ -751,19 +630,10 @@ for (const invalidVoteType of invalidVoteTypes) {
     test(`Vote on post should fail when voteType is invalid. Invalid type: ${invalidVoteType}`, async () => {
         expect.assertions(4);
 
-        const DB = new MockMongoDBServer()
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", "6537f617a17d1f6a636e7d39", "Image", invalidVoteType)
 
         const downvotes = await Downvote.find({}).lean();
         const upvotes = await Upvote.find({}).lean();
-
-        await mongoose.disconnect();
-        await DB.stopServer();
-
 
         expect(downvotes).toHaveLength(0);
         expect(upvotes).toHaveLength(0);
