@@ -5,10 +5,20 @@ const TempController = require('../../controllers/Temp');
 const User = require('../../models/User');
 const RefreshToken = require('../../models/RefreshToken');
 
-const {expect} = require('@jest/globals');
+const {expect, beforeEach, afterEach} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 jest.setTimeout(20_000); //20 seconds per test
+
+const DB = new MockMongoDBServer();
+
+beforeEach(async () => {
+    await DB.startTest();
+})
+
+afterEach(async () => {
+    await DB.stopTest();
+})
 
 /*
 Tests:
@@ -88,15 +98,7 @@ test ('If upload fails if refreshTokenId is not an objectId.', async () => {
 test('If upload fails if user with userId could not be found', async () => {
     expect.assertions(2);
 
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
     const returned = await TempController.sendnotificationkey("653bcdd1ab9cf6186dde00cf", validPushToken, "653bcdd1ab9cf6186dde00cf");
-
-    await mongoose.disconnect();
-    await DB.stopServer();
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe("Could not find user with provided userId.")
@@ -104,11 +106,6 @@ test('If upload fails if user with userId could not be found', async () => {
 
 test('If upload fails if refresh token with refreshTokenId could not be found', async () => {
     expect.assertions(2);
-
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
 
     const userData = {
         _id: new mongoose.Types.ObjectId("653bcdd1ab9cf6186dde00cf")
@@ -118,20 +115,12 @@ test('If upload fails if refresh token with refreshTokenId could not be found', 
 
     const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, "653bcdd1ab9cf6186dde00cf");
 
-    await mongoose.disconnect();
-    await DB.stopServer();
-
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe("Could not find refresh token.")
 })
 
 test('If upload successfully modifies refresh token', async () => {
     expect.assertions(5);
-
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
 
     const userData = {
         _id: new mongoose.Types.ObjectId(),
@@ -159,9 +148,6 @@ test('If upload successfully modifies refresh token', async () => {
 
     refreshTokenData.notificationKey = validPushToken;
 
-    await mongoose.disconnect();
-    await DB.stopServer();
-
     expect(returned.statusCode).toBe(200);
     expect(tokens).toHaveLength(1);
     expect(users).toHaveLength(1);
@@ -171,11 +157,6 @@ test('If upload successfully modifies refresh token', async () => {
 
 test('If successful upload does not modify other refresh tokens in the database', async () => {
     expect.assertions(3);
-
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
 
     const users = [...new Array(10)].map(() => {
         return {
@@ -219,9 +200,6 @@ test('If successful upload does not modify other refresh tokens in the database'
 
     const dbUsers = await User.find({}).lean();
     const dbRefreshTokens = await RefreshToken.find({_id: {$ne: refreshTokenData._id}}).lean();
-
-    await mongoose.disconnect();
-    await DB.stopServer();
 
     expect(returned.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(savedUsers);
