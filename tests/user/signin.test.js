@@ -21,41 +21,41 @@ const validDeviceName = "GitHub-Actions";
 
 const validHashedPassword = "$2b$10$34gQut./qmo7HoG1aKkQeOQWeZzCjwwMMgk8nsLpwb3snlKK0wRKy";
 
-jest.setTimeout(40_000); //40 seconds per test
+jest.setTimeout(20_000); //20 seconds per test
 
 /*
-TODO:
-Test if signin fails if email is not a string -- Done
-Test if signin fails if password is not a string -- Done
-Test if signin fails if email is an empty string -- Done
-Test if signin fails if password is an empty string -- Done
-Test if signin fails if user with specified email could not be found -- Done
-Test if signin fails if password is wrong (testing if user/signin carries out correct authentication) -- Done
+Tests:
+Test if signin fails if email is not a string
+Test if signin fails if password is not a string
+Test if signin fails if email is an empty string
+Test if signin fails if password is an empty string
+Test if signin fails if user with specified email could not be found
+Test if signin fails if password is wrong (testing if user/signin carries out correct authentication)
 
 Tests if email 2FA is enabled:
     - Test if email gets blurred -- Done
-    - Test fromAddress is the value of process.env.SMTP_EMAIL -- Done
-    - Test secondId is the user's secondId -- Done
-    - Test EmailVerificationCode gets created -- Done
-    - Test login does not interfere with other EmailVerificationCodes in the database -- Done
-    - Test that there can only be one EmailVerificationCode per user and that the code gets updated -- Done
-    - Test that a refresh token is not made -- Done
-    - Test that user document does not get modified -- Done
+    - Test fromAddress is the value of process.env.SMTP_EMAIL
+    - Test secondId is the user's secondId
+    - Test EmailVerificationCode gets created
+    - Test login does not interfere with other EmailVerificationCodes in the database
+    - Test that there can only be one EmailVerificationCode per user and that the code gets updated
+    - Test that a refresh token is not made
+    - Test that user document does not get modified
 
 
 Tests if email 2FA is not enabled:
-    - Test if token gets created and is correct and usable -- Done
-    - Test if refreshToken gets created and is correct and usable -- Done
-    - Test if encryptedRefreshToken gets created and can be decrypted back to refreshToken -- Done
-    - Test if RefreshToken document gets created (and admin is set to false) -- Done
-    - Test if IP is not added to RefreshToken when the user does not allow it -- Done
-    - Test if IP is added to RefreshToken when the user allows it -- Done
-    - Test if IP-derived location is not added to RefreshToken when the user does not allow it -- Done
-    - Test if IP-derived location is added to RefreshToken when the user allows it -- Done
-    - Test if location is set to "Unknown Location" if location returned was null -- Done
-    - Test if device name is not added to RefreshToken when the user does not allow it -- Done
-    - Test if device name is added to RefreshToken when the user allows it -- Done
-    - Test if correct user data gets returned -- Done
+    - Test if token gets created and is correct and usable
+    - Test if refreshToken gets created and is correct and usable
+    - Test if encryptedRefreshToken gets created and can be decrypted back to refreshToken
+    - Test if RefreshToken document gets created (and admin is set to false)
+    - Test if IP is not added to RefreshToken when the user does not allow it
+    - Test if IP is added to RefreshToken when the user allows it
+    - Test if IP-derived location is not added to RefreshToken when the user does not allow it
+    - Test if IP-derived location is added to RefreshToken when the user allows it
+    - Test if location is set to "Unknown Location" if location returned was null
+    - Test if device name is not added to RefreshToken when the user does not allow it
+    - Test if device name is added to RefreshToken when the user allows it
+    - Test if correct user data gets returned
     - Test if already existing RefreshToken documents do not get modified
     - Test if already existing User documents do not get modified
     - Test that user document does not get modified
@@ -700,5 +700,96 @@ describe('When Email 2FA is not enabled', () => {
         expect(typeof returned.data.data.followers).toBe("number");
         expect(typeof returned.data.data.following).toBe("number");
         expect(typeof returned.data.data._id).toBe("string");
+    })
+
+    test('if already existing RefreshToken documents do not get modified', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const tokensToInsert = [...new Array(10)].map(() => {
+            return {
+                encryptedRefreshToken: 'encrypted',
+                location: 'location',
+                deviceType: 'device',
+                IP: 'IP',
+                createdAt: Date.now(),
+                userId: new mongoose.Types.ObjectId(),
+                admin: Math.random() > 0.5,
+                notificationKey: false,
+                __v: 0
+            }
+        })
+
+        await new User(userData).save();
+        await RefreshToken.insertMany(tokensToInsert);
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const refreshTokens = await RefreshToken.find({_id: {$ne: returned.data.refreshTokenId}}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshTokens).toStrictEqual(tokensToInsert);
+    })
+
+    test('if already existing User documents do not get modified', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const usersToInsert = [...new Array(10)].map(() => {
+            return {
+                _id: new mongoose.Types.ObjectId(),
+                secondId: uuidv4(),
+                name: 'sebastian',
+                displayName: 'Sebastian',
+                __v: 0
+            }
+        })
+
+        await new User(userData).save();
+        await User.insertMany(usersToInsert);
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const savedUsers = await User.find({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(savedUsers).toStrictEqual(usersToInsert)
+    })
+
+    test('that user document does not get modified', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const beforeUser = await User.findOne({}).lean();
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const afterUser = await User.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(beforeUser).toStrictEqual(afterUser);
     })
 })
