@@ -40,8 +40,8 @@ Test if change fails if desiredEmail is an empty string -- Done
 Test if change fails if desiredEmail does not pass the valid email test -- Done
 Test if change fails if user with userId could not be found -- Done
 Test if change fails if there is already a user with the desired email -- Done
-test if change fails if password is wrong
-Test if change is successful when inputs are correct
+test if change fails if password is wrong -- Done
+Test if change is successful when inputs are correct -- Done
 Test if change does not modify other User documents
 */
 
@@ -164,4 +164,17 @@ test('if change fails if password is wrong', async () => {
 
     expect(returned.stautsCode).toBe(401);
     expect(returned.data.message).toBe('Wrong password entered!')
+})
+
+test('If change is successful when inputs are correct', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changeemail(String(userData._id), validPassword, validEmail);
+
+    const afterUser = await User.findOne({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(afterUser.email).toBe(validEmail);
 })
