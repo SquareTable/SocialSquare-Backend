@@ -123,7 +123,7 @@ class UserController {
             
                                             if (result?.settings?.loginActivitySettings?.getLocation) {
                                                 const location = geoIPLite.lookup(formattedIP)
-                                                newRefreshTokenObject.location = (!location?.city && !location.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
                                             }
             
                                             if (result?.settings?.loginActivitySettings?.getDeviceType) {
@@ -596,7 +596,7 @@ class UserController {
             
                                             if (userFound?.settings?.loginActivitySettings?.getLocation) {
                                                 const location = geoIPLite.lookup(formattedIP)
-                                                newRefreshTokenObject.location = (!location?.city && !location.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
                                             }
             
                                             if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
