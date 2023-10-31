@@ -38,7 +38,7 @@ const userData = {
 
 /*
 TODO:
-Test if change fails if userId is not a string
+Test if change fails if userId is not a string -- Done
 Test if change fails if userId is not an objectId
 Test if change fails if currentPassword is not a string
 Test if change fails if newPassword is not a string
@@ -73,3 +73,12 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
     })
 }
+
+test('If change fails if userId is not an objectId', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword('i am not an objectid', validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('userId must be an objectId.')
+})
