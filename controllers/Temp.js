@@ -125,6 +125,14 @@ class TempController {
 
     static #changedisplayname  = (userId, desiredDisplayName) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+            }
+
             if (typeof desiredDisplayName !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`Desired display name must be a string. Provided type: ${typeof desiredDisplayName}`))
             }
@@ -132,7 +140,11 @@ class TempController {
             desiredDisplayName = desiredDisplayName.trim();
         
             if (desiredDisplayName.length > CONSTANTS.MAX_USER_DISPLAY_NAME_LENGTH) {
-                return HTTPWTHandler.badInput('Desired display name must be 20 characters or less.')
+                return resolve(HTTPWTHandler.badInput('Desired display name must be 20 characters or less.'))
+            }
+
+            if (!desiredDisplayName.test(CONSTANTS.VALID_DISPLAY_NAME_TEST)) {
+                return resolve(HTTPWTHandler.badInput('Display name must only contain characters in the alphabet and must be a single line.'))
             }
         
             // Check if user exist

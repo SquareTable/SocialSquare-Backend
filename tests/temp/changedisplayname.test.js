@@ -27,6 +27,8 @@ Test if change fails if desiredDisplayName is more than 20 characters
 Test if change fails if user could not be found
 Test if change successfully changes display name and only changes display name
 Test if change does not interfere with already existing user documents
+Test if change fails if desiredDisplayName is multi-line
+Test if change fails if desiredDisplayName has non-alphabetic characters
 */
 
 const userData = {
@@ -134,4 +136,26 @@ test('If change does not modify already existing User documents', async () => {
 
     expect(returned.statusCode).toBe(200);
     expect(beforeUsers).toStrictEqual(afterUsers);
+})
+
+test('If change fails if desiredDisplayName is multi-line', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changedisplayname(String(userData._id), `new\ndisplay\nname`);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe("Display name must only containb characters in the alphabet and must be a single line.")
+})
+
+test('If change fails if desiredDisplayName contains non-alphabetic characters', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changedisplayname(String(userData._id), '*&^%$#%^&*()')
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe("Display name must only containb characters in the alphabet and must be a single line.")
 })
