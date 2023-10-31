@@ -10,7 +10,7 @@ const User = require('../../models/User');
 const UserController = require('../../controllers/User');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
-const {expect} = require('@jest/globals');
+const {expect, beforeEach, afterEach} = require('@jest/globals');
 const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 const RefreshToken = require('../../models/RefreshToken');
 
@@ -26,6 +26,16 @@ const validIP = "127.0.0.1";
 const validDeviceName = "GitHub-Actions"
 
 jest.setTimeout(20_000); //20 seconds per test
+
+const DB = new MockMongoDBServer();
+
+beforeEach(async () => {
+    await DB.startTest();
+})
+
+afterEach(async () => {
+    await DB.stopTest();
+})
 
 
 /*
@@ -172,11 +182,6 @@ test('if signup fails if password is longer than 17 characters (due to bcrypt li
 test('if signup fails if a user with the same email already exists', async () => {
     expect.assertions(3);
 
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
     const existingUserData = {
         _id: new mongoose.Types.ObjectId(),
         email: 'myemail@email.com'
@@ -188,9 +193,6 @@ test('if signup fails if a user with the same email already exists', async () =>
 
     const users = await User.find({}).lean();
 
-    await mongoose.disconnect();
-    await DB.stopServer();
-
     expect(users).toHaveLength(1);
     expect(returned.statusCode).toBe(409);
     expect(returned.data.message).toBe("User with the provided email already exists.")
@@ -198,11 +200,6 @@ test('if signup fails if a user with the same email already exists', async () =>
 
 test('if signup fails if a user with the same name already exists', async () => {
     expect.assertions(3);
-
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
 
     const existingUserData = {
         _id: new mongoose.Types.ObjectId(),
@@ -215,9 +212,6 @@ test('if signup fails if a user with the same name already exists', async () => 
 
     const users = await User.find({}).lean();
 
-    await mongoose.disconnect();
-    await DB.stopServer();
-
     expect(users).toHaveLength(1);
     expect(returned.statusCode).toBe(409);
     expect(returned.data.message).toBe("User with the provided username already exists")
@@ -226,11 +220,6 @@ test('if signup fails if a user with the same name already exists', async () => 
 for (const validUserEmail of VALID_EMAILS) {
     test(`if user account creation is successful with correct inputs. Email tested: ${validUserEmail}`, async () => {
         expect.assertions(24);
-    
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-    
-        await mongoose.connect(uri);
     
         const benchmarkUserData = {
             name: validName,
@@ -299,9 +288,6 @@ for (const validUserEmail of VALID_EMAILS) {
             }
         }
     
-        await mongoose.disconnect();
-        await DB.stopServer();
-    
         expect(returned.statusCode).toBe(200);
         expect(bcrypt.compareSync(benchmarkUserData.password, savedUser.password)).toBe(true);
         expect(savedUserBadges).toHaveLength(1);
@@ -335,11 +321,6 @@ for (const validUserEmail of VALID_EMAILS) {
 test('user creation does not modify other users in the database', async () => {
     expect.assertions(2);
 
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
     const users = [...new Array(10)].map((item, index) => {
         return {
             _id: new mongoose.Types.ObjectId(),
@@ -356,9 +337,6 @@ test('user creation does not modify other users in the database', async () => {
     const returned = await UserController.signup(validName, validEmail, validPassword, validIP, validDeviceName);
 
     const savedUsers = await User.find({email: {$ne: validEmail}}).lean();
-
-    await mongoose.disconnect();
-    await DB.stopServer();
 
     expect(returned.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(savedUsers);
