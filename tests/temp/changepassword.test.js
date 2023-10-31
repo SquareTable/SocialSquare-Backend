@@ -145,3 +145,12 @@ test('If change fails if user with userId could not be found', async () => {
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('User with provided userId could not be found.')
 })
+
+test('If change fails if password is wrong', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), 'wrongpassword', newPassword, newPassword, validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(401);
+    expect(returned.data.message).toBe('Invalid password entered!')
+})
