@@ -157,5 +157,5 @@ test('If change fails if desiredDisplayName contains non-alphabetic characters',
     const returned = await TempController.changedisplayname(String(userData._id), '*&^%$#%^&*()')
 
     expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Display name must only containb characters in the alphabet and must be a single line.")
+    expect(returned.data.message).toBe("Display name must only contain characters in the alphabet and must be a single line.")
 })
