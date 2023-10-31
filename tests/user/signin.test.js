@@ -50,12 +50,12 @@ Tests if email 2FA is not enabled:
     - Test if RefreshToken document gets created (and admin is set to false) -- Done
     - Test if IP is not added to RefreshToken when the user does not allow it -- Done
     - Test if IP is added to RefreshToken when the user allows it -- Done
-    - Test if IP-derived location is not added to RefreshToken when the user does not allow it
-    - Test if IP-derived location is added to RefreshToken when the user allows it
-    - Test if location is set to "Unknown Location" if location returned was null
-    - Test if device name is not added to RefreshToken when the user does not allow it
-    - Test if device name is added to RefreshToken when the user allows it
-    - Test if correct user data gets returned
+    - Test if IP-derived location is not added to RefreshToken when the user does not allow it -- Done
+    - Test if IP-derived location is added to RefreshToken when the user allows it -- Done
+    - Test if location is set to "Unknown Location" if location returned was null -- Done
+    - Test if device name is not added to RefreshToken when the user does not allow it -- Done
+    - Test if device name is added to RefreshToken when the user allows it -- Done
+    - Test if correct user data gets returned -- Done
     - Test if already existing RefreshToken documents do not get modified
     - Test if already existing User documents do not get modified
     - Test that user document does not get modified
@@ -462,7 +462,7 @@ describe('When Email 2FA is not enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, validHashedPassword, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
@@ -493,7 +493,7 @@ describe('When Email 2FA is not enabled', () => {
 
         await new User(userData).save();
 
-        const returned = await UserController.signin(userData.email, validHashedPassword, validIP, validDeviceName);
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
@@ -502,5 +502,203 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.IP).toBe(validIP);
+    })
+
+    test('if IP-derived location is not added to RefreshToken when the user does not allow it', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validHashedPassword,
+            settings: {
+                loginActivitySettings: {
+                    getLocation: false
+                }
+            }
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.location).toBe(undefined);
+    })
+
+    test('if IP-derived location is added to RefreshToken when the user allows it', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validHashedPassword,
+            settings: {
+                loginActivitySettings: {
+                    getLocation: true
+                }
+            }
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validPassword, '1.1.1.1', validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.location).toBeTruthy();
+    })
+
+    test('if IP-derived location is set to "Unknown Location" when the location cannot be found', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validHashedPassword,
+            settings: {
+                loginActivitySettings: {
+                    getLocation: true
+                }
+            }
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validPassword, '127.0.0.1', validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.location).toBe("Unknown Location");
+    })
+
+    test('if deviceType is not added to RefreshToken when the user does not allow it', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validHashedPassword,
+            settings: {
+                loginActivitySettings: {
+                    getDeviceType: false
+                }
+            }
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.deviceType).toBe(undefined);
+    })
+
+    test('if deviceType is not added to RefreshToken when the user does not allow it', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validHashedPassword,
+            settings: {
+                loginActivitySettings: {
+                    getDeviceType: true
+                }
+            }
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.deviceType).toBe(validDeviceName);
+    })
+
+    test('if correct user data gets returned', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        const notIncludedKeys = [
+            'notificationKeys',
+            'password',
+            'refreshTokens',
+            'algorithmData',
+            'accountFollowRequests',
+            'blockedAccounts',
+            'authenticationFactorsEnabled',
+            'MFAEmail'
+        ]
+
+        let includesNotIncludedKey = false;
+        const returnedUserDataKeys = Object.keys(returned.data.data);
+
+        for (const key of notIncludedKeys) {
+            if (returnedUserDataKeys.includes(key)) {
+                includesNotIncludedKey = true;
+                break;
+            }
+        }
+
+        expect(returned.statusCode).toBe(200);
+        expect(includesNotIncludedKey).toBe(false);
+        expect(typeof returned.data.data.followers).toBe("number");
+        expect(typeof returned.data.data.following).toBe("number");
+        expect(typeof returned.data.data._id).toBe("string");
     })
 })
