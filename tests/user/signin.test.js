@@ -759,15 +759,17 @@ describe('When Email 2FA is not enabled', () => {
         await new User(userData).save();
         await User.insertMany(usersToInsert);
 
+        const beforeUsers = await User.find({}).lean();
+
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
-        const savedUsers = await User.find({}).lean();
+        const afterUsers = await User.find({}).lean();
 
         await mongoose.disconnect();
         await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
-        expect(savedUsers).toStrictEqual(usersToInsert)
+        expect(beforeUsers).toStrictEqual(afterUsers)
     })
 
     test('that user document does not get modified', async () => {
