@@ -5,6 +5,7 @@ const User = require('../../models/User');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const {expect, test, beforeEach, afterEach} = require('@jest/globals');
 const {v4: uuidv4} = require('uuid');
+const MockMongoDBServer = require('../../libraries/MockDBServer');
 
 const DB = new MockMongoDBServer();
 
