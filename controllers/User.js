@@ -123,7 +123,7 @@ class UserController {
             
                                             if (result?.settings?.loginActivitySettings?.getLocation) {
                                                 const location = geoIPLite.lookup(formattedIP)
-                                                newRefreshTokenObject.location = location?.city + ', ' + location?.country
+                                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
                                             }
             
                                             if (result?.settings?.loginActivitySettings?.getDeviceType) {
@@ -176,127 +176,120 @@ class UserController {
         
             email = email.trim();
             password = password.trim();
-        
-            if (email == "" || password == "") {
-                return resolve(HTTPWTHandler.badInput('Empty credentials supplied'))
-            } else {
-                // Check if user exist
-                User.findOne({ email: {$eq: email} }).lean()
-                .then((data) => {
-                    if (data) {
-                        //User Exists
-        
-                        const hashedPassword = data.password;
-                        bcrypt.compare(password, hashedPassword).then(async (result) => {
-                                if (result) {
-                                    // Password match
-                                    if (data.authenticationFactorsEnabled?.includes('Email')) {
-                                        try {
-                                            var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
-                                            randomString = String(randomString.data).trim();
-                                            console.log('Random string generated: ' + randomString)
-                                    
-                                            if (randomString.length != 8) {
-                                                console.log('An error occured while generating random string. The random string that was generated is: ' + randomString)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
-                                            }
-                                        } catch (error) {
-                                            console.error('An error occurred while getting a random string. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while generating a random string. Please try again'))
-                                        }
-        
-                                        try {
-                                            var hashedRandomString = await bcrypt.hash(randomString, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS);
-                                        } catch (error) {
-                                            console.error('An error occurred while hashing random string. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while hashing the random string. Please try again'))
-                                        }
 
-                                        const userId = data._id
-
-                                        const emailVerificationCodeData = {
-                                            userId,
-                                            hashedVerificationCode: hashedRandomString
-                                        }
-
-                                        EmailVerificationCode.findOneAndReplace({userId: {$eq: userId}}, emailVerificationCodeData, {upsert: true}).then(() => {
-                                            //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
-                                            //If it does not exist, it'll get added to the database because of upsert: true
-
-                                            var emailData = {
-                                                from: process.env.SMTP_EMAIL,
-                                                to: data.MFAEmail,
-                                                subject: "Code to login to your SocialSquare account",
-                                                text: `Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.`,
-                                                html: `<p>Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.</p>`
-                                            };
-            
-                                            mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
-                                                if(error){
-                                                    console.error('An error occurred while sending email to user for task:', task, '. User ID for user was:', userId, '. Error type:', error.name, '. SMTP log:', error.data)
-                                                    return resolve(HTTPWTHandler.serverError('An error occurred while sending email verification code. Please try again'))
-                                                }
-    
-                                                console.log('Sent random string to user.')
-                                                return resolve(HTTPWTHandler.OK('Email', {email: blurEmailFunction(data.MFAEmail), fromAddress: process.env.SMTP_EMAIL, secondId: data.secondId}))
-                                            });
-                                        }).catch(error => {
-                                            console.error('An error occurred while doing findOneAndReplace for EmailVerificationCode querying {userId:', userId, '}. emailVerificationCodeData is:', emailVerificationCodeData, '. Options: {upsert: true}. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code. Please try again.'))
-                                        })
-                                
-                                    } else {
-                                        const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(data._id)
-        
-                                        const newRefreshTokenObject = {
-                                            encryptedRefreshToken,
-                                            userId: data._id,
-                                            createdAt: Date.now(),
-                                            admin: false
-                                        }
-
-                                        const formattedIP = HTTPHandler.formatIP(IP)
-        
-                                        if (data?.settings?.loginActivitySettings?.getIP) {
-                                            newRefreshTokenObject.IP = formattedIP
-                                        }
-        
-                                        if (data?.settings?.loginActivitySettings?.getLocation) {
-                                            const location = geoIPLite.lookup(formattedIP)
-                                            newRefreshTokenObject.location = location?.city + ', ' + location?.country
-                                        }
-        
-                                        if (data?.settings?.loginActivitySettings?.getDeviceType) {
-                                            newRefreshTokenObject.deviceType = deviceName
-                                        }
-        
-                                        const newRefreshToken = new RefreshToken(newRefreshTokenObject)
-        
-                                        newRefreshToken.save().then(refreshTokenSaved => {
-                                            const dataToSend = userHandler.filterUserInformationToSend(data)
-                                            return resolve(HTTPWTHandler.OK('Signin successful', dataToSend, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
-                                        }).catch(error => {
-                                            console.error('An error occurred while saving new refresh token. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
-                                        })
-                                    }
-                                } else {
-                                    return resolve(HTTPWTHandler.badInput('Invalid password entered!'))
-                                }
-                            })
-                            .catch(err => {
-                                console.error('An error occurred while comparing passwords. The error was:', err)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords!'))
-                            })
-                        } else {
-                            return resolve(HTTPWTHandler.badInput('Invalid credentials entered!'))
-                        }
-                    })
-                    .catch(err => {
-                        console.error('An error occurred while checking for existing user. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user'))
-                })
+            if (email.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Email cannot be blank'))
             }
+
+            if (password.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Password cannot be blank'))
+            }
+
+            User.findOne({email: {$eq: email}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('A user with the specified email does not exist.'))
+
+                const hashedPassword = userFound.password;
+                bcrypt.compare(password, hashedPassword).then(async result => {
+                    if (!result) return resolve(HTTPWTHandler.unauthorized('Invalid password entered!'))
+
+                    if (userFound.authenticationFactorsEnabled?.includes('Email')) {
+                        try {
+                            var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
+                            randomString = String(randomString.data).trim();
+                            console.log('Random string generated: ' + randomString)
+                    
+                            if (randomString.length != 8) {
+                                console.log('An error occured while generating random string. The random string that was generated is: ' + randomString)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
+                            }
+                        } catch (error) {
+                            console.error('An error occurred while getting a random string. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while generating a random string. Please try again'))
+                        }
+
+                        try {
+                            var hashedRandomString = await bcrypt.hash(randomString, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS);
+                        } catch (error) {
+                            console.error('An error occurred while hashing random string. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while hashing the random string. Please try again'))
+                        }
+
+                        const userId = userFound._id
+
+                        const emailVerificationCodeData = {
+                            userId,
+                            hashedVerificationCode: hashedRandomString
+                        }
+
+                        EmailVerificationCode.findOneAndReplace({userId: {$eq: userId}}, emailVerificationCodeData, {upsert: true}).then(() => {
+                            //If there is a document that already matches the query criteria, it'll get replaced with the new emailVerificationCodeData
+                            //If it does not exist, it'll get added to the database because of upsert: true
+
+                            var emailData = {
+                                from: process.env.SMTP_EMAIL,
+                                to: userFound.MFAEmail,
+                                subject: "Code to login to your SocialSquare account",
+                                text: `Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.`,
+                                html: `<p>Someone is trying to login to your account. If this is you, please enter this code into SocialSquare to login: ${randomString}. If you are not trying to login to your account, change your password immediately as someone else knows it.</p>`
+                            };
+
+                            mailTransporter.sendMail(emailData, function(error, response){ // Modified answer from https://github.com/nodemailer/nodemailer/issues/169#issuecomment-20463956
+                                if(error){
+                                    console.error('An error occurred while sending email to user for task:', task, '. User ID for user was:', userId, '. Error type:', error.name, '. SMTP log:', error.data)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while sending email verification code. Please try again'))
+                                }
+
+                                console.log('Sent random string to user.')
+                                return resolve(HTTPWTHandler.OK('Email', {email: blurEmailFunction(userFound.MFAEmail), fromAddress: process.env.SMTP_EMAIL, secondId: userFound.secondId}))
+                            });
+                        }).catch(error => {
+                            console.error('An error occurred while doing findOneAndReplace for EmailVerificationCode querying {userId:', userId, '}. emailVerificationCodeData is:', emailVerificationCodeData, '. Options: {upsert: true}. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while saving verification code. Please try again.'))
+                        })
+                
+                    } else {
+                        const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userFound._id)
+
+                        const newRefreshTokenObject = {
+                            encryptedRefreshToken,
+                            userId: userFound._id,
+                            createdAt: Date.now(),
+                            admin: false
+                        }
+
+                        const formattedIP = HTTPHandler.formatIP(IP)
+
+                        if (userFound?.settings?.loginActivitySettings?.getIP) {
+                            newRefreshTokenObject.IP = formattedIP
+                        }
+
+                        if (userFound?.settings?.loginActivitySettings?.getLocation) {
+                            const location = geoIPLite.lookup(formattedIP)
+                            newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                        }
+
+                        if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
+                            newRefreshTokenObject.deviceType = deviceName
+                        }
+
+                        const newRefreshToken = new RefreshToken(newRefreshTokenObject)
+
+                        newRefreshToken.save().then(refreshTokenSaved => {
+                            const dataToSend = userHandler.filterUserInformationToSend(userFound)
+                            return resolve(HTTPWTHandler.OK('Signin successful', dataToSend, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
+                        }).catch(error => {
+                            console.error('An error occurred while saving new refresh token. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
+                        })
+                    }
+                }).catch(error => {
+                    console.error('An error occurred while comparing password with bcrypt:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while authenticating. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with email:', email, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 
@@ -603,7 +596,7 @@ class UserController {
             
                                             if (userFound?.settings?.loginActivitySettings?.getLocation) {
                                                 const location = geoIPLite.lookup(formattedIP)
-                                                newRefreshTokenObject.location = location.city + ', ' + location.country
+                                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
                                             }
             
                                             if (userFound?.settings?.loginActivitySettings?.getDeviceType) {

@@ -1,14 +1,18 @@
 // Use nodemailer for sending emails to users
 const nodemailer = require("nodemailer");
-let mailTransporter = nodemailer.createTransport({
-    host: process.env.SMTP_SERVER,
-    port: process.env.SMTP_PORT,
-    secure: false, // IN THE FUTURE MAKE THIS TRUE --- true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-});
+let mailTransporter = nodemailer.createTransport(
+    process.env.USE_JSON_MAIL_TRANSPORT === "true" ? {
+        jsonTransport: true
+    } : {
+        host: process.env.SMTP_SERVER,
+        port: process.env.SMTP_PORT,
+        secure: false, // IN THE FUTURE MAKE THIS TRUE --- true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASSWORD,
+        }
+    }
+);
 
 function blurEmailFunction(emailToBlur) {
     // Modified stack overflow answer from https://stackoverflow.com/users/14547938/daniel

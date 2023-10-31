@@ -271,7 +271,7 @@ class TempController {
         
                                     if (data[0]?.settings?.loginActivitySettings?.getLocation) {
                                         const location = geoIPLite.lookup(formattedIP)
-                                        newRefreshTokenObject.location = location.city + ', ' + location.country
+                                        newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
                                     }
         
                                     if (data[0]?.settings?.loginActivitySettings?.getDeviceType) {
@@ -4550,7 +4550,7 @@ class TempController {
         
                     if (loginActivitySettingsToSet.getLocation) {
                         const location = geoIPLite.lookup(IP)
-                        changesToMake.location = location.city + ', ' + location.country
+                        changesToMake.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
                     }
         
                     if (loginActivitySettingsToSet.getDeviceType) {
