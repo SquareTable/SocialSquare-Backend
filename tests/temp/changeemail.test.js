@@ -65,7 +65,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const returned = await TempController.changeemail(String(userData._id), notString, validEmail);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`password must be a string. Provided type: ${typeof notString}`)
+        expect(returned.data.message).toBe(`password must be a string. Type provided: ${typeof notString}`)
     })
 
     test(`If change fails if desiredEmail is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
@@ -76,7 +76,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const returned = await TempController.changeemail(String(userData._id), validPassword, notString);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`desiredEmail must be a string. Provided type: ${typeof notString}`)
+        expect(returned.data.message).toBe(`desiredEmail must be a string. Type provided: ${typeof notString}`)
     })
 }
 
