@@ -30,18 +30,18 @@ const userData = {
 }
 
 /*
-TODO:
-Test if change fails if userId is not a string -- Done
-Test if change fails if userId is not an objectId -- Done
-Test if change fails if password is not a string -- Done
-Test if change fails if password is an empty string -- Done
-Test if change fails if desiredEmail is not a string -- Done
-Test if change fails if desiredEmail is an empty string -- Done
-Test if change fails if desiredEmail does not pass the valid email test -- Done
-Test if change fails if user with userId could not be found -- Done
-Test if change fails if there is already a user with the desired email -- Done
-test if change fails if password is wrong -- Done
-Test if change is successful when inputs are correct -- Done
+Tests:
+Test if change fails if userId is not a string
+Test if change fails if userId is not an objectId
+Test if change fails if password is not a string
+Test if change fails if password is an empty string
+Test if change fails if desiredEmail is not a string
+Test if change fails if desiredEmail is an empty string
+Test if change fails if desiredEmail does not pass the valid email test
+Test if change fails if user with userId could not be found
+Test if change fails if there is already a user with the desired email
+test if change fails if password is wrong
+Test if change is successful when inputs are correct
 Test if change does not modify other User documents
 */
 
@@ -177,4 +177,31 @@ test('If change is successful when inputs are correct', async () => {
 
     expect(returned.statusCode).toBe(200);
     expect(afterUser.email).toBe(validEmail);
+})
+
+test('If change does not modify other User documents', async () => {
+    expect.assertions(2);
+
+    const usersToInsert = [...new Array(10)].map((item, index) => {
+        return {
+            _id: new mongoose.Types.ObjectId(),
+            secondId: uuidv4(),
+            name: 'name' + index,
+            displayName: 'displayname' + index,
+            email: `email${index}@gmail.com`
+        }
+    })
+
+    await User.insertMany(usersToInsert);
+
+    const beforeUsers = await User.find({}).lean();
+
+    await new User(userData).save();
+
+    const returned = await TempController.changeemail(String(userData._id), validPassword, validEmail);
+
+    const afterUsers = await User.find({_id: {$ne: userData._id}}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(beforeUsers).toStrictEqual(afterUsers);
 })
