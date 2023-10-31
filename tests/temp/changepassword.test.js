@@ -46,7 +46,7 @@ Test if change fails if confirmNewPassword is not a string -- Done
 Test if change fails if newPassword is less than 8 characters -- Done
 Test if change fails if newPassword is more than 17 characters -- Done
 Test if change fails if newPassword and confirmNewPassword are not the same -- Done
-Test if change fails if user with userId cannot be found
+Test if change fails if user with userId cannot be found -- Done
 Test if change fails if currentPassword is wrong
 Test if new token is generated and it is usable
 Test if new refreshToken is generated and it is usable
@@ -135,4 +135,13 @@ test('If change fails if newPassword and confirmNewPassword are not the same', a
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Passwords do not match')
+})
+
+test('If change fails if user with userId could not be found', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('User with provided userId could not be found.')
 })
