@@ -43,9 +43,9 @@ Test if change fails if userId is not an objectId -- Done
 Test if change fails if currentPassword is not a string -- Done
 Test if change fails if newPassword is not a string -- Done
 Test if change fails if confirmNewPassword is not a string -- Done
-Test if change fails if newPassword is less than 8 characters
-Test if change fails if newPassword is more than 17 characters
-Test if change fails if newPassword and confirmNewPassword are not the same
+Test if change fails if newPassword is less than 8 characters -- Done
+Test if change fails if newPassword is more than 17 characters -- Done
+Test if change fails if newPassword and confirmNewPassword are not the same -- Done
 Test if change fails if user with userId cannot be found
 Test if change fails if currentPassword is wrong
 Test if new token is generated and it is usable
@@ -108,4 +108,31 @@ test('If change fails if userId is not an objectId', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('userId must be an objectId.')
+})
+
+test('If change fails if newPassword is less than 8 characters', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, 'short', 'short', validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('Your new password must be 8 or more characters.')
+})
+
+test('If change fails if newPassword is more than 17 characters', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, 'thisis18characters', 'thisis18characters', validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('Your new password must be 17 or less characters.')
+})
+
+test('If change fails if newPassword and confirmNewPassword are not the same', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, 'thesearenot', 'thesamepasswords', validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('Passwords do not match')
 })
