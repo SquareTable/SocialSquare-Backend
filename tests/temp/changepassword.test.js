@@ -39,10 +39,10 @@ const userData = {
 /*
 TODO:
 Test if change fails if userId is not a string -- Done
-Test if change fails if userId is not an objectId
-Test if change fails if currentPassword is not a string
-Test if change fails if newPassword is not a string
-Test if change fails if confirmNewPassword is not a string
+Test if change fails if userId is not an objectId -- Done
+Test if change fails if currentPassword is not a string -- Done
+Test if change fails if newPassword is not a string -- Done
+Test if change fails if confirmNewPassword is not a string -- Done
 Test if change fails if newPassword is less than 8 characters
 Test if change fails if newPassword is more than 17 characters
 Test if change fails if newPassword and confirmNewPassword are not the same
@@ -71,6 +71,33 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+    })
+
+    test(`If change fails if currentPassword is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
+        expect.assertions(2);
+
+        const returned = await TempController.changepassword(String(userData._id), notString, newPassword, newPassword, validIP, validDeviceName);
+
+        expect(returned.statusCode).toBe(400);
+        expect(returned.data.message).toBe(`currentPassword must be a string. Type provided: ${typeof notString}`)
+    })
+
+    test(`If change fails if newPassword is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
+        expect.assertions(2);
+
+        const returned = await TempController.changepassword(String(userData._id), validPassword, notString, newPassword, validIP, validDeviceName);
+
+        expect(returned.statusCode).toBe(400);
+        expect(returned.data.message).toBe(`newPassword must be a string. Type provided: ${typeof notString}`);
+    })
+
+    test(`If change fails if confirmNewPassword is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
+        expect.assertions(2);
+
+        const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, notString, validIP, validDeviceName);
+
+        expect(returned.statusCode).toBe(400);
+        expect(returned.data.message).toBe(`confirmNewPassword must be a string. Type provided: ${typeof notString}`)
     })
 }
 
