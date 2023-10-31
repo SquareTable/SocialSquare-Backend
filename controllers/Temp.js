@@ -143,7 +143,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('Desired display name must be 20 characters or less.'))
             }
 
-            if (!desiredDisplayName.test(CONSTANTS.VALID_DISPLAY_NAME_TEST)) {
+            if (!CONSTANTS.VALID_DISPLAY_NAME_TEST.test(desiredDisplayName)) {
                 return resolve(HTTPWTHandler.badInput('Display name must only contain characters in the alphabet and must be a single line.'))
             }
         
