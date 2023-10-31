@@ -10,7 +10,7 @@ const EmailVerificationCode = require('../../models/EmailVerificationCode');
 
 const UserController = require('../../controllers/User');
 
-const {expect, describe} = require('@jest/globals');
+const {expect, describe, beforeEach, afterEach} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 
@@ -22,6 +22,16 @@ const validDeviceName = "GitHub-Actions";
 const validHashedPassword = "$2b$10$34gQut./qmo7HoG1aKkQeOQWeZzCjwwMMgk8nsLpwb3snlKK0wRKy";
 
 jest.setTimeout(20_000); //20 seconds per test
+
+const DB = new MockMongoDBServer();
+
+beforeEach(async () => {
+    await DB.startTest();
+})
+
+afterEach(async () => {
+    await DB.stopTest();
+})
 
 /*
 Tests:
@@ -102,15 +112,7 @@ test('If signin fails if password is an empty string', async () => {
 test('If signin fails if user with specified email could not be found', async () => {
     expect.assertions(2);
 
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
-
     const returned = await UserController.signin(validEmail, validPassword, validIP, validDeviceName);
-
-    await mongoose.disconnect();
-    await DB.stopServer();
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe("A user with the specified email does not exist.")
@@ -118,11 +120,6 @@ test('If signin fails if user with specified email could not be found', async ()
 
 test('If signin fails if password is wrong', async () => {
     expect.assertions(6);
-
-    const DB = new MockMongoDBServer();
-    const uri = await DB.startServer();
-
-    await mongoose.connect(uri);
 
     const userData = {
         email: validEmail,
@@ -132,9 +129,6 @@ test('If signin fails if password is wrong', async () => {
     await new User(userData).save();
 
     const returned = await UserController.signin(userData.email, 'wrongpassword', validIP, validDeviceName);
-
-    await mongoose.disconnect();
-    await DB.stopServer();
 
     expect(returned.statusCode).toBe(401);
     expect(returned.data.message).toBe("Invalid password entered!");
@@ -157,17 +151,9 @@ describe('When Email 2FA is enabled', () => {
     test('If email gets blurred', async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(returned.data.data.email).toBe("jo**.s**li**n@g**il.com")
@@ -176,17 +162,9 @@ describe('When Email 2FA is enabled', () => {
     test('if fromAddress is the value of process.env.SMTP_EMAIL', async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(returned.data.data.fromAddress).toBe(process.env.SMTP_EMAIL)
@@ -195,17 +173,9 @@ describe('When Email 2FA is enabled', () => {
     test("if returned secondId is the same as the user's secondId", async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(returned.data.data.secondId).toBe(userData.secondId)
@@ -214,11 +184,6 @@ describe('When Email 2FA is enabled', () => {
     test('that email verification code gets created', async () => {
         expect.assertions(5);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
@@ -226,9 +191,6 @@ describe('When Email 2FA is enabled', () => {
         const EmailVerificationCodes = await EmailVerificationCode.find({}).lean();
 
         const verificationCode = EmailVerificationCodes[0];
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(EmailVerificationCodes).toHaveLength(1);
@@ -239,11 +201,6 @@ describe('When Email 2FA is enabled', () => {
 
     test('that login does not interfere with other email verification codes in the database', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const codesToInsert = [...new Array(10)].map(() => {
             return {
@@ -262,9 +219,6 @@ describe('When Email 2FA is enabled', () => {
 
         const codesInDatabase = await EmailVerificationCode.find({hashedVerificationCode: 'hashed'}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(codesInDatabase).toStrictEqual(codesToInsert);
     })
@@ -272,20 +226,12 @@ describe('When Email 2FA is enabled', () => {
     test('that there can only be one EmailVerificationCode document per user and the document gets updated for each new code', async () => {
         expect.assertions(5);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returnedOne = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
         const codesOne = await EmailVerificationCode.find({}).lean();
         const returnedTwo = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
         const codesTwo = await EmailVerificationCode.find({}).lean();
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returnedOne.statusCode).toBe(200);
         expect(returnedTwo.statusCode).toBe(200);
@@ -297,19 +243,11 @@ describe('When Email 2FA is enabled', () => {
     test('that a RefreshToken document is NOT made', async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const RefreshTokens = await RefreshToken.find({}).lean();
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(RefreshTokens).toHaveLength(0);
@@ -318,11 +256,6 @@ describe('When Email 2FA is enabled', () => {
     test('that the user document does not get modified', async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const user = await User.findOne({}).lean();
@@ -330,9 +263,6 @@ describe('When Email 2FA is enabled', () => {
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const userAfterSignin = await User.findOne({}).lean();
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(user).toStrictEqual(userAfterSignin);
@@ -361,17 +291,9 @@ describe('When Email 2FA is not enabled', () => {
     test('if token gets created and is usable', async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
@@ -380,17 +302,9 @@ describe('When Email 2FA is not enabled', () => {
     test('if refresh token gets created and is usable', async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
@@ -398,11 +312,6 @@ describe('When Email 2FA is not enabled', () => {
 
     test('if encrypted refresh token gets created and can be decrypted back to refresh token', async () => {
         expect.assertions(3);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         await new User(userData).save();
 
@@ -412,9 +321,6 @@ describe('When Email 2FA is not enabled', () => {
 
         const savedRefreshToken = refreshTokens[0];
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshTokens).toHaveLength(1);
         expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
@@ -423,19 +329,11 @@ describe('When Email 2FA is not enabled', () => {
     test('if RefreshToken document gets created and admin is set to false', async () => {
         expect.assertions(3);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const refreshToken = await RefreshToken.findOne({}).lean();
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.admin).toBe(false);
@@ -444,11 +342,6 @@ describe('When Email 2FA is not enabled', () => {
 
     test('if IP is not added to the RefreshToken document when the user does not allow it', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const userData = {
             email: validEmail,
@@ -466,20 +359,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.IP).toBe(undefined);
     })
 
     test('if IP is added to the RefreshToken document when the user allows it', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const userData = {
             email: validEmail,
@@ -497,20 +382,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.IP).toBe(validIP);
     })
 
     test('if IP-derived location is not added to RefreshToken when the user does not allow it', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const userData = {
             email: validEmail,
@@ -528,20 +405,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.location).toBe(undefined);
     })
 
     test('if IP-derived location is added to RefreshToken when the user allows it', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const userData = {
             email: validEmail,
@@ -559,20 +428,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.location).toBeTruthy();
     })
 
     test('if IP-derived location is set to "Unknown Location" when the location cannot be found', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const userData = {
             email: validEmail,
@@ -590,20 +451,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.location).toBe("Unknown Location");
     })
 
     test('if deviceType is not added to RefreshToken when the user does not allow it', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const userData = {
             email: validEmail,
@@ -621,20 +474,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.deviceType).toBe(undefined);
     })
 
     test('if deviceType is not added to RefreshToken when the user does not allow it', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const userData = {
             email: validEmail,
@@ -652,9 +497,6 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.deviceType).toBe(validDeviceName);
     })
@@ -662,17 +504,9 @@ describe('When Email 2FA is not enabled', () => {
     test('if correct user data gets returned', async () => {
         expect.assertions(5);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         await new User(userData).save();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         const notIncludedKeys = [
             'notificationKeys',
@@ -705,11 +539,6 @@ describe('When Email 2FA is not enabled', () => {
     test('if already existing RefreshToken documents do not get modified', async () => {
         expect.assertions(2);
 
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
-
         const tokensToInsert = [...new Array(10)].map(() => {
             return {
                 encryptedRefreshToken: 'encrypted',
@@ -732,20 +561,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const refreshTokens = await RefreshToken.find({_id: {$ne: returned.data.refreshTokenId}}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(refreshTokens).toStrictEqual(tokensToInsert);
     })
 
     test('if already existing User documents do not get modified', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         const usersToInsert = [...new Array(10)].map(() => {
             return {
@@ -766,20 +587,12 @@ describe('When Email 2FA is not enabled', () => {
 
         const afterUsers = await User.find({}).lean();
 
-        await mongoose.disconnect();
-        await DB.stopServer();
-
         expect(returned.statusCode).toBe(200);
         expect(beforeUsers).toStrictEqual(afterUsers)
     })
 
     test('that user document does not get modified', async () => {
         expect.assertions(2);
-
-        const DB = new MockMongoDBServer();
-        const uri = await DB.startServer();
-
-        await mongoose.connect(uri);
 
         await new User(userData).save();
 
@@ -788,9 +601,6 @@ describe('When Email 2FA is not enabled', () => {
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         const afterUser = await User.findOne({}).lean();
-
-        await mongoose.disconnect();
-        await DB.stopServer();
 
         expect(returned.statusCode).toBe(200);
         expect(beforeUser).toStrictEqual(afterUser);
