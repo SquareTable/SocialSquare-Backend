@@ -660,7 +660,7 @@ describe('When Email 2FA is not enabled', () => {
     })
 
     test('if correct user data gets returned', async () => {
-        expect.assertions(2);
+        expect.assertions(5);
 
         const DB = new MockMongoDBServer();
         const uri = await DB.startServer();
@@ -720,7 +720,8 @@ describe('When Email 2FA is not enabled', () => {
                 userId: new mongoose.Types.ObjectId(),
                 admin: Math.random() > 0.5,
                 notificationKey: 'notification key',
-                __v: 0
+                __v: 0,
+                _id: new mongoose.Types.ObjectId()
             }
         })
 
