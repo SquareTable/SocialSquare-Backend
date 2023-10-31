@@ -48,10 +48,11 @@ Tests if email 2FA is not enabled:
     - Test if refreshToken gets created and is correct and usable -- Done
     - Test if encryptedRefreshToken gets created and can be decrypted back to refreshToken -- Done
     - Test if RefreshToken document gets created (and admin is set to false) -- Done
-    - Test if IP is not added to RefreshToken when the user does not allow it
-    - Test if IP is added to RefreshToken when the user allows it
+    - Test if IP is not added to RefreshToken when the user does not allow it -- Done
+    - Test if IP is added to RefreshToken when the user allows it -- Done
     - Test if IP-derived location is not added to RefreshToken when the user does not allow it
     - Test if IP-derived location is added to RefreshToken when the user allows it
+    - Test if location is set to "Unknown Location" if location returned was null
     - Test if device name is not added to RefreshToken when the user does not allow it
     - Test if device name is added to RefreshToken when the user allows it
     - Test if correct user data gets returned
@@ -439,5 +440,67 @@ describe('When Email 2FA is not enabled', () => {
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.admin).toBe(false);
         expect(refreshToken.createdAt.getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway for test
+    })
+
+    test('if IP is not added to the RefreshToken document when the user does not allow it', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validHashedPassword,
+            settings: {
+                loginActivitySettings: {
+                    getIP: false
+                }
+            }
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validHashedPassword, validIP, validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.IP).toBe(undefined);
+    })
+
+    test('if IP is added to the RefreshToken document when the user allows it', async () => {
+        expect.assertions(2);
+
+        const DB = new MockMongoDBServer();
+        const uri = await DB.startServer();
+
+        await mongoose.connect(uri);
+
+        const userData = {
+            email: validEmail,
+            password: validHashedPassword,
+            settings: {
+                loginActivitySettings: {
+                    getIP: true
+                }
+            }
+        }
+
+        await new User(userData).save();
+
+        const returned = await UserController.signin(userData.email, validHashedPassword, validIP, validDeviceName);
+
+        const refreshToken = await RefreshToken.findOne({}).lean();
+
+        await mongoose.disconnect();
+        await DB.stopServer();
+
+        expect(returned.statusCode).toBe(200);
+        expect(refreshToken.IP).toBe(validIP);
     })
 })
