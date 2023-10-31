@@ -37,7 +37,7 @@ const userData = {
     _id: new mongoose.Types.ObjectId()
 }
 
-for (const notString of TEST_CONSTANTS) {
+for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If change fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
         expect.assertions(2);
 
