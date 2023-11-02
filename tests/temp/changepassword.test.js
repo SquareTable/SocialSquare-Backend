@@ -48,6 +48,9 @@ Test if change fails if newPassword is more than 17 characters -- Done
 Test if change fails if newPassword and confirmNewPassword are not the same -- Done
 Test if change fails if user with userId cannot be found -- Done
 Test if change fails if currentPassword is wrong -- Done
+Test if change fails if currentPassword is an empty string -- Done
+Test if change fails if newPassword is an empty string -- Done
+Test if change fails if confirmNewPassword is an empty string -- Done
 Test if new token is generated and it is usable
 Test if new refreshToken is generated and it is usable
 Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken
@@ -125,7 +128,7 @@ test('If change fails if newPassword is more than 17 characters', async () => {
     const returned = await TempController.changepassword(String(userData._id), validPassword, 'thisis18characters', 'thisis18characters', validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('Your new password must be 17 or less characters.')
+    expect(returned.data.message).toBe('Your new password cannot be more than 17 characters.')
 })
 
 test('If change fails if newPassword and confirmNewPassword are not the same', async () => {
@@ -134,7 +137,7 @@ test('If change fails if newPassword and confirmNewPassword are not the same', a
     const returned = await TempController.changepassword(String(userData._id), validPassword, 'thesearenot', 'thesamepasswords', validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('Passwords do not match')
+    expect(returned.data.message).toBe('Passwords do not match.')
 })
 
 test('If change fails if user with userId could not be found', async () => {
@@ -155,4 +158,31 @@ test('If change fails if password is wrong', async () => {
 
     expect(returned.statusCode).toBe(401);
     expect(returned.data.message).toBe('Invalid password entered!')
+})
+
+test('If change fails if currentPassword is an empty string', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), '', newPassword, newPassword, validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('Current password cannot be empty.')
+})
+
+test('If change fails if newPassword is an empty string', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, '', newPassword, validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('New password cannot be empty.')
+})
+
+test('If change fails if confirmNewPassword is an empty string', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, '', validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('Confirm new password cannot be empty.')
 })
