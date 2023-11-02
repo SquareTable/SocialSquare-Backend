@@ -18,7 +18,7 @@ afterEach(async () => {
 })
 
 const validEmail = 'john.sullivan@gmail.com';
-const validPassword = 'mypassword';
+const validPassword = 'securepassword';
 const validHashedPassword = '$2y$10$lIUHn3yo0uF05O.RA38QSOdqF270MQboayDZHifGm/jN1iJy.Tvna';
 
 const userData = {
