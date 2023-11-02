@@ -149,6 +149,8 @@ test('If change fails if user with userId could not be found', async () => {
 test('If change fails if password is wrong', async () => {
     expect.assertions(2);
 
+    await new User(userData).save();
+
     const returned = await TempController.changepassword(String(userData._id), 'wrongpassword', newPassword, newPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(401);
