@@ -320,6 +320,10 @@ class TempController {
 
     static #changeusername = (userId, desiredUsername) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
             if (typeof desiredUsername !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`desiredUsername must be a string. Provided type: ${typeof desiredUsername}`))
             }
