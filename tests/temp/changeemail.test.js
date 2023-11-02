@@ -19,7 +19,7 @@ afterEach(async () => {
 
 const validEmail = 'john.sullivan@gmail.com';
 const validPassword = 'securepassword';
-const validHashedPassword = '$2y$10$lIUHn3yo0uF05O.RA38QSOdqF270MQboayDZHifGm/jN1iJy.Tvna';
+const validHashedPassword = '$2b$10$ozCqAdz.IJrSpmEQ8FLn6e3JNytSmfMmU8sU9nk.WhobtLoX6mMf2';
 
 const userData = {
     _id: new mongoose.Types.ObjectId(),
