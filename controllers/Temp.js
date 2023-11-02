@@ -148,18 +148,15 @@ class TempController {
             }
         
             // Check if user exist
-            User.findOne({ _id: {$eq: userId} }).lean().then((data) => {
-                if (data) {
-                    //User Exists
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
-                        return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
-                    }).catch(err => {
-                        console.error('An error occurred while changing the display name of user with id:', userId, 'to:', desiredDisplayName, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while updating display name. Please try again.'))
-                    })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('User not found'))
-                }
+            User.findOne({ _id: {$eq: userId} }).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+                
+                User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
+                    return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
+                }).catch(err => {
+                    console.error('An error occurred while changing the display name of user with id:', userId, 'to:', desiredDisplayName, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while updating display name. Please try again.'))
+                })
             }).catch(err => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding existing user. Plesae try again.'))
