@@ -47,7 +47,7 @@ Test if change fails if newPassword is less than 8 characters -- Done
 Test if change fails if newPassword is more than 17 characters -- Done
 Test if change fails if newPassword and confirmNewPassword are not the same -- Done
 Test if change fails if user with userId cannot be found -- Done
-Test if change fails if currentPassword is wrong
+Test if change fails if currentPassword is wrong -- Done
 Test if new token is generated and it is usable
 Test if new refreshToken is generated and it is usable
 Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken
