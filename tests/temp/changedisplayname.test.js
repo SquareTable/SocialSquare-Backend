@@ -146,7 +146,7 @@ test('If change fails if desiredDisplayName is multi-line', async () => {
     const returned = await TempController.changedisplayname(String(userData._id), `new\ndisplay\nname`);
 
     expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Display name must only containb characters in the alphabet and must be a single line.")
+    expect(returned.data.message).toBe("Display name must only contain characters in the alphabet and must be a single line.")
 })
 
 test('If change fails if desiredDisplayName contains non-alphabetic characters', async () => {
