@@ -190,7 +190,7 @@ class TempController {
             
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user'))
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                 }
 
                 User.findOne({ email: {$eq: desiredEmail} }).lean().then(result => {
