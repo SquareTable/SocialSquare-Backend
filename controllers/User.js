@@ -194,7 +194,7 @@ class UserController {
 
                     if (userFound.authenticationFactorsEnabled?.includes('Email')) {
                         try {
-                            var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
+                            var randomString = await axios.get(CONSTANTS.RANDOM_EIGHT_CHARACTER_STRING_URL)
                             randomString = String(randomString.data).trim();
                             console.log('Random string generated: ' + randomString)
                     
@@ -323,7 +323,7 @@ class UserController {
     static #sendemailverificationcode = (userID, task, getAccountMethod, username, email, secondId) => {
         return new Promise(async resolve => {
             try {
-                var randomString = await axios.get('https://www.random.org/integers/?num=1&min=268500000&max=1000000000&col=1&base=16&format=plain&rnd=new')
+                var randomString = await axios.get(CONSTANTS.RANDOM_EIGHT_CHARACTER_STRING_URL)
                 randomString = String(randomString.data).trim();
                 console.log('Random string generated: ' + randomString)
         
@@ -332,7 +332,7 @@ class UserController {
                     return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again later.'))
                 }
             } catch (error) {
-                console.error('An error occurred while getting a random string. Data returned from random.org axios call:' + randomString.data, '.The error was:', error)
+                console.error('An error occurred while getting a random string. Data returned from random.org axios call:' + randomString?.data, '.The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
             }
 
