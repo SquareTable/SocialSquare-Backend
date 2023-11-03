@@ -350,18 +350,14 @@ class TempController {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'));
 
                 User.findOne({name: {$eq: desiredUsername}}).lean().then(result => {
-                    // A username exists
-                    if (result) {
-                        return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
-                    } else {
-                        User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(function(){
-                            return resolve(HTTPWTHandler.OK('Change Username Successful'))
-                        })
-                        .catch(err => {
-                            console.error('An error occured while updating user with id:', userId, ' to have a username:', desiredUsername, '. The error was:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while updating your username. Please try again.'))
-                        });
-                    }
+                    if (result) return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
+                    
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Change Username Successful'))
+                    }).catch(err => {
+                        console.error('An error occured while updating user with id:', userId, ' to have a username:', desiredUsername, '. The error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while updating your username. Please try again.'))
+                    });
                 }).catch(error => {
                     console.error('An error occured while finding one user with name:', desiredUsername, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
