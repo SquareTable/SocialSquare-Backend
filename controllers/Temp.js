@@ -333,7 +333,7 @@ class TempController {
             }
 
             if (!CONSTANTS.VALID_USERNAME_TEST.test(desiredUsername)) {
-                return resolve(HTTPWTHandler.badInput('Invalid username entered'))
+                return resolve(HTTPWTHandler.badInput('Invalid username entered (username can only have numbers and lowercase a - z characters)'))
             }
         
             desiredUsername = desiredUsername.trim();
