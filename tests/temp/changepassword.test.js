@@ -391,3 +391,26 @@ test('If password change is successful with correct inputs', async () => {
     expect(returned.statusCode).toBe(200);
     expect(bcrypt.compareSync(newPassword, afterUser.password)).toBe(true);
 })
+
+test('If all RefreshTokens from the user get removed', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const refreshTokens = [...new Array(10)].map((item, index) => {
+        return {
+            userId: userData._id,
+            createdAt: 1 + index
+        }
+    })
+
+    await RefreshToken.insertMany(refreshTokens);
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const afterRefreshTokens = await RefreshToken.find({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(afterRefreshTokens).toHaveLength(1);
+    expect(afterRefreshTokens[0].createdAt).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway to run test
+})
