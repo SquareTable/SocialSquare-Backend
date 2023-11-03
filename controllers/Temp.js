@@ -134,7 +134,7 @@ class TempController {
             }
 
             if (typeof desiredDisplayName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`Desired display name must be a string. Provided type: ${typeof desiredDisplayName}`))
+                return resolve(HTTPWTHandler.badInput(`desiredDisplayName must be a string. Provided type: ${typeof desiredDisplayName}`))
             }
         
             desiredDisplayName = desiredDisplayName.trim();
