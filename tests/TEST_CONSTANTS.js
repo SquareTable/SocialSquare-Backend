@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+
 const TEST_CONSTANTS = {
     NOT_STRINGS: [true, false, undefined, null, {}, [], 1, -1],
     JWTVerifier: (secret, token) => {
