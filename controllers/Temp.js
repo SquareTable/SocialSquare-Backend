@@ -337,41 +337,38 @@ class TempController {
             }
         
             desiredUsername = desiredUsername.trim();
-        
-            if (desiredUsername == "") {
-                return resolve(HTTPWTHandler.badInput('Username was not supplied'))
-            } else {
-                // Check if user exist
-                User.findOne({_id: {$eq: userId}}).lean()
-                .then((data) => {
-                    if (data) {
-                        //User Exists
-                        User.findOne({name: {$eq: desiredUsername}}).lean().then(result => {
-                            // A username exists
-                            if (result) {
-                                return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
-                            } else {
-                                User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(function(){
-                                    return resolve(HTTPWTHandler.OK('Change Username Successful'))
-                                })
-                                .catch(err => {
-                                    console.error('An error occured while updating user with id:', userId, ' to have a username:', desiredUsername, '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while updating your username. Please try again.'))
-                                });
-                            }
-                        }).catch(error => {
-                            console.error('An error occured while finding one user with name:', desiredUsername, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
-                        })
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
-                    }
-                })
-                .catch(err => {
-                    console.error('An error occured while checking for a user with id:', userId, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                })
+
+            if (desiredUsername.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Desired username cannot be blank.'))
             }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    //User Exists
+                    User.findOne({name: {$eq: desiredUsername}}).lean().then(result => {
+                        // A username exists
+                        if (result) {
+                            return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
+                        } else {
+                            User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(function(){
+                                return resolve(HTTPWTHandler.OK('Change Username Successful'))
+                            })
+                            .catch(err => {
+                                console.error('An error occured while updating user with id:', userId, ' to have a username:', desiredUsername, '. The error was:', err)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while updating your username. Please try again.'))
+                            });
+                        }
+                    }).catch(error => {
+                        console.error('An error occured while finding one user with name:', desiredUsername, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
+                }
+            }).catch(err => {
+                console.error('An error occured while checking for a user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 

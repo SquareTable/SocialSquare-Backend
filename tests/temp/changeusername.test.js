@@ -34,7 +34,7 @@ TODO:
 - Test that change fails if userId is not a string -- Done
 - Test that change fails if userId is not an objectId -- Done
 - Test that change fails if desiredUsername is not a string -- Done
-- Test that change fails if desiredUsername is blank
+- Test that change fails if desiredUsername is  -- Done
 - Test that change fails if desiredUsername does not pass the valid username test -- Done
 - Test that change fails if desiredUsername is more than 20 characters (CONSTANTS.MAX_USER_USERNAME_LENGTH)
 - Test that change fails if user with userId could not be found
@@ -70,6 +70,15 @@ test('if change fails if userId is not an objectId', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('userId must be an objectId.');
+})
+
+test('If change fails if desiredUsername is blank', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changeusername(String(userData._id), '');
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('Desired username cannot be blank.')
 })
 
 for (const invalidUsername of invalidUsernames) {
