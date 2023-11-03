@@ -163,7 +163,7 @@ test('if change fails if password is wrong', async () => {
 
     const returned = await TempController.changeemail(String(userData._id), 'notmypassword', validEmail);
 
-    expect(returned.stautsCode).toBe(401);
+    expect(returned.statusCode).toBe(401);
     expect(returned.data.message).toBe('Wrong password entered!')
 })
 
