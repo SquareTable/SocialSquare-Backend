@@ -95,7 +95,7 @@ for (const invalidUsername of invalidUsernames) {
 test('If change fails if desiredUsername is more than 20 characters', async () => {
     expect.assertions(2);
 
-    const returned = await TempController.changeusername(String(userData._id), 'thisis21characters...');
+    const returned = await TempController.changeusername(String(userData._id), 'thisis21characterssss');
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Your new username cannot be more than 20 characters.')
