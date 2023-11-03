@@ -198,7 +198,7 @@ test('If token is generated and is usable', async () => {
     const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(200);
-    expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token)).resolves.toBe(true);
+    expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
 })
 
 test('If refresh token is generated and is usable', async () => {
@@ -209,7 +209,7 @@ test('If refresh token is generated and is usable', async () => {
     const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(200);
-    expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken)).resolves.toBe(true);
+    expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
 })
 
 test('If encryptedRefreshToken can be decrypted to refreshToken', async () => {
