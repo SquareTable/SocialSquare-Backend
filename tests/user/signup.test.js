@@ -258,16 +258,6 @@ for (const validUserEmail of VALID_EMAILS) {
     
         benchmarkUser.password = savedUser.password;
     
-        const JWTVerifier = (secret, token) => {
-            return new Promise(resolve => {
-                jwt.verify(token, secret, (err, decoded) => {
-                    if (err) return resolve(false);
-                    if (decoded) return resolve(true);
-                    resolve(false);
-                })
-            })
-        }
-    
         const notIncludedKeys = [
             'notificationKeys',
             'password',
@@ -293,8 +283,8 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(savedUserBadges).toHaveLength(1);
         expect(savedUserBadges[0].badgeName).toBe("onSignUpBadge")
         expect(savedUserBadges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
-        expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
-        expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
         expect(userIdIsObjectId).toBe(true);
 
         //Make sure secondId (uuidv4) follows UUID format 8-4-4-4-12

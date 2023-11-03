@@ -51,8 +51,8 @@ Test if change fails if currentPassword is wrong -- Done
 Test if change fails if currentPassword is an empty string -- Done
 Test if change fails if newPassword is an empty string -- Done
 Test if change fails if confirmNewPassword is an empty string -- Done
-Test if new token is generated and it is usable
-Test if new refreshToken is generated and it is usable
+Test if new token is generated and it is usable -- Done
+Test if new refreshToken is generated and it is usable -- Done
 Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken
 Test RefreshToken document is created with admin set to false
 Test if IP is saved to RefreshToken document only if user allows it
@@ -185,4 +185,26 @@ test('If change fails if confirmNewPassword is an empty string', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Confirm new password cannot be empty.')
+})
+
+test('If token is generated and is usable', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token)).resolves.toBe(true);
+})
+
+test('If refresh token is generated and is usable', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    expect(returned.statusCode).toBe(400);
+    expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken)).resolves.toBe(true);
 })
