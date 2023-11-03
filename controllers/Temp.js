@@ -125,29 +125,38 @@ class TempController {
 
     static #changedisplayname  = (userId, desiredDisplayName) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+            }
+
             if (typeof desiredDisplayName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`Desired display name must be a string. Provided type: ${typeof desiredDisplayName}`))
+                return resolve(HTTPWTHandler.badInput(`desiredDisplayName must be a string. Provided type: ${typeof desiredDisplayName}`))
             }
         
             desiredDisplayName = desiredDisplayName.trim();
         
             if (desiredDisplayName.length > CONSTANTS.MAX_USER_DISPLAY_NAME_LENGTH) {
-                return HTTPWTHandler.badInput('Desired display name must be 20 characters or less.')
+                return resolve(HTTPWTHandler.badInput('Desired display name must be 20 characters or less.'))
+            }
+
+            if (!CONSTANTS.VALID_DISPLAY_NAME_TEST.test(desiredDisplayName)) {
+                return resolve(HTTPWTHandler.badInput('Display name must only contain characters in the alphabet and must be a single line.'))
             }
         
             // Check if user exist
-            User.findOne({ _id: {$eq: userId} }).lean().then((data) => {
-                if (data) {
-                    //User Exists
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
-                        return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
-                    }).catch(err => {
-                        console.error('An error occurred while changing the display name of user with id:', userId, 'to:', desiredDisplayName, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while updating display name. Please try again.'))
-                    })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('User not found'))
-                }
+            User.findOne({ _id: {$eq: userId} }).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+                
+                User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
+                    return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
+                }).catch(err => {
+                    console.error('An error occurred while changing the display name of user with id:', userId, 'to:', desiredDisplayName, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while updating display name. Please try again.'))
+                })
             }).catch(err => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding existing user. Plesae try again.'))
@@ -157,61 +166,75 @@ class TempController {
 
     static #changeemail = (userId, password, desiredEmail) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+            }
+
             if (typeof password !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`password must be a string. Provided type: ${typeof password}`))
+                return resolve(HTTPWTHandler.badInput(`password must be a string. Type provided: ${typeof password}`))
+            }
+
+            if (password.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Password cannot be blank.'))
             }
         
             if (typeof desiredEmail !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`desiredEmail must be a string. Provided type: ${typeof desiredEmail}`))
+                return resolve(HTTPWTHandler.badInput(`desiredEmail must be a string. Type provided: ${typeof desiredEmail}`))
+            }
+
+            if (desiredEmail.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Desired email cannot be blank.'))
             }
         
             password = password.trim();
             desiredEmail = desiredEmail.trim();
-            
-            if (password == "" || desiredEmail == "") {
-                return resolve(HTTPWTHandler.badInput('Empty credentials supplied'))
-            } else if (!CONSTANTS.VALID_EMAIL_TEST.test(desiredEmail)) {
-                return resolve(HTTPWTHandler.badInput('Invalid desired email entered'))
-            } else {
-                User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                    if (!userFound) {
-                        return resolve(HTTPWTHandler.notFound('Could not find user'))
-                    }
 
-                    User.findOne({ email: {$eq: desiredEmail} }).lean().then(result => {
-                        // A email exists
-                        if (result) {
-                            return resolve(HTTPWTHandler.badInput('User with the desired email already exists'))
-                        } else {
-                            const hashedPassword = userFound.password;
-                            bcrypt.compare(password, hashedPassword).then((result) => {
-                                if (result) {
-                                    // Password match
-                                    User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
-                                        return resolve(HTTPWTHandler.OK('Change Email Successful'))
-                                    })
-                                    .catch(err => {
-                                        console.error('An error occurred while changing email for user with id:', userId, 'to: ', String(desiredEmail), '. The error was:', err)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
-                                    });
-                                } else {
-                                    return resolve(HTTPWTHandler.badInput('Invalid password entered'))
-                                }
-                            })
-                            .catch(err => {
-                                console.error('An error occured while comparing passwords:', err)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
-                            })
-                        }
-                    }).catch(error => {
-                        console.error('An error occured while finding a user with email:', desiredEmail, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user with that email. Please try again.'))
-                    })         
-                }).catch(error => {
-                    console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                })                                 
+            if (!CONSTANTS.VALID_EMAIL_TEST.test(desiredEmail)) {
+                return resolve(HTTPWTHandler.badInput('Invalid desired email entered'))
             }
+            
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+                }
+
+                User.findOne({ email: {$eq: desiredEmail} }).lean().then(result => {
+                    // A email exists
+                    if (result) {
+                        return resolve(HTTPWTHandler.forbidden('User with the desired email already exists'))
+                    } else {
+                        const hashedPassword = userFound.password;
+                        bcrypt.compare(password, hashedPassword).then((result) => {
+                            if (result) {
+                                // Password match
+                                User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
+                                    return resolve(HTTPWTHandler.OK('Change Email Successful'))
+                                })
+                                .catch(err => {
+                                    console.error('An error occurred while changing email for user with id:', userId, 'to: ', String(desiredEmail), '. The error was:', err)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
+                                });
+                            } else {
+                                return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
+                            }
+                        })
+                        .catch(err => {
+                            console.error('An error occured while comparing passwords:', err)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
+                        })
+                    }
+                }).catch(error => {
+                    console.error('An error occured while finding a user with email:', desiredEmail, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user with that email. Please try again.'))
+                })         
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 
@@ -354,50 +377,52 @@ class TempController {
 
     static #changeusername = (userId, desiredUsername) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+            }
+
             if (typeof desiredUsername !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`desiredUsername must be a string. Provided type: ${typeof desiredUsername}`))
             }
 
             if (!CONSTANTS.VALID_USERNAME_TEST.test(desiredUsername)) {
-                return resolve(HTTPWTHandler.badInput('Invalid username entered'))
+                return resolve(HTTPWTHandler.badInput('Invalid username entered (username can only have numbers and lowercase a - z characters)'))
             }
         
             desiredUsername = desiredUsername.trim();
-        
-            if (desiredUsername == "") {
-                return resolve(HTTPWTHandler.badInput('Username was not supplied'))
-            } else {
-                // Check if user exist
-                User.findOne({_id: {$eq: userId}}).lean()
-                .then((data) => {
-                    if (data) {
-                        //User Exists
-                        User.findOne({name: {$eq: desiredUsername}}).lean().then(result => {
-                            // A username exists
-                            if (result) {
-                                return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
-                            } else {
-                                User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(function(){
-                                    return resolve(HTTPWTHandler.OK('Change Username Successful'))
-                                })
-                                .catch(err => {
-                                    console.error('An error occured while updating user with id:', userId, ' to have a username:', desiredUsername, '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while updating your username. Please try again.'))
-                                });
-                            }
-                        }).catch(error => {
-                            console.error('An error occured while finding one user with name:', desiredUsername, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
-                        })
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
-                    }
-                })
-                .catch(err => {
-                    console.error('An error occured while checking for a user with id:', userId, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                })
+
+            if (desiredUsername.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Desired username cannot be blank.'))
             }
+
+            if (desiredUsername.length > CONSTANTS.MAX_USER_USERNAME_LENGTH) {
+                return resolve(HTTPWTHandler.badInput('Your new username cannot be more than 20 characters.'))
+            }
+        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'));
+
+                User.findOne({name: {$eq: desiredUsername}}).lean().then(result => {
+                    if (result) return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
+                    
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Change Username Successful'))
+                    }).catch(err => {
+                        console.error('An error occured while updating user with id:', userId, ' to have a username:', desiredUsername, '. The error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while updating your username. Please try again.'))
+                    });
+                }).catch(error => {
+                    console.error('An error occured while finding one user with name:', desiredUsername, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
+                })
+            }).catch(err => {
+                console.error('An error occured while checking for a user with id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 

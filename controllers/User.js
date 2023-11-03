@@ -6,6 +6,9 @@ const HTTPHandler = new HTTPLibrary();
 const geoIPLite = require('geoip-lite')
 const UserLibrary = require('../libraries/User')
 const userHandler = new UserLibrary()
+const RandomLibrary = require('../libraries/Random');
+const randomHandler = new RandomLibrary();
+
 const User = require('../models/User')
 const axios = require('axios')
 const RefreshToken = require('../models/RefreshToken')
@@ -193,10 +196,9 @@ class UserController {
                     if (!result) return resolve(HTTPWTHandler.unauthorized('Invalid password entered!'))
 
                     if (userFound.authenticationFactorsEnabled?.includes('Email')) {
+                        let randomString;
                         try {
-                            var randomString = await axios.get('https://www.random.org/integers/?num=1&min=1&max=1000000000&col=1&base=16&format=plain&rnd=new')
-                            randomString = String(randomString.data).trim();
-                            console.log('Random string generated: ' + randomString)
+                            randomString = await randomHandler.generateRandomBase16String()
                     
                             if (randomString.length != 8) {
                                 console.log('An error occured while generating random string. The random string that was generated is: ' + randomString)
@@ -322,17 +324,17 @@ class UserController {
 
     static #sendemailverificationcode = (userID, task, getAccountMethod, username, email, secondId) => {
         return new Promise(async resolve => {
+            let randomString;
+
             try {
-                var randomString = await axios.get('https://www.random.org/integers/?num=1&min=268500000&max=1000000000&col=1&base=16&format=plain&rnd=new')
-                randomString = String(randomString.data).trim();
-                console.log('Random string generated: ' + randomString)
+                randomString = await randomHandler.generateRandomBase16String();
         
                 if (randomString.length != 8) {
                     console.log('An error occured while generating random string. The string is not 8 characters long. The random string that was generated is: ' + randomString)
                     return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again later.'))
                 }
             } catch (error) {
-                console.error('An error occurred while getting a random string. Data returned from random.org axios call:' + randomString.data, '.The error was:', error)
+                console.error('An error occurred while getting a random string. Data returned from random.org axios call:' + randomString?.data, '.The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
             }
 

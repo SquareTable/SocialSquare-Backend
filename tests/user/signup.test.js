@@ -15,7 +15,6 @@ const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 const RefreshToken = require('../../models/RefreshToken');
 
 const INVALID_NAMES = ["abc12!", "abc._.abc", "abc!@#$%^&*()", "(", ")", "$%^&*wegyf"]
-const INVALID_EMAILS = ["notanemail", "notanemail@gmail.notanemail"]
 
 const VALID_EMAILS = ["john.sullivan@gmail.com", "john.sullivan@hotmail.com", "john.sullivan123@gmail.com", "mytestemail@gmail.com", "mytestemail@hotmail.com", "myyahooemail@yahoo.com"];
 
@@ -141,7 +140,7 @@ for (const invalidName of INVALID_NAMES) {
     })
 }
 
-for (const invalidEmail of INVALID_EMAILS) {
+for (const invalidEmail of TEST_CONSTANTS.INVALID_EMAILS) {
     test(`If signup fails when email is an invalid email. Testing: ${invalidEmail}`, async () => {
         expect.assertions(2);
 
