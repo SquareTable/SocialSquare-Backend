@@ -36,7 +36,7 @@ TODO:
 - Test that change fails if desiredUsername is not a string -- Done
 - Test that change fails if desiredUsername is  -- Done
 - Test that change fails if desiredUsername does not pass the valid username test -- Done
-- Test that change fails if desiredUsername is more than 20 characters (CONSTANTS.MAX_USER_USERNAME_LENGTH)
+- Test that change fails if desiredUsername is more than 20 characters (CONSTANTS.MAX_USER_USERNAME_LENGTH) -- Done
 - Test that change fails if user with userId could not be found
 - Test that change fails if user with current desiredUsername could be found
 - Test that change is successful with correct inputs
@@ -91,3 +91,12 @@ for (const invalidUsername of invalidUsernames) {
         expect(returned.data.message).toBe('Invalid username entered (username can only have numbers and lowercase a - z characters)')
     })
 }
+
+test('If change fails if desiredUsername is more than 20 characters', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changeusername(String(userData._id), 'this is 21 characters');
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('Your new username cannot be more than 20 characters.')
+})

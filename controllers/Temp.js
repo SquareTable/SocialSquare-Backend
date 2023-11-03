@@ -341,6 +341,10 @@ class TempController {
             if (desiredUsername.length === 0) {
                 return resolve(HTTPWTHandler.badInput('Desired username cannot be blank.'))
             }
+
+            if (desiredUsername.length > CONSTANTS.MAX_USER_USERNAME_LENGTH) {
+                return resolve(HTTPWTHandler.badInput('Your new username cannot be more than 20 characters.'))
+            }
         
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
