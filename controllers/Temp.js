@@ -322,7 +322,7 @@ class TempController {
                                 return resolve(HTTPWTHandler.serverError('An error occurred while hashing password. Please try again.'))
                             })
                         } else {
-                            return resolve(HTTPWTHandler.unauthorized('Invalid password entered!'))
+                            return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
                         }
                     }).catch((error) => {
                         console.error('An error occured while comparing passwords:', error)
