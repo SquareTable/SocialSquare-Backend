@@ -63,7 +63,7 @@ Test if IP-derived location is not saved to RefreshToken document if user does n
 Test if IP-derived location is set to "Unknown Location" if the location cannot be found -- Done
 Test if deviceType is saved to the RefreshToken document only if the user allows it -- Done
 Test if deviceType is not saved to the RefreshToken document if the user does not allow it -- Done
-Test if password change is successful with correct inputs
+Test if password change is successful with correct inputs -- Done
 Test if all previous RefreshTokens from the same user are removed when password is changed
 Test if other RefreshToken documents not related to the account are not affected
 Test if other User documents are not interfered with
@@ -377,4 +377,17 @@ test('if deviceType is not saved to RefreshToken document if the user does not a
 
     expect(returned.statusCode).toBe(200);
     expect(refreshToken.deviceType).toBe(undefined);
+})
+
+test('If password change is successful with correct inputs', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const afterUser = await User.findOne({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(bcrypt.compareSync(newPassword, afterUser.password)).toBe(true);
 })
