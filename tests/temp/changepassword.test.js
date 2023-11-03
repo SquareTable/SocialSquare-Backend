@@ -255,6 +255,7 @@ test('If IP is added to RefreshToken document if user allows it', async () => {
 
     const refreshToken = await RefreshToken.findOne({_id: {$eq: returned.data.refreshTokenId}}).lean();
 
+    expect(returned.statusCode).toBe(200);
     expect(refreshToken.IP).toBe(validIP);
 })
 
@@ -274,5 +275,6 @@ test('If IP is not added to RefreshToken document if user does not allow it', as
 
     const refreshToken = await RefreshToken.findOne({_id: {$eq: returned.data.refreshTokenId}}).lean();
 
+    expect(returned.statusCode).toBe(200);
     expect(refreshToken.IP).toBe(undefined);
 })
