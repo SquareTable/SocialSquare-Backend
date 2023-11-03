@@ -30,17 +30,17 @@ const userData = {
 }
 
 /*
-TODO:
-- Test that change fails if userId is not a string -- Done
-- Test that change fails if userId is not an objectId -- Done
-- Test that change fails if desiredUsername is not a string -- Done
-- Test that change fails if desiredUsername is  -- Done
-- Test that change fails if desiredUsername does not pass the valid username test -- Done
-- Test that change fails if desiredUsername is more than 20 characters (CONSTANTS.MAX_USER_USERNAME_LENGTH) -- Done
-- Test that change fails if user with userId could not be found -- Done
-- Test that change fails if user with current desiredUsername could be found -- Done
-- Test that change is successful with correct inputs -- Done
-- Test that successful change does not interfere with already existing User documents in the database -- Done
+Tests:
+- Test that change fails if userId is not a string
+- Test that change fails if userId is not an objectId
+- Test that change fails if desiredUsername is not a string
+- Test that change fails if desiredUsername is 
+- Test that change fails if desiredUsername does not pass the valid username test
+- Test that change fails if desiredUsername is more than 20 characters (CONSTANTS.MAX_USER_USERNAME_LENGTH)
+- Test that change fails if user with userId could not be found
+- Test that change fails if user with current desiredUsername could be found
+- Test that change is successful with correct inputs
+- Test that successful change does not interfere with already existing User documents in the database
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
