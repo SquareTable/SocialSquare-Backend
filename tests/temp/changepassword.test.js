@@ -65,8 +65,8 @@ Test if deviceType is saved to the RefreshToken document only if the user allows
 Test if deviceType is not saved to the RefreshToken document if the user does not allow it -- Done
 Test if password change is successful with correct inputs -- Done
 Test if all previous RefreshTokens from the same user are removed when password is changed -- Done
-Test if other RefreshToken documents not related to the account are not affected
-Test if other User documents are not interfered with
+Test if other RefreshToken documents not related to the account are not affected -- Done
+Test if other User documents are not interfered with -- Done
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -413,4 +413,52 @@ test('If all RefreshTokens from the user get removed', async () => {
     expect(returned.statusCode).toBe(200);
     expect(afterRefreshTokens).toHaveLength(1);
     expect(afterRefreshTokens[0].createdAt).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway to run test
+})
+
+test('if other RefreshToken documents not related to the account are not affected', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const refreshTokens = [...new Array(10)].map((item, index) => {
+        return {
+            userId: new mongoose.Types.ObjectId(),
+            createdAt: 1 + index
+        }
+    })
+
+    await RefreshToken.insertMany(refreshTokens);
+
+    const beforeRefreshTokens = await RefreshToken.find({}).lean();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const afterRefreshTokens = await RefreshToken.find({userId: {$ne: userData._id}}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(beforeRefreshTokens).toStrictEqual(afterRefreshTokens);
+})
+
+test('if other User documents do not get affected from password change', async () => {
+    expect.assertions(2);
+
+    const users = [...new Array(10)].map((item, index) => {
+        return {
+            _id: new mongoose.Types.ObjectId(),
+            password: 'password' + index
+        }
+    })
+
+    await User.insertMany(users);
+
+    const beforeUsers = await User.find({}).lean();
+
+    await new User(userData).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const afterUsers = await User.find({_id: {$ne: userData._id}}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(beforeUsers).toStrictEqual(afterUsers);
 })
