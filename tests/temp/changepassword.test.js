@@ -56,11 +56,11 @@ Test if new token is generated and it is usable -- Done
 Test if new refreshToken is generated and it is usable -- Done
 Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken -- Done
 Test RefreshToken document is created with admin set to false -- Done
-Test if IP is saved to RefreshToken document only if user allows it
-Test if IP is not saved to RefreshToken document if user does not allow it
-Test if IP-derived location is saved to RefreshToken document only if user allows it
-Test if IP-derived location is not saved to RefreshToken document if user does not allow it
-Test if IP-derived location is set to "Unknown Location" if the location cannot be found
+Test if IP is saved to RefreshToken document only if user allows it -- Done
+Test if IP is not saved to RefreshToken document if user does not allow it -- Done
+Test if IP-derived location is saved to RefreshToken document only if user allows it -- Done
+Test if IP-derived location is not saved to RefreshToken document if user does not allow it -- Done
+Test if IP-derived location is set to "Unknown Location" if the location cannot be found -- Done
 Test if deviceType is saved to the RefreshToken document only if the user allows it
 Test if deviceType is not saved to the RefreshToken document if the user does not allow it
 Test if password change is successful with correct inputs
@@ -277,4 +277,64 @@ test('If IP is not added to RefreshToken document if user does not allow it', as
 
     expect(returned.statusCode).toBe(200);
     expect(refreshToken.IP).toBe(undefined);
+})
+
+test('If IP-derived location is added to RefreshToken document if the user allows it', async () => {
+    expect.assertions(2);
+
+    await new User({
+        ...userData,
+        settings: {
+            loginActivitySettings: {
+                getLocation: true
+            }
+        }
+    }).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, '1.1.1.1', validDeviceName);
+
+    const refreshToken = await RefreshToken.findOne({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(refreshToken.location).toBeTruthy();
+})
+
+test('If IP-derived location is not added to RefreshToken document if the user does not allow it', async () => {
+    expect.assertions(2);
+
+    await new User({
+        ...userData,
+        settings: {
+            loginActivitySettings: {
+                getLocation: false
+            }
+        }
+    }).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const refreshToken = await RefreshToken.findOne({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(refreshToken.location).toBeTruthy();
+})
+
+test('If IP-derived location is "Unknown Location" if a location cannot be found', async () => {
+    expect.assertions(2);
+
+    await new User({
+        ...userData,
+        settings: {
+            loginActivitySettings: {
+                getLocation: true
+            }
+        }
+    }).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const refreshToken = await RefreshToken.findOne({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(refreshToken.location).toBe('Unknown Location');
 })
