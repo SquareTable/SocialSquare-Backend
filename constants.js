@@ -6,6 +6,7 @@ const CONSTANTS = {
     VALID_EMAIL_TEST: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
     VALID_USERNAME_TEST: /^[a-z0-9]*$/,
     MAX_USER_DISPLAY_NAME_LENGTH: 20,
+    VALID_DISPLAY_NAME_TEST: /^[A-Za-z]+$/,
     MAX_USER_BIO_LENGTH: 250,
     VALID_BIO_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure bio has less than 10 lines
     MAX_USER_BIO_LINES: 10, //Update this value to reflect the VALID_BIO_TEST above

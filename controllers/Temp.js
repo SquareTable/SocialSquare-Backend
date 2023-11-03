@@ -125,29 +125,38 @@ class TempController {
 
     static #changedisplayname  = (userId, desiredDisplayName) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+            }
+
             if (typeof desiredDisplayName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`Desired display name must be a string. Provided type: ${typeof desiredDisplayName}`))
+                return resolve(HTTPWTHandler.badInput(`desiredDisplayName must be a string. Provided type: ${typeof desiredDisplayName}`))
             }
         
             desiredDisplayName = desiredDisplayName.trim();
         
             if (desiredDisplayName.length > CONSTANTS.MAX_USER_DISPLAY_NAME_LENGTH) {
-                return HTTPWTHandler.badInput('Desired display name must be 20 characters or less.')
+                return resolve(HTTPWTHandler.badInput('Desired display name must be 20 characters or less.'))
+            }
+
+            if (!CONSTANTS.VALID_DISPLAY_NAME_TEST.test(desiredDisplayName)) {
+                return resolve(HTTPWTHandler.badInput('Display name must only contain characters in the alphabet and must be a single line.'))
             }
         
             // Check if user exist
-            User.findOne({ _id: {$eq: userId} }).lean().then((data) => {
-                if (data) {
-                    //User Exists
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
-                        return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
-                    }).catch(err => {
-                        console.error('An error occurred while changing the display name of user with id:', userId, 'to:', desiredDisplayName, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while updating display name. Please try again.'))
-                    })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('User not found'))
-                }
+            User.findOne({ _id: {$eq: userId} }).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+                
+                User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
+                    return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
+                }).catch(err => {
+                    console.error('An error occurred while changing the display name of user with id:', userId, 'to:', desiredDisplayName, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while updating display name. Please try again.'))
+                })
             }).catch(err => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding existing user. Plesae try again.'))
