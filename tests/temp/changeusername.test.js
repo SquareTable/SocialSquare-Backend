@@ -23,7 +23,7 @@ const validUsername = 'sebastian';
 /*
 TODO:
 - Test that change fails if userId is not a string -- Done
-- Test that change fails if userId is not an objectId
+- Test that change fails if userId is not an objectId -- Done
 - Test that change fails if desiredUsername does not pass the valid username test
 - Test that change fails if desiredUsername is more than 20 characters (CONSTANTS.MAX_USER_USERNAME_LENGTH)
 - Test that change fails if desiredUsername is blank
@@ -43,3 +43,12 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         expect(returned.data.message).toBe(`userId must be a string. Provided type: ${typeof notString}`)
     })
 }
+
+test('if change fails if userId is not an objectId', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changeusername('i am not an objectid', validUsername);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('userId must be an objectId.');
+})
