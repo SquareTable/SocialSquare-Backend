@@ -73,7 +73,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const returned = await TempController.changepassword(notString, validPassword, newPassword, newPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+        expect(returned.data.message).toBe(`userId must be a string. Provided type: ${typeof notString}`)
     })
 
     test(`If change fails if currentPassword is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
@@ -82,7 +82,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const returned = await TempController.changepassword(String(userData._id), notString, newPassword, newPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`currentPassword must be a string. Type provided: ${typeof notString}`)
+        expect(returned.data.message).toBe(`currentPassword must be a string. Provided type: ${typeof notString}`)
     })
 
     test(`If change fails if newPassword is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
@@ -91,7 +91,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const returned = await TempController.changepassword(String(userData._id), validPassword, notString, newPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`newPassword must be a string. Type provided: ${typeof notString}`);
+        expect(returned.data.message).toBe(`newPassword must be a string. Provided type: ${typeof notString}`);
     })
 
     test(`If change fails if confirmNewPassword is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
@@ -100,7 +100,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, notString, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`confirmNewPassword must be a string. Type provided: ${typeof notString}`)
+        expect(returned.data.message).toBe(`confirmNewPassword must be a string. Provided type: ${typeof notString}`)
     })
 }
 
@@ -145,7 +145,7 @@ test('If change fails if user with userId could not be found', async () => {
 
     const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
 
-    expect(returned.statusCode).toBe(400);
+    expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('User with provided userId could not be found.')
 })
 
