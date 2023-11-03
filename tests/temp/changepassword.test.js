@@ -157,7 +157,7 @@ test('If change fails if password is wrong', async () => {
     const returned = await TempController.changepassword(String(userData._id), 'wrongpassword', newPassword, newPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(401);
-    expect(returned.data.message).toBe('Invalid password entered!')
+    expect(returned.data.message).toBe('Wrong password entered!')
 })
 
 test('If change fails if currentPassword is an empty string', async () => {
