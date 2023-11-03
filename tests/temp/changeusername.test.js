@@ -37,10 +37,10 @@ TODO:
 - Test that change fails if desiredUsername is  -- Done
 - Test that change fails if desiredUsername does not pass the valid username test -- Done
 - Test that change fails if desiredUsername is more than 20 characters (CONSTANTS.MAX_USER_USERNAME_LENGTH) -- Done
-- Test that change fails if user with userId could not be found
-- Test that change fails if user with current desiredUsername could be found
-- Test that change is successful with correct inputs
-- Test that successful change does not interfere with already existing User documents in the database
+- Test that change fails if user with userId could not be found -- Done
+- Test that change fails if user with current desiredUsername could be found -- Done
+- Test that change is successful with correct inputs -- Done
+- Test that successful change does not interfere with already existing User documents in the database -- Done
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -95,8 +95,69 @@ for (const invalidUsername of invalidUsernames) {
 test('If change fails if desiredUsername is more than 20 characters', async () => {
     expect.assertions(2);
 
-    const returned = await TempController.changeusername(String(userData._id), 'this is 21 characters');
+    const returned = await TempController.changeusername(String(userData._id), 'thisis21characters...');
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Your new username cannot be more than 20 characters.')
+})
+
+test('If change fails if user with userId could not be found', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.changeusername(String(userData._id), 'newname');
+
+    expect(returned.statusCode).toBe(404);
+    expect(returned.data.message).toBe('Could not find user with provided userId.')
+})
+
+test('If change fails when user with desiredUsername already exists', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+    await new User({
+        name: 'newname'
+    }).save();
+
+    const returned = await TempController.changeusername(String(userData._id), 'newname');
+
+    expect(returned.statusCode).toBe(409);
+    expect(returned.data.message).toBe('User with the provided username already exists')
+})
+
+test('If change is successful with correct inputs', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changeusername(String(userData._id), 'newname');
+
+    const afterUser = await User.findOne({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(afterUser.name).toBe('newname');
+})
+
+test('that successful change of username does not interfere with other User documents', async () => {
+    expect.assertions(2);
+
+    const users = [...new Array(10)].map((item, index) => {
+        return {
+            _id: new mongoose.Types.ObjectId(),
+            secondId: uuidv4(),
+            name: 'name' + index
+        }
+    })
+
+    await User.insertMany(users);
+    
+    const beforeUsers = await User.find({}).lean();
+
+    await new User(userData).save();
+
+    const returned = await TempController.changeusername(String(userData._id), 'newname');
+
+    const afterUsers = await User.find({}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(beforeUsers).toStrictEqual(afterUsers);
 })
