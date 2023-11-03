@@ -1,4 +1,5 @@
 const axios = require('axios');
+const CONSTANTS = require('../constants');
 
 class Random {
     async generateRandomBase16String() {
