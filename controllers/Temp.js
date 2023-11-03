@@ -210,7 +210,7 @@ class TempController {
                                     return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
                                 });
                             } else {
-                                return resolve(HTTPWTHandler.unauthorized('Invalid password entered'))
+                                return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
                             }
                         })
                         .catch(err => {
