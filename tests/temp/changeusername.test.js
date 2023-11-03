@@ -156,7 +156,7 @@ test('that successful change of username does not interfere with other User docu
 
     const returned = await TempController.changeusername(String(userData._id), 'newname');
 
-    const afterUsers = await User.find({}).lean();
+    const afterUsers = await User.find({_id: {$ne: userData._id}}).lean();
 
     expect(returned.statusCode).toBe(200);
     expect(beforeUsers).toStrictEqual(afterUsers);
