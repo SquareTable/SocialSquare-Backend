@@ -9,6 +9,7 @@ const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const TempController = require('../../controllers/Temp');
 
 const {expect, beforeEach, afterEach, test} = require('@jest/globals');
+const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 
 const DB = new MockMongoDBServer();
 
@@ -53,8 +54,8 @@ Test if change fails if newPassword is an empty string -- Done
 Test if change fails if confirmNewPassword is an empty string -- Done
 Test if new token is generated and it is usable -- Done
 Test if new refreshToken is generated and it is usable -- Done
-Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken
-Test RefreshToken document is created with admin set to false
+Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken -- Done
+Test RefreshToken document is created with admin set to false -- Done
 Test if IP is saved to RefreshToken document only if user allows it
 Test if IP is not saved to RefreshToken document if user does not allow it
 Test if IP-derived location is saved to RefreshToken document only if user allows it
@@ -64,6 +65,8 @@ Test if deviceType is saved to the RefreshToken document only if the user allows
 Test if deviceType is not saved to the RefreshToken document if the user does not allow it
 Test if password change is successful with correct inputs
 Test if all previous RefreshTokens from the same user are removed when password is changed
+Test if other RefreshToken documents not related to the account are not affected
+Test if other User documents are not interfered with
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -194,7 +197,7 @@ test('If token is generated and is usable', async () => {
 
     const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
 
-    expect(returned.statusCode).toBe(400);
+    expect(returned.statusCode).toBe(200);
     expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token)).resolves.toBe(true);
 })
 
@@ -205,6 +208,33 @@ test('If refresh token is generated and is usable', async () => {
 
     const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
 
-    expect(returned.statusCode).toBe(400);
+    expect(returned.statusCode).toBe(200);
     expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken)).resolves.toBe(true);
+})
+
+test('If encryptedRefreshToken can be decrypted to refreshToken', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const refreshToken = await RefreshToken.findOne({_id: {$eq: returned.data.refreshTokenId}}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(refreshTokenDecryption(refreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
+})
+
+test('If RefreshToken document is created and with admin set to false', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const refreshToken = await RefreshToken.findOne({_id: {$eq: returned.data.refreshTokenId}}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(refreshToken.admin).toBe(false);
+    expect(refreshToken.createdAt.getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway for test
 })
