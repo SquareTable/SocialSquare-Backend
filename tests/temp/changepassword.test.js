@@ -226,7 +226,7 @@ test('If encryptedRefreshToken can be decrypted to refreshToken', async () => {
 })
 
 test('If RefreshToken document is created and with admin set to false', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(userData).save();
 
@@ -237,4 +237,42 @@ test('If RefreshToken document is created and with admin set to false', async ()
     expect(returned.statusCode).toBe(200);
     expect(refreshToken.admin).toBe(false);
     expect(refreshToken.createdAt.getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway for test
+})
+
+test('If IP is added to RefreshToken document if user allows it', async () => {
+    expect.assertions(2);
+
+    await new User({
+        ...userData,
+        settings: {
+            loginActivitySettings: {
+                getIP: true
+            }
+        }
+    }).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const refreshToken = await RefreshToken.findOne({_id: {$eq: returned.data.refreshTokenId}}).lean();
+
+    expect(refreshToken.IP).toBe(validIP);
+})
+
+test('If IP is not added to RefreshToken document if user does not allow it', async () => {
+    expect.assertions(2);
+
+    await new User({
+        ...userData,
+        settings: {
+            loginActivitySettings: {
+                getIP: false
+            }
+        }
+    }).save();
+
+    const returned = await TempController.changepassword(String(userData._id), validPassword, newPassword, newPassword, validIP, validDeviceName);
+
+    const refreshToken = await RefreshToken.findOne({_id: {$eq: returned.data.refreshTokenId}}).lean();
+
+    expect(refreshToken.IP).toBe(undefined);
 })
