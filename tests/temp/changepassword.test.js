@@ -64,7 +64,7 @@ Test if IP-derived location is set to "Unknown Location" if the location cannot 
 Test if deviceType is saved to the RefreshToken document only if the user allows it -- Done
 Test if deviceType is not saved to the RefreshToken document if the user does not allow it -- Done
 Test if password change is successful with correct inputs -- Done
-Test if all previous RefreshTokens from the same user are removed when password is changed
+Test if all previous RefreshTokens from the same user are removed when password is changed -- Done
 Test if other RefreshToken documents not related to the account are not affected
 Test if other User documents are not interfered with
 */
