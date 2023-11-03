@@ -93,7 +93,7 @@ test('If change fails if user could not be found', async () => {
 })
 
 test('If change successfully changes display name and only display name', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(userData).save();
 
