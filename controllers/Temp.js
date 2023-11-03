@@ -329,7 +329,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
                     })
                 } else {
-                    return resolve(HTTPWTHandler.notFound('Cannot find user with userId provided'))
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                 }
             }).catch((error) => {
                 console.error('An error occured while finding user with id:', userId, '. The error was:', error)
