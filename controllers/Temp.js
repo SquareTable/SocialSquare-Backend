@@ -292,7 +292,7 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                 
-                const hashedPassword = data.password;
+                const hashedPassword = userFound.password;
                 bcrypt.compare(currentPassword, hashedPassword).then((result) => {
                     if (result) {
                         //Password match
