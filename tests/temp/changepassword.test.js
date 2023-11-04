@@ -400,7 +400,8 @@ test('If all RefreshTokens from the user get removed', async () => {
     const refreshTokens = [...new Array(10)].map((item, index) => {
         return {
             userId: userData._id,
-            createdAt: 1 + index
+            createdAt: 1 + index,
+            admin: false
         }
     })
 
@@ -423,7 +424,8 @@ test('if other RefreshToken documents not related to the account are not affecte
     const refreshTokens = [...new Array(10)].map((item, index) => {
         return {
             userId: new mongoose.Types.ObjectId(),
-            createdAt: 1 + index
+            createdAt: 1 + index,
+            admin: false
         }
     })
 
