@@ -413,7 +413,7 @@ test('If all RefreshTokens from the user get removed', async () => {
 
     expect(returned.statusCode).toBe(200);
     expect(afterRefreshTokens).toHaveLength(1);
-    expect(afterRefreshTokens[0].createdAt).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway to run test
+    expect(afterRefreshTokens[0].createdAt.getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway to run test
 })
 
 test('if other RefreshToken documents not related to the account are not affected', async () => {
