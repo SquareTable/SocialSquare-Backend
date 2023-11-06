@@ -38,35 +38,35 @@ const userData = {
 }
 
 /*
-TODO:
-Test if change fails if userId is not a string -- Done
-Test if change fails if userId is not an objectId -- Done
-Test if change fails if currentPassword is not a string -- Done
-Test if change fails if newPassword is not a string -- Done
-Test if change fails if confirmNewPassword is not a string -- Done
-Test if change fails if newPassword is less than 8 characters -- Done
-Test if change fails if newPassword is more than 17 characters -- Done
-Test if change fails if newPassword and confirmNewPassword are not the same -- Done
-Test if change fails if user with userId cannot be found -- Done
-Test if change fails if currentPassword is wrong -- Done
-Test if change fails if currentPassword is an empty string -- Done
-Test if change fails if newPassword is an empty string -- Done
-Test if change fails if confirmNewPassword is an empty string -- Done
-Test if new token is generated and it is usable -- Done
-Test if new refreshToken is generated and it is usable -- Done
-Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken -- Done
-Test RefreshToken document is created with admin set to false -- Done
-Test if IP is saved to RefreshToken document only if user allows it -- Done
-Test if IP is not saved to RefreshToken document if user does not allow it -- Done
-Test if IP-derived location is saved to RefreshToken document only if user allows it -- Done
-Test if IP-derived location is not saved to RefreshToken document if user does not allow it -- Done
-Test if IP-derived location is set to "Unknown Location" if the location cannot be found -- Done
-Test if deviceType is saved to the RefreshToken document only if the user allows it -- Done
-Test if deviceType is not saved to the RefreshToken document if the user does not allow it -- Done
-Test if password change is successful with correct inputs -- Done
-Test if all previous RefreshTokens from the same user are removed when password is changed -- Done
-Test if other RefreshToken documents not related to the account are not affected -- Done
-Test if other User documents are not interfered with -- Done
+Tests:
+Test if change fails if userId is not a string
+Test if change fails if userId is not an objectId
+Test if change fails if currentPassword is not a string
+Test if change fails if newPassword is not a string
+Test if change fails if confirmNewPassword is not a string
+Test if change fails if newPassword is less than 8 characters
+Test if change fails if newPassword is more than 17 characters
+Test if change fails if newPassword and confirmNewPassword are not the same
+Test if change fails if user with userId cannot be found
+Test if change fails if currentPassword is wrong
+Test if change fails if currentPassword is an empty string
+Test if change fails if newPassword is an empty string
+Test if change fails if confirmNewPassword is an empty string
+Test if new token is generated and it is usable
+Test if new refreshToken is generated and it is usable
+Test if new encryptedRefreshToken is generated and it can be decrypted back to refreshToken
+Test RefreshToken document is created with admin set to false
+Test if IP is saved to RefreshToken document only if user allows it
+Test if IP is not saved to RefreshToken document if user does not allow it
+Test if IP-derived location is saved to RefreshToken document only if user allows it
+Test if IP-derived location is not saved to RefreshToken document if user does not allow it
+Test if IP-derived location is set to "Unknown Location" if the location cannot be found
+Test if deviceType is saved to the RefreshToken document only if the user allows it
+Test if deviceType is not saved to the RefreshToken document if the user does not allow it
+Test if password change is successful with correct inputs
+Test if all previous RefreshTokens from the same user are removed when password is changed
+Test if other RefreshToken documents not related to the account are not affected
+Test if other User documents are not interfered with
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
