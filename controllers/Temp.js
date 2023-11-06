@@ -2792,7 +2792,7 @@ class TempController {
                                     totalLikes: userData.totalLikes,
                                     profileKey: userData.profileImageKey,
                                     badges: userData.badges,
-                                    privateAccount: userData.privateAccount
+                                    privateAccount: !!userData.privateAccount
                                 };
         
                                 if (userData.privateAccount == true) {
