@@ -2786,7 +2786,7 @@ class TempController {
                             } else {
                                 const userDataToSend = {
                                     name: userData.name,
-                                    displayName: userData.name,
+                                    displayName: userData.displayName,
                                     followers: userData.followers.length,
                                     following: userData.following.length,
                                     totalLikes: userData.totalLikes,
