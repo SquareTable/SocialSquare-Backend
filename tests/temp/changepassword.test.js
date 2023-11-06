@@ -393,7 +393,7 @@ test('If password change is successful with correct inputs', async () => {
 })
 
 test('If all RefreshTokens from the user get removed', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(userData).save();
 
