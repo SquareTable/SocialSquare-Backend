@@ -240,6 +240,14 @@ class TempController {
 
     static #changepassword = (userId, currentPassword, newPassword, confirmNewPassword, IP, deviceType) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`));
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+            }
+
             if (typeof currentPassword !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`currentPassword must be a string. Provided type: ${typeof currentPassword}`))
             }
@@ -256,88 +264,114 @@ class TempController {
             currentPassword = currentPassword.trim()
             newPassword = newPassword.trim()
             confirmNewPassword = confirmNewPassword.trim()
-        
-            if (currentPassword == "" || newPassword == "" || confirmNewPassword == "") {
-                return resolve(HTTPWTHandler.badInput('Empty credentials supplied'))
-            } else if (newPassword !== confirmNewPassword) {
-                return resolve(HTTPWTHandler.badInput('Passwords do not match'))
-            } else if (newPassword.length < CONSTANTS.MIN_USER_PASSWORD_LENGTH) {
-                return resolve(HTTPWTHandler.badInput(`Your new password must be longer than ${CONSTANTS.MIN_USER_PASSWORD_LENGTH} characters`))
-            } else if (newPassword.length > CONSTANTS.MAX_USER_PASSWORD_LENGTH) {
-                return resolve(HTTPWTHandler.badInput(`Your new password cannot be more than ${CONSTANTS.MAX_USER_PASSWORD_LENGTH} characters`))
-            } else {
-                //Check if the user exists
-                User.findOne({_id: {$eq: userId}}).lean()
-                .then((data) => {
-                    if (data) {
-                        //User Exists
-                        const hashedPassword = data.password;
-                        bcrypt.compare(currentPassword, hashedPassword).then((result) => {
-                            if (result) {
-                                //Password match
-                                const saltRounds = 10;
-                                bcrypt.hash(newPassword, saltRounds).then((hashedPassword) => {
-                                    const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(data._id)
-        
-                                    const newRefreshTokenObject = {
-                                        encryptedRefreshToken,
-                                        userId: data._id,
-                                        createdAt: Date.now(),
-                                        admin: false
-                                    }
 
-                                    const formattedIP = HTTPHandler.formatIP(IP)
+            if (currentPassword.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Current password cannot be empty.'))
+            }
+
+            if (newPassword.length === 0) {
+                return resolve(HTTPWTHandler.badInput('New password cannot be empty.'))
+            }
+
+            if (confirmNewPassword.length === 0) {
+                return resolve(HTTPWTHandler.badInput('Confirm new password cannot be empty.'))
+            }
+
+            if (newPassword !== confirmNewPassword) {
+                return resolve(HTTPWTHandler.badInput('Passwords do not match.'))
+            }
+
+            if (newPassword.length < CONSTANTS.MIN_USER_PASSWORD_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`Your new password must be ${CONSTANTS.MIN_USER_PASSWORD_LENGTH} or more characters.`))
+            }
+
+            if (newPassword.length > CONSTANTS.MAX_USER_PASSWORD_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`Your new password cannot be more than ${CONSTANTS.MAX_USER_PASSWORD_LENGTH} characters.`))
+            }
         
-                                    if (data?.settings?.loginActivitySettings?.getIP) {
-                                        newRefreshTokenObject.IP = formattedIP
-                                    }
-        
-                                    if (data[0]?.settings?.loginActivitySettings?.getLocation) {
-                                        const location = geoIPLite.lookup(formattedIP)
-                                        newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
-                                    }
-        
-                                    if (data[0]?.settings?.loginActivitySettings?.getDeviceType) {
-                                        newRefreshTokenObject.deviceType = deviceType
-                                    }
-        
-                                    const newRefreshToken = new RefreshToken(newRefreshTokenObject)
-        
-                                    newRefreshToken.save().then(savedRefreshToken => {
-                                        RefreshToken.deleteMany({encryptedRefreshToken: {$ne: encryptedRefreshToken}, userId: data._id, admin: false}).then(() => {
-                                            User.findOneAndUpdate({_id: {$eq: userId}}, {password: hashedPassword}).then(() => {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+                
+                const hashedPassword = userFound.password;
+                bcrypt.compare(currentPassword, hashedPassword).then((result) => {
+                    if (result) {
+                        //Password match
+                        const saltRounds = 10;
+                        bcrypt.hash(newPassword, saltRounds).then((hashedPassword) => {
+                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userId)
+
+                            const newRefreshTokenObject = {
+                                encryptedRefreshToken,
+                                userId: userId,
+                                createdAt: Date.now(),
+                                admin: false
+                            }
+
+                            const formattedIP = HTTPHandler.formatIP(IP)
+
+                            if (userFound?.settings?.loginActivitySettings?.getIP) {
+                                newRefreshTokenObject.IP = formattedIP
+                            }
+
+                            if (userFound?.settings?.loginActivitySettings?.getLocation) {
+                                const location = geoIPLite.lookup(formattedIP)
+                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                            }
+
+                            if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
+                                newRefreshTokenObject.deviceType = deviceType
+                            }
+
+                            const newRefreshToken = new RefreshToken(newRefreshTokenObject)
+
+                            mongoose.startSession().then(session => {
+                                session.startTransaction();
+
+                                RefreshToken.deleteMany({userId: {$eq: userId}, admin: false}, {session}).then(() => {
+                                    newRefreshToken.save({session}).then(savedRefreshToken => {
+                                        User.findOneAndUpdate({_id: {$eq: userId}}, {password: hashedPassword}, {session}).then(() => {
+                                            mongooseSessionHelper.commitTransaction(session).then(() => {
                                                 return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(savedRefreshToken._id)}))
-                                            }).catch(error => {
-                                                console.error('An error occurred while setting password to:', hashedPassword, 'for user with id:', userId, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                                            }).catch(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while saving new password. Please try again.'))
                                             })
                                         }).catch(error => {
-                                            console.error('An error occurred while deleting all RefreshTokens that have a userId of:', data._id, 'and that do not have an encryptedRefreshToken:', encryptedRefreshToken, '. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while invalidating all other sessions. Please manually log out all other users from your account.'))
+                                            console.error('An error occurred while finding user with id:', userId, 'and updating password. The error was:', error)
+                                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                                            })
                                         })
                                     }).catch(error => {
-                                        console.error('An error occurred while saving refresh token. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
+                                        console.error('An error occurred while saving new refresh token with data:', newRefreshTokenObject, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                                        })
                                     })
-                                }).catch((error) => {
-                                    console.error('An error occured while hashing password:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while hashing password. Please try again.'))
+                                }).catch(error => {
+                                    console.error('An error occurred while deleting many RefreshTokens with userId:', userId, ' and with admin set to false. The error was:', error)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while logging out other devices. Please try again.'))
+                                    })
                                 })
-                            } else {
-                                return resolve(HTTPWTHandler.unauthorized('Invalid password entered!'))
-                            }
+                            }).catch(error => {
+                                console.error('An error occurred while starting Mongoose session:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while starting to change password. Please try again.'))
+                            })
                         }).catch((error) => {
-                            console.error('An error occured while comparing passwords:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
+                            console.error('An error occured while hashing password:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while hashing password. Please try again.'))
                         })
                     } else {
-                        return resolve(HTTPWTHandler.notFound('Cannot find user with userId provided'))
+                        return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
                     }
                 }).catch((error) => {
-                    console.error('An error occured while finding user with id:', userId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user with id:', userId))
+                    console.error('An error occured while comparing passwords:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
                 })
-            }
+            }).catch((error) => {
+                console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user with id:', userId))
+            })
         })
     }
 

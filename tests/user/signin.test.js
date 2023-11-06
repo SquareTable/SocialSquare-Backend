@@ -278,16 +278,6 @@ describe('When Email 2FA is not enabled', () => {
         _id: new mongoose.Types.ObjectId()
     }
 
-    const JWTVerifier = (secret, token) => {
-        return new Promise(resolve => {
-            jwt.verify(token, secret, (err, decoded) => {
-                if (err) return resolve(false);
-                if (decoded) return resolve(true);
-                resolve(false);
-            })
-        })
-    }
-
     test('if token gets created and is usable', async () => {
         expect.assertions(2);
 
@@ -296,7 +286,7 @@ describe('When Email 2FA is not enabled', () => {
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(200);
-        expect(JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
     })
 
     test('if refresh token gets created and is usable', async () => {
@@ -307,7 +297,7 @@ describe('When Email 2FA is not enabled', () => {
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(200);
-        expect(JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
     })
 
     test('if encrypted refresh token gets created and can be decrypted back to refresh token', async () => {
