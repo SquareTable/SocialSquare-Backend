@@ -2782,7 +2782,7 @@ class TempController {
                         if (userData) {
                             //could do a user search ig but no need really
                             if (userData.blockedAccounts?.includes(userSearchingPubId)) {
-                                return resolve(HTTPWTHandler.notFound('User not found.'))
+                                return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                             } else {
                                 const userDataToSend = {
                                     name: userData.name,
@@ -2854,7 +2854,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
                     })
                 } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                 }
             }).catch(error => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
