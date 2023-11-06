@@ -316,7 +316,7 @@ test('If IP-derived location is not added to RefreshToken document if the user d
     const refreshToken = await RefreshToken.findOne({}).lean();
 
     expect(returned.statusCode).toBe(200);
-    expect(refreshToken.location).toBeTruthy();
+    expect(refreshToken.location).toBe(undefined);
 })
 
 test('If IP-derived location is "Unknown Location" if a location cannot be found', async () => {
