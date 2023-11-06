@@ -34,7 +34,8 @@ class ThreadPost {
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: String(post._id),
                                 threadCategory: category.categoryTitle,
-                                comments
+                                comments,
+                                creatorPublicId: postOwner.secondId
                             }
 
                             if (isUpvoted) {
