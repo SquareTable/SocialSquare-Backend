@@ -2791,7 +2791,8 @@ class TempController {
                                     following: userData.following.length,
                                     totalLikes: userData.totalLikes,
                                     profileKey: userData.profileImageKey,
-                                    badges: userData.badges
+                                    badges: userData.badges,
+                                    privateAccount: userData.privateAccount
                                 };
         
                                 if (userData.privateAccount == true) {
