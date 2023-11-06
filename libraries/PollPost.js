@@ -44,7 +44,8 @@ class PollPost {
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 votedFor: pollVote?.vote || "None",
-                                comments
+                                comments,
+                                creatorPublicId: postOwner.secondId
                             }
 
                             if (isUpvoted) {
