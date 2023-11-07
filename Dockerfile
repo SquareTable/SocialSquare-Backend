@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:20
 WORKDIR /server
 COPY  package*.json /server/
 RUN mkdir Local-Images
