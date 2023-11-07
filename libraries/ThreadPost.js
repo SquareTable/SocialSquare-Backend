@@ -37,7 +37,7 @@ class ThreadPost {
                                 comments,
                                 creatorPublicId: postOwner.secondId,
                                 categoryImageKey: category.imageKey,
-                                categoryId: category._id
+                                categoryId: String(category._id)
                             }
 
                             if (isUpvoted) {
