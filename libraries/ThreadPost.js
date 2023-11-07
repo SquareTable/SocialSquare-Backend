@@ -19,7 +19,7 @@ class ThreadPost {
                             Downvote.countDocuments({postId: {$eq: post._id}, postFormat: "Thread"}),
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Thread", userPublicId: {$eq: userRequesting.secondId}}),
-                            Category.findOne({_id: {$eq: post.threadCategoryId}}, {categoryTitle: 1, imageKey: 1}),
+                            Category.findOne({_id: {$eq: post.threadCategoryId}}, {categoryTitle: 1, imageKey: 1, _id: 1}),
                             Comment.countDocuments({postId: {$eq: post._id}, postFormat: "Thread"})
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, category, comments]) => {
                             const postObject = {
@@ -36,7 +36,8 @@ class ThreadPost {
                                 threadCategory: category.categoryTitle,
                                 comments,
                                 creatorPublicId: postOwner.secondId,
-                                categoryImageKey: category.imageKey
+                                categoryImageKey: category.imageKey,
+                                categoryId: category._id
                             }
 
                             if (isUpvoted) {
