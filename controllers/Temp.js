@@ -2468,11 +2468,7 @@ class TempController {
                                             }
 
                                             threadPostHandler.processMultiplePostDataFromOneOwner([result], data, userRequestingThread).then(posts => {
-                                                const post = {
-                                                    ...posts[0],
-                                                    categoryImageKey
-                                                }
-                                                return resolve(HTTPWTHandler.OK('Posts found', post))
+                                                return resolve(HTTPWTHandler.OK('Posts found', posts[0]))
                                             }).catch(error => {
                                                 console.error('An error occured while processing thread. The error was:', error)
                                                 return resolve(HTTPWTHandler.serverError('An error occurred while getting thread. Please try again.'))
