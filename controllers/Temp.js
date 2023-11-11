@@ -1617,24 +1617,50 @@ class TempController {
                                 categoryTitle: categoryTitle, 
                                 categoryDescription: categoryDescription,
                                 categoryTags: categoryTags,
-                                members: [userId],
                                 NSFW: categoryNSFW,
                                 NSFL: categoryNSFL,
                                 categoryOwnerId: userId,
                                 categoryOriginalCreator: userId,
-                                categoryModeratorIds: [],
                                 datePosted: Date.now(),
                                 allowScreenShots: sentAllowScreenShots
                             }
         
                             const newCategory = new Category(newCategoryObject);
-        
-                            newCategory.save().then(result => {
-                                return resolve(HTTPWTHandler.OK('Creation successful'))
-                            })
-                            .catch(err => {
-                                console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+
+                            mongoose.startSession().then(session => {
+                                session.startTransaction();
+
+                                newCategory.save({session}).then(result => {
+                                    const categoryMemberData = {
+                                        userId,
+                                        categoryId: result._id,
+                                        dateJoined: Date.now(),
+                                        roles: []
+                                    }
+
+                                    const newCategoryMember = new CategoryMember(categoryMemberData);
+
+                                    newCategoryMember.save({session}).then(() => {
+                                        mongooseSessionHelper.commitTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.OK('Creation successful'))
+                                        }).catch(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while saving new CategoryMember with data:', categoryMemberData, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    })
+                                }).catch(err => {
+                                    console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                    })
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while starting Mongoose session:', error)
+                                return resolve(HTTPWTHandler.serverError("An error occurred while beginning to save category. Please try again."))
                             })
                         } else {
                             return resolve(HTTPWTHandler.conflict('A category with this name already exists.'))
