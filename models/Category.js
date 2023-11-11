@@ -6,15 +6,14 @@ const CategorySchema = new Schema({
     categoryTitle: String, 
     categoryDescription: String,
     categoryTags: String,
-    members: Array,
     NSFW: {type: Boolean, default: false},
     NSFL: {type: Boolean, default: false},
     categoryOwnerId: mongoose.Schema.Types.ObjectId,
     categoryOriginalCreator: mongoose.Schema.Types.ObjectId,
-    categoryModeratorIds: Array,
     datePosted: Number,
     allowScreenShots: Boolean,
-    userVisits: Array
+    userVisits: Array,
+    roles: Array // Object array with roles
 });
 
 const Category = mongoose.model('Category', CategorySchema);

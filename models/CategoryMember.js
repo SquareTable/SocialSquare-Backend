@@ -5,7 +5,7 @@ const CategoryMemberSchema = new Schema({
     userId: mongoose.Schema.Types.ObjectId,
     categoryId: mongoose.Schema.Types.ObjectId,
     dateJoined: Number,
-    role: String
+    roles: Array //String array with uuids of category roles
 })
 
 const CategoryMember = mongoose.model('CategoryMember', CategoryMemberSchema)
