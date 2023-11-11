@@ -6,6 +6,7 @@ const CONSTANTS = {
     VALID_EMAIL_TEST: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
     VALID_USERNAME_TEST: /^[a-z0-9]*$/,
     MAX_USER_DISPLAY_NAME_LENGTH: 20,
+    VALID_DISPLAY_NAME_TEST: /^[A-Za-z]+$/,
     MAX_USER_BIO_LENGTH: 250,
     VALID_BIO_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure bio has less than 10 lines
     MAX_USER_BIO_LINES: 10, //Update this value to reflect the VALID_BIO_TEST above
@@ -53,7 +54,10 @@ const CONSTANTS = {
     NUM_CATEGORIES_TO_SEND_PER_API_CALL: 10, //Used for temp/findcategoryfromprofile, temp/getCategoriesUserIsAPartOf, and temp/searchpagesearchcategories APIs - Determines how many categories to send per API call
     NUM_USERS_TO_SEND_PER_PROFILE_STATS_API_CALL: 10, //Used for temp/getProfileStats API - Determines how many users they are following or users that follow them to send per API call
     NUM_BLOCKED_ACCOUNTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getuserblockedaccounts API - Determines how many blocked accounts to send per API call
-    COMMENT_API_ALLOWED_POST_FORMATS: ["Image", "Poll", "Thread"] //Used by various comment related APIs to see post formats that are allowed and supported to have comments on them
+    COMMENT_API_ALLOWED_POST_FORMATS: ["Image", "Poll", "Thread"], //Used by various comment related APIs to see post formats that are allowed and supported to have comments on them
+    VOTE_API_ALLOWED_POST_FORMATS: ["Image", "Poll", "Thread"], //Used temp/voteonpost and temp/removevoteonpost to know what post formats are supported
+    VOTE_API_ALLOWED_VOTE_TYPES: ["Up", "Down"], //Used by temp/voteonpost and temp/removevoteonpost to know what vote types are supported
+    RANDOM_EIGHT_CHARACTER_STRING_URL: 'https://www.random.org/integers/?num=1&min=268435456&max=1000000000&col=1&base=16&format=plain&rnd=new'
 }
 
 module.exports = CONSTANTS

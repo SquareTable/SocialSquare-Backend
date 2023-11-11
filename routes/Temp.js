@@ -144,24 +144,6 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/upvotepoll': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many polls in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/downvotepoll': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have downvoted too many polls in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/deletepoll': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 30,
@@ -204,24 +186,6 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many profile pictures in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/upvoteimage': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many images in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/downvoteimage': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have downvoted too many images in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -339,24 +303,6 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many threads from a certain user in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/upvotethread': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have upvoted too many threads in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/downvotethread': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 45,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have downvoted too many threads in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -802,6 +748,24 @@ const rateLimiters = {
         message: {status: "FAILED", message: "You have removed votes from comments too many times in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/voteonpost': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 60,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have voted on too many posts in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/removevoteonpost': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 60,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have removed too many votes from posts in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
 
@@ -1173,64 +1137,6 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
     })
 });
 
-router.post('/upvotepoll', rateLimiters['/upvotepoll'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'upvotepoll',
-            functionArgs: [req.tokenData, req.body.pollId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/upvotepoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /upvotepoll:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/upvotepoll controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/downvotepoll', rateLimiters['/downvotepoll'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'downvotepoll',
-            functionArgs: [req.tokenData, req.body.pollId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/downvotepoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /downvotepoll:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/downvotepoll controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
 router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
     let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
@@ -1372,64 +1278,6 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('GET temp/getProfilePic/:pubId controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/upvoteimage', rateLimiters['/upvoteimage'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'upvoteimage',
-            functionArgs: [req.tokenData, req.body.imageId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/upvoteimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /upvoteimage:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/upvoteimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/downvoteimage', rateLimiters['/downvoteimage'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'downvoteimage',
-            functionArgs: [req.tokenData, req.body.imageId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/downvoteimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /downvoteimage:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/downvoteimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -1813,64 +1661,6 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/getthreadsfromprofile controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/upvotethread', rateLimiters['/upvotethread'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'upvotethread',
-            functionArgs: [req.tokenData, req.body.threadId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/upvotethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /upvotethread:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/upvotethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/downvotethread', rateLimiters['/downvotethread'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'downvotethread',
-            functionArgs: [req.tokenData, req.body.threadId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/downvotethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /downvotethread:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/downvotethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -3297,6 +3087,64 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/removevoteoncomment controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/voteonpost', rateLimiters['/voteonpost'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'voteonpost',
+            functionArgs: [req.tokenData, req.body.postId, req.body.postFormat, req.body.voteType]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/voteonpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /voteonpost:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/voteonpost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/removevoteonpost', rateLimiters['/removevoteonpost'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'removevoteonpost',
+            functionArgs: [req.tokenData, req.body.postId, req.body.postFormat, req.body.voteType]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/removevoteonpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /removevoteonpost:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/removevoteonpost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
