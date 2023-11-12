@@ -1383,25 +1383,52 @@ class TempController {
                                     categoryTitle: categoryTitle, 
                                     categoryDescription: categoryDescription,
                                     categoryTags: categoryTags,
-                                    members: [userId],
                                     NSFW: categoryNSFW,
                                     NSFL: categoryNSFL,
                                     categoryOwnerId: userId,
                                     categoryOriginalCreator: userId,
-                                    categoryModeratorIds: [],
                                     datePosted: Date.now(),
-                                    allowScreenShots: allowScreenShots
+                                    allowScreenShots: sentAllowScreenShots
                                 };
 
                                 const newCategory = new Category(newCategoryObject);
-        
-                                newCategory.save().then(() => {
-                                    return resolve(HTTPWTHandler.OK('Creation successful'))
-                                })
-                                .catch(err => {
+
+                                mongoose.startSession().then(session => {
+                                    session.startTransaction();
+
+                                    newCategory.save({session}).then(result => {
+                                        const categoryMemberData = {
+                                            userId,
+                                            categoryId: result._id,
+                                            dateJoined: Date.now(),
+                                            roles: []
+                                        }
+
+                                        const newCategoryMember = new CategoryMember(categoryMemberData);
+
+                                        newCategoryMember.save({session}).then(() => {
+                                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.OK('Creation successful'))
+                                            }).catch(() => {
+                                                imageHandler.deleteImageByKey(imageKey)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                            })
+                                        }).catch(error => {
+                                            imageHandler.deleteImageByKey(imageKey)
+                                            console.error('An error occurred while saving new CategoryMember with data:', categoryMemberData, '. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    }).catch(err => {
+                                        imageHandler.deleteImageByKey(imageKey)
+                                        console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    })
+                                }).catch(error => {
                                     imageHandler.deleteImageByKey(imageKey)
-                                    console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                    console.error('An error occurred while starting Mongoose session:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while starting to create category. Please try again.'))
                                 })
                             }).catch(error => {
                                 console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
