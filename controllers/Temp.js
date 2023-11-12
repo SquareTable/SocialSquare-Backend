@@ -45,6 +45,9 @@ const commentHandler = new CommentLibrary();
 const MongooseSessionLibrary = require('../libraries/MongooseSession');
 const mongooseSessionHelper = new MongooseSessionLibrary();
 
+const CategoryLibrary = require('../libraries/Category.js');
+const categoryHelper = new CategoryLibrary();
+
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
@@ -1868,7 +1871,7 @@ class TempController {
         })
     }
 
-    static #findcategoryfromprofile = (userId, pubId, previousCategoryId) => {
+    static #findcategoryfromprofile = (userId, pubId, previousCategoryMemberId) => {
         return new Promise(resolve => {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
@@ -1878,23 +1881,13 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousCategoryId !== 'string' && previousCategoryId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousCategoryId must be a string or undefined. Type provided: ${typeof previousCategoryId}`))
+            if (typeof previousCategoryMemberId !== 'string' && previousCategoryMemberId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must be a string or undefined. Type provided: ${typeof previousCategoryMemberId}`))
             }
 
-            if (previousCategoryId?.length === 0) {
-                return resolve(HTTPWTHandler.badInput('previousCategoryId cannot be an empty string.'))
+            if (previousCategoryMemberId?.length === 0) {
+                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId cannot be an empty string.'))
             }
-        
-            function sendResponse(foundCategories) {
-                console.log("Params Recieved")
-                console.log(foundCategories)
-                return resolve(HTTPWTHandler.OK('Categories search successful', {categories: foundCategories, noMoreCategories: foundCategories.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
-            }
-
-            //Find Categories
-            var foundCategories = [];
-            var itemsProcessed = 0;
             
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
                 if (result) {
@@ -1912,44 +1905,54 @@ class TempController {
                         console.log(profilesId)
 
                         const dbQuery = {
-                            members: {$elemMatch: {$eq: String(profilesId)}}
+                            userId: {$eq: userId}
                         }
 
-                        if (previousCategoryId) {
-                            dbQuery._id = {$lt: previousCategoryId}
+                        if (previousCategoryMemberId) {
+                            dbQuery._id = {$lt: previousCategoryMemberId}
                         }
 
-                        Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data =>{
-                            console.log("Found categories")
-                            console.log(data)
-                            if (data.length) {
-                                data.forEach(function (item, index) {
-                                    foundCategories.push({
-                                        categoryTitle: data[index].categoryTitle,
-                                        categoryDescription: data[index].categoryDescription,
-                                        members: data[index].members.length,
-                                        categoryTags: data[index].categoryTags,
-                                        imageKey: data[index].imageKey,
-                                        NSFW: data[index].NSFW,
-                                        NSFL: data[index].NSFL,
-                                        datePosted: data[index].datePosted,
+                        CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
+                            if (data.length < 1) return resolve(HTTPWTHandler.OK('No more categories could be found', {categories: [], noMoreCategories: true}))
+
+                            const categoryIds = Array.from(new Set(data.map(member => member.categoryId)));
+
+                            Category.find({_id: {$in: categoryIds}}).lean().then(categories => {
+                                const {ownerPostPairs: memberCategoryPairs, postsWithNoOwners: missingCategories} = arrayHelper.returnOwnerPostPairs(categories, data, 'categoryId');
+
+                                if (missingCategories.length > 0) {
+                                    console.error('Found missing categories from memberCategoryPairs:', missingCategories);
+                                }
+
+                                const toSend = memberCategoryPairs.map(({categoryMember, category}) => {
+                                    const userPermissions = categoryHelper.returnPermissions(categoryMember, category);
+
+                                    return {
+                                        categoryTitle: category.categoryTitle,
+                                        categoryDescription: category.categoryDescription,
+                                        members: category.members.length,
+                                        categoryTags: category.categoryTags,
+                                        imageKey: category.imageKey,
+                                        NSFW: category.NSFW,
+                                        NSFL: category.NSFL,
+                                        datePosted: category.datePosted,
                                         inCategory: true,
-                                        allowScreenShots: data[index].allowScreenShots,
-                                        categoryId: String(data[index]._id)
-                                    })
-                                    itemsProcessed++;
-                                    if(itemsProcessed === data.length) {
-                                        sendResponse(foundCategories);
+                                        allowScreenShots: category.allowScreenShots,
+                                        categoryId: String(category._id),
+                                        permissions: userPermissions,
+                                        memberId: String(categoryMember._id)
                                     }
                                 })
-                            } else {
-                                return resolve(HTTPWTHandler.OK('No more categories could be found', {categories: [], noMoreCategories: true}))
-                            }
+
+                                return resolve(HTTPWTHandler.OK('Categories search successful', {categories: toSend, noMoreCategories: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
+                            }).catch(error => {
+                                console.error('An error occurred while finding categories with ids in:', categoryIds, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while getting category data. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while finding CategoryMember documents with query:', dbQuery, 'and sorting with _id -1 and limiting to:', CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding categories that you have joined. Please try again.'))
                         })
-                        .catch(err => {
-                            console.error('An error occurred while finding categories where:', profilesId, 'is in members. The error was:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
-                        });
                     }).catch(error => {
                         console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
