@@ -1976,41 +1976,25 @@ class TempController {
             if (categoryId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('categoryId must not be an empty string.'))
             }
-        
-            User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
-                    Category.findOne({_id: {$eq: categoryId}}).lean().then(data => {
-                        if (data) {
-                            if (data.members.includes(userId)) {
-                                Category.findOneAndUpdate({_id: {$eq: categoryId}}, { $pull: { members : userId }}).then(function(){
-                                    console.log("SUCCESS1")
-                                    return resolve(HTTPWTHandler.OK('Left Category'))
-                                }).catch(error => {
-                                    console.error('An error occurred while pulling:', userId, 'from members for category with id:', categoryId, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while removing you from the category. Please try again.'))
-                                })
-                            } else {
-                                //Not in the category yet
-                                Category.findOneAndUpdate({_id: {$eq: categoryId}}, { $addToSet: { members : userId }}).then(function(){
-                                    console.log("SUCCESS1")
-                                    return resolve(HTTPWTHandler.OK('Joined Category'))
-                                }).catch(error => {
-                                    console.error('An error occurred while using $addToSet to add:', userId, 'to the members array for category with id:', categoryId, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding you to the category. Please try again.'))
-                                })
-                            }
-                        } else {
-                            return resolve(HTTPWTHandler.notFound('Could not find category'))
-                        }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(categoryFound => {
+                    if (!categoryFound) return resolve(HTTPWTHandler.notFound('Could not find category.'))
+
+                    CategoryMember.findOneAndUpdate({userId: {$eq: userId}, categoryId: {$eq: categoryId}}, {dateJoined: Date.now(), roles: []}, {upsert: true}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully added you to the category.'))
                     }).catch(error => {
-                        console.error('An error occurred while finding category with categoryId:', categoryId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding cateogry. Please try again.'))
+                        console.error('An error occurred while finding CategoryMember with userId:', userId, 'and categoryId:', categoryId, 'and upserting dateJoined as the current time and roles as an empty array. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while adding you to the category. Please try again.'))
                     })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                })
             }).catch(error => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
