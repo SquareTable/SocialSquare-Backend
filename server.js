@@ -1,6 +1,6 @@
 // mongodb
 require('./config/db').then(() => {
-    console.log("DB Connected"); 
+    console.log("DB Connected");
 }).catch((err) => {
     console.error('ERROR CONNECTING TO DATABASE:')
     console.error(err)

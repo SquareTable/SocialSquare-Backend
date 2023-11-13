@@ -11,6 +11,7 @@ const PostReports = require('../models/PostReports');
 const RefreshToken = require('../models/RefreshToken');
 const Message = require('../models/Message');
 const Comment = require('../models/Comment');
+const CategoryMember = require('../models/CategoryMember');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -43,6 +44,9 @@ const commentHandler = new CommentLibrary();
 
 const MongooseSessionLibrary = require('../libraries/MongooseSession');
 const mongooseSessionHelper = new MongooseSessionLibrary();
+
+const CategoryLibrary = require('../libraries/Category.js');
+const categoryHelper = new CategoryLibrary();
 
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
@@ -1382,25 +1386,52 @@ class TempController {
                                     categoryTitle: categoryTitle, 
                                     categoryDescription: categoryDescription,
                                     categoryTags: categoryTags,
-                                    members: [userId],
                                     NSFW: categoryNSFW,
                                     NSFL: categoryNSFL,
                                     categoryOwnerId: userId,
                                     categoryOriginalCreator: userId,
-                                    categoryModeratorIds: [],
                                     datePosted: Date.now(),
-                                    allowScreenShots: allowScreenShots
+                                    allowScreenShots: sentAllowScreenShots
                                 };
 
                                 const newCategory = new Category(newCategoryObject);
-        
-                                newCategory.save().then(() => {
-                                    return resolve(HTTPWTHandler.OK('Creation successful'))
-                                })
-                                .catch(err => {
+
+                                mongoose.startSession().then(session => {
+                                    session.startTransaction();
+
+                                    newCategory.save({session}).then(result => {
+                                        const categoryMemberData = {
+                                            userId,
+                                            categoryId: result._id,
+                                            dateJoined: Date.now(),
+                                            roles: []
+                                        }
+
+                                        const newCategoryMember = new CategoryMember(categoryMemberData);
+
+                                        newCategoryMember.save({session}).then(() => {
+                                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                                return resolve(HTTPWTHandler.OK('Creation successful'))
+                                            }).catch(() => {
+                                                imageHandler.deleteImageByKey(imageKey)
+                                                return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                            })
+                                        }).catch(error => {
+                                            imageHandler.deleteImageByKey(imageKey)
+                                            console.error('An error occurred while saving new CategoryMember with data:', categoryMemberData, '. The error was:', error)
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    }).catch(err => {
+                                        imageHandler.deleteImageByKey(imageKey)
+                                        console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    })
+                                }).catch(error => {
                                     imageHandler.deleteImageByKey(imageKey)
-                                    console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                    console.error('An error occurred while starting Mongoose session:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while starting to create category. Please try again.'))
                                 })
                             }).catch(error => {
                                 console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
@@ -1616,24 +1647,50 @@ class TempController {
                                 categoryTitle: categoryTitle, 
                                 categoryDescription: categoryDescription,
                                 categoryTags: categoryTags,
-                                members: [userId],
                                 NSFW: categoryNSFW,
                                 NSFL: categoryNSFL,
                                 categoryOwnerId: userId,
                                 categoryOriginalCreator: userId,
-                                categoryModeratorIds: [],
                                 datePosted: Date.now(),
                                 allowScreenShots: sentAllowScreenShots
                             }
         
                             const newCategory = new Category(newCategoryObject);
-        
-                            newCategory.save().then(result => {
-                                return resolve(HTTPWTHandler.OK('Creation successful'))
-                            })
-                            .catch(err => {
-                                console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+
+                            mongoose.startSession().then(session => {
+                                session.startTransaction();
+
+                                newCategory.save({session}).then(result => {
+                                    const categoryMemberData = {
+                                        userId,
+                                        categoryId: result._id,
+                                        dateJoined: Date.now(),
+                                        roles: []
+                                    }
+
+                                    const newCategoryMember = new CategoryMember(categoryMemberData);
+
+                                    newCategoryMember.save({session}).then(() => {
+                                        mongooseSessionHelper.commitTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.OK('Creation successful'))
+                                        }).catch(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    }).catch(error => {
+                                        console.error('An error occurred while saving new CategoryMember with data:', categoryMemberData, '. The error was:', error)
+                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                        })
+                                    })
+                                }).catch(err => {
+                                    console.error('An error occurred while saving new category with newCategoryObject:', newCategoryObject, '. The error was:', err)
+                                    mongooseSessionHelper.abortTransaction(session).then(() => {
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while saving category. Please try again.'))
+                                    })
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while starting Mongoose session:', error)
+                                return resolve(HTTPWTHandler.serverError("An error occurred while beginning to save category. Please try again."))
                             })
                         } else {
                             return resolve(HTTPWTHandler.conflict('A category with this name already exists.'))
@@ -1680,27 +1737,36 @@ class TempController {
                 }
 
                 Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
-                    const categories = data.map(category => {
-                        return {
-                            categoryTitle: category.categoryTitle,
-                            categoryDescription: category.categoryDescription,
-                            members: category.members.length,
-                            categoryTags: category.categoryTags,
-                            imageKey: category.imageKey,
-                            NSFW: category.NSFW,
-                            NSFL: category.NSFL,
-                            datePosted: category.datePosted,
-                            allowScreenShots: category.allowScreenShots,
-                            categoryId: String(category._id)
+                    Promise.all(
+                        data.map(category => {
+                            return CategoryMember.estimatedDocumentCount({categoryId: {$eq: category._id}})
+                        })
+                    ).then(memberCounts => {
+                        const categories = data.map((category, index) => {
+                            return {
+                                categoryTitle: category.categoryTitle,
+                                categoryDescription: category.categoryDescription,
+                                members: memberCounts[index],
+                                categoryTags: category.categoryTags,
+                                imageKey: category.imageKey,
+                                NSFW: category.NSFW,
+                                NSFL: category.NSFL,
+                                datePosted: category.datePosted,
+                                allowScreenShots: category.allowScreenShots,
+                                categoryId: String(category._id)
+                            }
+                        })
+    
+                        const toSend = {
+                            categories,
+                            noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
                         }
+    
+                        return resolve(HTTPWTHandler.OK('Search successful', toSend))
+                    }).catch(error => {
+                        console.error('An error occurred while counting CategoryMember documents. The categoryIds were:', data.map(category => category._id), '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
                     })
-
-                    const toSend = {
-                        categories,
-                        noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
-                    }
-
-                    return resolve(HTTPWTHandler.OK('Search successful', toSend))
                 }).catch(error => {
                     console.error('An error occurred while finding category with dbQuery:', dbQuery, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
@@ -1750,54 +1816,43 @@ class TempController {
             if (categoryId.length === 0) {
                 return resolve(HTTPWTHandler.badInput('categoryId cannot be an empty string'))
             }
-        
-            //Find Category
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
 
-                Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{
-                    if (data) {
-                        let modPerms = false
-                        let ownerPerms = false
-                        let inCategory = false
-                        if (data.categoryModeratorIds.includes(userId)) {
-                            modPerms = true
-                            ownerPerms = false
-                        }
-                        if (data.categoryOwnerId == userId) {
-                            modPerms = true
-                            ownerPerms = true
-                        }
-                        if (data.members.includes(userId)) {
-                            inCategory = true
-                        }
-                        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(categoryFound => {
+                    if (!categoryFound) return resolve(HTTPWTHandler.notFound('Could not find category.'))
+
+                    Promise.all([
+                        CategoryMember.countDocuments({categoryId: {$eq: categoryId}}),
+                        CategoryMember.findOne({userId: {$eq: userId}, categoryId: {$eq: categoryId}})
+                    ]).then(([members, memberDocument]) => {
+                        const permissions = memberDocument ? categoryHelper.returnPermissions(memberDocument, categoryFound) : {};
+
                         const categoryData = {
-                            categoryTitle: data.categoryTitle,
-                            categoryDescription: data.categoryDescription,
-                            members: data.members.length,
-                            categoryTags: data.categoryTags,
-                            imageKey: data.imageKey,
-                            NSFW: data.NSFW,
-                            NSFL: data.NSFL,
-                            datePosted: data.datePosted,
-                            modPerms: modPerms,
-                            ownerPerms: ownerPerms,
-                            inCategory: inCategory,
-                            allowScreenShots: data.allowScreenShots,
-                            categoryId: String(data._id)
+                            categoryTitle: categoryFound.categoryTitle,
+                            categoryDescription: categoryFound.categoryDescription,
+                            members: members,
+                            categoryTags: categoryFound.categoryTags,
+                            imageKey: categoryFound.imageKey,
+                            NSFW: categoryFound.NSFW,
+                            NSFL: categoryFound.NSFL,
+                            datePosted: categoryFound.datePosted,
+                            inCategory: !!memberDocument,
+                            allowScreenShots: categoryFound.allowScreenShots,
+                            categoryId: String(categoryFound._id),
+                            permissions
                         }
 
                         return resolve(HTTPWTHandler.OK('Search successful', categoryData))
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('Could not find category with that id.'))
-                    }
-                }).catch(err => {
-                    console.error('An error occurred while finding category with id:', categoryId, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category'))
-                });
+                    }).catch(error => {
+                        console.error('An error occurred while finding members and member document for categories:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding members of the category. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
@@ -1805,7 +1860,7 @@ class TempController {
         })
     }
 
-    static #findcategoryfromprofile = (userId, pubId, previousCategoryId) => {
+    static #findcategoryfromprofile = (userId, pubId, previousCategoryMemberId) => {
         return new Promise(resolve => {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
@@ -1815,23 +1870,13 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousCategoryId !== 'string' && previousCategoryId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousCategoryId must be a string or undefined. Type provided: ${typeof previousCategoryId}`))
+            if (typeof previousCategoryMemberId !== 'string' && previousCategoryMemberId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must be a string or undefined. Type provided: ${typeof previousCategoryMemberId}`))
             }
 
-            if (previousCategoryId?.length === 0) {
-                return resolve(HTTPWTHandler.badInput('previousCategoryId cannot be an empty string.'))
+            if (previousCategoryMemberId?.length === 0) {
+                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId cannot be an empty string.'))
             }
-        
-            function sendResponse(foundCategories) {
-                console.log("Params Recieved")
-                console.log(foundCategories)
-                return resolve(HTTPWTHandler.OK('Categories search successful', {categories: foundCategories, noMoreCategories: foundCategories.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
-            }
-
-            //Find Categories
-            var foundCategories = [];
-            var itemsProcessed = 0;
             
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
                 if (result) {
@@ -1849,44 +1894,63 @@ class TempController {
                         console.log(profilesId)
 
                         const dbQuery = {
-                            members: {$elemMatch: {$eq: String(profilesId)}}
+                            userId: {$eq: userId}
                         }
 
-                        if (previousCategoryId) {
-                            dbQuery._id = {$lt: previousCategoryId}
+                        if (previousCategoryMemberId) {
+                            dbQuery._id = {$lt: previousCategoryMemberId}
                         }
 
-                        Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data =>{
-                            console.log("Found categories")
-                            console.log(data)
-                            if (data.length) {
-                                data.forEach(function (item, index) {
-                                    foundCategories.push({
-                                        categoryTitle: data[index].categoryTitle,
-                                        categoryDescription: data[index].categoryDescription,
-                                        members: data[index].members.length,
-                                        categoryTags: data[index].categoryTags,
-                                        imageKey: data[index].imageKey,
-                                        NSFW: data[index].NSFW,
-                                        NSFL: data[index].NSFL,
-                                        datePosted: data[index].datePosted,
-                                        inCategory: true,
-                                        allowScreenShots: data[index].allowScreenShots,
-                                        categoryId: String(data[index]._id)
+                        CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
+                            if (data.length < 1) return resolve(HTTPWTHandler.OK('No more categories could be found', {categories: [], noMoreCategories: true}))
+
+                            const categoryIds = Array.from(new Set(data.map(member => member.categoryId)));
+
+                            Category.find({_id: {$in: categoryIds}}).lean().then(categories => {
+                                const {memberCategoryPairs, missingCategories} = arrayHelper.returnMemberCategoryPairs(categories, data);
+
+                                if (missingCategories.length > 0) {
+                                    console.error('Found missing categories from memberCategoryPairs:', missingCategories);
+                                }
+
+                                Promise.all(
+                                    memberCategoryPairs.map(([category]) => {
+                                        return CategoryMember.countDocuments({categoryId: {$eq: category._id}});
                                     })
-                                    itemsProcessed++;
-                                    if(itemsProcessed === data.length) {
-                                        sendResponse(foundCategories);
-                                    }
+                                ).then(memberCounts => {
+                                    const toSend = memberCategoryPairs.map(([category, categoryMember], index) => {
+                                        const userPermissions = categoryHelper.returnPermissions(categoryMember, category);
+
+                                        return {
+                                            categoryTitle: category.categoryTitle,
+                                            categoryDescription: category.categoryDescription,
+                                            members: memberCounts[index],
+                                            categoryTags: category.categoryTags,
+                                            imageKey: category.imageKey,
+                                            NSFW: category.NSFW,
+                                            NSFL: category.NSFL,
+                                            datePosted: category.datePosted,
+                                            inCategory: true,
+                                            allowScreenShots: category.allowScreenShots,
+                                            categoryId: String(category._id),
+                                            permissions: userPermissions,
+                                            memberId: String(categoryMember._id)
+                                        }
+                                    })
+
+                                    return resolve(HTTPWTHandler.OK('Categories search successful', {categories: toSend, noMoreCategories: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
+                                }).catch(error => {
+                                    console.error('An error occurred while getting member counts from categories in this pair list:', memberCategoryPairs, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occured while finding member counts for the categories. Please try again.'))
                                 })
-                            } else {
-                                return resolve(HTTPWTHandler.OK('No more categories could be found', {categories: [], noMoreCategories: true}))
-                            }
+                            }).catch(error => {
+                                console.error('An error occurred while finding categories with ids in:', categoryIds, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while getting category data. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while finding CategoryMember documents with query:', dbQuery, 'and sorting with _id -1 and limiting to:', CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding categories that you have joined. Please try again.'))
                         })
-                        .catch(err => {
-                            console.error('An error occurred while finding categories where:', profilesId, 'is in members. The error was:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
-                        });
                     }).catch(error => {
                         console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
@@ -1910,41 +1974,62 @@ class TempController {
             if (categoryId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('categoryId must not be an empty string.'))
             }
-        
-            User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
-                    Category.findOne({_id: {$eq: categoryId}}).lean().then(data => {
-                        if (data) {
-                            if (data.members.includes(userId)) {
-                                Category.findOneAndUpdate({_id: {$eq: categoryId}}, { $pull: { members : userId }}).then(function(){
-                                    console.log("SUCCESS1")
-                                    return resolve(HTTPWTHandler.OK('Left Category'))
-                                }).catch(error => {
-                                    console.error('An error occurred while pulling:', userId, 'from members for category with id:', categoryId, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while removing you from the category. Please try again.'))
-                                })
-                            } else {
-                                //Not in the category yet
-                                Category.findOneAndUpdate({_id: {$eq: categoryId}}, { $addToSet: { members : userId }}).then(function(){
-                                    console.log("SUCCESS1")
-                                    return resolve(HTTPWTHandler.OK('Joined Category'))
-                                }).catch(error => {
-                                    console.error('An error occurred while using $addToSet to add:', userId, 'to the members array for category with id:', categoryId, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while adding you to the category. Please try again.'))
-                                })
-                            }
-                        } else {
-                            return resolve(HTTPWTHandler.notFound('Could not find category'))
-                        }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(categoryFound => {
+                    if (!categoryFound) return resolve(HTTPWTHandler.notFound('Could not find category.'))
+
+                    CategoryMember.findOneAndUpdate({userId: {$eq: userId}, categoryId: {$eq: categoryId}}, {dateJoined: Date.now(), roles: []}, {upsert: true}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully added you to the category.'))
                     }).catch(error => {
-                        console.error('An error occurred while finding category with categoryId:', categoryId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding cateogry. Please try again.'))
+                        console.error('An error occurred while finding CategoryMember with userId:', userId, 'and categoryId:', categoryId, 'and upserting dateJoined as the current time and roles as an empty array. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while adding you to the category. Please try again.'))
                     })
-                } else {
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #leavecategory = (userId, categoryId) => {
+        return new Promise(resolve => {
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
+            }
+
+            if (categoryId.length === 0) {
+                return resolve(HTTPWTHandler.badInput('categoryId must not be an empty string.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).then(userFound => {
+                if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
+
+                Category.findOne({_id: {$eq: categoryId}}).then(categoryFound => {
+                    if (!categoryFound) {
+                        return resolve(HTTPWTHandler.notFound('Could not find category.'))
+                    }
+
+                    CategoryMember.deleteMany({userId: {$eq: userId}, categoryId: {$eq: categoryId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully left category'))
+                    }).catch(error => {
+                        console.error('An error occurred while deleting many category members with userId:', userId, 'and categoryId:', categoryId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while leaving category. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                })
             }).catch(error => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -3638,37 +3723,37 @@ class TempController {
 
                                                                         PostReports.bulkWrite(postReportsBulkWrite, {session}).then(() => {
                                                                             RefreshToken.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
-                                                                                Category.updateMany({}, {$pull: {members: userId}}, {session}).then(() => {
-                                                                                    const commentBulkWrites = [
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {commenterId: {$eq: userId}, replies: 0}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            updateMany: {
-                                                                                                filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
-                                                                                                update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {_id: {$in: imageCommentIds}}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {_id: {$in: pollCommentIds}}
-                                                                                            }
-                                                                                        },
-                                                                                        {
-                                                                                            deleteMany: {
-                                                                                                filter: {_id: {$in: threadCommentIds}}
-                                                                                            }
+                                                                                const commentBulkWrites = [
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {commenterId: {$eq: userId}, replies: 0}
                                                                                         }
-                                                                                    ];
+                                                                                    },
+                                                                                    {
+                                                                                        updateMany: {
+                                                                                            filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
+                                                                                            update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {_id: {$in: imageCommentIds}}
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {_id: {$in: pollCommentIds}}
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        deleteMany: {
+                                                                                            filter: {_id: {$in: threadCommentIds}}
+                                                                                        }
+                                                                                    }
+                                                                                ];
 
-                                                                                    Comment.bulkWrite(commentBulkWrites, {session}).then(() => {
+                                                                                Comment.bulkWrite(commentBulkWrites, {session}).then(() => {
+                                                                                    CategoryMember.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
                                                                                         if (userFound.profileImageKey) {
                                                                                             imageHandler.deleteImageByKey(userFound.profileImageKey)
                                                                                         }
@@ -3687,13 +3772,13 @@ class TempController {
                                                                                             return resolve(HTTPWTHandler.serverError('An error occurred while deleting your account and associated data. Please try again.'))
                                                                                         })
                                                                                     }).catch(error => {
-                                                                                        console.error('An error occurred while making a bulkWrite operation on Comment collection:', commentBulkWrites, '. The error was:', error)
+                                                                                        console.error('An error occurred while deleting all CategoryMember documents with userId:', userId, '. The error was:', error)
+                                                                                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                                            return resolve(HTTPWTHandler.serverError('An error occurred while removing you from categories. Please try again.'))
+                                                                                        })
                                                                                     })
                                                                                 }).catch(error => {
-                                                                                    console.error('An error occurred while pulling:', userId, 'from all member fields from all Category documents. The error was:', error)
-                                                                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                                                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing you from all categories. Please try again.'))
-                                                                                    })
+                                                                                    console.error('An error occurred while making a bulkWrite operation on Comment collection:', commentBulkWrites, '. The error was:', error)
                                                                                 })
                                                                             }).catch(error => {
                                                                                 console.error('An error occurred while deleting all refresh tokens with userId:', userId, '. The error was:', error)
@@ -4085,11 +4170,10 @@ class TempController {
         })
     }
 
-    static #getCategoriesUserIsAPartOf = (userId, skip) => {
+    static #getCategoriesUserIsAPartOf = (userId, previousCategoryMemberId) => {
         return new Promise(resolve => {
-            skip = parseInt(skip)
-            if (isNaN(skip)) {
-                return resolve(HTTPWTHandler.badInput('skip must be a number (integer)'))
+            if (typeof previousCategoryMemberId !== 'undefined' && typeof previousCategoryMemberId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must either be undefined or a string. Provided type: ${typeof previousCategoryMemberId}`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -4097,11 +4181,37 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
 
-                Category.find({members: userId}).sort({dateCreated: -1}).skip(skip).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoriesFound => {
-                    return resolve(HTTPWTHandler.OK(`Successfully found categories ${skip} - ${skip + categoriesFound.length}`, categoriesFound))
+                const dbQuery = {
+                    userId: {$eq: userId}
+                }
+
+                if (previousCategoryMemberId) {
+                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousCategoryMemberId)}
+                }
+
+                CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoryMemberDocuments => {
+                    const categoryIds = categoryMemberDocuments.map(doc => doc.categoryId)
+                    Category.find({_id: {$in: categoryIds}}).then(categories => {
+                        const categoriesToSend = categories.map((category, index) => {
+                            const newCategory = {...category}
+                            newCategory.dateJoined = categoryMemberDocuments[index].dateJoined;
+                            newCategory.role = categoryMemberDocuments[index].role;
+                            return newCategory
+                        })
+
+                        const toSend = {
+                            noMoreCategories: categoryMemberDocuments.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL,
+                            categories: categoriesToSend
+                        }
+
+                        return resolve(HTTPWTHandler.OK(`Successfully found ${categoryMemberDocuments.length} categories`, toSend))
+                    }).catch(error => {
+                        console.error('An error occurred while finding categories with ids:', categoryIds, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
+                    })
                 }).catch(error => {
-                    console.error('An error occured while finding what categories user with id:', userId, 'is part of. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding what categories you are a part of. Please try again.'))
+                    console.error('An error occurred while finding CategoryMembers with dbQuery:', dbQuery, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding categories you are a part of. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -5714,6 +5824,10 @@ class TempController {
 
     static joincategory = async (userId, categoryId) => {
         return await this.#joincategory(userId, categoryId)
+    }
+
+    static leavecategory = async (userId, categoryId) => {
+        return await this.#leavecategory(userId, categoryId)
     }
 
     static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {

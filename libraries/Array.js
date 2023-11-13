@@ -32,6 +32,32 @@ class ArrayClass {
             postsWithNoOwners
         }
     }
+
+    returnMemberCategoryPairs(categoriesReceived, members) {
+        const categories = {};
+        for (const category of categoriesReceived) {
+            categories[String(category._id)] = category;
+        }
+
+        const memberCategoryPairMap = new Map();
+        const missingCategories = [];
+
+        for (const member of members) {
+            const categoryId = member.categoryId;
+            const category = categories[categoryId];
+
+            if (category) {
+                memberCategoryPairMap.set(category, member)
+            } else {
+                missingCategories.push(category)
+            }
+        }
+
+        return {
+            memberCategoryPairs: Array.from(memberCategoryPairMap.entries()),
+            missingCategories
+        }
+    }
 }
 
 module.exports = ArrayClass;

@@ -257,7 +257,16 @@ const rateLimiters = {
         max: 6,
         standardHeaders: false,
         legacyHeaders: false,
-        message: {status: "FAILED", message: "You have joined / left too many categories in the last minute. Please try again in 60 seconds."},
+        message: {status: "FAILED", message: "You have joined too many categories in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/leavecategory': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 6,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have left too many categories in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -1454,7 +1463,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategoryfromprofile',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousCategoryId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.previousCategoryMemberId]
         }
     })
 
@@ -1503,6 +1512,34 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/joincategory controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'leavecategory',
+            functionArgs: [req.tokenData, req.body.categoryId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/leavecategory controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            console.error('An error occurred from TempWorker for POST /leavecategory:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/leavecategory controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error to be returned:', error)
         }
     })
 });
@@ -2386,11 +2423,10 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
 
 router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPartOf'], (req, res) => {
     let HTTPHeadersSent = false;
-    let {skip = 0} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getCategoriesUserIsAPartOf',
-            functionArgs: [req.tokenData, skip]
+            functionArgs: [req.tokenData, req.body.previousCategoryMemberId]
         }
     })
 
