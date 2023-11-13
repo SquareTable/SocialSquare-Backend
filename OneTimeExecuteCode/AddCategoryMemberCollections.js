@@ -14,10 +14,9 @@ Category.find({}).lean().then(async categories => {
                 })
             }
             await CategoryMember.insertMany(docs);
+            await Category.updateOne({_id: category._id}, {$unset: {members: "deletes members", categoryModeratorIds: "deletes moderatorIds"}})
         }
     }
-
-    await Category.updateMany({}, {$unset: {members: "", categoryModeratorIds: ""}})
 
     console.log('SUCCESS!')
 }).catch(error => {
