@@ -1907,33 +1907,42 @@ class TempController {
                             const categoryIds = Array.from(new Set(data.map(member => member.categoryId)));
 
                             Category.find({_id: {$in: categoryIds}}).lean().then(categories => {
-                                const {ownerPostPairs: memberCategoryPairs, postsWithNoOwners: missingCategories} = arrayHelper.returnOwnerPostPairs(categories, data, 'categoryId');
+                                const {memberCategoryPairs, missingCategories} = arrayHelper.returnMemberCategoryPairs(categories, data);
 
                                 if (missingCategories.length > 0) {
                                     console.error('Found missing categories from memberCategoryPairs:', missingCategories);
                                 }
 
-                                const toSend = memberCategoryPairs.map(({categoryMember, category}) => {
-                                    const userPermissions = categoryHelper.returnPermissions(categoryMember, category);
+                                Promise.all(
+                                    memberCategoryPairs.map(([category]) => {
+                                        return CategoryMember.countDocuments({categoryId: {$eq: category._id}});
+                                    })
+                                ).then(memberCounts => {
+                                    const toSend = memberCategoryPairs.map(([category, categoryMember], index) => {
+                                        const userPermissions = categoryHelper.returnPermissions(categoryMember, category);
 
-                                    return {
-                                        categoryTitle: category.categoryTitle,
-                                        categoryDescription: category.categoryDescription,
-                                        members: category.members.length,
-                                        categoryTags: category.categoryTags,
-                                        imageKey: category.imageKey,
-                                        NSFW: category.NSFW,
-                                        NSFL: category.NSFL,
-                                        datePosted: category.datePosted,
-                                        inCategory: true,
-                                        allowScreenShots: category.allowScreenShots,
-                                        categoryId: String(category._id),
-                                        permissions: userPermissions,
-                                        memberId: String(categoryMember._id)
-                                    }
+                                        return {
+                                            categoryTitle: category.categoryTitle,
+                                            categoryDescription: category.categoryDescription,
+                                            members: memberCounts[index],
+                                            categoryTags: category.categoryTags,
+                                            imageKey: category.imageKey,
+                                            NSFW: category.NSFW,
+                                            NSFL: category.NSFL,
+                                            datePosted: category.datePosted,
+                                            inCategory: true,
+                                            allowScreenShots: category.allowScreenShots,
+                                            categoryId: String(category._id),
+                                            permissions: userPermissions,
+                                            memberId: String(categoryMember._id)
+                                        }
+                                    })
+
+                                    return resolve(HTTPWTHandler.OK('Categories search successful', {categories: toSend, noMoreCategories: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
+                                }).catch(error => {
+                                    console.error('An error occurred while getting member counts from categories in this pair list:', memberCategoryPairs, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occured while finding member counts for the categories. Please try again.'))
                                 })
-
-                                return resolve(HTTPWTHandler.OK('Categories search successful', {categories: toSend, noMoreCategories: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
                             }).catch(error => {
                                 console.error('An error occurred while finding categories with ids in:', categoryIds, '. The error was:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while getting category data. Please try again.'))

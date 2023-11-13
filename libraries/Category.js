@@ -12,7 +12,7 @@ class CategoryLibrary {
             }
         }
 
-        const userRoles = category.roles.filter(role => categoryMember.roles.includes(role.roleId))
+        const userRoles = category.roles?.filter(role => categoryMember.roles.includes(role.roleId)) || [];
 
         const userPermissions = {};
 
