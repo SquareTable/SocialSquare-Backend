@@ -1816,54 +1816,43 @@ class TempController {
             if (categoryId.length === 0) {
                 return resolve(HTTPWTHandler.badInput('categoryId cannot be an empty string'))
             }
-        
-            //Find Category
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
 
-                Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{
-                    if (data) {
-                        let modPerms = false
-                        let ownerPerms = false
-                        let inCategory = false
-                        if (data.categoryModeratorIds.includes(userId)) {
-                            modPerms = true
-                            ownerPerms = false
-                        }
-                        if (data.categoryOwnerId == userId) {
-                            modPerms = true
-                            ownerPerms = true
-                        }
-                        if (data.members.includes(userId)) {
-                            inCategory = true
-                        }
-                        
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(categoryFound => {
+                    if (!categoryFound) return resolve(HTTPWTHandler.notFound('Could not find category.'))
+
+                    Promise.all([
+                        CategoryMember.countDocuments({categoryId: {$eq: categoryId}}),
+                        CategoryMember.findOne({userId: {$eq: userId}, categoryId: {$eq: categoryId}})
+                    ]).then(([members, memberDocument]) => {
+                        const permissions = memberDocument ? categoryHelper.returnPermissions(memberDocument, categoryFound) : {};
+
                         const categoryData = {
-                            categoryTitle: data.categoryTitle,
-                            categoryDescription: data.categoryDescription,
-                            members: data.members.length,
-                            categoryTags: data.categoryTags,
-                            imageKey: data.imageKey,
-                            NSFW: data.NSFW,
-                            NSFL: data.NSFL,
-                            datePosted: data.datePosted,
-                            modPerms: modPerms,
-                            ownerPerms: ownerPerms,
-                            inCategory: inCategory,
-                            allowScreenShots: data.allowScreenShots,
-                            categoryId: String(data._id)
+                            categoryTitle: categoryFound.categoryTitle,
+                            categoryDescription: categoryFound.categoryDescription,
+                            members: members,
+                            categoryTags: categoryFound.categoryTags,
+                            imageKey: categoryFound.imageKey,
+                            NSFW: categoryFound.NSFW,
+                            NSFL: categoryFound.NSFL,
+                            datePosted: categoryFound.datePosted,
+                            inCategory: !!memberDocument,
+                            allowScreenShots: categoryFound.allowScreenShots,
+                            categoryId: String(categoryFound._id),
+                            permissions
                         }
 
                         return resolve(HTTPWTHandler.OK('Search successful', categoryData))
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('Could not find category with that id.'))
-                    }
-                }).catch(err => {
-                    console.error('An error occurred while finding category with id:', categoryId, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category'))
-                });
+                    }).catch(error => {
+                        console.error('An error occurred while finding members and member document for categories:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding members of the category. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
+                })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
