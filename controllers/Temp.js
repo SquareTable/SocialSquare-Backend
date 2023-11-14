@@ -3312,13 +3312,13 @@ class TempController {
                         {
                             updateOne: {
                                 filter: {_id: {$eq: userId}},
-                                update: {$pull: {followers: userToBlockFound.secondId}, $push: {blockedAccounts: userToBlockFound.secondId}}
+                                update: {$pull: {followers: userToBlockFound.secondId, accountFollowRequests: userToBlockFound.secondId}, $push: {blockedAccounts: userToBlockFound.secondId}}
                             }
                         },
                         {
                             updateOne: {
                                 filter: {secondId: {$eq: userToBlockPubId}},
-                                update: {$pull: {following: userFound.secondId}}
+                                update: {$pull: {following: userFound.secondId, accountFollowRequests: userFound.secondId}}
                             }
                         }
                     ]
