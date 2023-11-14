@@ -3206,7 +3206,7 @@ class TempController {
                     },
                     {
                         updateOne: {
-                            filter: {_id: {$eq: accountFollowRequestAcceptedPubID}},
+                            filter: {secondId: {$eq: accountFollowRequestAcceptedPubID}},
                             update: {$push: {following: userFound.secondId}}
                         }
                     }
