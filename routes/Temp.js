@@ -378,7 +378,7 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/followrequests': rateLimit({
+    '/followrequests/:skip': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 20,
         standardHeaders: false,
@@ -1897,12 +1897,12 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
     })
 });
 
-router.get('/followrequests', rateLimiters['/followrequests'], (req, res) => {
+router.get('/followrequests/:skip', rateLimiters['/followrequests/:skip'], (req, res) => {
     let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
-            functionName: 'getfollowrequests',
-            functionArgs: [req.tokenData, req.body.skip]
+            functionName: 'getfollowrequests/:skip',
+            functionArgs: [req.tokenData, req.params.skip]
         }
     })
 
@@ -1911,17 +1911,17 @@ router.get('/followrequests', rateLimiters['/followrequests'], (req, res) => {
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('GET temp/followrequests controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+            console.error('GET temp/followrequests/:skip controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
             HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /followrequests:', error)
+            console.error('An error occurred from TempWorker for POST /followrequests/:skip:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
-            console.error('GET temp/followrequests controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+            console.error('GET temp/followrequests/:skip controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
