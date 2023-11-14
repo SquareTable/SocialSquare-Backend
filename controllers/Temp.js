@@ -3192,7 +3192,7 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
         
-                if (!userFound.accountFollowRequests.includes(accountFollowRequestAcceptedPubID)) {
+                if (!userFound.accountFollowRequests?.includes(accountFollowRequestAcceptedPubID)) {
                     //The follow request was not found in the user's list of follow requests
                     return resolve(HTTPWTHandler.notFound('Follow request could not be found.'))
                 }
