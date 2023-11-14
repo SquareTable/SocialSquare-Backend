@@ -60,7 +60,8 @@ const CONSTANTS = {
     RANDOM_EIGHT_CHARACTER_STRING_URL: 'https://www.random.org/integers/?num=1&min=268435456&max=1000000000&col=1&base=16&format=plain&rnd=new',
     CATEGORY_PERMISSIONS: [
         'deletePosts'
-    ]
+    ],
+    MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL: 10
 }
 
 module.exports = CONSTANTS

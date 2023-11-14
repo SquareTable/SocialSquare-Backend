@@ -1902,7 +1902,7 @@ router.get('/followrequests', rateLimiters['/followrequests'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getfollowrequests',
-            functionArgs: [req.tokenData]
+            functionArgs: [req.tokenData, req.body.skip]
         }
     })
 
