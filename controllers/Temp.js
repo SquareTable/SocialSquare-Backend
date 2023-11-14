@@ -3108,15 +3108,16 @@ class TempController {
 
     static #getfollowrequests = (userId, skip) => {
         return new Promise(resolve => {
-            if (typeof skip !== 'number' && skip !== undefined) return resolve(HTTPWTHandler.badInput(`skip must be undefiend or a number. Type provided: ${typeof skip}`))
+            if (skip?.length > 12) return resolve(HTTPWTHandler.badInput('Skip cannot have a length greater than 12'))
 
-            const skipAmount = skip !== undefined ? skip : 0;
+            const parsedSkip = parseInt(skip);
+            if (!isNaN(parsedSkip)) return resolve(HTTPWTHandler.badInput(`Skip must be a number.`))
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
 
                 if (Array.isArray(userFound.accountFollowRequests)) {
-                    const {items, noMoreItems} = arrayHelper.returnSomeItems(userFound.accountFollowRequests, skipAmount, CONSTANTS.MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL);
+                    const {items, noMoreItems} = arrayHelper.returnSomeItems(userFound.accountFollowRequests, parsedSkip, CONSTANTS.MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL);
 
                     User.find({_id: {$in: items}}).lean().then(users => {
                         const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(items, users);
@@ -3129,7 +3130,7 @@ class TempController {
                             return userHandler.returnPublicInformation(item)
                         })
 
-                        return resolve(HTTPWTHandler.OK('Successfully found requests', {requesters: toSend, noMoreItems, skip: skipAmount + items.length}))
+                        return resolve(HTTPWTHandler.OK('Successfully found requests', {requesters: toSend, noMoreItems, skip: parsedSkip + items.length}))
                     }).catch(error => {
                         console.error('An error occurred while finding users with ids in:', items, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding account follow requests. Please try again.'))
