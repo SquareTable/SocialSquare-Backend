@@ -3178,7 +3178,7 @@ class TempController {
     }
 
     static #acceptfollowrequest = (userId, accountFollowRequestAcceptedPubID) => {
-        return new Promised(resolve => {
+        return new Promise(resolve => {
             if (typeof accountFollowRequestAcceptedPubID !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`accountFollowRequestAcceptedPubID must be a string. Provided type: ${typeof accountFollowRequestAcceptedPubID}`))
             }
