@@ -3178,7 +3178,7 @@ class TempController {
     }
 
     static #acceptfollowrequest = (userId, accountFollowRequestAcceptedPubID) => {
-        return new Promised(resolve => {
+        return new Promise(resolve => {
             if (typeof accountFollowRequestAcceptedPubID !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`accountFollowRequestAcceptedPubID must be a string. Provided type: ${typeof accountFollowRequestAcceptedPubID}`))
             }
@@ -3206,7 +3206,7 @@ class TempController {
                     },
                     {
                         updateOne: {
-                            filter: {_id: {$eq: accountFollowRequestAcceptedPubID}},
+                            filter: {secondId: {$eq: accountFollowRequestAcceptedPubID}},
                             update: {$push: {following: userFound.secondId}}
                         }
                     }
