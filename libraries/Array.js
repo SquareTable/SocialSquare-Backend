@@ -58,6 +58,31 @@ class ArrayClass {
             missingCategories
         }
     }
+
+    returnDocumentsFromIdArray(ids, documentsReceived) {
+        const documents = {};
+        for (const doc of documentsReceived) {
+            documents[String(doc._id)] = doc;
+        }
+
+        const foundDocuments = [];
+        const missingDocuments = [];
+
+        for (const id of ids) {
+            const doc = documents[id];
+
+            if (doc) {
+                foundDocuments.push(doc)
+            } else {
+                missingDocuments.push(doc);
+            }
+        }
+
+        return {
+            foundDocuments,
+            missingDocuments
+        }
+    }
 }
 
 module.exports = ArrayClass;

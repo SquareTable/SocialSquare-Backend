@@ -3106,16 +3106,39 @@ class TempController {
         })
     }
 
-    static #getfollowrequests = (userId) => {
+    static #getfollowrequests = (userId, skip) => {
         return new Promise(resolve => {
+            if (typeof skip !== 'number' && skip !== undefined) return resolve(HTTPWTHandler.badInput(`skip must be undefiend or a number. Type provided: ${typeof skip}`))
+
+            const skipAmount = skip !== undefined ? skip : 0;
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (userFound) {
-                    return resolve(HTTPWTHandler.OK('Found user', userFound.accountFollowRequests))
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                if (Array.isArray(userFound.accountFollowRequests)) {
+                    const {items, noMoreItems} = arrayHelper.returnSomeItems(userFound.accountFollowRequests, skipAmount, CONSTANTS.MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL);
+
+                    User.find({_id: {$in: items}}).lean().then(users => {
+                        const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(items, users);
+
+                        if (missingDocuments.length > 0) {
+                            console.error('Found users that are in follow request fields of other users. The ids are:', missingDocuments)
+                        }
+
+                        const toSend = foundDocuments.map(item => {
+                            return userHandler.returnPublicInformation(item)
+                        })
+
+                        return resolve(HTTPWTHandler.OK('Successfully found requests', {requesters: toSend, noMoreItems, skip: skipAmount + items.length}))
+                    }).catch(error => {
+                        console.error('An error occurred while finding users with ids in:', items, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding account follow requests. Please try again.'))
+                    })
                 } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                    return resolve(HTTPWTHandler.OK('accountFollowRequests is not an array - there are no requests', []))
                 }
             }).catch(error => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -5878,8 +5901,8 @@ class TempController {
         return await this.#makeaccountpublic(userId)
     }
 
-    static getfollowrequests = async (userId) => {
-        return await this.#getfollowrequests(userId)
+    static getfollowrequests = async (userId, skip) => {
+        return await this.#getfollowrequests(userId, skip)
     }
 
     static denyfollowrequest = async (userId, accountFollowRequestDeniedPubID) => {
