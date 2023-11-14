@@ -3119,8 +3119,8 @@ class TempController {
                 if (Array.isArray(userFound.accountFollowRequests)) {
                     const {items, noMoreItems} = arrayHelper.returnSomeItems(userFound.accountFollowRequests, parsedSkip, CONSTANTS.MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL);
 
-                    User.find({_id: {$in: items}}).lean().then(users => {
-                        const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(items, users);
+                    User.find({secondId: {$in: items}}).lean().then(users => {
+                        const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(items, users, 'secondId');
 
                         if (missingDocuments.length > 0) {
                             console.error('Found users that are in follow request fields of other users. The ids are:', missingDocuments)

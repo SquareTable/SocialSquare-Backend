@@ -59,10 +59,10 @@ class ArrayClass {
         }
     }
 
-    returnDocumentsFromIdArray(ids, documentsReceived) {
+    returnDocumentsFromIdArray(ids, documentsReceived, idKey) {
         const documents = {};
         for (const doc of documentsReceived) {
-            documents[String(doc._id)] = doc;
+            documents[String(doc[idKey])] = doc;
         }
 
         const foundDocuments = [];
