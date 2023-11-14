@@ -3111,7 +3111,7 @@ class TempController {
             if (skip?.length > 12) return resolve(HTTPWTHandler.badInput('Skip cannot have a length greater than 12'))
 
             const parsedSkip = parseInt(skip);
-            if (!isNaN(parsedSkip)) return resolve(HTTPWTHandler.badInput(`Skip must be a number.`))
+            if (isNaN(parsedSkip)) return resolve(HTTPWTHandler.badInput(`Skip must be a number.`))
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
