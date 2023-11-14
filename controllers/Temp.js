@@ -3127,7 +3127,7 @@ class TempController {
                         }
 
                         const toSend = foundDocuments.map(item => {
-                            return userHandler.returnPublicInformation(item)
+                            return userHandler.returnPublicInformation(item, userFound)
                         })
 
                         return resolve(HTTPWTHandler.OK('Successfully found requests', {requesters: toSend, noMoreItems, skip: parsedSkip + items.length}))
