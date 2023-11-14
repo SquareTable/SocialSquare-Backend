@@ -1901,7 +1901,7 @@ router.get('/followrequests/:skip', rateLimiters['/followrequests/:skip'], (req,
     let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
-            functionName: 'getfollowrequests/:skip',
+            functionName: 'getfollowrequests',
             functionArgs: [req.tokenData, req.params.skip]
         }
     })
