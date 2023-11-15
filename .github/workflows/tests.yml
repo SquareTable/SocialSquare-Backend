@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Install Jest
-        run: npm install jest
+        run: npm install --location=global jest
 
       - name: Run tests
         run: jest --shard=${{ matrix.shard }}/5 --runInBand
