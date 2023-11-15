@@ -725,7 +725,7 @@ class TempController {
                                 if (result.blockedAccounts?.includes(userGettingPollPosts.secondId)) {
                                     // User is blocked or the account is private but the user requesting doesn't follow the user so do not send posts
                                     return resolve(HTTPWTHandler.notFound('User could not be found.'))
-                                } else if (result.privateAccount && !result.followers.includes(userGettingPollPosts.secondId)) {
+                                } else if (userId != result._id && (result.privateAccount && !result.followers.includes(userGettingPollPosts.secondId))) {
                                     return resolve(HTTPWTHandler.notFound('No Poll Posts'))
                                 } else {
                                     // User exists
