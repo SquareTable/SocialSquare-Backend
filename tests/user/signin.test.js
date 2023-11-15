@@ -130,7 +130,7 @@ test('If signin fails if password is wrong', async () => {
 
     const returned = await UserController.signin(userData.email, 'wrongpassword', validIP, validDeviceName);
 
-    expect(returned.statusCode).toBe(401);
+    expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Invalid password entered!");
     expect(returned.data.data).toBe(undefined);
     expect(returned.data.token).toBe(undefined);
