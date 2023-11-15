@@ -25,8 +25,11 @@ jobs:
       - name: Install packages
         run: npm ci
 
+      - name: Install Jest
+        run: npm install jest
+
       - name: Run tests
-        run: npm test --shard=${{ matrix.shard }}/5 --runInBand
+        run: jest --shard=${{ matrix.shard }}/5 --runInBand
 
   calc-coverage:
     runs-on: ubuntu-latest
