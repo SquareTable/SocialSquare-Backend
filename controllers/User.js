@@ -193,7 +193,7 @@ class UserController {
 
                 const hashedPassword = userFound.password;
                 bcrypt.compare(password, hashedPassword).then(async result => {
-                    if (!result) return resolve(HTTPWTHandler.unauthorized('Invalid password entered!'))
+                    if (!result) return resolve(HTTPWTHandler.badInput('Invalid password entered!'))
 
                     if (userFound.authenticationFactorsEnabled?.includes('Email')) {
                         let randomString;
