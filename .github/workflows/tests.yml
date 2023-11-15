@@ -11,6 +11,7 @@ jobs:
       matrix:
         node-version: [20.x, 21.x]
         os: [ubuntu-22.04]
+        shard: [1, 2, 3, 4, 5]
 
     steps:
       - name: Checkout Repository
@@ -25,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test
+        run: npm test --shard=${{ matrix.shard }}/5 --runInBand
 
   calc-coverage:
     runs-on: ubuntu-latest
