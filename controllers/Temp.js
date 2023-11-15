@@ -2469,7 +2469,7 @@ class TempController {
                 if (userResult) {
                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingThreads => {
                         if (userRequestingThreads && !userResult.blockedAccounts?.includes(userRequestingThreads.secondId)) {
-                            if (userResult.privateAccount && !userResult.followers.includes(userRequestingThreads.secondId)) {
+                            if (userId != userResult._id && (userResult.privateAccount && !userResult.followers.includes(userRequestingThreads.secondId))) {
                                 return resolve(HTTPWTHandler.notFound('This user has no thread posts!'))
                             }
                             var userid = userResult._id
@@ -2505,14 +2505,14 @@ class TempController {
                                 return resolve(HTTPWTHandler.serverError('An error occurred while finding threads. Please try again.'))
                             })
                         } else {
-                            return resolve(HTTPWTHandler.notFound('User not found.'))
+                            return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                         }
                     }).catch(error => {
                         console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
                     })
                 } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                 }
             }).catch(err => {
                 console.error('An error occurred while finding user with secondId:', pubId, '. The error was:', err)
