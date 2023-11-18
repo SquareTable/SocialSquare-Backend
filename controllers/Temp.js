@@ -432,6 +432,14 @@ class TempController {
 
     static #changebio = (userId, bio) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId. Type provided: ${typeof userId}`))
+            }
+
             if (typeof bio !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`bio must be a string. Provided type" ${typeof bio}`))
             }
@@ -466,6 +474,14 @@ class TempController {
 
     static #searchpageusersearch = (userId, skip, val) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             const limit = CONSTANTS.SEARCH_PAGE_USER_SEARCH_MAX_USERS_TO_RETURN;
 
             if (typeof skip !== 'number') {
@@ -476,57 +492,69 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
             }
 
-
-            //Check Input fields
-            if (val == "") {
+            if (val.length === 0) {
                 return resolve(HTTPWTHandler.badInput('Search box empty!'))
-            } else {
-                function sendResponse(foundArray) {
-                    return resolve(HTTPWTHandler.OK('Search successful', foundArray))
-                }
-                //Find User
-                var foundArray = []
-                User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                    if (userFound) {
-                        User.find({$or: [ { name: {$regex: `^${val}`, $options: 'i'}}, { displayName: {$regex: `^${val}`, $options: 'i'}} ]}).skip(skip).limit(limit).lean().then(data =>{
-                            if (data.length) {
-                                var itemsProcessed = 0;
-                                data.forEach(function (item, index) {
-                                    if (data[index].blockedAccounts?.includes(userFound.secondId)) {
-                                        itemsProcessed++;
-                                    } else {
-                                        foundArray.push(userHandler.returnPublicInformation(data[index], userFound))
-                                    }
-                                    itemsProcessed++;
-                                    if(itemsProcessed === data.length) {
-                                        console.log("Before Function")
-                                        console.log(foundArray)
-                                        sendResponse(foundArray);
-                                    }
-                                });
-                            } else {
-                                const message = skip > 0 ? 'No more results' : 'No results'
-                                return resolve(HTTPWTHandler.notFound(message))
-                            }
-                        }).catch(err => {
-                            console.error('An error occured while finding users with names or displaynames similar to:', val, '. The error was:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
-                        });
-                    } else {
-                        HTTPHandler.badInput(res, 'Your user could not be found')
-                        return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
-                    }
-                }).catch(error => {
-                    console.error('An error occured while finding user with id:', userId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                })
             }
+
+            function sendResponse(foundArray) {
+                if (foundArray.length < 1) {
+                    const message = skip > 0 ? 'No more results' : 'No results'
+                    return resolve(HTTPWTHandler.notFound(message))
+                }
+
+                return resolve(HTTPWTHandler.OK('Search successful', foundArray))
+            }
+
+            //Find User
+            var foundArray = []
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (userFound) {
+                    User.find({$or: [ { name: {$regex: `^${val}`, $options: 'i'}}, { displayName: {$regex: `^${val}`, $options: 'i'}} ]}).skip(skip).limit(limit).lean().then(data =>{
+                        if (data.length) {
+                            var itemsProcessed = 0;
+                            data.forEach(function (item, index) {
+                                if (data[index].blockedAccounts?.includes(userFound.secondId)) {
+                                    itemsProcessed++;
+                                } else {
+                                    foundArray.push(userHandler.returnPublicInformation(data[index], userFound))
+                                }
+                                itemsProcessed++;
+                                if(itemsProcessed === data.length) {
+                                    console.log("Before Function")
+                                    console.log(foundArray)
+                                    sendResponse(foundArray);
+                                }
+                            });
+                        } else {
+                            const message = skip > 0 ? 'No more results' : 'No results'
+                            return resolve(HTTPWTHandler.notFound(message))
+                        }
+                    }).catch(err => {
+                        console.error('An error occured while finding users with names or displaynames similar to:', val, '. The error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
+                    });
+                } else {
+                    HTTPHandler.badInput(res, 'Your user could not be found')
+                    return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
+                }
+            }).catch(error => {
+                console.error('An error occured while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
         })
     }
 
     static #createpollpost = (userId, pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots) => {
         return new Promise(resolve => {
             const allowedColors = ['Red', 'Orange', 'Yellow', 'Green', 'Purple']
+
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
 
             if (typeof pollTitle !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollTitle must be a string. Provided type: ${typeof pollTitle}`))
@@ -704,6 +732,14 @@ class TempController {
         //userId is the ID of the user requesting the poll posts
         //pubId is the secondId of the user with the poll posts that are being searched for
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
             }
@@ -711,75 +747,80 @@ class TempController {
             if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
                 return resolve(HTTPWTHandler.badInput(`previousPostId must be either a string or undefined`))
             }
-        
-            //Check Input fields
-            if (pubId == "") {
+
+            if (pubId.length < 1) {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string'))
-            } else {
-                //Find User
-                User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
-                    if (result) {
-                        //User Exists
-                        User.findOne({_id: {$eq: userId}}).lean().then(userGettingPollPosts => {
-                            if (userGettingPollPosts) {
-                                if (result.blockedAccounts?.includes(userGettingPollPosts.secondId)) {
-                                    // User is blocked or the account is private but the user requesting doesn't follow the user so do not send posts
-                                    return resolve(HTTPWTHandler.notFound('User could not be found.'))
-                                } else if (userId != result._id && (result.privateAccount && !result.followers.includes(userGettingPollPosts.secondId))) {
-                                    return resolve(HTTPWTHandler.notFound('No Poll Posts'))
-                                } else {
-                                    // User exists
-                                    const dbQuery = {
-                                        creatorId: {$eq: result._id}
-                                    }
-
-                                    if (previousPostId) {
-                                        dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousPostId)}
-                                    }
-
-                                    console.log('previousPostId:', previousPostId)
-                                    console.log('dbQuery:', dbQuery)
-
-                                    const time1 = performance.now()
-                                    Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
-                                        const time2 = performance.now()
-                                        console.log('TIME TO PROCESS 10 POLLS:', time2 - time1, 'MILLISECONDS.')
-                                        if (data.length) {
-                                            const toSend = {
-                                                posts: data,
-                                                noMorePosts: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
-                                            }
-
-                                            return resolve(HTTPWTHandler.OK('Poll search successful', toSend))
-                                        } else {
-                                            return resolve(HTTPWTHandler.OK('No more poll posts could be found', {posts: [], noMorePosts: true}))
-                                        }
-                                    }).catch(error => {
-                                        console.error('An error occured while finding polls with a creatorId of:', result._id, '. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while finding posts. Please try again.'))
-                                    })
-                                }
-                            } else {
-                                return resolve(HTTPWTHandler.notFound('User could not be found.'))
-                            }
-                        }).catch(error => {
-                            console.error('An error occured while finding user with ID:', userId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                        })
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('User could not be found.'))
-                    } 
-                })
-                .catch(err => {
-                    console.error('An error occured while finding user with secondId:', pubId, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                });
             }
+        
+            User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
+                if (result) {
+                    //User Exists
+                    User.findOne({_id: {$eq: userId}}).lean().then(userGettingPollPosts => {
+                        if (userGettingPollPosts) {
+                            if (result.blockedAccounts?.includes(userGettingPollPosts.secondId)) {
+                                // User is blocked or the account is private but the user requesting doesn't follow the user so do not send posts
+                                return resolve(HTTPWTHandler.notFound('User could not be found.'))
+                            } else if (userId != result._id && (result.privateAccount && !result.followers.includes(userGettingPollPosts.secondId))) {
+                                return resolve(HTTPWTHandler.notFound('No Poll Posts'))
+                            } else {
+                                // User exists
+                                const dbQuery = {
+                                    creatorId: {$eq: result._id}
+                                }
+
+                                if (previousPostId) {
+                                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousPostId)}
+                                }
+
+                                console.log('previousPostId:', previousPostId)
+                                console.log('dbQuery:', dbQuery)
+
+                                const time1 = performance.now()
+                                Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
+                                    const time2 = performance.now()
+                                    console.log('TIME TO PROCESS 10 POLLS:', time2 - time1, 'MILLISECONDS.')
+                                    if (data.length) {
+                                        const toSend = {
+                                            posts: data,
+                                            noMorePosts: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
+                                        }
+
+                                        return resolve(HTTPWTHandler.OK('Poll search successful', toSend))
+                                    } else {
+                                        return resolve(HTTPWTHandler.OK('No more poll posts could be found', {posts: [], noMorePosts: true}))
+                                    }
+                                }).catch(error => {
+                                    console.error('An error occured while finding polls with a creatorId of:', result._id, '. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding posts. Please try again.'))
+                                })
+                            }
+                        } else {
+                            return resolve(HTTPWTHandler.notFound('User could not be found.'))
+                        }
+                    }).catch(error => {
+                        console.error('An error occured while finding user with ID:', userId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('User could not be found.'))
+                } 
+            }).catch(err => {
+                console.error('An error occured while finding user with secondId:', pubId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
         })
     }
 
     static #voteonpoll = (userId, optionSelected, pollId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+            
             if (typeof optionSelected !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be a string. Provided type: ${typeof optionSelected}`))
             }
