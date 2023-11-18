@@ -892,6 +892,14 @@ class TempController {
 
     static #removevoteonpoll = (userId, pollId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
@@ -925,6 +933,14 @@ class TempController {
 
     static #searchforpollpostsbyid = (userId, pollId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
@@ -973,6 +989,14 @@ class TempController {
 
     static #deletepoll = (userId, pollId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
@@ -1106,6 +1130,16 @@ class TempController {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`description must be a string. Provided type: ${typeof description}`))
             }
+
+            if (typeof creatorId !== 'string') {
+                deleteFile();
+                return resolve(HTTPWTHandler.badInput(`creatorId must be a string. Provided type: ${typeof creatorId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(creatorId)) {
+                deleteFile();
+                return resolve(HTTPWTHandler.badInput('creatorId must be an ObjectId.'))
+            }
             
             title = title.trim()
             description = description.trim()
@@ -1173,17 +1207,33 @@ class TempController {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file was sent.'))
             }
-        
+
+            const deleteImage = () => {
+                imageHandler.deleteMulterTempImage(file.filename)
+            }
+
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandloer.badInput('userId must be an ObjectId.'))
+            }
         
             console.log('File has been recieved: ', file.filename)
             //check if user exists
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    imageHandler.compressImage(file.filename).then(imageKey => {
+                    imageHandler.compressImage(file.filename).then(async imageKey => {
                         if (result.profileImageKey != "") {
                             //Remove previous profile image if the user already has one
-                            imageHandler.deleteImageByKey(result.profileImageKey)
+                            try {
+                                await imageHandler.deleteImagePromiseByKey(result.profileImageKey);
+                            } catch (error) {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting your previous profile picrture. Please try again.'))
+                            }
                         }
+
                         User.findOneAndUpdate({_id: {$eq: userId}}, { profileImageKey: imageKey }).then(function(){
                             console.log("SUCCESS1")
                             return resolve(HTTPWTHandler.OK('Profile Image Updated'))
@@ -1195,16 +1245,16 @@ class TempController {
                         });
                     }).catch(error => {
                         console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
-                        imageHandler.deleteMulterTempImage(file.filename)
+                        deleteImage()
                         return resolve(HTTPWTHandler.serverError('Failed to compress image. Please try again.'))
                     })
                 } else {
-                    imageHandler.deleteMulterTempImage(file.filename)
+                    deleteImage()
                     return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
                 }
             }).catch(err => { 
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-                imageHandler.deleteMulterTempImage(file.filename)
+                deleteImage()
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             });
         })
@@ -1212,6 +1262,14 @@ class TempController {
 
     static #getImagesFromProfile = (userId, pubId, previousPostId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Type provided: ${typeof pubId}`))
             }
@@ -1226,6 +1284,10 @@ class TempController {
 
             if (previousPostId?.length === 0) {
                 return resolve(HTTPWTHandler.badInput('previousPostId cannot be a blank string'))
+            }
+
+            if (typeof previousPostId === 'string' && !mongoose.isObjectIdOrHexString(previousPostId)) {
+                return resolve(HTTPWTHandler.badInput('previousPostId must be an ObjectId string or undefined.'))
             }
         
             const getImagesAndSendToUser = (postOwner, userRequesting) => {
@@ -1327,6 +1389,16 @@ class TempController {
         
             const deleteFile = () => {
                 imageHandler.deleteMulterTempImage(file.filename)
+            }
+
+            if (typeof userId !== 'string') {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                deleteFile()
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
         
             if (typeof categoryTitle !== 'string') {
@@ -1502,12 +1574,20 @@ class TempController {
 
     static #deleteimage = (userId, postId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
             if (typeof postId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof postId}`))
             }
-        
-            if (postId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('postId cannot be an empty string'))
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -1604,6 +1684,14 @@ class TempController {
 
     static #postcategorywithoutimage = (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof categoryTitle !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryTitle must be a string. Provided type: ${typeof categoryTitle}`))
             }
@@ -1752,6 +1840,14 @@ class TempController {
 
     static #searchpagesearchcategories = (userId, val, lastCategoryId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof val !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
             }
@@ -1762,6 +1858,10 @@ class TempController {
 
             if (lastCategoryId !== undefined && typeof lastCategoryId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`lastCategoryId must be undefined or a string. Provided type: ${typeof lastCategoryId}`))
+            }
+
+            if (typeof lastCategoryId === 'string' && !mongoose.isObjectIdOrHexString(lastCategoryId)) {
+                return resolve(HTTPWTHandler.badInput('lastCategoryId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -1850,12 +1950,20 @@ class TempController {
 
     static #findcategorybyid = (userId, categoryId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
             if (typeof categoryId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
             }
 
-            if (categoryId.length === 0) {
-                return resolve(HTTPWTHandler.badInput('categoryId cannot be an empty string'))
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(categoryId)) {
+                return resolve(HTTPWTHandler.badInput('categoryId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -1903,6 +2011,14 @@ class TempController {
 
     static #findcategoryfromprofile = (userId, pubId, previousCategoryMemberId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
             }
@@ -1915,8 +2031,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must be a string or undefined. Type provided: ${typeof previousCategoryMemberId}`))
             }
 
-            if (previousCategoryMemberId?.length === 0) {
-                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId cannot be an empty string.'))
+            if (typeof previousCategoryMemberId === 'string' && !mongoose.isObjectIdOrHexString(previousCategoryMemberId)) {
+                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId must be an ObjectId string or undefined.'))
             }
             
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
@@ -2008,12 +2124,20 @@ class TempController {
 
     static #joincategory = (userId, categoryId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
             if (typeof categoryId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
             }
         
-            if (categoryId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('categoryId must not be an empty string.'))
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(categoryId)) {
+                return resolve(HTTPWTHandler.badInput('categoryId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -2041,12 +2165,20 @@ class TempController {
 
     static #leavecategory = (userId, categoryId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
             if (typeof categoryId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
             }
 
-            if (categoryId.length === 0) {
-                return resolve(HTTPWTHandler.badInput('categoryId must not be an empty string.'))
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(categoryId)) {
+                return resolve(HTTPWTHandler.badInput('categoryId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).then(userFound => {
@@ -2078,6 +2210,14 @@ class TempController {
 
     static #posttextthread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof threadTitle !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadTitle must be a string. Provided type: ${typeof threadTitle}`))
             }
