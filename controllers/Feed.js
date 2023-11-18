@@ -18,6 +18,8 @@ const threadPostHandler = new ThreadPostLibrary();
 const HTTPWTLibrary = require('../libraries/HTTPWT')
 const HTTPWTHandler = new HTTPWTLibrary()
 
+const mongoose = require('mongoose');
+
 const dateFuncForTest = () => {
     var currentdate = new Date(); 
     var datetime = "Last Sync: " + currentdate.getDate() + "/"
@@ -32,6 +34,22 @@ const dateFuncForTest = () => {
 class FeedController {
     static #viewedPostInFeed = (userId, postId, postFormat) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userOfViewing => {
                 if (userOfViewing) {
                     if (postFormat == "Image") {
@@ -180,6 +198,14 @@ class FeedController {
 
     static #followerFeed = (idOfUser, alreadyOnCurrentFeed) => {
         return new Promise(resolve => {
+            if (typeof idOfUser !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`idOfUser must be a string. Type provided: ${typeof idOfUser}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(idOfUser)) {
+                return resolve(HTTPWTHandler.badInput('idOfUser must be an ObjectId.'))
+            }
+
             if (typeof alreadyOnCurrentFeed === 'string' || alreadyOnCurrentFeed instanceof String) {
 
                 var splitAlreadyOnCurrentFeedIds = alreadyOnCurrentFeed.split(",")
@@ -1237,6 +1263,14 @@ class FeedController {
 
     static #forYouFeed = (idOfUser, alreadyOnCurrentFeed) => {
         return new Promise(resolve => {
+            if (typeof idOfUser !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`idOfUser must be a string. Type provided: ${typeof idOfUser}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(idOfUser)) {
+                return resolve(HTTPWTHandler.badInput('idOfUser must be an ObjectId.'))
+            }
+            
             const sendBack = (posts) => {
                 posts = posts.map(item => {
                     item._id = item._id.toString()
