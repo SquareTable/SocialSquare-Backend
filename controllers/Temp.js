@@ -820,7 +820,7 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
-            
+
             if (typeof optionSelected !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be a string. Provided type: ${typeof optionSelected}`))
             }
@@ -3198,6 +3198,14 @@ class TempController {
 
     static #earnSpecialBadge = (userId, badgeEarnt) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             //Check if an actual special badge was passed
             if (badgeEarnt == "homeScreenLogoPressEasterEgg") { // Will add more badges here when we make more
                 User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -3235,6 +3243,14 @@ class TempController {
 
     static #getuserbyid = (userId, pubId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
             }
@@ -3272,6 +3288,14 @@ class TempController {
 
     static #makeaccountprivate = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then((userFound) => {
                 if (userFound) {
                     // User exists
@@ -3294,6 +3318,14 @@ class TempController {
 
     static #makeaccountpublic = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     //User found
@@ -3359,6 +3391,14 @@ class TempController {
 
     static #getfollowrequests = (userId, skip) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (skip?.length > 12) return resolve(HTTPWTHandler.badInput('Skip cannot have a length greater than 12'))
 
             const parsedSkip = parseInt(skip);
@@ -3398,6 +3438,14 @@ class TempController {
 
     static #denyfollowrequest = (userId, accountFollowRequestDeniedPubID) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+            
             if (typeof accountFollowRequestDeniedPubID !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`accountFollowRequestDeniedPubID must be a string. Provided type: ${typeof accountFollowRequestDeniedPubID}`))
             }
@@ -3430,6 +3478,14 @@ class TempController {
 
     static #acceptfollowrequest = (userId, accountFollowRequestAcceptedPubID) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof accountFollowRequestAcceptedPubID !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`accountFollowRequestAcceptedPubID must be a string. Provided type: ${typeof accountFollowRequestAcceptedPubID}`))
             }
@@ -3491,6 +3547,14 @@ class TempController {
 
     static #removefollowerfromaccount = (userId, userToRemovePubId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof userToRemovePubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToRemovePubId must be a string. Provided type: ${typeof userToRemovePubId}`))
             }
@@ -3565,6 +3629,14 @@ class TempController {
 
     static #blockaccount = (userId, userToBlockPubId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof userToBlockPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToBlockPubId must be a string. Provided type: ${typeof userToBlockPubId}`))
             }
@@ -3630,6 +3702,14 @@ class TempController {
 
     static #getuserblockedaccounts = (userId, skip) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (skip === undefined) skip = 0;
             if (typeof skip !== 'number') return resolve(HTTPWTHandler.badInput(`skip must be either undefined or a number. Type provided: ${typeof skip}`));
 
@@ -3663,6 +3743,14 @@ class TempController {
 
     static #unblockaccount = (userId, userToUnblockPubId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+            
             if (typeof userToUnblockPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToUnblockPubId must be a string. Provided type: ${typeof userToUnblockPubId}`))
             }
@@ -3691,6 +3779,14 @@ class TempController {
 
     static #enableAlgorithm = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
@@ -3712,6 +3808,14 @@ class TempController {
 
     static #getAuthenticationFactorsEnabled = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
@@ -3727,6 +3831,14 @@ class TempController {
 
     static #disableAlgorithm = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
@@ -3750,6 +3862,14 @@ class TempController {
 
     static #reloadProfileEssentials = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
@@ -3766,6 +3886,14 @@ class TempController {
 
     static #turnOffEmailMultiFactorAuthentication = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     User.findOneAndUpdate({_id: {$eq: userId}}, {$pull: {authenticationFactorsEnabled: 'Email'}, $unset: {MFAEmail: "this removes the MFAEmail field"}}).then(function() {
@@ -3800,6 +3928,14 @@ class TempController {
 
     static #deleteaccount = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
@@ -4167,6 +4303,14 @@ class TempController {
 
     static #uploadNotificationsSettings = (userId, notificationSettings) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof notificationSettings !== 'object' || notificationSettings === null || Array.isArray(notificationSettings)) {
                 return resolve(HTTPWTHandler.badInput(`notificationSettings must be an object. Is null: ${notificationSettings === null} Is array: ${Array.isArray(notificationSettings)} Type provided: ${typeof notificationSettings}`))
             }
@@ -4209,6 +4353,14 @@ class TempController {
 
     static #getUserNotificationSettings = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
@@ -4226,8 +4378,16 @@ class TempController {
 
     static #reportUser = (reporterId, reportType, reporteePubId) => {
         return new Promise(resolve => {
+            if (typeof reporterId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`reporterId must be a string. Provided type: ${typeof reporterId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(reporterId)) {
+                return resolve(HTTPWTHandler.badInput('reporterId must be an ObjectId.'))
+            }
+
             if (typeof reporteePubId !== 'string') {
-                return resolve(HTPTWTHandler.badInput(`reporteePubId must be a string. Provided type: ${typeof reporteePubId}`))
+                return resolve(HTTPWTHandler.badInput(`reporteePubId must be a string. Provided type: ${typeof reporteePubId}`))
             }
         
             if (reporteePubId.length == 0) {
@@ -4299,6 +4459,14 @@ class TempController {
             let votes;
             let creators;
             let promises;
+
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
 
             if (typeof skip !== 'string' && skip !== undefined) {
                 return resolve(HTTPWTHandler.badInput(`skip must be a string or undefined. Provided type: ${typeof skip}`))
@@ -4447,8 +4615,20 @@ class TempController {
 
     static #getCategoriesUserIsAPartOf = (userId, previousCategoryMemberId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof previousCategoryMemberId !== 'undefined' && typeof previousCategoryMemberId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must either be undefined or a string. Provided type: ${typeof previousCategoryMemberId}`))
+            }
+
+            if (typeof previousCategoryMemberId === 'string' && !mongoose.isObjectIdOrHexString(previousCategoryMemberId)) {
+                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -4470,7 +4650,6 @@ class TempController {
                         const categoriesToSend = categories.map((category, index) => {
                             const newCategory = {...category}
                             newCategory.dateJoined = categoryMemberDocuments[index].dateJoined;
-                            newCategory.role = categoryMemberDocuments[index].role;
                             return newCategory
                         })
 
@@ -4498,6 +4677,14 @@ class TempController {
     static #reportPost = (reporterId, postId, postFormat, reason) => {
         return new Promise(async resolve => {
             let post;
+
+            if (typeof reporterId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`reporterId must be a string. Provided type: ${typeof reporterId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(reporterId)) {
+                return resolve(HTTPWTHandler.badInput('reporterId must be an ObjectId.'))
+            }
 
             if (typeof reason !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`reason must be a string. Provided type: ${typeof reason}`))
@@ -4578,6 +4765,14 @@ class TempController {
 
     static #userAlgorithmSettings = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
@@ -4595,6 +4790,14 @@ class TempController {
 
     static #uploadAlgorithmSettings = (userId, algorithmSettings) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof algorithmSettings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`algorithmSettings must be an object. Provided type: ${typeof algorithmSettings}`))
             }
@@ -4643,6 +4846,14 @@ class TempController {
 
     static #privacySettings = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(user => {
                 if (user) {
                     const privacySettings = {...DEFAULTS.userPrivacySettings, ...user?.settings?.privacySettings};
@@ -4659,6 +4870,14 @@ class TempController {
 
     static #savePrivacySettings = (userId, settings) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+            
             if (typeof settings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`settings must be an object. Provided type: ${typeof settings}`))
             }
@@ -4711,6 +4930,14 @@ class TempController {
     static #getProfileStats = (userId, profilePublicId, skip, stat) => {
         return new Promise(resolve => {
             const allowedStats = ['following', 'followers']
+
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
 
             if (!allowedStats.includes(stat)) {
                 return resolve(HTTPWTHandler.badInput('Invalid stat provided'))
@@ -4793,6 +5020,14 @@ class TempController {
 
     static #loginactivity = (userId, authRefreshTokenHeader) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
@@ -4824,12 +5059,20 @@ class TempController {
 
     static #logoutdevice = (userId, tokenToLogout) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof tokenToLogout !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`tokenToLogout must be a string. Provided type: ${typeof tokenToLogout}`))
             }
         
-            if (tokenToLogout.length == 0) {
-                return resolve(HTTPWTHandler.badInput('tokenToLogout cannot be an empty string.'))
+            if (!mongoose.isObjectIdOrHexString(tokenToLogout)) {
+                return resolve(HTTPWTHandler.badInput('tokenToLogout must be an ObjectId.'))
             }
         
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -4856,8 +5099,20 @@ class TempController {
 
     static #logoutallotherdevices = (userId, tokenIdNotToLogout) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof tokenIdNotToLogout !== 'string' && tokenIdNotToLogout !== null) {
                 return HTTPWTHandler.badInput(`tokenIdNotToLogout must be a string or null. Provided type: ${typeof tokenIdNotToLogout}`)
+            }
+
+            if (typeof tokenIdNotToLogout === 'string' && !mongoose.isObjectIdOrHexString(tokenIdNotToLogout)) {
+                return resolve(HTTPWTHander.badInput('tokenIdNotToLogout must be an ObjectId.'))
             }
         
             const query = {userId: {$eq: userId}};
@@ -4886,6 +5141,14 @@ class TempController {
 
     static #loginActivitySettings = (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('User with userId could not be found'))
@@ -4903,6 +5166,14 @@ class TempController {
 
     static #uploadLoginActivitySettings = (userId, newSettings) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+            
             if (typeof newSettings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`newSettings must be an object. Provided type: ${typeof newSettings}`))
             }
@@ -4946,6 +5217,14 @@ class TempController {
 
     static #updateLoginActivitySettingsOnSignup = (userId, newSettings, refreshTokenId, IP, deviceName) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof newSettings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`newSettings must be an object. Provided type: ${typeof newSettings}`))
             }
@@ -5017,6 +5296,14 @@ class TempController {
 
     static #followingFeedFilterSettings = async (userId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             User.findOne({_id: {$eq: userId}}, 'settings.followingFeedFilterSettings').then(projectedUserObject => {
                 if (!projectedUserObject) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
@@ -5034,8 +5321,20 @@ class TempController {
 
     static #logoutuser = (userId, refreshTokenId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof refreshTokenId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`refreshTokenId must be a string. Type provided: ${typeof refreshTokenId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(refreshTokenId)) {
+                return resolve(HTTPWTHandler.badInput('refreshTokenId must be an ObjectId.'))
             }
             
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -5065,6 +5364,21 @@ class TempController {
 
     static #deletecomment = (userId, commentId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
+            if (typeof commentId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(commentId)) {
+                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
+            }
 
             function deleteComment(parentCommentId) {
                 mongoose.startSession().then(session => {
@@ -5107,10 +5421,6 @@ class TempController {
                     console.error('An error occurred while starting Mongoose session. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while starting to delete the comment. Please try again.'))
                 })
-            }
-
-            if (typeof commentId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Type provided: ${typeof commentId}`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -5220,12 +5530,20 @@ class TempController {
 
     static #getsinglecomment = (userId, commentId) => {
         return new Promise(async resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof commentId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
             }
 
-            if (commentId.length === 0) {
-                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            if (!mongoose.isObjectIdOrHexString(commentId)) {
+                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -5284,14 +5602,22 @@ class TempController {
         })
     }
 
-    static #getcommentreplies = async (userId, commentId) => {
+    static #getcommentreplies = (userId, commentId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+            
             if (typeof commentId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Type provided: ${typeof commentId}`))
             }
 
-            if (commentId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            if (!mongoose.isObjectIdOrHexString(commentId)) {
+                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -5398,6 +5724,14 @@ class TempController {
 
     static #voteoncomment = (userId, commentId, voteType) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             console.log('VOTE TYPE:', voteType)
             if (voteType !== "Down" && voteType !== "Up") {
                 return resolve(HTTPWTHandler.badInput("voteType must be either Down or Up."))
@@ -5407,8 +5741,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
             }
 
-            if (commentId.length === 0) {
-                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            if (!mongoose.isObjectIdOrHexString(commentId)) {
+                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -5498,12 +5832,24 @@ class TempController {
 
     static #replytocomment = (userId, comment, commentId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
             }
         
             if (typeof commentId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(commentId)) {
+                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
             }
         
             comment = comment.trim();
@@ -5622,12 +5968,24 @@ class TempController {
 
     static #postcomment = (userId, comment, postId, postFormat) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
             }
         
             if (typeof postId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
             }
 
             if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
@@ -5704,9 +6062,19 @@ class TempController {
 
     static #searchforpostcomments = (userId, postId, postFormat) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (typeof postId !== 'string') return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
 
-            if (postId.length === 0) return resolve(HTTPWTHandler.badInput('postId cannot be blank'))
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
+            }
 
             if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(postFormat)) return resolve(HTTPWTHandler.badInput(`postFormat must be one of these: ${CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.join(', ')}`))
 
@@ -5791,6 +6159,14 @@ class TempController {
     
     static #removevoteoncomment = (userId, commentId, voteType) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
+            }
+
             if (voteType !== "Down" && voteType !== "Up") {
                 return resolve(HTTPWTHandler.badInput("voteType must be either Down or Up."))
             }
@@ -5799,8 +6175,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
             }
 
-            if (commentId.length === 0) {
-                return resolve(HTTPWTHandler.badInput('commentId cannot be blank'))
+            if (!mongoose.isObjectIdOrHexString(commentId)) {
+                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
