@@ -15,6 +15,8 @@ const RefreshToken = require('../models/RefreshToken')
 const bcrypt = require('bcrypt')
 const { v4: uuidv4 } = require('uuid');
 
+const mongoose = require('mongoose');
+
 const { setCacheItem, getCacheItem, delCacheItem } = require('../memoryCache.js')
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
@@ -344,7 +346,9 @@ class UserController {
                 console.log('Task:', task, '  |   getAccountMethod:', getAccountMethod)
                 if (getAccountMethod === 'userID') {
                     if (typeof userID !== 'string') return resolve(HTTPWTHandler.badInput(`userID must be a string. Provided type: ${typeof userID}`))
-                    if (userID.length === 0) return resolve(HTTPWTHandler.badInput('userID cannot be blank'))
+                    if (!mongoose.isObjectIdOrHexString(userID)) {
+                        return resolve(HTTPWTHandler.badInput('userID must be an ObjectId.'))
+                    }
 
                     user = await User.findOne({_id: {$eq: userID}}).lean()
                 } else if (getAccountMethod === 'username') {
@@ -492,11 +496,9 @@ class UserController {
                 if (typeof userID !== 'string') {
                     return resolve(HTTPWTHandler.badInput(`userID must be a string. Provided type: ${typeof userID}`))
                 }
-        
-                userID = userID.trim();
 
-                if (userID.length === 0) {
-                    return resolve(HTTPWTHandler.badInput('userID cannot be blank.'))
+                if (!mongoose.isObjectIdOrHexString(userID)) {
+                    return resolve(HTTPWTHandler.badInput('userID must be an ObjectId.'))
                 }
         
                 User.findOne({_id: {$eq: userID}}).lean().then(userFound => {
