@@ -4,6 +4,9 @@ const adminLib = new AdminLibrary()
 const HTTPWTLibrary = require('../libraries/HTTPWT')
 const HTTPWTHandler = new HTTPWTLibrary()
 
+const mongoose = require('mongoose');
+
+
 class AdminController {
     static #login = (email, password) => {
         return new Promise(resolve => {
@@ -24,6 +27,13 @@ class AdminController {
 
     static #getAssignedReports = (adminId) => {
         return new Promise(resolve => {
+            if (typeof adminId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`adminId must be a string. Provided type: ${typeof adminId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(adminId)) {
+                return resolve(HTTPWTHandler.badInput('adminId must be an objectId.'))
+            }
             adminLib.getAssignedReports(adminId).then(data => {
                 resolve(HTTPWTHandler.OK('Found assigned reports', data))
             }).catch(error => {
@@ -34,6 +44,22 @@ class AdminController {
 
     static #dismissPostReport = (adminId, reportId) => {
         return new Promise(resolve => {
+            if (typeof adminId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`adminId must be a string. Provided type: ${typeof adminId}`))
+            }
+
+            if (typeof reportId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`reportId must be a string. Provided type: ${typeof reportId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(adminId)) {
+                return resolve(HTTPWTHandler.badInput('adminId must be an objectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(reportId)) {
+                return resolve(HTTPWTHandler.badInput('reportId must be an objectId.'))
+            }
+
             adminLib.dismissPostReport(adminId, reportId).then(() => {
                 resolve(HTTPWTHandler.OK('Successfully deleted post report'))
             }).catch(error => {
@@ -44,6 +70,22 @@ class AdminController {
 
     static #deletePostAndReport = (adminId, reportId) => {
         return new Promise(resolve => {
+            if (typeof adminId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`adminId must be a string. Provided type: ${typeof adminId}`))
+            }
+
+            if (typeof reportId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`reportId must be a string. Provided type: ${typeof reportId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(adminId)) {
+                return resolve(HTTPWTHandler.badInput('adminId must be a string.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(reportId)) {
+                return resolve(HTTPWTHandler.badInput('reportId must be a string.'))
+            }
+            
             adminLib.deletePostAndReport(adminId, reportId).then(() => {
                 resolve(HTTPWTHandler.OK('Successfully deleted post and report'))
             }).catch(error => {
