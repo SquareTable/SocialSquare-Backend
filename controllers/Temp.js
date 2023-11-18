@@ -2382,6 +2382,16 @@ class TempController {
             const deleteImage = () => {
                 imageHandler.deleteMulterTempImage(file.filename)
             }
+
+            if (typeof userId !== 'string') {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                deleteImage()
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
         
             if (typeof threadTitle !== 'string') {
                 deleteImage()
@@ -2459,6 +2469,7 @@ class TempController {
             }
 
             if (!CONSTANTS.VALID_THREAD_TITLE_TEST.test(threadTitle)) {
+                deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
         
@@ -2468,6 +2479,7 @@ class TempController {
             }
 
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
+                deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_SUBTITLE_FAILED_TEST_ERROR_MESSAGE))
             }
         
@@ -2477,6 +2489,7 @@ class TempController {
             }
 
             if (!CONSTANTS.VALID_THREAD_TAGS_TEST.test(threadTags)) {
+                deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE))
             }
         
@@ -2486,6 +2499,7 @@ class TempController {
             }
 
             if (!CONSTANTS.VALID_THREAD_IMAGE_DESCRIPTION_TEST.test(threadImageDescription)) {
+                deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE))
             }
         
@@ -2564,6 +2578,22 @@ class TempController {
 
     static #getthreadsfromcategory = (userId, categoryId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(categoryId)) {
+                return resolve(HTTPWTHandler.badInput('categoryId must be an ObjectId.'))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userRequesting => {
                 if (userRequesting) {
                     Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{ 
@@ -2630,6 +2660,14 @@ class TempController {
 
     static #getthreadsfromprofile = (userId, pubId, previousPostId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Type provided: ${typeof pubId}`))
             }
@@ -2642,8 +2680,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`previousPostId must either be a string or undefined. Type provided: ${typeof previousPostId}`))
             }
 
-            if (previousPostId?.length === 0) {
-                return resolve(HTTPWTHandler.badInput('previousPostId must not be an empty string'))
+            if (typeof previousPostId === 'string' && !mongoose.isObjectIdOrHexString(previousPostId)) {
+                return resolve(HTTPWTHandler.badInput('previousPostId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({secondId: {$eq: pubId}}).lean().then(userResult => {
@@ -2704,12 +2742,20 @@ class TempController {
 
     static #getthreadbyid = (userId, threadId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
             if (typeof threadId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
             }
         
-            if (threadId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('threadId cannot be blank.'))
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(threadId)) {
+                return resolve(HTTPWTHandler.badInput('threadId must be an ObjectId.'))
             }
         
             Thread.findOne({_id: {$eq: threadId}}).lean().then(result => {
@@ -2772,12 +2818,20 @@ class TempController {
 
     static #deletethread = (userId, threadId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
             if (typeof threadId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
             }
         
-            if (threadId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('threadId cannot be blank.'))
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(threadId)) {
+                return resolve(HTTPWTHandler.badInput('threadId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -2874,6 +2928,14 @@ class TempController {
 
     static #toggleFollowOfAUser = (userId, userToFollowPubId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
             if (typeof userToFollowPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToFollowPubId must be a string. Provided type: ${typeof userToFollowPubId}`))
             }
@@ -3028,6 +3090,14 @@ class TempController {
 
     static #reloadUsersDetails = (userId, usersPubId) => {
         return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+            
             if (typeof usersPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`usersPubId must be a string. Provided type: ${typeof usersPubId}`))
             }
