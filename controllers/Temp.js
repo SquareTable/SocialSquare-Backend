@@ -4705,7 +4705,7 @@ class TempController {
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             }
 
-            const supportedFormats = ['Image', 'Poll', 'Thread']
+            const supportedFormats = ['Image', 'Poll', 'Thread', 'Comment']
 
             if (!supportedFormats.includes(postFormat)) {
                 return resolve(HTTPWTHandler.badInput('Invalid post format supplied'))
@@ -4732,6 +4732,26 @@ class TempController {
                     console.error('An error occurred while finding one thread post with id:', postId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding thread post. Please try again.'))
                 }
+            }
+
+            try {
+                switch(postFormat) {
+                    case 'Image':
+                        post = await ImagePost.findOne({_id: {$eq: postId}}).lean();
+                        break;
+                    case 'Poll':
+                        post = await Poll.findOne({_id: {$eq: postId}}).lean();
+                        break;
+                    case 'Thread':
+                        post = await Thread.findOne({_id: {$eq: postId}}).lean();
+                        break;
+                    case 'Comment':
+                        post = await Comment.findOne({_id: {$eq: postId}}).lean();
+                        break;
+                }
+            } catch (error) {
+                console.error('An error occurred while finding one', postFormat, 'post with id:', postId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding post. Please try again.'))
             }
 
             if (!post) {
