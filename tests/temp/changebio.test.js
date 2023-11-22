@@ -3,7 +3,7 @@ const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const TempController = require('../../controllers/Temp')
 
-const {beforeEach, afterEach, test, expect} = requir4e('@jest/globals');
+const {beforeEach, afterEach, test, expect} = require('@jest/globals');
 
 const DB = MockMongoDBServer();
 
@@ -94,7 +94,7 @@ test('If change fails if user could not be found', async () => {
 })
 
 test('If change is successful with correct inputs', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(validUser).save();
 
@@ -112,7 +112,7 @@ test('If change is successful with correct inputs', async () => {
 })
 
 test('If change does not interfere with other User documents', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     const newUsers = [...new Array(10)].map((itme, index) => {
         return {
