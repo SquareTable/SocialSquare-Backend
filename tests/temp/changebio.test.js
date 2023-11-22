@@ -66,7 +66,7 @@ test('If change fails if userId is not an ObjectId', async () => {
 test('If change fails if bio is longer than 250 characters', async () => {
     expect.assertions(2);
 
-    const returned = await TempController.changebio(validUser._id, new Array(251).join('a'));
+    const returned = await TempController.changebio(validUser._id, new Array(252).join('a'));
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Bio must be 250 or less characters')
