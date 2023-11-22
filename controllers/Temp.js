@@ -454,7 +454,7 @@ class TempController {
 
             User.findOne({_id: {$eq: userId}}).lean().then((data) => {
                 if (data) {
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {bio: {$set: String(bio)}}).then(function(){
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {bio: String(bio)}}).then(function(){
                         return resolve(HTTPWTHandler.OK('Change Successful'))
                     })
                     .catch(err => {
