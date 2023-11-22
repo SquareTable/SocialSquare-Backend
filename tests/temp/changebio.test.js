@@ -5,7 +5,7 @@ const TempController = require('../../controllers/Temp')
 
 const {beforeEach, afterEach, test, expect} = require('@jest/globals');
 
-const DB = MockMongoDBServer();
+const DB = new MockMongoDBServer();
 
 beforeEach(async () => {
     await DB.startTest();
