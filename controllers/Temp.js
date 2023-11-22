@@ -441,7 +441,7 @@ class TempController {
             }
 
             if (typeof bio !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`bio must be a string. Provided type" ${typeof bio}`))
+                return resolve(HTTPWTHandler.badInput(`bio must be a string. Provided type:" ${typeof bio}`))
             }
 
             if (bio.length > CONSTANTS.MAX_USER_BIO_LENGTH) {
