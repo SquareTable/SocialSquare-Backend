@@ -140,9 +140,9 @@ class TempController {
             if (typeof desiredDisplayName !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`desiredDisplayName must be a string. Provided type: ${typeof desiredDisplayName}`))
             }
-        
+
             desiredDisplayName = desiredDisplayName.trim();
-        
+
             if (desiredDisplayName.length > CONSTANTS.MAX_USER_DISPLAY_NAME_LENGTH) {
                 return resolve(HTTPWTHandler.badInput('Desired display name must be 20 characters or less.'))
             }
@@ -150,11 +150,11 @@ class TempController {
             if (!CONSTANTS.VALID_DISPLAY_NAME_TEST.test(desiredDisplayName)) {
                 return resolve(HTTPWTHandler.badInput('Display name must only contain characters in the alphabet and must be a single line.'))
             }
-        
+
             // Check if user exist
             User.findOne({ _id: {$eq: userId} }).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
-                
+
                 User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
                     return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
                 }).catch(err => {
@@ -185,7 +185,7 @@ class TempController {
             if (password.length === 0) {
                 return resolve(HTTPWTHandler.badInput('Password cannot be blank.'))
             }
-        
+
             if (typeof desiredEmail !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`desiredEmail must be a string. Type provided: ${typeof desiredEmail}`))
             }
@@ -193,14 +193,14 @@ class TempController {
             if (desiredEmail.length === 0) {
                 return resolve(HTTPWTHandler.badInput('Desired email cannot be blank.'))
             }
-        
+
             password = password.trim();
             desiredEmail = desiredEmail.trim();
 
             if (!CONSTANTS.VALID_EMAIL_TEST.test(desiredEmail)) {
                 return resolve(HTTPWTHandler.badInput('Invalid desired email entered'))
             }
-            
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
@@ -234,7 +234,7 @@ class TempController {
                 }).catch(error => {
                     console.error('An error occured while finding a user with email:', desiredEmail, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user with that email. Please try again.'))
-                })         
+                })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
@@ -255,16 +255,16 @@ class TempController {
             if (typeof currentPassword !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`currentPassword must be a string. Provided type: ${typeof currentPassword}`))
             }
-        
+
             if (typeof newPassword !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`newPassword must be a string. Provided type: ${typeof newPassword}`))
             }
-        
+
             if (typeof confirmNewPassword !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`confirmNewPassword must be a string. Provided type: ${typeof confirmNewPassword}`))
             }
-        
-        
+
+
             currentPassword = currentPassword.trim()
             newPassword = newPassword.trim()
             confirmNewPassword = confirmNewPassword.trim()
@@ -292,10 +292,10 @@ class TempController {
             if (newPassword.length > CONSTANTS.MAX_USER_PASSWORD_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`Your new password cannot be more than ${CONSTANTS.MAX_USER_PASSWORD_LENGTH} characters.`))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
-                
+
                 const hashedPassword = userFound.password;
                 bcrypt.compare(currentPassword, hashedPassword).then((result) => {
                     if (result) {
@@ -396,7 +396,7 @@ class TempController {
             if (!CONSTANTS.VALID_USERNAME_TEST.test(desiredUsername)) {
                 return resolve(HTTPWTHandler.badInput('Invalid username entered (username can only have numbers and lowercase a - z characters)'))
             }
-        
+
             desiredUsername = desiredUsername.trim();
 
             if (desiredUsername.length === 0) {
@@ -406,13 +406,13 @@ class TempController {
             if (desiredUsername.length > CONSTANTS.MAX_USER_USERNAME_LENGTH) {
                 return resolve(HTTPWTHandler.badInput('Your new username cannot be more than 20 characters.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'));
 
                 User.findOne({name: {$eq: desiredUsername}}).lean().then(result => {
                     if (result) return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
-                    
+
                     User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(() => {
                         return resolve(HTTPWTHandler.OK('Change Username Successful'))
                     }).catch(err => {
@@ -443,7 +443,7 @@ class TempController {
             if (typeof bio !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`bio must be a string. Provided type" ${typeof bio}`))
             }
-        
+
             if (bio.length > CONSTANTS.MAX_USER_BIO_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`Bio must be ${CONSTANTS.MAX_USER_BIO_LENGTH} or less characters`))
             }
@@ -451,7 +451,7 @@ class TempController {
             if (!CONSTANTS.VALID_BIO_TEST(bio)) {
                 return resolve(HTTPWTHandler.badInput(`Bio must have ${CONSTANTS.MAX_USER_BIO_LINES} or less lines`))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then((data) => {
                 if (data) {
                     User.findOneAndUpdate({_id: {$eq: userId}}, {bio: {$set: String(bio)}}).then(function(){
@@ -673,7 +673,7 @@ class TempController {
             } else if (sentAllowScreenShots == false) {
                 console.log("sent allow ss was false")
                 allowScreenShots = false
-            } else {    
+            } else {
                 console.log("Sent allow ss wasnt true or false so set true")
                 allowScreenShots = true
             }
@@ -708,7 +708,7 @@ class TempController {
                         }
 
                         const newPoll = new Poll(pollObject);
-                
+
                         newPoll.save().then(() => {
                             return resolve(HTTPWTHandler.OK('Poll creation successful'))
                         })
@@ -718,7 +718,7 @@ class TempController {
                         })
                     } else {
                         return resolve(HTTPWTHandler.notFound('A user could not be found with provided userId'))
-                    } 
+                    }
                 })
                 .catch(err => {
                     console.error('An error occured while finding a user with _id:', userId, '. The error was:', err)
@@ -751,7 +751,7 @@ class TempController {
             if (pubId.length < 1) {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string'))
             }
-        
+
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
                 if (result) {
                     //User Exists
@@ -803,7 +803,7 @@ class TempController {
                     })
                 } else {
                     return resolve(HTTPWTHandler.notFound('User could not be found.'))
-                } 
+                }
             }).catch(err => {
                 console.error('An error occured while finding user with secondId:', pubId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
@@ -824,11 +824,11 @@ class TempController {
             if (typeof optionSelected !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be a string. Provided type: ${typeof optionSelected}`))
             }
-        
+
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
-        
+
             const allowedOptionsToSelect = ['One', 'Two', 'Three', 'Four', 'Five', 'Six']
             if (!allowedOptionsToSelect.includes(optionSelected)) {
                 return resolve(HTTPWTHandler.badInput(`optionSelected must be either ${allowedOptionsToSelect.join(', ')}`))
@@ -944,7 +944,7 @@ class TempController {
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
-        
+
             //Check Input fields
             if (pollId == "" || userId == "") {
                 return resolve(HTTPWTHandler.badInput('pollId or userId is an empty string. That is not allowed.'))
@@ -1000,11 +1000,11 @@ class TempController {
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
-        
+
             if (pollId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('pollId must not be an empty string.'))
             }
-        
+
             //Find User
             User.findOne({_id: {$eq: userId}}).lean().then(userDeletingPoll => {
                 if (userDeletingPoll) {
@@ -1023,13 +1023,16 @@ class TempController {
                                                     deleteMany: {
                                                         filter: {postId: pollId, postFormat: "Poll"}
                                                     }
-                                                },
-                                                {
+                                                }
+                                            ];
+
+                                            if (commentIds.length < 1) {
+                                                upvoteBulkUpdates.push({
                                                     deleteMany: {
                                                         filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                                     }
-                                                }
-                                            ];
+                                                })
+                                            }
 
                                             Upvote.bulkWrite(upvoteBulkUpdates, {session}).then(() => {
                                                 const downvoteBulkUpdates = [
@@ -1037,13 +1040,16 @@ class TempController {
                                                         deleteMany: {
                                                             filter: {postId: pollId, postFormat: "Poll"}
                                                         }
-                                                    },
-                                                    {
+                                                    }
+                                                ];
+
+                                                if (commentIds.length < 1) {
+                                                    downvoteBulkUpdates.push({
                                                         deleteMany: {
                                                             filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                                         }
-                                                    }
-                                                ];
+                                                    })
+                                                }
 
                                                 Downvote.bulkWrite(downvoteBulkUpdates, {session}).then(() => {
                                                     PollVote.deleteMany({pollId: {$eq: pollId}}, {session}).then(() => {
@@ -1116,16 +1122,16 @@ class TempController {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file was sent.'))
             }
-        
+
             const deleteFile = () => {
                 imageHandler.deleteMulterTempImage(file.filename, false)
             }
-        
+
             if (typeof title !== 'string') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`title must be a string. Provided type: ${typeof title}`))
             }
-        
+
             if (typeof description !== 'string') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`description must be a string. Provided type: ${typeof description}`))
@@ -1140,7 +1146,7 @@ class TempController {
                 deleteFile();
                 return resolve(HTTPWTHandler.badInput('creatorId must be an ObjectId.'))
             }
-            
+
             title = title.trim()
             description = description.trim()
             //console.log(file)
@@ -1158,16 +1164,16 @@ class TempController {
                     } else if (sentAllowScreenShots == false || allowScreenShots == "false") {
                         console.log("sent allow ss was false")
                         allowScreenShots = false
-                    } else {    
+                    } else {
                         console.log("Sent allow ss wasnt true or false so set true")
                         allowScreenShots = true
                     }
                     console.log(`allowScreenShots ${allowScreenShots}`)
-        
+
                     imageHandler.compressImage(file.filename).then(imageKey => {
                         const newImagePostObject = {
                             imageKey,
-                            imageTitle: title, 
+                            imageTitle: title,
                             imageDescription: description,
                             creatorId: creatorId,
                             comments: [],
@@ -1176,7 +1182,7 @@ class TempController {
                         }
 
                         const newImage = new ImagePost(newImagePostObject);
-        
+
                         newImage.save().then(result => {
                             return resolve(HTTPWTHandler.OK('Post successful'))
                         })
@@ -1219,7 +1225,7 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandloer.badInput('userId must be an ObjectId.'))
             }
-        
+
             console.log('File has been recieved: ', file.filename)
             //check if user exists
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -1252,7 +1258,7 @@ class TempController {
                     deleteImage()
                     return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
                 }
-            }).catch(err => { 
+            }).catch(err => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
                 deleteImage()
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
@@ -1273,7 +1279,7 @@ class TempController {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Type provided: ${typeof pubId}`))
             }
-        
+
             if (pubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
@@ -1289,7 +1295,7 @@ class TempController {
             if (typeof previousPostId === 'string' && !mongoose.isObjectIdOrHexString(previousPostId)) {
                 return resolve(HTTPWTHandler.badInput('previousPostId must be an ObjectId string or undefined.'))
             }
-        
+
             const getImagesAndSendToUser = (postOwner, userRequesting) => {
                 const dbQuery = {
                     creatorId: postOwner._id
@@ -1315,7 +1321,7 @@ class TempController {
                     return resolve(HTTPWTHandler.serverError('An error occurred while getting user image posts. Please try again.'))
                 })
             }
-        
+
             User.findOne({secondId: {$eq: pubId}}).lean().then(data => {
                 User.findOne({_id: {$eq: userId}}).lean().then(secondData => {
                     console.log('Second Data:', secondData)
@@ -1362,8 +1368,8 @@ class TempController {
 
     static #getProfilePic = (pubId) => {
         return new Promise(resolve => {
-            User.findOne({secondId: {$eq: pubId}}).lean().then(data => { 
-                if (data) { 
+            User.findOne({secondId: {$eq: pubId}}).lean().then(data => {
+                if (data) {
                     const profileKey = data.profileImageKey
                     if (profileKey !== "") {
                         return resolve(HTTPWTHandler.OK('Profile image found.', profileKey))
@@ -1374,7 +1380,7 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with pubId provided.'))
                 }
             })
-            .catch(err => { 
+            .catch(err => {
                 console.error('An error occurred while finding one user with secondId:', pubId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
             });
@@ -1386,7 +1392,7 @@ class TempController {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file sent.'))
             }
-        
+
             const deleteFile = () => {
                 imageHandler.deleteMulterTempImage(file.filename)
             }
@@ -1400,79 +1406,79 @@ class TempController {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
-        
+
             if (typeof categoryTitle !== 'string') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryTitle must be a string. Provided type: ${typeof categoryTitle}`))
             }
-        
+
             if (typeof categoryDescription !== 'string') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryDescription must be a string. Provided type: ${typeof categoryDescription}`))
             }
-        
+
             if (typeof categoryTags !== 'string') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryTags must be a string. Provided type: ${typeof categoryTags}`))
             }
-        
+
             if (typeof categoryNSFW !== 'boolean' && categoryNSFW !== 'false' && categoryNSFW !== 'true') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryNSFW must be a boolean, "false", or "true"`))
             }
-        
+
             if (typeof categoryNSFL !== 'boolean' && categoryNSFL !== 'false' && categoryNSFW !== 'true') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryNSFL must be a boolean, "false", or "true"`))
             }
-        
+
             if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== 'false' && sentAllowScreenShots !== 'true') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`sentAllowScreenShots must be a boolean, "false", or "true"`))
             }
-        
+
             if (categoryNSFW === "false") {
                 categoryNSFW = false;
             }
-        
+
             if (categoryNSFW === "true") {
                 categoryNSFW = true;
             }
-        
+
             if (categoryNSFL === "false") {
                 categoryNSFL = false;
             }
-        
+
             if (categoryNSFL === "true") {
                 categoryNSFL = true;
             }
-        
+
             if (sentAllowScreenShots === "false") {
                 sentAllowScreenShots = false;
             }
-            
+
             if (sentAllowScreenShots === "true") {
                 sentAllowScreenShots = true;
             }
-        
+
             categoryTitle = categoryTitle.trim()
             categoryDescription = categoryDescription.trim()
-        
+
             if (categoryTitle.length == 0) {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput('categoryTitle must not be an empty string.'))
             }
-        
+
             if (categoryDescription.length == 0) {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput('categoryDescription must not be an empty string.'))
             }
-        
+
             if (categoryTitle.length > CONSTANTS.MAX_CATEGORY_TITLE_LENGTH) {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryTitle cannot be more than ${CONSTANTS.MAX_CATEGORY_TITLE_LENGTH} characters long.`))
             }
-        
+
             if (categoryDescription.length > CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH) {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`categoryDescription cannot be more than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH} characters long.`))
@@ -1487,7 +1493,7 @@ class TempController {
                 deleteFile();
                 return resolve(HTTPWTHandler.badInput(`categoryDescription must have less than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LINES} lines.`))
             }
-        
+
             console.log('File has been recieved: ', file.filename)
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
@@ -1496,7 +1502,7 @@ class TempController {
                             imageHandler.compressImage(file.filename).then(imageKey => {
                                 const newCategoryObject = {
                                     imageKey,
-                                    categoryTitle: categoryTitle, 
+                                    categoryTitle: categoryTitle,
                                     categoryDescription: categoryDescription,
                                     categoryTags: categoryTags,
                                     NSFW: categoryNSFW,
@@ -1554,7 +1560,7 @@ class TempController {
                         } else {
                             deleteFile()
                             return resolve(HTTPWTHandler.conflict('A category with the chosen title already exists.'))
-                        }   
+                        }
                     }).catch(error => {
                         deleteFile()
                         console.error('An error occured while seeing if a category title already exists or not. The title to be checked was:', categoryTitle, '. The error was:', error)
@@ -1610,13 +1616,16 @@ class TempController {
                                         deleteMany: {
                                             filter: {postId: {$eq: postId}, postFormat: "Image"}
                                         }
-                                    },
-                                    {
+                                    }
+                                ];
+
+                                if (commentIds.length < 1) {
+                                    upvoteBulkUpdates.push({
                                         deleteMany: {
                                             filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                         }
-                                    }
-                                ];
+                                    })
+                                }
 
                                 Upvote.bulkWrite(upvoteBulkUpdates, {session}).then(() => {
                                     const downvoteBulkUpdates = [
@@ -1624,13 +1633,16 @@ class TempController {
                                             deleteMany: {
                                                 filter: {postId: {$eq: postId}, postFormat: "Image"}
                                             }
-                                        },
-                                        {
+                                        }
+                                    ];
+
+                                    if (commentIds.length < 1) {
+                                        downvoteBulkUpdates.push({
                                             deleteMany: {
                                                 filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                             }
-                                        }
-                                    ];
+                                        })
+                                    }
 
                                     Downvote.bulkWrite(downvoteBulkUpdates, {session}).then(() => {
                                         Comment.deleteMany({postId: {$eq: postId}, postFormat: "Image"}, {session}).then(() => {
@@ -1695,66 +1707,66 @@ class TempController {
             if (typeof categoryTitle !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryTitle must be a string. Provided type: ${typeof categoryTitle}`))
             }
-            
+
             if (typeof categoryDescription !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryDescription must be a string. Provided type: ${typeof categoryDescription}`))
             }
-        
+
             if (typeof categoryTags !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryTags must be a string. Provided type: ${typeof categoryTags}`))
             }
-        
+
             if (typeof categoryNSFW !== 'boolean' && categoryNSFW !== "false" && categoryNSFW !== "true") {
                 return resolve(HTTPWTHandler.badInput('categoryNSFW must either be a boolean, "false", or "true"'))
             }
-            
+
             if (typeof categoryNSFL !== 'boolean' && categoryNSFL !== "false" && categoryNSFL !== "true") {
                 return resolve(HTTPWTHandler.badInput('categoryNSFL must either be a boolean, "false" or "true"'))
             }
-        
+
             if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
                 return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false" or "true"'))
             }
-        
+
             if (categoryNSFW === "false") {
                 categoryNSFW = false;
             }
-        
+
             if (categoryNSFW === "true") {
                 categoryNSFW = true;
             }
-        
+
             if (categoryNSFL === "false") {
                 categoryNSFL = false;
             }
-        
+
             if (categoryNSFL === "true") {
                 categoryNSFL = true;
             }
-        
+
             if (sentAllowScreenShots === "false") {
                 sentAllowScreenShots = false;
             }
-            
+
             if (sentAllowScreenShots === "true") {
                 sentAllowScreenShots = true;
             }
-        
+
             categoryTitle = categoryTitle.trim()
             categoryDescription = categoryDescription.trim()
-        
+
             if (categoryTitle.length == 0) {
                 return resolve(HTTPWTHandler.badInput('categoryTitle must not be blank'))
             }
-        
+
             if (categoryDescription.length == 0) {
                 return resolve(HTTPWTHandler.badInput('categoryDescription must not be blank'))
             }
-        
+
             if (categoryTitle.length > CONSTANTS.MAX_CATEGORY_TITLE_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`categoryTitle cannot be more than ${CONSTANTS.MAX_CATEGORY_TITLE_LENGTH} characters long.`))
             }
-        
+
             if (categoryDescription.length > CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`categoryDescription cannot be more than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH} characters long.`))
             }
@@ -1766,14 +1778,14 @@ class TempController {
             if (!CONSTANTS.VALID_CATEGORY_DESCRIPTION_TEST.test(categoryDescription)) {
                 return resolve(HTTPWTHandler.badInput(`categoryDescription must have less than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LINES} lines.`))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
                     Category.findOne({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).lean().then(categoryFound => {
                         if (!categoryFound) { // category title not already used so allow it
                             const newCategoryObject = {
                                 imageKey: "",
-                                categoryTitle: categoryTitle, 
+                                categoryTitle: categoryTitle,
                                 categoryDescription: categoryDescription,
                                 categoryTags: categoryTags,
                                 NSFW: categoryNSFW,
@@ -1783,7 +1795,7 @@ class TempController {
                                 datePosted: Date.now(),
                                 allowScreenShots: sentAllowScreenShots
                             }
-        
+
                             const newCategory = new Category(newCategoryObject);
 
                             mongoose.startSession().then(session => {
@@ -1823,7 +1835,7 @@ class TempController {
                             })
                         } else {
                             return resolve(HTTPWTHandler.conflict('A category with this name already exists.'))
-                        }   
+                        }
                     }).catch(error => {
                         console.error("An error occurred while doing regex ^categoryTitle with $options: 'i'. Category title was:", categoryTitle, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while checking if a category already exists with your desired category title. Please try again.'))
@@ -1851,7 +1863,7 @@ class TempController {
             if (typeof val !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
             }
-        
+
             if (val.length == 0) {
                 return resolve(HTTPWTHandler.badInput('Search box cannot be empty!'))
             }
@@ -1897,12 +1909,12 @@ class TempController {
                                 categoryId: String(category._id)
                             }
                         })
-    
+
                         const toSend = {
                             categories,
                             noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
                         }
-    
+
                         return resolve(HTTPWTHandler.OK('Search successful', toSend))
                     }).catch(error => {
                         console.error('An error occurred while counting CategoryMember documents. The categoryIds were:', data.map(category => category._id), '. The error was:', error)
@@ -1924,11 +1936,11 @@ class TempController {
             if (typeof val !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
             }
-        
+
             if (val.length == 0) {
                 return resolve(HTTPWTHandler.badInput('val cannot be an empty string.'))
             }
-        
+
             Category.findOne({categoryTitle: {$eq: val}}).lean().then(data =>{
                 if (data) {
                     var categoryImageKey = data.imageKey
@@ -2022,7 +2034,7 @@ class TempController {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
             }
-        
+
             if (pubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
@@ -2034,7 +2046,7 @@ class TempController {
             if (typeof previousCategoryMemberId === 'string' && !mongoose.isObjectIdOrHexString(previousCategoryMemberId)) {
                 return resolve(HTTPWTHandler.badInput('previousCategoryMemberId must be an ObjectId string or undefined.'))
             }
-            
+
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
                 if (result) {
                     User.findOne({_id: {$eq: userId}}).lean().then(userRequestingCategories => {
@@ -2131,7 +2143,7 @@ class TempController {
             if (typeof categoryId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Provided type: ${typeof categoryId}`))
             }
-        
+
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
@@ -2221,64 +2233,64 @@ class TempController {
             if (typeof threadTitle !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadTitle must be a string. Provided type: ${typeof threadTitle}`))
             }
-        
+
             if (typeof threadSubtitle !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadSubtitle must be a string. Provided type: ${typeof threadSubtitle}`))
             }
-        
+
             if (typeof threadTags !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadTags must be a string. Provided type: ${typeof threadTags}`))
             }
-        
+
             if (typeof threadCategoryId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadCategoryId must be a string. Provided type: ${typeof threadCategoryId}`))
             }
-        
+
             if (typeof threadBody !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadBody must be a string. Provided type: ${typeof threadBody}`))
             }
-        
+
             if (typeof threadNSFW !== 'boolean' && threadNSFW !== "false" && threadNSFW !== "true") {
                 return resolve(HTTPWTHandler.badInput('threadNSFW must either be a boolean, "false", or "true"'))
             }
-        
+
             if (typeof threadNSFL !== 'boolean' && threadNSFL !== "false" && threadNSFL !== "true") {
                 return resolve(HTTPWTHandler.badInput('threadNSFL must either be a boolean, "false", or "true"'))
             }
-        
+
             if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
                 return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false", or "true"'))
             }
-        
+
             if (threadNSFW === "false") {
                 threadNSFW = false;
             }
-        
+
             if (threadNSFL === "true") {
                 threadNSFW = true;
             }
-        
+
             if (threadNSFL === "false") {
                 threadNSFL = false;
             }
-        
+
             if (threadNSFL === "true") {
                 threadNSFL = true;
             }
-        
+
             if (sentAllowScreenShots === "false") {
                 sentAllowScreenShots = false;
             }
-        
+
             if (sentAllowScreenShots === "true") {
                 sentAllowScreenShots = true;
             }
-        
+
             threadBody = threadBody.trim();
             threadTitle = threadTitle.trim();
             threadSubtitle = threadSubtitle.trim();
             threadTags = threadTags.trim();
-        
+
             if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
                 return resolve(HTTPWTHandler.badInput(`threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`))
             }
@@ -2286,7 +2298,7 @@ class TempController {
             if (!CONSTANTS.VALID_THREAD_TITLE_TEST.test(threadTitle)) {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
-        
+
             if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
                 return resolve(HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`))
             }
@@ -2294,7 +2306,7 @@ class TempController {
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_SUBTITLE_FAILED_TEST_ERROR_MESSAGE))
             }
-        
+
             if (threadBody.length > CONSTANTS.MAX_THREAD_BODY_LENGTH || threadBody.length == 0) {
                 return resolve(HTTPWTHandler.badInput(`threadBody must be between 1 and ${CONSTANTS.MAX_THREAD_BODY_LENGTH} characters long`))
             }
@@ -2302,7 +2314,7 @@ class TempController {
             if (!CONSTANTS.VALID_THREAD_BODY_TEST.test(threadBody)) {
                 return resolve(HTTPWTHandler.badInput(`threadBody must have less than ${CONSTANTS.MAX_THREAD_BODY_LINES} lines.`))
             }
-        
+
             if (threadTags.length > CONSTANTS.MAX_THREAD_TAGS_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`))
             }
@@ -2310,22 +2322,22 @@ class TempController {
             if (!CONSTANTS.VALID_THREAD_TAGS_TEST.test(threadTags)) {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
                     Category.findOne({_id: {$eq: threadCategoryId}}).then(data => {
                         if (data) {
                             const categoryNSFW = data.NSFW;
                             const categoryNSFL = data.NSFL;
-        
+
                             if (threadNSFW && !categoryNSFW && !categoryNSFL) {
                                 return resolve(HTTPWTHandler.forbidden('NSFW thread posts cannot be posted in non-NSFW categories.'))
                             }
-        
+
                             if (threadNSFL && !categoryNSFL) {
                                 return resolve(HTTPWTHandler.forbidden('NSFL thread posts cannot be posted in non-NSFL categories.'))
                             }
-        
+
                             //allowScreenShots set up
                             const allowScreenShots = data.allowScreenShots ? sentAllowScreenShots : false;
                             console.log(`allowScreenShots ${allowScreenShots}`)
@@ -2348,7 +2360,7 @@ class TempController {
                             };
 
                             const newThread = new Thread(newThreadObject);
-        
+
                             newThread.save().then(() => {
                                 return resolve(HTTPWTHandler.OK('Creation successful'))
                             })
@@ -2378,7 +2390,7 @@ class TempController {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file sent.'))
             }
-        
+
             const deleteImage = () => {
                 imageHandler.deleteMulterTempImage(file.filename)
             }
@@ -2392,77 +2404,77 @@ class TempController {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
-        
+
             if (typeof threadTitle !== 'string') {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(`threadTitle must be a string. Provided type: ${typeof threadTitle}`))
             }
-        
+
             if (typeof threadSubtitle !== 'string') {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(`threadSubtitle must be a string. Provided type: ${typeof threadSubtitle}`))
             }
-        
+
             if (typeof threadTags !== 'string') {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(`threadTags must be a string. Provided type: ${typeof threadTags}`))
             }
-        
+
             if (typeof threadCategoryId !== 'string') {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(`threadCategoryId must be a string. Provided type: ${typeof threadCategoryId}`))
             }
-        
+
             if (typeof threadImageDescription !== 'string') {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(`threadImageDescription must be a string. Provided type: ${typeof threadImageDescription}`))
             }
-        
+
             if (typeof threadNSFW !== 'boolean' && threadNSFW !== "false" && threadNSFW !== "true") {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput('threadNSFW must either be a boolean, "false", or "true"'))
             }
-        
+
             if (typeof threadNSFL !== 'boolean' && threadNSFL !== "false" && threadNSFL !== "true") {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput('threadNSFL must either be a boolean, "false", or "true"'))
             }
-        
+
             if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false", or "true"'))
             }
-        
+
             if (threadNSFW === "false") {
                 threadNSFW = false
             }
-        
+
             if (threadNSFW === "true") {
                 threadNSFW = true
             }
-        
+
             if (threadNSFL === "false") {
                 threadNSFL = false
             }
-        
+
             if (threadNSFL === "true") {
                 threadNSFL = true
             }
-        
+
             if (sentAllowScreenShots === "false") {
                 sentAllowScreenShots = false
             }
-        
+
             if (sentAllowScreenShots === "true") {
                 sentAllowScreenShots = true
             }
-        
+
             threadTitle = threadTitle.trim();
             threadSubtitle = threadSubtitle.trim();
             threadTags = threadTags.trim();
             threadCategoryId = threadCategoryId.trim();
             threadImageDescription = threadImageDescription.trim();
-        
+
             if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
                 deleteImage()
                 return HTTPHandler.badInput(res, `threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`)
@@ -2472,7 +2484,7 @@ class TempController {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
-        
+
             if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
                 deleteImage()
                 return HTTPHandler.badInput(res, `threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`)
@@ -2482,7 +2494,7 @@ class TempController {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_SUBTITLE_FAILED_TEST_ERROR_MESSAGE))
             }
-        
+
             if (threadTags.length > CONSTANTS.MAX_THREAD_TAGS_LENGTH) {
                 deleteImage()
                 return HTTPHandler.badInput(res, `threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`)
@@ -2492,7 +2504,7 @@ class TempController {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE))
             }
-        
+
             if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH || threadImageDescription.length == 0) {
                 deleteImage()
                 return HTTPHandler.badInput(res, `threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`)
@@ -2502,7 +2514,7 @@ class TempController {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE))
             }
-        
+
             console.log('File has been recieved: ', file.filename)
             console.log(userId)
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
@@ -2511,17 +2523,17 @@ class TempController {
                         if (data) {
                             const categoryNSFW = data.NSFW;
                             const categoryNSFL = data.NSFL;
-        
+
                             if (threadNSFW && !categoryNSFW && !categoryNSFL) {
                                 deleteImage()
                                 return resolve(HTTPWTHandler.forbidden('NSFW thread posts cannot be posted in non-NSFW categories.'))
                             }
-        
+
                             if (threadNSFL && !categoryNSFL) {
                                 deleteImage()
                                 return resolve(HTTPWTHandler.forbidden('NSFL thread posts cannot be posted in non-NSFL categories.'))
                             }
-        
+
                             imageHandler.compressImage(file.filename).then(imageKey => {
                                 const newThreadObject = {
                                     threadType: "Images",
@@ -2541,7 +2553,7 @@ class TempController {
                                 };
 
                                 const newThread = new Thread(newThreadObject);
-        
+
                                 newThread.save().then(() => {
                                     return resolve(HTTPWTHandler.OK('Creation successful'))
                                 })
@@ -2596,7 +2608,7 @@ class TempController {
 
             User.findOne({_id: {$eq: userId}}).lean().then(userRequesting => {
                 if (userRequesting) {
-                    Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{ 
+                    Category.findOne({_id: {$eq: categoryId}}).lean().then(data =>{
                         if (data) {
                             Thread.find({threadCategoryId: {$eq: categoryId}}).lean().then(result => {
                                 if (result) {
@@ -2749,7 +2761,7 @@ class TempController {
             if (typeof threadId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
             }
-        
+
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
@@ -2757,10 +2769,10 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(threadId)) {
                 return resolve(HTTPWTHandler.badInput('threadId must be an ObjectId.'))
             }
-        
+
             Thread.findOne({_id: {$eq: threadId}}).lean().then(result => {
                 if (result) {
-                    Category.findOne({_id: result.threadCategoryId}).lean().then(data =>{ 
+                    Category.findOne({_id: result.threadCategoryId}).lean().then(data =>{
                         if (data) {
                             var categoryImageKey = data.imageKey
                             if (data.imageKey == "") {
@@ -2825,7 +2837,7 @@ class TempController {
             if (typeof threadId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`threadId must be a string. Provided type: ${typeof threadId}`))
             }
-        
+
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
@@ -2847,20 +2859,23 @@ class TempController {
 
                         mongoose.startSession().then(session => {
                             session.startTransaction();
-                            
+
                             Thread.deleteOne({_id: {$eq: threadId}}, {session}).then(() => {
                                 const upvoteBulkUpdates = [
                                     {
                                         deleteMany: {
                                             filter: {postId: {$eq: threadId}, postFormat: "Thread"}
                                         }
-                                    },
-                                    {
+                                    }
+                                ];
+
+                                if (commentIds.length < 1) {
+                                    upvoteBulkUpdates.push({
                                         deleteMany: {
                                             filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                         }
-                                    }
-                                ];
+                                    })
+                                }
 
                                 Upvote.bulkWrite(upvoteBulkUpdates, {session}).then(() => {
                                     const downvoteBulkUpdates = [
@@ -2868,13 +2883,16 @@ class TempController {
                                             deleteMany: {
                                                 filter: {postId: {$eq: threadId}, postFormat: "Thread"}
                                             }
-                                        },
-                                        {
+                                        }
+                                    ];
+
+                                    if (commentIds.length < 1) {
+                                        downvoteBulkUpdates.push({
                                             deleteMany: {
                                                 filter: {postId: {$in: commentIds}, postFormat: "Comment"}
                                             }
-                                        }
-                                    ];
+                                        })
+                                    }
 
                                     Downvote.bulkWrite(downvoteBulkUpdates, {session}).then(() => {
                                         Comment.deleteMany({postId: {$eq: threadId}, postFormat: "Thread"}, {session}).then(() => {
@@ -2939,11 +2957,11 @@ class TempController {
             if (typeof userToFollowPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToFollowPubId must be a string. Provided type: ${typeof userToFollowPubId}`))
             }
-        
+
             if (userToFollowPubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('userToFollowPubId cannot be a blank string.'))
             }
-        
+
             //Check for userId validity and get user for their pub Id
             User.findOne({_id: {$eq: userId}}).lean().then(userFollowingFound => {
                 if (userFollowingFound) {
@@ -2978,7 +2996,7 @@ class TempController {
                                         }
                                     }
                                 ]
-    
+
                                 User.bulkWrite(dbUpdates, {session}).then(() => {
                                     mongooseSessionHelper.commitTransaction(session).then(() => {
                                         return resolve(HTTPWTHandler.OK('UnFollowed user'))
@@ -3045,7 +3063,7 @@ class TempController {
                                             }
                                         }
                                     ]
-    
+
                                     User.bulkWrite(dbUpdates, {session}).then(() => {
                                         var notifMessage = {
                                             title: "New Follower",
@@ -3097,7 +3115,7 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
-            
+
             if (typeof usersPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`usersPubId must be a string. Provided type: ${typeof usersPubId}`))
             }
@@ -3109,7 +3127,7 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userSearching => {
                 if (userSearching) {
                     const userSearchingPubId = userSearching.secondId;
-        
+
                     User.findOne({secondId: {$eq: usersPubId}}).lean().then(userData => {
                         if (userData) {
                             //could do a user search ig but no need really
@@ -3126,58 +3144,58 @@ class TempController {
                                     badges: userData.badges,
                                     privateAccount: !!userData.privateAccount
                                 };
-        
+
                                 if (userData.privateAccount == true) {
                                     if (userData.accountFollowRequests.includes(userSearchingPubId)) {
                                         //User has requested to follow this account
-        
+
                                         const toSend = {
                                             ...userDataToSend,
                                             userIsFollowing: 'Requested'
                                         }
-        
+
                                         return resolve(HTTPWTHandler.OK('Found', toSend))
                                     } else {
                                         //User has not requested to follow this private account
                                         if (userData.followers.includes(userSearchingPubId)) {
                                             // User is following this account
-        
+
                                             const toSend = {
                                                 ...userDataToSend,
                                                 userIsFollowing: true
                                             }
-        
+
                                             return resolve(HTTPWTHandler.OK('Found', toSend))
                                         } else {
                                             //User is not following this private account
-        
+
                                             const toSend = {
                                                 ...userDataToSend,
                                                 userIsFollowing: false
                                             }
-        
+
                                             return resolve(HTTPWTHandler.OK('Found', toSend))
                                         }
                                     }
                                 } else {
                                     if (userData.followers.includes(userSearchingPubId)) {
-        
+
                                         const toSend = {
                                             ...userDataToSend,
                                             userIsFollowing: true
                                         }
-        
+
                                         return resolve(HTTPWTHandler.OK('Found', toSend))
                                     } else {
-        
+
                                         const toSend = {
                                             ...userDataToSend,
                                             userIsFollowing: false
                                         }
-        
+
                                         return resolve(HTTPWTHandler.OK('Found', toSend))
-                                    }    
-                                }      
+                                    }
+                                }
                             }
                         } else {
                             return resolve(HTTPWTHandler.notFound('Could not find user with pubId'))
@@ -3254,11 +3272,11 @@ class TempController {
             if (typeof pubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
             }
-        
+
             if (pubId.length === 0) {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(requestingUser => {
                 if (requestingUser) {
                     User.findOne({secondId: {$eq: pubId}}).lean().then(userFound => {
@@ -3408,6 +3426,10 @@ class TempController {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
 
                 if (Array.isArray(userFound.accountFollowRequests)) {
+                    if (userFound.accountFollowRequests.length < 1) {
+                        return resolve(HTTPWTHandler.OK('No account follow requests', {requesters: [], noMoreItems: true, skip: 0}))
+                    }
+
                     const {items, noMoreItems} = arrayHelper.returnSomeItems(userFound.accountFollowRequests, parsedSkip, CONSTANTS.MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL);
 
                     User.find({secondId: {$in: items}}).lean().then(users => {
@@ -3427,7 +3449,7 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding account follow requests. Please try again.'))
                     })
                 } else {
-                    return resolve(HTTPWTHandler.OK('accountFollowRequests is not an array - there are no requests', []))
+                    return resolve(HTTPWTHandler.OK('accountFollowRequests is not an array - there are no requests', {requesters: [], noMoreItems: true, skip: 0}))
                 }
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -3445,15 +3467,15 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
-            
+
             if (typeof accountFollowRequestDeniedPubID !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`accountFollowRequestDeniedPubID must be a string. Provided type: ${typeof accountFollowRequestDeniedPubID}`))
             }
-        
+
             if (accountFollowRequestDeniedPubID.length == 0) {
                 return resolve(HTTPWTHandler.badInput('accountFollowRequestDeniedPubID cannot be a blank string.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     if (userFound.accountFollowRequests.includes(accountFollowRequestDeniedPubID)) {
@@ -3489,21 +3511,21 @@ class TempController {
             if (typeof accountFollowRequestAcceptedPubID !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`accountFollowRequestAcceptedPubID must be a string. Provided type: ${typeof accountFollowRequestAcceptedPubID}`))
             }
-        
+
             if (accountFollowRequestAcceptedPubID.length == 0) {
                 return resolve(HTTPWTHandler.badInput('accountFollowRequestAcceptedPubID cannot be a blank string.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-        
+
                 if (!userFound.accountFollowRequests?.includes(accountFollowRequestAcceptedPubID)) {
                     //The follow request was not found in the user's list of follow requests
                     return resolve(HTTPWTHandler.notFound('Follow request could not be found.'))
                 }
-        
+
                 const dbUpdates = [
                     {
                         updateOne: {
@@ -3558,11 +3580,11 @@ class TempController {
             if (typeof userToRemovePubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToRemovePubId must be a string. Provided type: ${typeof userToRemovePubId}`))
             }
-        
+
             if (userToRemovePubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('userToRemovePubId cannot be a blank string.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
@@ -3571,7 +3593,7 @@ class TempController {
                 if (!userFound.followers.includes(userToRemovePubId)) {
                     return resolve(HTTPWTHandler.notFound("This user doesn't follow you"))
                 }
-        
+
                 User.findOne({secondId: {$eq: userToRemovePubId}}).lean().then(userToRemoveFound => {
                     if (!userToRemoveFound) {
                         User.findOneAndUpdate({_id: {$eq: userId}}, {$pull: {followers: userToRemovePubId}}).then(() => {
@@ -3581,7 +3603,7 @@ class TempController {
                             return resolve(HTTPWTHandler.serverError('An error occurred while removing follower. Please try again.'))
                         })
                     }
-        
+
                     const dbUpdates = [
                         {
                             updateOne: {
@@ -3640,21 +3662,21 @@ class TempController {
             if (typeof userToBlockPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToBlockPubId must be a string. Provided type: ${typeof userToBlockPubId}`))
             }
-        
+
             if (userToBlockPubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('userToBlockPubId cannot be an empty string.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
                 }
-        
+
                 User.findOne({secondId: {$eq: userToBlockPubId}}).lean().then(userToBlockFound => {
                     if (!userToBlockFound) {
                         return resolve(HTTPWTHandler.notFound('User to block could not be found'))
                     }
-        
+
                     const dbUpdates = [
                         {
                             updateOne: {
@@ -3750,15 +3772,15 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
             }
-            
+
             if (typeof userToUnblockPubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userToUnblockPubId must be a string. Provided type: ${typeof userToUnblockPubId}`))
             }
-        
+
             if (userToUnblockPubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('userToUnblockPubId must not be an empty string.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     User.findOneAndUpdate({_id: {$eq: userId}}, {$pull: {blockedAccounts: userToUnblockPubId}}).then(() => {
@@ -3791,7 +3813,7 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
                 }
-        
+
                 let newSettings = {...userFound.settings};
                 newSettings.algorithmSettings.enabled = true;
                 User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
@@ -3820,7 +3842,7 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-        
+
                 return resolve(HTTPWTHandler.OK('Authentication factors found.', {authenticationFactorsEnabled: userFound.authenticationFactorsEnabled, MFAEmail: userFound.MFAEmail ? blurEmailFunction(userFound.MFAEmail) : null}))
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -3843,7 +3865,7 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-        
+
                 let newSettings = {...userFound.settings}
                 newSettings.algorithmSettings.enabled = false;
 
@@ -3874,7 +3896,7 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-        
+
                 const sendBackForReload = userHandler.filterUserInformationToSend(userFound)
                 return resolve(HTTPWTHandler.OK('Reload Information Successful.', sendBackForReload))
             }).catch(err => {
@@ -3904,7 +3926,7 @@ class TempController {
                             text: `Email Multi-Factor authentication has now been turned off for your account. If you did not request for this to happen, someone else may be logged into your account. If so, change your password immediately.`,
                             html: `<p>Email Multi-Factor authentication has now been turned off for your account. If you did not request for this to happen, someone else may be logged into your account. If so, change your password immediately.</p>`
                         };
-        
+
                         mailTransporter.sendMail(emailData, function(error, response) {
                             if (error) {
                                 console.error('An error occured while sending an email to user with ID:', userId, '. The error was:', error, ' The emailData was:', emailData)
@@ -3940,10 +3962,11 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
                 }
-        
+
                 PopularPosts.findOne({}).lean().then(async popularPostDocument => {
                     const popularPosts = popularPostDocument.popularPosts
                     const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userId)
+
 
                     Promise.all([
                         ImagePost.find({creatorId: {$eq: userId}}, 'imageKey').lean(),
@@ -3955,9 +3978,9 @@ class TempController {
                         const threadPostIds = threadPosts.map(post => String(post._id))
 
                         Promise.all([
-                            Comment.find({postId: {$in: imagePostIds}, postFormat: "Image"}, '_id').lean(),
-                            Comment.find({postId: {$in: pollPostIds}, postFormat: "Poll"}, '_id').lean(),
-                            Comment.find({postId: {$in: threadPostIds}, postFormat: "Thread"}, '_id').lean()
+                            imagePostIds.length > 0 ? Comment.find({postId: {$in: imagePostIds}, postFormat: "Image"}, '_id').lean() : Promise.resolve([]),
+                            pollPostIds.length > 0 ? Comment.find({postId: {$in: pollPostIds}, postFormat: "Poll"}, '_id').lean() : Promise.resolve([]),
+                            threadPostIds.length > 0 ? Comment.find({postId: {$in: threadPostIds}, postFormat: "Thread"}, '_id').lean() : Promise.resolve([])
                         ]).then(([imageCommentIds, pollCommentIds, threadCommentIds]) => {
                             const imageKeys = imagePosts.map(post => post.imageKey)
                             const threadImageKeys = threadPosts.filter(post => post.threadType === "Images").map(post => post.threadImageKey)
@@ -3973,13 +3996,16 @@ class TempController {
                                                     deleteMany: {
                                                         filter: {userId: {$eq: userId}}
                                                     }
-                                                },
-                                                {
+                                                }
+                                            ]
+
+                                            if (pollPostIds.length > 0) {
+                                                pollVoteBulkWrites.push({
                                                     deleteMany: {
                                                         filter: {postId: {$in: pollPostIds}}
                                                     }
-                                                }
-                                            ]
+                                                })
+                                            }
 
                                             PollVote.bulkWrite(pollVoteBulkWrites, {session}).then(() => {
                                                 Thread.deleteMany({creatorId: {$eq: userId}}, {session}).then(() => {
@@ -4022,38 +4048,56 @@ class TempController {
                                                                     deleteMany: {
                                                                         filter: {userPublicId: userFound.secondId}
                                                                     }
-                                                                },
-                                                                {
+                                                                }
+                                                            ];
+
+                                                            if (imageCommentIds.length > 0) {
+                                                                downvoteBulkWrites.push({
                                                                     deleteMany: {
                                                                         filter: {postId: {$in: imageCommentIds}, postFormat: "Comment"}
                                                                     }
-                                                                },
-                                                                {
+                                                                })
+                                                            }
+
+                                                            if (pollCommentIds.length > 0) {
+                                                                downvoteBulkWrites.push({
                                                                     deleteMany: {
                                                                         filter: {postId: {$in: pollCommentIds}, postFormat: "Comment"}
                                                                     }
-                                                                },
-                                                                {
+                                                                })
+                                                            }
+
+                                                            if (threadCommentIds.length > 0) {
+                                                                downvoteBulkWrites.push({
                                                                     deleteMany: {
                                                                         filter: {postId: {$in: threadCommentIds}, postFormat: "Comment"}
                                                                     }
-                                                                },
-                                                                {
+                                                                })
+                                                            }
+
+                                                            if (imagePostIds.length > 0) {
+                                                                downvoteBulkWrites.push({
                                                                     deleteMany: {
                                                                         filter: {postId: {$in: imagePostIds}, postFormat: "Image"}
                                                                     }
-                                                                },
-                                                                {
+                                                                })
+                                                            }
+
+                                                            if (pollPostIds.length > 0) {
+                                                                downvoteBulkWrites.push({
                                                                     deleteMany: {
                                                                         filter: {postId: {$in: pollPostIds}, postFormat: "Poll"}
                                                                     }
-                                                                },
-                                                                {
+                                                                })
+                                                            }
+
+                                                            if (threadPostIds.length > 0) {
+                                                                downvoteBulkWrites.push({
                                                                     deleteMany: {
                                                                         filter: {postId: {$in: threadPostIds}, postFormat: "Thread"}
                                                                     }
-                                                                }
-                                                            ];
+                                                                })
+                                                            }
 
                                                             Downvote.bulkWrite(downvoteBulkWrites, {session}).then(() => {
                                                                 const upvoteBulkWrites = [
@@ -4061,44 +4105,62 @@ class TempController {
                                                                         deleteMany: {
                                                                             filter: {userPublicId: userFound.secondId}
                                                                         }
-                                                                    },
-                                                                    {
+                                                                    }
+                                                                ];
+
+                                                                if (imageCommentIds.length > 0) {
+                                                                    upvoteBulkWrites.push({
                                                                         deleteMany: {
                                                                             filter: {postId: {$in: imageCommentIds}, postFormat: "Comment"}
                                                                         }
-                                                                    },
-                                                                    {
+                                                                    })
+                                                                }
+
+                                                                if (pollCommentIds.length > 0) {
+                                                                    upvoteBulkWrites.push({
                                                                         deleteMany: {
                                                                             filter: {postId: {$in: pollCommentIds}, postFormat: "Comment"}
                                                                         }
-                                                                    },
-                                                                    {
+                                                                    })
+                                                                }
+
+                                                                if (threadCommentIds.length > 0) {
+                                                                    upvoteBulkWrites.push({
                                                                         deleteMany: {
                                                                             filter: {postId: {$in: threadCommentIds}, postFormat: "Comment"}
                                                                         }
-                                                                    },
-                                                                    {
+                                                                    })
+                                                                }
+
+                                                                if (imagePostIds.length > 0) {
+                                                                    upvoteBulkWrites.push({
                                                                         deleteMany: {
                                                                             filter: {postId: {$in: imagePostIds}, postFormat: "Image"}
                                                                         }
-                                                                    },
-                                                                    {
+                                                                    })
+                                                                }
+
+                                                                if (pollPostIds.length > 0) {
+                                                                    upvoteBulkWrites.push({
                                                                         deleteMany: {
                                                                             filter: {postId: {$in: pollPostIds}, postFormat: "Poll"}
                                                                         }
-                                                                    },
-                                                                    {
+                                                                    })
+                                                                }
+
+                                                                if (threadPostIds.length > 0) {
+                                                                    upvoteBulkWrites.push({
                                                                         deleteMany: {
                                                                             filter: {postId: {$in: threadPostIds}, postFormat: "Thread"}
                                                                         }
-                                                                    }
-                                                                ];
+                                                                    })
+                                                                }
 
                                                                 Upvote.bulkWrite(upvoteBulkWrites, {session}).then(() => {
                                                                     const accountReportsBulkWrite = [
                                                                         {
                                                                             deleteMany: {
-                                                                                filter: {}
+                                                                                filter: {reporterId: {$eq: userId}}
                                                                             }
                                                                         },
                                                                         {
@@ -4114,23 +4176,32 @@ class TempController {
                                                                                 deleteMany: {
                                                                                     filter: {reporterId: {$eq: userId}}
                                                                                 }
-                                                                            },
-                                                                            {
+                                                                            }
+                                                                        ];
+
+                                                                        if (imagePostIds.length > 0) {
+                                                                            postReportsBulkWrite.push({
                                                                                 deleteMany: {
                                                                                     filter: {postId: {$in: imagePostIds}}
                                                                                 }
-                                                                            },
-                                                                            {
+                                                                            })
+                                                                        }
+
+                                                                        if (pollPostIds.length > 0) {
+                                                                            postReportsBulkWrite.push({
                                                                                 deleteMany: {
                                                                                     filter: {postId: {$in: pollPostIds}}
                                                                                 }
-                                                                            },
-                                                                            {
+                                                                            })
+                                                                        }
+
+                                                                        if (threadPostIds.length > 0) {
+                                                                            postReportsBulkWrite.push({
                                                                                 deleteMany: {
                                                                                     filter: {postId: {$in: threadPostIds}}
                                                                                 }
-                                                                            }
-                                                                        ];
+                                                                            })
+                                                                        }
 
                                                                         PostReports.bulkWrite(postReportsBulkWrite, {session}).then(() => {
                                                                             RefreshToken.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
@@ -4145,23 +4216,32 @@ class TempController {
                                                                                             filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
                                                                                             update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
                                                                                         }
-                                                                                    },
-                                                                                    {
+                                                                                    }
+                                                                                ];
+
+                                                                                if (imageCommentIds.length > 0) {
+                                                                                    commentBulkWrites.push({
                                                                                         deleteMany: {
                                                                                             filter: {_id: {$in: imageCommentIds}}
                                                                                         }
-                                                                                    },
-                                                                                    {
+                                                                                    })
+                                                                                }
+
+                                                                                if (pollCommentIds.length > 0) {
+                                                                                    commentBulkWrites.push({
                                                                                         deleteMany: {
                                                                                             filter: {_id: {$in: pollCommentIds}}
                                                                                         }
-                                                                                    },
-                                                                                    {
+                                                                                    })
+                                                                                }
+
+                                                                                if (threadCommentIds.length > 0) {
+                                                                                    commentBulkWrites.push({
                                                                                         deleteMany: {
                                                                                             filter: {_id: {$in: threadCommentIds}}
                                                                                         }
-                                                                                    }
-                                                                                ];
+                                                                                    })
+                                                                                }
 
                                                                                 Comment.bulkWrite(commentBulkWrites, {session}).then(() => {
                                                                                     CategoryMember.deleteMany({userId: {$eq: userId}}, {session}).then(() => {
@@ -4314,11 +4394,11 @@ class TempController {
             if (typeof notificationSettings !== 'object' || notificationSettings === null || Array.isArray(notificationSettings)) {
                 return resolve(HTTPWTHandler.badInput(`notificationSettings must be an object. Is null: ${notificationSettings === null} Is array: ${Array.isArray(notificationSettings)} Type provided: ${typeof notificationSettings}`))
             }
-        
+
             const allowedKeys = [
                 'GainsFollower'
             ]
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     for (let [key, value] of Object.entries(notificationSettings)) {
@@ -4326,7 +4406,7 @@ class TempController {
                             delete notificationSettings[key]
                         }
                     }
-        
+
                     const newUserSettings = {
                         ...userFound.settings,
                         notificationSettings: {
@@ -4334,7 +4414,7 @@ class TempController {
                             ...notificationSettings
                         }
                     }
-        
+
                     User.findOneAndUpdate({_id: {$eq: userID}}, {settings: newUserSettings}).then(function() {
                         return resolve(HTTPWTHandler.OK('Notification settings updated successfully.'))
                     }).catch(error => {
@@ -4365,9 +4445,9 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
                 }
-        
+
                 const toSend = {...DEFAULTS.userNotificationSettings, ...userFound?.settings?.notificationSettings || {}}
-        
+
                 return resolve(HTTPWTHandler.OK('Notification settings retrieved successfully.', toSend))
             }).catch(error => {
                 console.error('An error occurred while finding user with ID:', userId, '. The error was:', error)
@@ -4389,52 +4469,52 @@ class TempController {
             if (typeof reporteePubId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`reporteePubId must be a string. Provided type: ${typeof reporteePubId}`))
             }
-        
+
             if (reporteePubId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('reporteePubId cannot be a blank string.'))
             }
-        
+
             if (typeof reportType !== 'object' || Array.isArray(reportType) || reportType === null) {
                 return resolve(HTTPWTHandler.badInput(`reportType must be an object. Is array: ${Array.isArray(reportType)} Is null: ${reportType === null} Provided type: ${typeof reportType}`))
             }
-        
+
             if (!Object.hasOwn(reportType, 'topic')) {
                 return resolve(HTTPWTHandler.badInput(`reportType object must have a topic key`))
             }
-        
+
             if (!Object.hasOwn(reportType, 'subTopic')) {
                 return resolve(HTTPWTHandler.badInput(`reportType object must have a subTopic key`))
             }
-        
+
             if (!DEFAULTS.validReportOptions[reportType?.topic]?.includes(reportType?.subTopic)) {
                 return resolve(HTTPWTHandler.badInput('Invalid report options provided.'))
             }
-        
+
             User.findOne({_id: {$eq: reporterId}}).lean().then(reporterFound => {
                 if (!reporterFound) {
                     return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
                 }
-        
+
                 User.findOne({secondId: {$eq: reporteePubId}}).lean().then(reporteeFound => {
                     if (!reporteeFound) {
                         return resolve(HTTPWTHandler.notFound('Could not find user to report.'))
                     }
-        
+
                     if (String(reporterFound._id) === String(reporteeFound._id)) {
                         return resolve(HTTPWTHandler.forbidden('You cannot report yourself'))
                     }
-        
+
                     console.log(`Valid report passed by: ${reporterFound.name} about ${reporteeFound.name} with the reasoning being: ${reportType.topic}-${reportType.subTopic}`)
-        
+
                     const report = {
                         reportedAccountPubId: reporteePubId,
                         reporterId: reporterId,
                         topic: reportType.topic,
                         subTopic: reportType.subTopic
                     }
-        
+
                     const newUserReport = new AccountReports(report)
-                    
+
                     newUserReport.save().then(() => {
                         return resolve(HTTPWTHandler.OK('Successfully sent report'))
                     }).catch(error => {
@@ -4518,6 +4598,16 @@ class TempController {
 
             const lastVoteId = votes.length > 0 ? votes[votes.length - 1]._id.toString() : null
             const noMoreVotes = votes.length < CONSTANTS.GET_USER_ACTIVITY_API_LIMIT
+
+            if (votes.length < 1) {
+                const toSend = {
+                    posts: [],
+                    lastVoteId,
+                    noMoreVotes
+                }
+
+                return resolve(HTTPWTHandler.OK('Found no activity', toSend))
+            }
 
             const postIds = votes.map(vote => vote.postId)
 
@@ -4645,6 +4735,8 @@ class TempController {
                 }
 
                 CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoryMemberDocuments => {
+                    if (categoryMemberDocuments.length < 1) return resolve(HTTPWTHandler.OK('Successfully found no categories', {noMoreCategories: true, categories: []}))
+
                     const categoryIds = categoryMemberDocuments.map(doc => doc.categoryId)
                     Category.find({_id: {$in: categoryIds}}).then(categories => {
                         const categoriesToSend = categories.map((category, index) => {
@@ -4689,13 +4781,13 @@ class TempController {
             if (typeof reason !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`reason must be a string. Provided type: ${typeof reason}`))
             }
-        
+
             reason = reason.trim()
-        
+
             if (reason.length === 0) {
                 return resolve(HTTPWTHandler.badInput('You cannt leave the reason blank.'))
             }
-        
+
             try {
                 if (await User.findOne({_id: {$eq: reporterId}}) == null) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
@@ -4797,9 +4889,9 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-        
+
                 const toSend = {...DEFAULTS.userAlgorithmSettings, ...userFound?.settings?.algorithmSettings || {}}
-        
+
                 return resolve(HTTPWTHandler.OK('Algorithm settings retrieved successfully.', toSend))
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -4821,11 +4913,11 @@ class TempController {
             if (typeof algorithmSettings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`algorithmSettings must be an object. Provided type: ${typeof algorithmSettings}`))
             }
-        
+
             if (Array.isArray(algorithmSettings)) {
                 return resolve(HTTPWTHandler.badInput('algorithmSettings must be an object. Provided was an array.'))
             }
-        
+
             if (algorithmSettings === null) {
                 return resolve(HTTPWTHandler.badInput('algorithmSettings must be an object. Provided was null.'))
             }
@@ -4847,7 +4939,7 @@ class TempController {
                         newAlgorithmSettings.useUserFollowingData = algorithmSettings.useUserFollowingData;
                     }
                     newUserSettings.algorithmSettings = newAlgorithmSettings;
-        
+
                     User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newUserSettings}).then(function() {
                         return resolve(HTTPWTHandler.OK('Algorithm settings updated successfully.'))
                     }).catch(error => {
@@ -4897,40 +4989,40 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
             }
-            
+
             if (typeof settings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`settings must be an object. Provided type: ${typeof settings}`))
             }
-        
+
             if (Array.isArray(settings)) {
                 return resolve(HTTPWTHandler.badInput('Settings must be an object. Provided was an array.'))
             }
-        
+
             if (settings === null) {
                 return resolve(HTTPWTHandler.badInput('Settings must be an object. Provided was null.'))
             }
-        
+
             const allowedKeys = Object.keys(CONSTANTS.PRIVACY_SETTINGS_ALLOWED_VALUES)
-        
+
             for (let [key, value] of Object.entries(settings)) {
                 if (!allowedKeys.includes(key) || !CONSTANTS.PRIVACY_SETTINGS_ALLOWED_VALUES[key].includes(value)) {
                     console.log('Deleting key:', key, '  value:', value, '  from /tempRoute/savePrivacySettings')
                     delete settings[key]
                 }
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(user => {
                 if (user) {
                     const newPrivacySettings = {
                         ...user?.settings?.privacySettings,
                         ...settings
                     }
-        
+
                     const newSettings = {
                         ...user.settings,
                         privacySettings: newPrivacySettings
                     }
-        
+
                     User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
                         return resolve(HTTPWTHandler.OK('Successfully updated privacy settings'))
                     }).catch(error => {
@@ -4978,6 +5070,10 @@ class TempController {
             const sendItemsToUser = (array, userRequesting) => {
                 const limit = CONSTANTS.NUM_USERS_TO_SEND_PER_PROFILE_STATS_API_CALL;
                 const {items, noMoreItems} = arrayHelper.returnSomeItems(array, skip, limit)
+
+                if (items.length < 1) {
+                    return resolve(HTTPWTHandler.OK('Successfully found no users', {items: [], noMoreItems: true}))
+                }
 
                 User.find({secondId: {$in: items}}).lean().then(items => {
                     const newItems = [];
@@ -5052,10 +5148,10 @@ class TempController {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
                 }
-        
+
                 RefreshToken.find({admin: false, userId}).lean().then(encryptedRefreshTokens => {
                     const refreshTokens = []
-        
+
                     for (let i = 0; i < encryptedRefreshTokens.length; i++) {
                         let decryptedToken = `Bearer ${refreshTokenDecryption(encryptedRefreshTokens[i].encryptedRefreshToken)}`
                         if (decryptedToken == authRefreshTokenHeader) {
@@ -5064,7 +5160,7 @@ class TempController {
                             refreshTokens.push({refreshTokenId: String(encryptedRefreshTokens[i]._id), currentDevice: false, location: encryptedRefreshTokens[i].location, IP: encryptedRefreshTokens[i].IP, deviceType: encryptedRefreshTokens[i].deviceType, loginTime: encryptedRefreshTokens[i].createdAt})
                         }
                     }
-        
+
                     return resolve(HTTPWTHandler.OK('Found devices logged in to your account', refreshTokens))
                 }).catch(error => {
                     console.error('An error occurred while finding refresh tokens with admin set to false and userId set to:', userId, '. The error was:', error)
@@ -5090,16 +5186,16 @@ class TempController {
             if (typeof tokenToLogout !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`tokenToLogout must be a string. Provided type: ${typeof tokenToLogout}`))
             }
-        
+
             if (!mongoose.isObjectIdOrHexString(tokenToLogout)) {
                 return resolve(HTTPWTHandler.badInput('tokenToLogout must be an ObjectId.'))
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('User could not be found with provided userId'))
                 }
-        
+
                 RefreshToken.deleteOne({userId: {$eq: userId}, admin: false, _id: {$eq: tokenToLogout}}).then(result => {
                     if (result.deletedCount === 1) {
                         return resolve(HTTPWTHandler.OK('Successfully logged device out of your account.'))
@@ -5134,18 +5230,18 @@ class TempController {
             if (typeof tokenIdNotToLogout === 'string' && !mongoose.isObjectIdOrHexString(tokenIdNotToLogout)) {
                 return resolve(HTTPWTHander.badInput('tokenIdNotToLogout must be an ObjectId.'))
             }
-        
+
             const query = {userId: {$eq: userId}};
-        
+
             if (typeof tokenIdNotToLogout === 'string') {
                 query._id = {$ne: tokenIdNotToLogout}
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
                 }
-        
+
                 RefreshToken.deleteMany(query).then(() => {
                     return resolve(HTTPWTHandler.OK('Successfully logged out all other devices out of your account'))
                 }).catch(error => {
@@ -5193,35 +5289,35 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
             }
-            
+
             if (typeof newSettings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`newSettings must be an object. Provided type: ${typeof newSettings}`))
             }
-        
+
             if (Array.isArray(newSettings)) {
                 return resolve(HTTPWTHandler.badInput('newSettings must be an object. An array was provided.'))
             }
-        
+
             if (newSettings === null) {
                 return resolve(HTTPWTHandler.badInput('newSettings must be an object. null was provided.'))
             }
-        
+
             const allowedKeys = Object.keys(CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES)
-        
+
             for (const key of Object.keys(newSettings)) {
                 if (!allowedKeys.includes(key) || !CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES[key].includes(newSettings[key])) {
                     delete newSettings[key];
                 }
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
                 }
-        
+
                 const loginActivitySettingsToSet = {...userFound?.settings?.loginActivitySettings || {}, ...newSettings}
                 const settingsToSet = {...userFound?.settings || {}, loginActivitySettings: loginActivitySettingsToSet}
-        
+
                 User.findOneAndUpdate({_id: {$eq: userId}}, {settings: settingsToSet}).then(() => {
                     return resolve(HTTPWTHandler.OK('Changed settings successfully'))
                 }).catch(error => {
@@ -5248,55 +5344,55 @@ class TempController {
             if (typeof newSettings !== 'object') {
                 return resolve(HTTPWTHandler.badInput(`newSettings must be an object. Provided type: ${typeof newSettings}`))
             }
-        
+
             if (Array.isArray(newSettings)) {
                 return resolve(HTTPWTHandler.badInput('newSettings must be an object. An array was provided.'))
             }
-        
+
             if (newSettings === null) {
                 return resolve(HTTPWTHandler.badInput('newSettings must be an object. null was provided.'))
             }
-        
+
             if (typeof refreshTokenId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`refreshTokenId must be a string. Provided type: ${typeof refreshTokenId}`))
             }
-        
+
             if (refreshTokenId.length == 0) {
                 return resolve(HTTPWTHandler.badInput('refreshTokenId cannot be an empty string.'))
             }
-        
+
             const allowedKeys = Object.keys(CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES)
-        
+
             for (const key of Object.keys(newSettings)) {
                 if (!allowedKeys.includes(key) || !CONSTANTS.LOGIN_ACTIVITY_SETTINGS_ALLOWED_VALUES[key].includes(newSettings[key])) {
                     delete newSettings[key];
                 }
             }
-        
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) {
                     return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
                 }
-        
+
                 const loginActivitySettingsToSet = {...userFound?.settings?.loginActivitySettings || {}, ...newSettings}
                 const settingsToSet = {...userFound?.settings || {}, loginActivitySettings: loginActivitySettingsToSet}
-        
+
                 User.findOneAndUpdate({_id: {$eq: userId}}, {settings: settingsToSet}).then(() => {
                     const changesToMake = {}
-        
+
                     if (loginActivitySettingsToSet.getIP) {
                         changesToMake.IP = HTTPHandler.formatIP(IP)
                     }
-        
+
                     if (loginActivitySettingsToSet.getLocation) {
                         const location = geoIPLite.lookup(IP)
                         changesToMake.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
                     }
-        
+
                     if (loginActivitySettingsToSet.getDeviceType) {
                         changesToMake.deviceType = deviceName
                     }
-        
+
                     RefreshToken.findOneAndUpdate({_id: {$eq: refreshTokenId}, userId: {$eq: userId}}, changesToMake).then(() => {
                         return resolve(HTTPWTHandler.OK('Successfully updated settings'))
                     }).catch(error => {
@@ -5328,9 +5424,9 @@ class TempController {
                 if (!projectedUserObject) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
-        
+
                 const toSend = {...projectedUserObject?.settings?.followingFeedFilterSettings || {}, ...DEFAULTS.userFollowingFeedFilterSettings}
-        
+
                 return resolve(HTTPWTHandler.OK('Found following feed filter settings', toSend))
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, 'with projection "settings.followingFeedFilterSettings". The error was:', error)
@@ -5356,7 +5452,7 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(refreshTokenId)) {
                 return resolve(HTTPWTHandler.badInput('refreshTokenId must be an ObjectId.'))
             }
-            
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('User could not be found'))
 
@@ -5631,7 +5727,7 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(userId)) {
                 return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
             }
-            
+
             if (typeof commentId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Type provided: ${typeof commentId}`))
             }
@@ -5697,16 +5793,16 @@ class TempController {
                                     notDeletedComments.push(comment)
                                 }
                             }
-        
+
                             const uniqueUsers = Array.from(new Set(notDeletedComments.map(comment => String(comment.commenterId))))
-        
+
                             User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
                                 const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(notDeletedComments, commentOwners, 'commenterId');
-        
+
                                 if (postsWithNoOwners.length > 0) {
                                     console.error('Found comments without owners:', postsWithNoOwners)
                                 }
-        
+
                                 Promise.all(
                                     ownerPostPairs.map(pair => {
                                         return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
@@ -5863,7 +5959,7 @@ class TempController {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
             }
-        
+
             if (typeof commentId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
             }
@@ -5871,13 +5967,13 @@ class TempController {
             if (!mongoose.isObjectIdOrHexString(commentId)) {
                 return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
             }
-        
+
             comment = comment.trim();
-        
+
             if (comment.length == 0) {
                 return resolve(HTTPWTHandler.badInput('comment cannot be blank'))
             }
-        
+
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`comment cannot be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters`))
             }
@@ -5893,7 +5989,7 @@ class TempController {
                     if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
 
                     let commentOwner;
-                    
+
                     try {
                         commentOwner = userId == commentFound.commenterId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
                     } catch (error) {
@@ -5999,7 +6095,7 @@ class TempController {
             if (typeof comment !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
             }
-        
+
             if (typeof postId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
@@ -6011,13 +6107,13 @@ class TempController {
             if (!CONSTANTS.COMMENT_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
                 return resolve(HTTPWTHandler.badInput(`postFormat must be either: ${postFormat.join(', ')}`))
             }
-        
+
             comment = comment.trim();
-        
+
             if (comment.length == 0) {
                 return resolve(HTTPWTHandler.badInput('comment cannot be blank'))
             }
-        
+
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
                 return HTTPHandler.badInput(res, `comment cannot be longer than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters.`)
             }
@@ -6130,7 +6226,7 @@ class TempController {
                                 delete comment.__v;
                                 comment.postId = String(comment.postId)
                                 comment._id = String(comment._id)
-                                
+
                                 deletedComments.push(comment)
                             } else {
                                 notDeletedComments.push(comment)
@@ -6176,7 +6272,7 @@ class TempController {
             })
         })
     }
-    
+
     static #removevoteoncomment = (userId, commentId, voteType) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
@@ -6232,7 +6328,7 @@ class TempController {
                             )) {
                                 return resolve(HTTPWTHandler.notFound('Could not find comment.'))
                             }
-                            
+
                             const voteTypeToRemove = voteType === "Down" ? Downvote : Upvote
 
                             voteTypeToRemove.deleteMany({postId: {$eq: commentId}, postFormat: "Comment", userPublicId: userFound.secondId}).then(() => {
