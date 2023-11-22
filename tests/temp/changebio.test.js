@@ -19,7 +19,8 @@ const validUser = {
     _id: '655e091738d16dd48778d1df',
     bio: 'Old bio'
 }
-const VALID_BIO = 'bio here'
+
+const VALID_BIO = "my bio here";
 
 /*
 Tests:
