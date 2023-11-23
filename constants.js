@@ -8,8 +8,8 @@ const CONSTANTS = {
     MAX_USER_DISPLAY_NAME_LENGTH: 20,
     VALID_DISPLAY_NAME_TEST: /^[A-Za-z]+$/,
     MAX_USER_BIO_LENGTH: 250,
-    VALID_BIO_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure bio has less than 10 lines
-    MAX_USER_BIO_LINES: 10, //Update this value to reflect the VALID_BIO_TEST above
+    VALID_BIO_TEST: /^([^\n]*\n){0,3}[^\n]*$/, //Tests to make sure bio has less than 4 lines
+    MAX_USER_BIO_LINES: 4, //Update this value to reflect the VALID_BIO_TEST above
     SEARCH_PAGE_USER_SEARCH_MAX_USERS_TO_RETURN: 20,
     MAX_USER_COMMENT_LENGTH: 1000,
     VALID_COMMENT_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure comment has less than 10 lines

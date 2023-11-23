@@ -437,25 +437,25 @@ class TempController {
             }
 
             if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId. Type provided: ${typeof userId}`))
+                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
             }
 
             if (typeof bio !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`bio must be a string. Provided type" ${typeof bio}`))
+                return resolve(HTTPWTHandler.badInput(`bio must be a string. Provided type: ${typeof bio}`))
             }
 
             if (bio.length > CONSTANTS.MAX_USER_BIO_LENGTH) {
                 return resolve(HTTPWTHandler.badInput(`Bio must be ${CONSTANTS.MAX_USER_BIO_LENGTH} or less characters`))
             }
 
-            if (!CONSTANTS.VALID_BIO_TEST(bio)) {
+            if (!CONSTANTS.VALID_BIO_TEST.test(bio)) {
                 return resolve(HTTPWTHandler.badInput(`Bio must have ${CONSTANTS.MAX_USER_BIO_LINES} or less lines`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then((data) => {
                 if (data) {
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {bio: {$set: String(bio)}}).then(function(){
-                        return resolve(HTTPWTHandler.OK('Change Bio Successful'))
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {bio: String(bio)}}).then(function(){
+                        return resolve(HTTPWTHandler.OK('Change Successful'))
                     })
                     .catch(err => {
                         console.error('An error occured while updating user with id:', userId, ' bio to:', bio, '. The error was:', err)
