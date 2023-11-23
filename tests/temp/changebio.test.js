@@ -99,11 +99,11 @@ test('If change is successful with correct inputs', async () => {
 
     await new User(validUser).save();
 
-    const beforeUser = await User.findOne({_id: validUser._id});
+    const beforeUser = await User.findOne({_id: validUser._id}).lean();
 
     const returned = await TempController.changebio(validUser._id, VALID_BIO);
 
-    const afterUser = await User.findOne({_id: validUser._id});
+    const afterUser = await User.findOne({_id: validUser._id}).lean();
 
     beforeUser.bio = VALID_BIO;
 
@@ -121,13 +121,13 @@ test('If change does not interfere with other User documents', async () => {
         }
     })
 
-    const beforeUsers = await User.find({});
+    const beforeUsers = await User.find({}).lean();
 
     await new User(validUser).save();
 
     const returned = await TempController.changebio(validUser._id, VALID_BIO);
 
-    const afterUsers = await User.find({_id: {$ne: validUser._id}});
+    const afterUsers = await User.find({_id: {$ne: validUser._id}}).lean();
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Change Successful');
