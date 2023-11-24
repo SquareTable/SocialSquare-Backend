@@ -12,6 +12,7 @@ const RefreshToken = require('../models/RefreshToken');
 const Message = require('../models/Message');
 const Comment = require('../models/Comment');
 const CategoryMember = require('../models/CategoryMember');
+const Notification = require('../models/Notification');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -6493,6 +6494,32 @@ class TempController {
         })
     }
 
+    static #clearnotifications = (userId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                Notification.deleteMany({userId: {$eq: userId}}).then(() => {
+                    return resolve(HTTPWTHandler.OK('Successfully deleted all notifications.'))
+                }).catch(error => {
+                    console.error('An error occurred while deleting all notifications with userId:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting all notifications. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error);
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6815,6 +6842,10 @@ class TempController {
 
     static removevoteonpost = async (userId, postId, postFormat, voteType) => {
         return await this.#removevoteonpost(userId, postId, postFormat, voteType);
+    }
+
+    static clearnotifications = async (userId) => {
+        return await this.#clearnotifications(userId);
     }
 }
 
