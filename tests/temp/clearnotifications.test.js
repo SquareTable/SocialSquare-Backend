@@ -62,7 +62,7 @@ test('If clearing notifications fails if user could not be found', async () => {
 
 	const returned = await TempController.clearnotifications(userData._id);
 
-	expect(returned.statusCode).toBe(400);
+	expect(returned.statusCode).toBe(404);
 	expect(returned.data.message).toBe('Could not find user with provided userId.')
 })
 
