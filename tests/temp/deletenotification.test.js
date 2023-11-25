@@ -1,6 +1,6 @@
 const User = require('../../models/User');
 const Notification = require('../../models/Notification');
-const TempController = require('../../controllers/TempController');
+const TempController = require('../../controllers/Temp');
 const MockMongoDBServer = require('../../models/MockDBServer');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
