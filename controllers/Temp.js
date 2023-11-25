@@ -6530,6 +6530,14 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
 
+            if (typeof notificationId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`notificationId must be a string. Provided type: ${typeof notificationId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(notificationId)) {
+                return resolve(HTTPWTHandler.badInput('notificationId must be an ObjectId.'))
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
 
