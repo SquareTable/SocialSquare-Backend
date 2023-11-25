@@ -53,7 +53,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 		const returned = await TempController.deletenotification(userData._id, notString);
 
 		expect(returned.statusCode).toBe(400);
-		expect(returned.data.message).toBe('notificationId must be an ObjectId.')
+		expect(returned.data.message).toBe(`notificationId must be a string. Provided type: ${typeof notString}`)
 	})
 }
 
