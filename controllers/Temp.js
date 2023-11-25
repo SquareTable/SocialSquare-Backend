@@ -6520,6 +6520,38 @@ class TempController {
         })
     }
 
+    static #deletenotification = (userId, notificationId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`));
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                Notification.findOne({_id: {$eq: notificationId}}).then(notificationFound => {
+                    if (!notificationFound) return resolve(HTTPWTHandler.notFound('Could not find notification.'))
+
+                    if (String(notificationFound.userId) !== userId) return resolve(HTTPWTHandler.forbidden('You must be the notification owner to delete this notification.'))
+
+                    Notification.deleteOne({_id: {$eq: notificationId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully deleted notification'))
+                    }).catch(error => {
+                        console.error('An error occurred while deleting one notification with id:', notificationId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting notification. Please try again.'))
+                    })
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6846,6 +6878,10 @@ class TempController {
 
     static clearnotifications = async (userId) => {
         return await this.#clearnotifications(userId);
+    }
+
+    static deletenotification = async (userId, notificationId) => {
+        return await this.#deletenotification(userId, notificationId);
     }
 }
 

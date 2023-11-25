@@ -775,6 +775,15 @@ const rateLimiters = {
         message: {status: "FAILED", message: "You have cleared your notifications too many times in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/deletenotifications': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 60,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have deleted too many notifications in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     })
 }
 
@@ -3183,6 +3192,35 @@ router.post('/clearnotifications', rateLimiters['/clearnotifications'], (req, re
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/clearnotifications controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/deletenotification', rateLimiters['/deletenotification'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'deletenotification',
+            functionArgs: [req.tokenData, req.body.notificationId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/deletenotification controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /deletenotification:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/deletenotification controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
