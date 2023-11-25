@@ -1,7 +1,7 @@
 const User = require('../../models/User');
 const Notification = require('../../models/Notification');
 const TempController = require('../../controllers/Temp');
-const MockMongoDBServer = require('../../models/MockDBServer');
+const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const {expect, test, beforeEach, afterEach} = require('@jest/globals');
