@@ -30,8 +30,8 @@ TODO:
 - Test if deletion fails if userId is not an ObjectId -- Done
 - Test if deletion fails if notificationId is not a string -- Done
 - Test if deletion fails if notificationId is not an ObjectId -- Done
-- Test if deletion fails if user could not be found
-- Test if deletion fails if notification could not be found
+- Test if deletion fails if user could not be found -- Done
+- Test if deletion fails if notification could not be found -- Done
 - Test if deletion fails if the user is not the notification owner
 - Test if deletion succeeds with correct inputs
 - Test if deletion does not interfere with other notifications in the database
@@ -73,4 +73,24 @@ test('If deletion fails if notificationId is not an ObjectId', async () => {
 
 	expect(returned.statusCode).toBe(400);
 	expect(returned.data.message).toBe('notificationId must be an ObjectId.')
+})
+
+test('If deletion fails if user could not be found', async () => {
+	expect.assertions(2);
+
+	const returned = await TempController.deletenotification(userData._id, notificationData._id);
+
+	expect(returned.statusCode).toBe(404);
+	expect(returned.data.message).toBe('Could not find user with provided userId.')
+})
+
+test('If deletion fails if notification could not be found', async () => {
+	expect.assertions(2);
+
+	await new User(userData).save();
+
+	const returned = await TempController.deletenotification(userData._id, notificationData._id);
+
+	expect(returned.statusCode).toBe(404;
+	expect(returned.data.message).toBe('Could not find notification.')
 })
