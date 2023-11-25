@@ -90,10 +90,11 @@ test("If clearing notifications do not clear other user's notifications", async 
 	await new User(userData).save();
 
 	const otherUserNotifications = [...new Array(900)].map((item, index) => {
+		const index = Math.floor(Math.random() * TEST_CONSTANTS.RANDOM_OBJECTIDS.length)
 		return {
 			text: `Notification ${index}`,
 			dateCreated: new Date(),
-			userId: TEST_CONSTANTS.RANDOM_OBJECTIDS[Math.floor(Math.random() * TEST_CONSTANTS.RANDOM_OBJECTIDS.length)]
+			userId: TEST_CONSTANTS.RANDOM_OBJECTIDS[index]
 		}
 	})
 
