@@ -91,6 +91,6 @@ test('If deletion fails if notification could not be found', async () => {
 
 	const returned = await TempController.deletenotification(userData._id, notificationData._id);
 
-	expect(returned.statusCode).toBe(404;
+	expect(returned.statusCode).toBe(404);
 	expect(returned.data.message).toBe('Could not find notification.')
 })
