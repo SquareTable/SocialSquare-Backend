@@ -6560,6 +6560,12 @@ class TempController {
         })
     }
 
+    static #getnotifications = (userId, lastNotificationId) => {
+        return new Promise(resolve => {
+            
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6890,6 +6896,10 @@ class TempController {
 
     static deletenotification = async (userId, notificationId) => {
         return await this.#deletenotification(userId, notificationId);
+    }
+
+    static getnotifications = async (userId, lastNotificationId) => {
+        return await this.#getnotifications(userId, lastNotificationId);
     }
 }
 
