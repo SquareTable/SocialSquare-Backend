@@ -355,15 +355,17 @@ const options = {
   ]
 };
 
-var server = https.createServer(options, app).listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
+let server;
 
-/*
-var server = app.listen(port, () =>  {
-    console.log(`Server running on port ${port}`);
-})
-*/
+if (process.env.NO_HTTPS) {
+    server = app.listen(port, () =>  {
+        console.log(`Server running on port ${port}`);
+    })
+} else {
+    server = https.createServer(options, app).listen(port, () => {
+        console.log(`Server running on port ${port}`);
+    });
+}
 
 
 const handlePopularPosts = () => {
