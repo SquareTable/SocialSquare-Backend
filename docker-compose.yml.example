@@ -7,5 +7,6 @@ services:
             environment:
                   - TEMP_IMAGES_PATH=/Local-Images
                   - UPLOADED_PATH=/server/Local-Images
+                  - NO_HTTPS=false
             volumes:
                   - DIRECTORY-TO-SAVE-IMAGES-TO:/server/Local-Images
