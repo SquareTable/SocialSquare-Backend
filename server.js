@@ -346,15 +346,6 @@ const https = require('https');
 const e = require('express');
 const { tokenValidation } = require('./middleware/TokenHandler');
 
-const options = {
-  key: fs.readFileSync('./ssl/private.key'),
-  cert: fs.readFileSync('./ssl/server.crt'),
-  ca: [
-    fs.readFileSync('./ssl/intermediate.crt'),
-    fs.readFileSync('./ssl/root.crt')
-  ]
-};
-
 let server;
 
 if (process.env.NO_HTTPS) {
@@ -362,6 +353,15 @@ if (process.env.NO_HTTPS) {
         console.log(`Server running on port ${port}`);
     })
 } else {
+    const options = {
+        key: fs.readFileSync('./ssl/private.key'),
+        cert: fs.readFileSync('./ssl/server.crt'),
+        ca: [
+          fs.readFileSync('./ssl/intermediate.crt'),
+          fs.readFileSync('./ssl/root.crt')
+        ]
+      };
+      
     server = https.createServer(options, app).listen(port, () => {
         console.log(`Server running on port ${port}`);
     });
