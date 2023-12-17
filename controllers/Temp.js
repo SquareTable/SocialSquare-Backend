@@ -49,6 +49,9 @@ const mongooseSessionHelper = new MongooseSessionLibrary();
 const CategoryLibrary = require('../libraries/Category.js');
 const categoryHelper = new CategoryLibrary();
 
+const NotificationLibrary = require('../libraries/Notifications.js');
+const notificationHelper = new NotificationLibrary();
+
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
@@ -6589,10 +6592,17 @@ class TempController {
                     notificationQuery._id = {$lt: lastNotificationId}
                 }
 
-                Notification.find(notificationQuery).then(notifications => {
+                Notification.find(notificationQuery).sort({_id: -1}).limit(CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL).then(notifications => {
                     if (notifications.length < 1) return resolve(HTTPWTHandler.OK('No notifications could be found', {notifications: [], noMoreNotifications: true}))
 
-                    
+                    const notificationData = notificationHelper.returnNotificationDataToSend(notifications);
+
+                    const toSend = {
+                        notifications: notificationData,
+                        noMoreNotifications: notifications.length < CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL
+                    }
+
+                    return resolve(HTTPWTHandler.OK('Found notifications', toSend));
                 }).catch(error => {
                     console.error('An error occurred while finding notifications with database query:', notificationQuery, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding notifications. Please try again.'))
