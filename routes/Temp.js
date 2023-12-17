@@ -776,7 +776,7 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/deletenotifications': rateLimit({
+    '/deletenotification': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
         standardHeaders: false,
