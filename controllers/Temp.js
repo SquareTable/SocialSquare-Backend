@@ -6592,7 +6592,7 @@ class TempController {
                     notificationQuery._id = {$lt: lastNotificationId}
                 }
 
-                Notification.find(notificationQuery).sort({_id: -1}).limit(CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL).then(notifications => {
+                Notification.find(notificationQuery).sort({_id: -1}).limit(CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL).lean().then(notifications => {
                     if (notifications.length < 1) return resolve(HTTPWTHandler.OK('No notifications could be found', {notifications: [], noMoreNotifications: true}))
 
                     const notificationData = notificationHelper.returnNotificationDataToSend(notifications);
