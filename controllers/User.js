@@ -40,7 +40,9 @@ class UserController {
             name = name.trim();
             let displayName = ""; //Adding displayName via SocialSquare app will be coming soon - For now it'll be an empty string
             email = email.trim();
-            let badges = [];
+            const badges = [
+                {badgeName: "onSignUpBadge", dateRecieved: Date.now()}
+            ];
             password = password.trim();
 
             if (name.length === 0) {
@@ -75,93 +77,85 @@ class UserController {
                 return resolve(HTTPWTHandler.badInput(`Password is too long! Due to current limitations, please keep your password at ${CONSTANTS.MAX_USER_PASSWORD_LENGTH} or less characters.`))
             }
 
-            // Checking if user already exists
             User.findOne({email: {$eq: email}}).then(result => {
-                if (result) {
-                    // A user already exists
-                    return resolve(HTTPWTHandler.conflict('User with the provided email already exists.'))
-                } else { 
-                    User.findOne({name: {$eq: name}}).then(result => {
-                        // A username exists
-                        if (result) {
-                            return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
-                        } else {
-                            User.findOne({displayName: {$eq: displayName}}).lean().then(result => {
-                                if (result && displayName !== "") {
-                                    return resolve(HTTPWTHandler.conflict('User with the provided display name already exists'))
-                                } else {
-                                    //Try to create a new user
-                                    badges.push({badgeName: "onSignUpBadge", dateRecieved: Date.now()});
-                                    console.log(badges);
-                                    // password handling
-                                    const saltRounds = CONSTANTS.BCRYPT_COST_FACTOR
-                                    bcrypt.hash(password, saltRounds).then(hashedPassword => {
-                                        var newUUID = uuidv4(); 
-                                        const newUser = new User({
-                                            secondId: newUUID,
-                                            name,
-                                            displayName,
-                                            email,
-                                            badges,
-                                            password: hashedPassword,
-                                            followers: [],
-                                            following: [],
-                                            totalLikes: 0,
-                                            profileImageKey: ""
-                                        });
+                if (result) return resolve(HTTPWTHandler.conflict('User with the provided email already exists.'))
+                
+                User.findOne({name: {$eq: name}}).then(result => {
+                    if (result) return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
 
-                                        newUser.save().then(result => {
-                                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(result._id)
+                    User.findOne({displayName: {$eq: displayName}}).lean().then(result => {
+                        if (result && displayName !== "") return resolve(HTTPWTHandler.conflict('User with the provided display name already exists'))
+                        
+                        const saltRounds = CONSTANTS.BCRYPT_COST_FACTOR
 
-                                            const newRefreshTokenObject = {
-                                                encryptedRefreshToken,
-                                                userId: result._id,
-                                                createdAt: Date.now(),
-                                                admin: false
-                                            }
+                        let hashedPassword;
 
-                                            const formattedIP = HTTPHandler.formatIP(IP)
-            
-                                            if (result?.settings?.loginActivitySettings?.getIP) {
-                                                newRefreshTokenObject.IP = formattedIP
-                                            }
-            
-                                            if (result?.settings?.loginActivitySettings?.getLocation) {
-                                                const location = geoIPLite.lookup(formattedIP)
-                                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
-                                            }
-            
-                                            if (result?.settings?.loginActivitySettings?.getDeviceType) {
-                                                newRefreshTokenObject.deviceType = deviceName
-                                            }
-            
-                                            const newRefreshToken = new RefreshToken(newRefreshTokenObject)
-
-                                            newRefreshToken.save().then(refreshTokenResult => {
-                                                return resolve(HTTPWTHandler.OK('Signup successful', userHandler.filterUserInformationToSend(result.toJSON()), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenResult._id)}))
-                                            }).catch(error => {
-                                                console.error('An error occurred while saving new RefreshToken to database. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while logging you into your new account. Your account was successfully created so please go to the login screen to login to your account.'))
-                                            })
-                                        }).catch(err => {
-                                            console.error('An error occured while saving user account:', err)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while saving user account! Please try again.'))
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occured while hashing password:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while hashing password. Please try again.'))
-                                    })
-                                }
-                            }).catch(error => {
-                                console.error('An error occured while finding one user with displayName:', displayName, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
-                            })
+                        try {
+                            hashedPassword = bcrypt.hashSync(password, saltRounds)
+                        } catch (error) {
+                            console.error('An error occurred while hashing password for new user. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while hashing password. Please try again.'))
                         }
-                    }).catch(err => {
-                        console.error('An error occured while finding user with name:', name, '. The error was:', err)
+
+                        const newUUID = uuidv4(); 
+                        const newUser = new User({
+                            secondId: newUUID,
+                            name,
+                            displayName,
+                            email,
+                            badges,
+                            password: hashedPassword,
+                            followers: [],
+                            following: [],
+                            totalLikes: 0,
+                            profileImageKey: ""
+                        });
+
+                        newUser.save().then(result => {
+                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(result._id)
+
+                            const newRefreshTokenObject = {
+                                encryptedRefreshToken,
+                                userId: result._id,
+                                createdAt: Date.now(),
+                                admin: false
+                            }
+
+                            const formattedIP = HTTPHandler.formatIP(IP)
+
+                            if (result?.settings?.loginActivitySettings?.getIP) {
+                                newRefreshTokenObject.IP = formattedIP
+                            }
+
+                            if (result?.settings?.loginActivitySettings?.getLocation) {
+                                const location = geoIPLite.lookup(formattedIP)
+                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                            }
+
+                            if (result?.settings?.loginActivitySettings?.getDeviceType) {
+                                newRefreshTokenObject.deviceType = deviceName
+                            }
+
+                            const newRefreshToken = new RefreshToken(newRefreshTokenObject)
+
+                            newRefreshToken.save().then(refreshTokenResult => {
+                                return resolve(HTTPWTHandler.OK('Signup successful', userHandler.filterUserInformationToSend(result.toJSON()), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenResult._id)}))
+                            }).catch(error => {
+                                console.error('An error occurred while saving new RefreshToken to database. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while logging you into your new account. Your account was successfully created so please go to the login screen to login to your account.'))
+                            })
+                        }).catch(err => {
+                            console.error('An error occured while saving user account:', err)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while saving user account! Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occured while finding one user with displayName:', displayName, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
                     })
-                }
+                }).catch(err => {
+                    console.error('An error occured while finding user with name:', name, '. The error was:', err)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
+                })
             }).catch(err => {
                 console.error('An error occured while checking for user with email:', email, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
