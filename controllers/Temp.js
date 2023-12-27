@@ -1589,7 +1589,7 @@ class TempController {
             }
 
             if (typeof postId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof postId}`))
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
 
             if (!mongoose.isObjectIdOrHexString(userId)) {
