@@ -71,7 +71,7 @@ test('user/checkusernameavailability says not available when uppercase username 
     const returned = await UserController.checkusernameavailability('SEB')
 
     expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
-    expect(returned.statusCode).toBe(200)
+    expect(returned.statusCode).toBe(400)
 })
 
 test('username is invalid if it is multicase', async () => {   
@@ -83,7 +83,7 @@ test('username is invalid if it is multicase', async () => {
     const returned = await UserController.checkusernameavailability('sebasTiAN')
 
     expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
-    expect(returned.statusCode).toBe(200)
+    expect(returned.statusCode).toBe(400)
 })
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
