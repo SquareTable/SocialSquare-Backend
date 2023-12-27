@@ -56,7 +56,7 @@ class UserController {
             }
 
             if (!CONSTANTS.VALID_USERNAME_TEST.test(name)) {
-                return resolve(HTTPWTHandler.badInput('Invalid name entered'))
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS))
             }
 
             if (!CONSTANTS.VALID_EMAIL_TEST.test(email)) {
@@ -307,8 +307,12 @@ class UserController {
                 return resolve(HTTPWTHandler.badInput('Username cannot be blank'))
             }
         
-            if (username.length > 20) {
-                return resolve(HTTPWTHandler.badInput('Username must be 20 or less characters'))
+            if (username.length > CONSTANTS.MAX_USER_USERNAME_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`Username must be ${CONSTANTS.MAX_USER_USERNAME_LENGTH} or less characters`))
+            }
+
+            if (!CONSTANTS.VALID_USERNAME_TEST.test(username)) {
+                return resolve(HTTPWTHandler.badInput(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS))
             }
         
             User.findOne({name: {$regex: `^${username}$`, $options: 'i'}}).lean().then(userFound => {
