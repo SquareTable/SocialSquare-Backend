@@ -315,7 +315,7 @@ class UserController {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS))
             }
         
-            User.findOne({name: {$regex: `^${username}$`, $options: 'i'}}).lean().then(userFound => {
+            User.findOne({name: {$eq: username}}).lean().then(userFound => {
                 if (userFound) {
                     return resolve(HTTPWTHandler.OK('Username is not available'))
                 } else {
