@@ -212,24 +212,24 @@ class TempController {
                         return resolve(HTTPWTHandler.forbidden('User with the desired email already exists'))
                     } else {
                         const hashedPassword = userFound.password;
-                        bcrypt.compare(password, hashedPassword).then((result) => {
-                            if (result) {
-                                // Password match
-                                User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
-                                    return resolve(HTTPWTHandler.OK('Change Email Successful'))
-                                })
-                                .catch(err => {
-                                    console.error('An error occurred while changing email for user with id:', userId, 'to: ', String(desiredEmail), '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
-                                });
-                            } else {
-                                return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
-                            }
-                        })
-                        .catch(err => {
-                            console.error('An error occured while comparing passwords:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
-                        })
+
+                        let passwordIsCorrect;
+
+                        try {
+                            passwordIsCorrect = bcrypt.compareSync(password, hashedPassword);
+                        } catch (error) {
+                            console.error('An error occurred while comparing passwords for user with id:', userId, '. The error was:', error);
+                            return resolve(HTTPWTHandler.serverError('An error occurred while authenticating you. Please try again.'))
+                        }
+
+                        if (!passwordIsCorrect) return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
+                        
+                        User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
+                            return resolve(HTTPWTHandler.OK('Change Email Successful'))
+                        }).catch(error => {
+                            console.error('An error occurred while changing email for user with id:', userId, 'to: ', String(desiredEmail), '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
+                        });
                     }
                 }).catch(error => {
                     console.error('An error occured while finding a user with email:', desiredEmail, '. The error was:', error)
