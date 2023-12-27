@@ -3964,7 +3964,7 @@ class TempController {
                 }
 
                 PopularPosts.findOne({}).lean().then(async popularPostDocument => {
-                    const popularPosts = popularPostDocument.popularPosts
+                    const popularPosts = popularPostDocument ? popularPostDocument.popularPosts : []
                     const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userId)
 
 
