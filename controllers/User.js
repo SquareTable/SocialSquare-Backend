@@ -702,31 +702,35 @@ class UserController {
                             return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
                         }
 
-                        bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
-                            if (result) {
-                                //Verification code is correct
-                                EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
-                                    bcrypt.hash(newPassword, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS).then(hashedPassword => {
-                                        User.findOneAndUpdate({_id: {$eq: userID}}, {password: hashedPassword}).then(() => {
-                                            return resolve(HTTPWTHandler.OK('Password changed successfully.'))
-                                        }).catch(error => {
-                                            console.error('An error occured while updating user with id:', userID, ' to have password:', hashedPassword, '. The error was:', error)
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occured while hashing a password:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while hashing the password. Please try again.'))
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting used code. Please try again.'))
-                                })
-                            } else {
-                                return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
+                        let passwordIsCorrect;
+                        let newHashedPassword;
+
+                        try {
+                            passwordIsCorrect = bcrypt.compareSync(verificationCode, verificationCodeFound.hashedVerificationCode)
+                        } catch (error) {
+                            console.error('An error occurred while comparing passwords for user with username:', username, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while authenticating you. Please try again.'))
+                        }
+
+                        if (!passwordIsCorrect) return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
+
+                        EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
+                            try {
+                                newHashedPassword = bcrypt.hashSync(newPassword, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS)
+                            } catch (error) {
+                                console.error('An error occurred while hashing new password. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while hashing new password. Please try again.'))
                             }
+                            
+                            User.findOneAndUpdate({_id: {$eq: userID}}, {password: newHashedPassword}).then(() => {
+                                return resolve(HTTPWTHandler.OK('Password changed successfully.'))
+                            }).catch(error => {
+                                console.error('An error occured while updating user with id:', userID, ' to have password:', hashedPassword, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                            })
                         }).catch(error => {
-                            console.error('An error occured while comparing hashes:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while comoaring verificaation to hash. Please try again.'))
+                            console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting used code. Please try again.'))
                         })
                     }).catch(error => {
                         console.error('An error occurred while finding one email verification code with userId:', userID, '. The error was:', error)
