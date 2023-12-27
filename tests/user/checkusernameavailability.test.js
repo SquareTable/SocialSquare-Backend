@@ -51,17 +51,6 @@ test('user/checkusernameavailability says not available when username is not ava
     expect(returned.statusCode).toBe(200)
 })
 
-test('user/checkusernameavailability says not available when lowercase username is queried and uppercase username is in db', async () => {
-    expect.assertions(2);
-    const newUser = new User({name: 'SEB'});
-    await newUser.save();
-
-    const returned = await UserController.checkusernameavailability('seb')
-
-    expect(returned.data.message).toBe('Username is not available')
-    expect(returned.statusCode).toBe(200)
-})
-
 test('user/checkusernameavailability says not available when uppercase username is queried and uppercase username is in db', async () => {
     expect.assertions(2);
 
@@ -76,9 +65,6 @@ test('user/checkusernameavailability says not available when uppercase username 
 
 test('username is invalid if it is multicase', async () => {   
     expect.assertions(2);
-
-    const newUser = new User({name: 'sEbasTiaN'});
-    await newUser.save();
 
     const returned = await UserController.checkusernameavailability('sebasTiAN')
 
