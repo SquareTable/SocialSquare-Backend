@@ -466,20 +466,22 @@ class UserController {
                                 return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new verification code.'))
                             }
 
-                            bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
-                                if (result) {
-                                    if (task === 'Check Before Reset Password') {
-                                        return resolve(HTTPWTHandler.OK('Verification code is correct.'))
-                                    } else {
-                                        return resolve(HTTPWTHandler.badInput('Task is not supported.'))
-                                    }
-                                } else {
-                                    return resolve(HTTPWTHandler.badInput('Verification code is incorrect.'))
-                                }
-                            }).catch(error => {
-                                console.error('An error occurred while comparing a string and its hash with bcrypt. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while comparing verification code. Please try again.'))
-                            })
+                            let verificationCodeIsCorrect;
+
+                            try {
+                                verificationCodeIsCorrect = bcrypt.compareSync(verificationCode, verificationCodeFound.hashedVerificationCode)
+                            } catch (error) {
+                                console.error('An error occurred while comparing verification codes for user with username:', username, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while checking if verification code is correct. Please try again.'))
+                            }
+
+                            if (!verificationCodeIsCorrect) return resolve(HTTPWTHandler.badInput('Verification code is incorrect.'))
+
+                            if (task === 'Check Before Reset Password') {
+                                return resolve(HTTPWTHandler.OK('Verification code is correct.'))
+                            } else {
+                                return resolve(HTTPWTHandler.badInput('Task is not supported.'))
+                            }
                         }).catch(error => {
                             console.error('An error occurred while finding email verification code with userId:', userFound._id, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while finding email verification code. Please try again.'))
@@ -511,43 +513,45 @@ class UserController {
                                 return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
                             }
 
-                            bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
-                                if (result) {
-                                    EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
-                                        if (task == 'Add Email Multi-Factor Authentication') {
-                                            User.findOneAndUpdate({_id: {$eq: userID}}, {$push: {authenticationFactorsEnabled: 'Email'}, MFAEmail: String(email)}).then(function() {
-                                                var emailData = {
-                                                    from: process.env.SMTP_EMAIL,
-                                                    to: userFound.email,
-                                                    subject: "Email Multi-Factor Authentication Turned On",
-                                                    text: `Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.`,
-                                                    html: `<p>Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.</p>`
-                                                };
-                            
-                                                mailTransporter.sendMail(emailData, function(error, response) {
-                                                    if (error) {
-                                                        console.error('An error occured while sending an email to user with ID: ' + userID)
-                                                    }
-                                                })
-    
-                                                return resolve(HTTPWTHandler.OK('Email is now a multi-factor authentication factor for your account.'))
-                                            }).catch(error => {
-                                                console.error('An error occurred while pushing Email to authenticationFactorsEnabled and setting MFAEmail to:', String(email), 'for user with id:', userID, '. The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while adding email to the list of authentication factors enabled for your account. Please try again.'))
-                                            })
-                                        } else {
-                                            return resolve(HTTPWTHandler.badInput('Task is not supported.'))
-                                        }
+                            let verificationCodeIsCorrect;
+
+                            try {
+                                verificationCodeIsCorrect = bcrypt.compareSync(verificationCode, verificationCodeFound.hashedVerificationCode)
+                            } catch (error) {
+                                console.error('An error occurred while comparing verification codes for user with id:', userID, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while checking if verification code is correct. Please try again.'))
+                            }
+
+                            if (!verificationCodeIsCorrect) return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
+
+                            EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
+                                if (task == 'Add Email Multi-Factor Authentication') {
+                                    User.findOneAndUpdate({_id: {$eq: userID}}, {$push: {authenticationFactorsEnabled: 'Email'}, MFAEmail: String(email)}).then(function() {
+                                        var emailData = {
+                                            from: process.env.SMTP_EMAIL,
+                                            to: userFound.email,
+                                            subject: "Email Multi-Factor Authentication Turned On",
+                                            text: `Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.`,
+                                            html: `<p>Email Multi-Factor authentication has now been turned on for your account. If you did not request for this to happen, someone else may be logged into your account and you might not be able to get back in. Try changing your password and if you can't contact SocialSquare support.</p>`
+                                        };
+                    
+                                        mailTransporter.sendMail(emailData, function(error, response) {
+                                            if (error) {
+                                                console.error('An error occured while sending an email to user with ID: ' + userID)
+                                            }
+                                        })
+
+                                        return resolve(HTTPWTHandler.OK('Email is now a multi-factor authentication factor for your account.'))
                                     }).catch(error => {
-                                        console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting used email verification code. Please try again.'))
+                                        console.error('An error occurred while pushing Email to authenticationFactorsEnabled and setting MFAEmail to:', String(email), 'for user with id:', userID, '. The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding email to the list of authentication factors enabled for your account. Please try again.'))
                                     })
                                 } else {
-                                    return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
+                                    return resolve(HTTPWTHandler.badInput('Task is not supported.'))
                                 }
                             }).catch(error => {
-                                console.error('An error occurred while comparing two strings with bcrypt:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while comparing verification code. Please try again.'))
+                                console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting used email verification code. Please try again.'))
                             })
                         }).catch(error => {
                             console.error('An error occurred while finding one email verification code with userId:', userID, '. The error was:', error)
@@ -578,55 +582,57 @@ class UserController {
                                 return resolve(HTTPWTHandler.forbidden('Verification code has expired. Please create a new one.'))
                             }
 
-                            bcrypt.compare(verificationCode, verificationCodeFound.hashedVerificationCode).then(result => {
-                                if (result) {
-                                    EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
-                                        if (task == "Verify Email MFA Code") {
-                                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userFound._id)
-            
-                                            const newRefreshTokenObject = {
-                                                encryptedRefreshToken,
-                                                userId: userFound._id,
-                                                createdAt: Date.now(),
-                                                admin: false
-                                            }
+                            let verificationCodeIsCorrect;
+
+                            try {
+                                verificationCodeIsCorrect = bcrypt.compareSync(verificationCode, verificationCodeFound.hashedVerificationCode)
+                            } catch (error) {
+                                console.error('An error occurred while comparing verification codes for user with secondId:', secondId, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while checking if the verification code is correct. Please try again.'))
+                            }
+
+                            if (!verificationCodeIsCorrect) return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
+
+                            EmailVerificationCode.deleteOne({userId: {$eq: userID}}).then(() => {
+                                if (task == "Verify Email MFA Code") {
+                                    const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userFound._id)
     
-                                            const formattedIP = HTTPHandler.formatIP(IP)
-            
-                                            if (userFound?.settings?.loginActivitySettings?.getIP) {
-                                                newRefreshTokenObject.IP = formattedIP
-                                            }
-            
-                                            if (userFound?.settings?.loginActivitySettings?.getLocation) {
-                                                const location = geoIPLite.lookup(formattedIP)
-                                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
-                                            }
-            
-                                            if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
-                                                newRefreshTokenObject.deviceType = deviceType;
-                                            }
-            
-                                            const newRefreshToken = new RefreshToken(newRefreshTokenObject)
-            
-                                            newRefreshToken.save().then(refreshTokenSaved => {
-                                                return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
-                                            }).catch(error => {
-                                                console.error('An error occurred while saving new refresh token. The refresh token object is:', newRefreshTokenObject, 'The error was:', error)
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
-                                            })
-                                        } else {
-                                            return resolve(HTTPWTHandler.badInput('Unsupported task sent.'))
-                                        }
+                                    const newRefreshTokenObject = {
+                                        encryptedRefreshToken,
+                                        userId: userFound._id,
+                                        createdAt: Date.now(),
+                                        admin: false
+                                    }
+
+                                    const formattedIP = HTTPHandler.formatIP(IP)
+    
+                                    if (userFound?.settings?.loginActivitySettings?.getIP) {
+                                        newRefreshTokenObject.IP = formattedIP
+                                    }
+    
+                                    if (userFound?.settings?.loginActivitySettings?.getLocation) {
+                                        const location = geoIPLite.lookup(formattedIP)
+                                        newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                                    }
+    
+                                    if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
+                                        newRefreshTokenObject.deviceType = deviceType;
+                                    }
+    
+                                    const newRefreshToken = new RefreshToken(newRefreshTokenObject)
+    
+                                    newRefreshToken.save().then(refreshTokenSaved => {
+                                        return resolve(HTTPWTHandler.OK('Signin successful', userHandler.filterUserInformationToSend(userFound), {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(refreshTokenSaved._id)}))
                                     }).catch(error => {
-                                        console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting used email verification code. Please try again.'))
+                                        console.error('An error occurred while saving new refresh token. The refresh token object is:', newRefreshTokenObject, 'The error was:', error)
+                                        return resolve(HTTPWTHandler.serverError('An error occurred while saving refresh token. Please try again.'))
                                     })
                                 } else {
-                                    return resolve(HTTPWTHandler.forbidden('Verification code is incorrect.'))
+                                    return resolve(HTTPWTHandler.badInput('Unsupported task sent.'))
                                 }
                             }).catch(error => {
-                                console.error('An error occured while comparing a string against its hash. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError("An error occurred while comparing verification code against it's hash. Please try again later."))
+                                console.error('An error occurred while deleting one email verification code with userId:', userID, '. The error was:', error)
+                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting used email verification code. Please try again.'))
                             })
                         }).catch(error => {
                             console.error('An error occurred while finding one email verification code with userId:', userFound._id, '. The error was:', error)
