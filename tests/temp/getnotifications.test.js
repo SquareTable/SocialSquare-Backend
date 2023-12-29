@@ -111,7 +111,7 @@ test('If retrieval works with lastNotificationId', async () => {
     expect(returned.data.data).toStrictEqual(processedNotifications);
 })
 
-test('If retrieval works with lastNotificationId', async () => {
+test('If retrieval works with lastNotificationId as undefined', async () => {
     expect.assertions(2);
 
     await new User(userData).save();
