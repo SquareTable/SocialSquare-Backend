@@ -1,6 +1,7 @@
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TempController = require('../../controllers/Temp');
 const Notification = require('../../models/Notification');
+const User = require('../../models/User');
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const CONSTANTS = require('../../constants');
