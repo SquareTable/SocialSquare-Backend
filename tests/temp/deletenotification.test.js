@@ -33,7 +33,7 @@ TODO:
 - Test if deletion fails if notificationId is not an ObjectId -- Done
 - Test if deletion fails if user could not be found -- Done
 - Test if deletion fails if notification could not be found -- Done
-- Test if deletion fails if the user is not the notification owner
+- Test if deletion fails if the user is not the notification owner -- Done
 - Test if deletion succeeds with correct inputs
 - Test if deletion does not interfere with other notifications in the database
 */
@@ -97,7 +97,7 @@ test('If deletion fails if notification could not be found', async () => {
 })
 
 test('If deletion fails if the user is not the notification owner', async () => {
-	expect.assertions(2);
+	expect.assertions(3);
 
 	const notOwnerId = "658eb5abe9bed6afd85928b6";
 
@@ -109,5 +109,13 @@ test('If deletion fails if the user is not the notification owner', async () => 
 
 	await new Notification(notificationData).save();
 
+	const beforeNotifications = await Notification.find({}).lean();
+
 	const returned = await TempController.deletenotification(notOwnerId, notificationData._id);
+
+	const afterNotifications = await Notification.find({}).lean();
+
+	expect(beforeNotifications).toStrictEqual(afterNotifications);
+	expect(returned.statusCode).toBe(403);
+	expect(returned.data.message).toBe('You must be the notification owner to delete this notification.')
 })
