@@ -13,12 +13,12 @@ const {expect, beforeEach, afterEach} = require('@jest/globals')
 jest.setTimeout(20_000);
 
 /*
-TODO:
-- Test if notification retrieval fails if userId is not a string -- Done
-- Test if notification retrieval fails if userId is not an ObjectId -- Done
-- Test if notification retrieval fails if lastNotificationId is not a string and not undefined -- Done
-- Test if notification retrieval fails if lastNotificationid is not an ObjectId and not undefined -- Done
-- Test if notification retrieval fails if user could not be found -- Done
+Tests:
+- Test if notification retrieval fails if userId is not a string
+- Test if notification retrieval fails if userId is not an ObjectId
+- Test if notification retrieval fails if lastNotificationId is not a string and not undefined
+- Test if notification retrieval fails if lastNotificationid is not an ObjectId and not undefined
+- Test if notification retrieval fails if user could not be found
 - Test if notification retrieval works with lastNotificationId
 - Test if notification retrieval works with lastNotificationId as undefined
 */
@@ -105,6 +105,27 @@ test('If retrieval works with lastNotificationId', async () => {
     const processedNotifications = notificationHelper.returnNotificationDataToSend(notifications.splice(5, CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL))
 
     const returned = await TempController.getnotifications(userData._id, lastNotificationId);
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.data).toStrictEqual(processedNotifications);
+})
+
+test('If retrieval works with lastNotificationId', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    await Notification.insertMany([...new Array(1000)].map((item, index) => {
+        return {
+            text: index
+        }
+    }))
+
+    const notifications = await Notification.find({}).lean();
+
+    const processedNotifications = notificationHelper.returnNotificationDataToSend(notifications.splice(0, CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL))
+
+    const returned = await TempController.getnotifications(userData._id, undefined);
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.data).toStrictEqual(processedNotifications);
