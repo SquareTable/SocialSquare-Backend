@@ -1,8 +1,12 @@
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TempController = require('../../controllers/Temp');
+const Notification = require('../../models/Notification');
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const CONSTANTS = require('../../constants');
+
+const NotificationLibrary = require('../../libraries/Notifications');
+const notificationHelper = new NotificationLibrary();
 
 const {expect, beforeEach, afterEach} = require('@jest/globals')
 
@@ -81,4 +85,27 @@ test('If retrieval fails if user could not be found', async () => {
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user with provided userId.')
     expect(returned.data.data).toBe(undefined)
+})
+
+test('If retrieval works with lastNotificationId', async () => {
+    expect.assertions(2);
+
+    await new User(userData).save();
+
+    await Notification.insertMany([...new Array(1000)].map((item, index) => {
+        return {
+            text: index
+        }
+    }))
+
+    const notifications = await Notification.find({}).lean();
+
+    const lastNotificationId = notifications[4]._id;
+
+    const processedNotifications = notificationHelper.returnNotificationDataToSend(notifications.splice(5, CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL))
+
+    const returned = await TempController.getnotifications(userData._id, lastNotificationId);
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.data).toStrictEqual(processedNotifications);
 })
