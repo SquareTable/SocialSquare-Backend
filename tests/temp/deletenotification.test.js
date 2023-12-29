@@ -149,7 +149,7 @@ test('If deletion does not interfere with other notifications in the database', 
 		userId: "658edc8e7902c80dfff44a8a"
 	})))
 
-	const beforeNotifications = await Notification.find({_id: {$ne: userData._id}}.lean());
+	const beforeNotifications = await Notification.find({_id: {$ne: userData._id}}).lean();
 
 	const returned = await TempController.deletenotification(userData._id, notificationData._id);
 
