@@ -26,14 +26,14 @@ const notificationData = {
 }
 
 /*
-TODO:
-- Test if deletion fails if userId is not a string -- Done
-- Test if deletion fails if userId is not an ObjectId -- Done
-- Test if deletion fails if notificationId is not a string -- Done
-- Test if deletion fails if notificationId is not an ObjectId -- Done
-- Test if deletion fails if user could not be found -- Done
-- Test if deletion fails if notification could not be found -- Done
-- Test if deletion fails if the user is not the notification owner -- Done
+Tests:
+- Test if deletion fails if userId is not a string
+- Test if deletion fails if userId is not an ObjectId
+- Test if deletion fails if notificationId is not a string
+- Test if deletion fails if notificationId is not an ObjectId
+- Test if deletion fails if user could not be found
+- Test if deletion fails if notification could not be found
+- Test if deletion fails if the user is not the notification owner
 - Test if deletion succeeds with correct inputs
 - Test if deletion does not interfere with other notifications in the database
 */
@@ -118,4 +118,43 @@ test('If deletion fails if the user is not the notification owner', async () => 
 	expect(beforeNotifications).toStrictEqual(afterNotifications);
 	expect(returned.statusCode).toBe(403);
 	expect(returned.data.message).toBe('You must be the notification owner to delete this notification.')
+})
+
+test('If deletion succeeds with correct inputs', async () => {
+	expect.assertions(3);
+
+	await new User(userData).save();
+
+	await new Notification(notificationData).save();
+
+	const beforeNotifications = await Notification.find({}).lean();
+
+	const returned = await TempController.deletenotification(userData._id, notificationData._id);
+
+	const afterNotifications = await Notification.find({}).lean();
+
+	expect(beforeNotifications).toHaveLength(1);
+	expect(afterNotifications).toHaveLength(0);
+	expect(returned.statusCode).toBe(200);
+})
+
+test('If deletion does not interfere with other notifications in the database', async () => {
+	expect.assertions(2);
+
+	await new User(userData).save();
+
+	await new Notification(notificationData).save();
+
+	await Notification.insertMany([...new Array(10)].map(() => ({
+		userId: "658edc8e7902c80dfff44a8a"
+	})))
+
+	const beforeNotifications = await Notification.find({_id: {$ne: userData._id}}.lean());
+
+	const returned = await TempController.deletenotification(userData._id, notificationData._id);
+
+	const afterNotifications = await Notification.find({_id: {$ne: userData._id}}).lean();
+
+	expect(beforeNotifications).toStrictEqual(afterNotifications);
+	expect(returned.statusCode).toBe(200);
 })
