@@ -21,7 +21,8 @@ const userData = {
 }
 
 const notificationData = {
-	_id: '656196ed5d7c232a0c5f8da1'
+	_id: '656196ed5d7c232a0c5f8da1',
+	userId: userData._id
 }
 
 /*
@@ -93,4 +94,20 @@ test('If deletion fails if notification could not be found', async () => {
 
 	expect(returned.statusCode).toBe(404);
 	expect(returned.data.message).toBe('Could not find notification.')
+})
+
+test('If deletion fails if the user is not the notification owner', async () => {
+	expect.assertions(2);
+
+	const notOwnerId = "658eb5abe9bed6afd85928b6";
+
+	await new User(userData).save();
+	await new User({
+		_id: notOwnerId,
+		name: "UserTwo"
+	}).save();
+
+	await new Notification(notificationData).save();
+
+	const returned = await TempController.deletenotification(notOwnerId, notificationData._id);
 })
