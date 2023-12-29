@@ -74,7 +74,7 @@ test('If retrieval fails if lastNotificationId is not an ObjectId and not undefi
 })
 
 test('If retrieval fails if user could not be found', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     const returned = await TempController.getnotifications(userData._id, undefined);
 
