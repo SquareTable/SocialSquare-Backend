@@ -95,7 +95,8 @@ test('If retrieval works with lastNotificationId', async () => {
 
     await Notification.insertMany([...new Array(1000)].map((item, index) => {
         return {
-            text: index
+            text: index,
+            userId: userData._id
         }
     }))
 
@@ -108,7 +109,7 @@ test('If retrieval works with lastNotificationId', async () => {
     const returned = await TempController.getnotifications(userData._id, lastNotificationId);
 
     expect(returned.statusCode).toBe(200);
-    expect(returned.data.data).toStrictEqual(processedNotifications);
+    expect(returned.data.data.notifications).toStrictEqual(processedNotifications);
 })
 
 test('If retrieval works with lastNotificationId as undefined', async () => {
@@ -118,7 +119,8 @@ test('If retrieval works with lastNotificationId as undefined', async () => {
 
     await Notification.insertMany([...new Array(1000)].map((item, index) => {
         return {
-            text: index
+            text: index,
+            userId: userData._id
         }
     }))
 
@@ -129,5 +131,5 @@ test('If retrieval works with lastNotificationId as undefined', async () => {
     const returned = await TempController.getnotifications(userData._id, undefined);
 
     expect(returned.statusCode).toBe(200);
-    expect(returned.data.data).toStrictEqual(processedNotifications);
+    expect(returned.data.data.notifications).toStrictEqual(processedNotifications);
 })
