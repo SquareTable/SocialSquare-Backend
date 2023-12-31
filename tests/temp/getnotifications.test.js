@@ -102,7 +102,7 @@ test('If retrieval works with lastNotificationId', async () => {
 
     const notifications = await Notification.find({}).sort({_id: -1}).lean();
 
-    const lastNotificationId = notifications[4]._id;
+    const lastNotificationId = String(notifications[4]._id);
 
     const processedNotifications = notificationHelper.returnNotificationDataToSend(notifications.splice(5, CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL))
 
