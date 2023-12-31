@@ -6399,7 +6399,7 @@ class TempController {
                             return resolve(HTTPWTHandler.notFound('Could not find post creator'))
                         }
 
-                        if (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Could not find post'))
+                        if (postCreator.blockedAccounts?.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers?.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Could not find post'))
 
                         mongoose.startSession().then(session => {
                             session.startTransaction();
