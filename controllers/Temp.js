@@ -48,6 +48,9 @@ const mongooseSessionHelper = new MongooseSessionLibrary();
 const CategoryLibrary = require('../libraries/Category.js');
 const categoryHelper = new CategoryLibrary();
 
+const UUIDLibrary = require('../libraries/UUID.js');
+const uuidHelper = new UUIDLibrary();
+
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
@@ -2943,168 +2946,6 @@ class TempController {
                 })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
-    static #toggleFollowOfAUser = (userId, userToFollowPubId) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
-            }
-
-            if (typeof userToFollowPubId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userToFollowPubId must be a string. Provided type: ${typeof userToFollowPubId}`))
-            }
-
-            if (userToFollowPubId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('userToFollowPubId cannot be a blank string.'))
-            }
-
-            //Check for userId validity and get user for their pub Id
-            User.findOne({_id: {$eq: userId}}).lean().then(userFollowingFound => {
-                if (userFollowingFound) {
-                    //Check for other user for validity and to make sure they exist
-                    User.findOne({secondId: {$eq: userToFollowPubId}}).lean().then(userGettingFollowed => {
-                        if (!userGettingFollowed || userGettingFollowed.blockedAccounts?.includes(userFollowingFound.secondId)) {
-                            //If the user could not be found or if the user has blocked the user trying to follow
-                            return resolve(HTTPWTHandler.notFound('User not found'))
-                        }
-
-                        if (userId === String(userGettingFollowed._id)) {
-                            return resolve(HTTPWTHandler.forbidden('You cannot follow yourself'))
-                        }
-
-                        if (userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
-                            //Already following account
-
-                            mongoose.startSession().then(session => {
-                                session.startTransaction();
-
-                                const dbUpdates = [
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userGettingFollowed._id}},
-                                            update: {$pull : {followers: userFollowingFound.secondId}}
-                                        }
-                                    },
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userId}},
-                                            update: { $pull : {following: userGettingFollowed.secondId}}
-                                        }
-                                    }
-                                ]
-
-                                User.bulkWrite(dbUpdates, {session}).then(() => {
-                                    mongooseSessionHelper.commitTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.OK('UnFollowed user'))
-                                    }).catch(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
-                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
-                                    })
-                                })
-                            }).catch(error => {
-                                console.error('An error occurred while starting mongoose session. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
-                            })
-                        } else {
-                            //Is not following account
-                            if (userGettingFollowed.privateAccount == true) {
-                                if (!userGettingFollowed.accountFollowRequests.includes(userFollowingFound.secondId)) {
-                                    //Request to follow the account
-                                    User.findOneAndUpdate({_id: userGettingFollowed._id}, {$addToSet: {accountFollowRequests: userFollowingFound.secondId}}).then(function() {
-                                        if (userFollowingFound.settings.notificationSettings.SendFollowRequests && userGettingFollowed.settings.notificationSettings.FollowRequests) {
-                                            //If the user following has SENDING follow requests notifications ON and user getting followed has follow requests notifications ON
-                                            var notifMessage = {
-                                                title: "New Follow Request",
-                                                body: userFollowingFound.name + " has requested to follow you."
-                                            }
-                                            var notifData = {
-                                                type: "Follow request",
-                                                pubIdOfFollower: userFollowingFound.secondId
-                                            }
-                                            sendNotifications(userGettingFollowed._id, notifMessage, notifData)
-                                        }
-                                        return resolve(HTTPWTHandler.OK('Requested To Follow User'))
-                                    }).catch(err => {
-                                        console.error('An error occurred while adding to set:', userFollowingFound.secondId, 'to accountFollowRequests on user with id:', userGettingFollowed._id, '. The error was:', err)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while sending follow request to user. Please try again.'))
-                                    })
-                                } else {
-                                    //Remove request to follow the account
-                                    User.findOneAndUpdate({_id: userGettingFollowed._id}, {$pull: {accountFollowRequests: userFollowingFound.secondId}}).then(function() {
-                                        return resolve(HTTPWTHandler.OK('Removed Request To Follow User'))
-                                    }).catch(err => {
-                                        console.error('An error occurred while pulling:', userFollowingFound.secondId, 'from accountFollowRequests for user with id:', userGettingFollowed._id, '. The error was:', err)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing request to follow user. Please try again.'))
-                                    })
-                                }
-                            } else {
-                                mongoose.startSession().then(session => {
-                                    session.startTransaction();
-
-                                    const dbUpdates = [
-                                        {
-                                            updateOne: {
-                                                filter: {_id: {$eq: userGettingFollowed._id}},
-                                                update: {$addToSet : {followers: userFollowingFound.secondId}}
-                                            }
-                                        },
-                                        {
-                                            updateOne: {
-                                                filter: {_id: {$eq: userId}},
-                                                update: { $addToSet : {following: userGettingFollowed.secondId}}
-                                            }
-                                        }
-                                    ]
-
-                                    User.bulkWrite(dbUpdates, {session}).then(() => {
-                                        var notifMessage = {
-                                            title: "New Follower",
-                                            body: userFollowingFound[0].name + " has followed you."
-                                        }
-                                        var notifData = {
-                                            type: "Follow",
-                                            pubIdOfFollower: userFollowingFound[0].secondId
-                                        }
-                                        sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
-
-                                        mongooseSessionHelper.commitTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.OK('Followed User'))
-                                        }).catch(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
-                                        mongooseSessionHelper.abortTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
-                                        })
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while starting a mongoose session. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
-                                })
-                            }
-                        }
-                    }).catch(err => {
-                        console.error('An error occurred while finding user with secondId:', userToFollowPubId, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user to follow. Please try again.'))
-                    })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
-            }).catch(err => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -6497,6 +6338,166 @@ class TempController {
         })
     }
 
+    static #followuser = (userId, userPubId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof userPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userPubId must be a string. Type provided: ${typeof userPubId}`))
+            }
+
+            if (!uuidHelper.validateV4(userPubId)) {
+                return resolve(HTTPWTHandler.badInput('userPubId must be a valid version 4 UUID'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(followerFound => {
+                if (!followerFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                User.findOne({secondId: {$eq: userPubId}}).lean().then(userFound => {
+                    if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userPubId.'))
+
+                    if (userFound.privateAccount) {
+                        User.findOneAndUpdate({secondId: {$eq: userPubId}}, {$addToSet: {accountFollowRequests: followerFound.secondId}}).then(() => {
+                            return resolve(HTTPWTHandler.OK('Requested To Follow User'))
+                        }).catch(error => {
+                            console.error('An error occurred while adding:', followerFound.secondId, 'to set in accountFollowRequests for user with secondId:', userPubId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while requesting to follow user. Please try again.'))
+                        })
+                    }
+
+                    //The account is not private, so follow the user and add the user to the follower's following array
+
+                    mongoose.startSession().then(session => {
+                        session.startTransaction();
+
+                        const dbUpdates = [
+                            {
+                                updateOne: {
+                                    filter: {_id: {$eq: userFound._id}},
+                                    update: {$addToSet : {followers: followerFound.secondId}}
+                                }
+                            },
+                            {
+                                updateOne: {
+                                    filter: {_id: {$eq: userId}},
+                                    update: { $addToSet : {following: userFound.secondId}}
+                                }
+                            }
+                        ]
+
+                        User.bulkWrite(dbUpdates).then(() => {
+                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                return resolve(HTTPWTHandler.OK('Followed User'))
+                            }).catch(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while making database updates to User collection:', dbUpdates, '. The error was:', error)
+                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                            })
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while starting Mongoose session:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while starting to follow user. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding user with secondId:', userPubId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user to follow. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #unfollowuser = (userId, userPubId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof userPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userPubId must be a string. Type provided: ${typeof userPubId}`))
+            }
+
+            if (!uuidHelper.validateV4(userPubId)) {
+                return resolve(HTTPWTHandler.badInput('userPubId must be a valid version 4 UUID'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(followerFound => {
+                if (!followerFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                User.findOne({secondId: {$eq: userPubId}}).lean().then(userFound => {
+                    if (!userFound || userFound.blockedAccounts.includes(followerFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find user.'))
+
+                    if (userFound.privateAccount && userFound.accountFollowRequests.includes(followerFound.secondId)) {
+                        User.findOneAndUpdate({secondId: {$eq: userPubId}}, {$pull: {accountFollowRequests: followerFound.secondId}}).then(() => {
+                            return resolve(HTTPWTHandler.OK('Removed Request To Follow User'))
+                        }).catch(error => {
+                            console.error('An error occurred while pulling:', followerFound.secondId, 'from accountFollowRequests from user with secondId:', userPubId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while removing account follow requests.'))
+                        })
+                    }
+
+                    //By this point, there is no account follow request or the account is not private, so we remove the regular follow.
+
+                    mongoose.startSession().then(session => {
+                        session.startTransaction();
+
+                        const dbUpdates = [
+                            {
+                                updateOne: {
+                                    filter: {_id: {$eq: userFound._id}},
+                                    update: {$pull : {followers: followerFound.secondId}}
+                                }
+                            },
+                            {
+                                updateOne: {
+                                    filter: {_id: {$eq: userId}},
+                                    update: { $pull : {following: userFound.secondId}}
+                                }
+                            }
+                        ]
+
+                        User.bulkWrite(dbUpdates, {session}).then(() => {
+                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                            }).catch(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while making these updates to the User collection:', dbUpdates, '. The error was:', error)
+                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                            })
+                        })
+                    }).catch(error => {
+                        console.error('There was an error while starting Mongoose session:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while starting to unfollow user. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding user with secondId:', userPubId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user to unfollow. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6623,10 +6624,6 @@ class TempController {
 
     static deletethread = async (userId, threadId) => {
         return await this.#deletethread(userId, threadId)
-    }
-
-    static toggleFollowOfAUser = async (userId, userToFollowPubId) => {
-        return await this.#toggleFollowOfAUser(userId, userToFollowPubId)
     }
 
     static reloadUsersDetails = async (userId, usersPubId) => {
@@ -6819,6 +6816,14 @@ class TempController {
 
     static removevoteonpost = async (userId, postId, postFormat, voteType) => {
         return await this.#removevoteonpost(userId, postId, postFormat, voteType);
+    }
+
+    static followuser = async (userId, userPubId) => {
+        return await this.#followuser(userId, userPubId)
+    }
+
+    static unfollowuser = async (userId, userPubId) => {
+        return await this.#unfollowuser(userId, userPubId)
     }
 }
 
