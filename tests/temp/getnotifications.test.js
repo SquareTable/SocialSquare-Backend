@@ -100,7 +100,7 @@ test('If retrieval works with lastNotificationId', async () => {
         }
     }))
 
-    const notifications = await Notification.find({}).lean();
+    const notifications = await Notification.find({}).sort({_id: -1}).lean();
 
     const lastNotificationId = notifications[4]._id;
 
@@ -124,7 +124,7 @@ test('If retrieval works with lastNotificationId as undefined', async () => {
         }
     }))
 
-    const notifications = await Notification.find({}).lean();
+    const notifications = await Notification.find({}).sort({_id: -1}).lean();
 
     const processedNotifications = notificationHelper.returnNotificationDataToSend(notifications.splice(0, CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL))
 
