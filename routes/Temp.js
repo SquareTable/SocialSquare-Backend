@@ -324,15 +324,6 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/toggleFollowOfAUser': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 6,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have toggled following of users too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/reloadUsersDetails': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -766,7 +757,25 @@ const rateLimiters = {
         message: {status: "FAILED", message: "You have removed too many votes from posts in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    })
+    }),
+    '/followuser': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 6,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have followed too many accounts in the past minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/unfollowuser': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 6,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have unfollowed too many accounts in the past minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -1719,35 +1728,6 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/deletethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'toggleFollowOfAUser',
-            functionArgs: [req.tokenData, req.body.userToFollowPubId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/toggleFollowOfAUser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /toggleFollowOfAUser:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/toggleFollowOfAUser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -3145,6 +3125,64 @@ router.post('/removevoteonpost', rateLimiters['/removevoteonpost'], (req, res) =
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/removevoteonpost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/followuser', rateLimiters['/followuser'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'followuser',
+            functionArgs: [req.tokenData, req.body.userPubId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/followuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /followuser:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/followuser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'unfollowuser',
+            functionArgs: [req.tokenData, req.body.userPubId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/unfollowuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /unfollowuser:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/unfollowuser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
