@@ -123,8 +123,8 @@ test('If follow fails if user following is blocked by the account to be followed
     expect(returned.data.message).toBe('Could not find user.')
     expect(followedUserAfter.followers).toHaveLength(0)
     expect(followingUserAfter.followers).toHaveLength(0)
-    expect(followedUserAfter.accountFollowRequests).toBe(undefined)
-    expect(followingUserAfter.accountFollowRequests).toBe(undefined)
+    expect(followedUserAfter.accountFollowRequests).toStrictEqual([])
+    expect(followingUserAfter.accountFollowRequests).toStrictEqual([])
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toHaveLength(0)
 })
@@ -147,7 +147,7 @@ test('If a private account gets followed, a follow request gets created (and not
     expect(followedUserAfter.followers).toHaveLength(0)
     expect(followingUserAfter.followers).toHaveLength(0)
     expect(followedUserAfter.accountFollowRequests).toStrictEqual([userFollowingData.secondId])
-    expect(followingUserAfter.accountFollowRequests).toBe(undefined)
+    expect(followingUserAfter.accountFollowRequests).toStrictEqual([])
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toHaveLength(0)
 })
@@ -170,7 +170,7 @@ test('that multiple account follow requests cannot be made from the same user', 
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Requested To Follow User')
-    expect(followedUserAfter.accountFollowRequests).toBe([userFollowingData.secondId])
+    expect(followedUserAfter.accountFollowRequests).toStrictEqual([userFollowingData.secondId])
 })
 
 test('If a following a user works and updates both User documents and no account follow requests are made', async () => {
@@ -188,8 +188,8 @@ test('If a following a user works and updates both User documents and no account
     expect(returned.data.message).toBe('Followed User');
     expect(followedUserAfter.followers).toStrictEqual([userFollowingData.secondId])
     expect(followingUserAfter.followers).toHaveLength(0)
-    expect(followedUserAfter.accountFollowRequests).toBe(undefined)
-    expect(followingUserAfter.accountFollowRequests).toBe(undefined)
+    expect(followedUserAfter.accountFollowRequests).toStrictEqual([])
+    expect(followingUserAfter.accountFollowRequests).toStrictEqual([])
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toStrictEqual([userGettingFollowedData.secondId])
 })
