@@ -42,7 +42,8 @@ TODO:
 - Test multiple follow requests from the same user cannot be added -- Done
 - Test following a user works (and updates both User documents) if the account being followed is public (and no request is made) -- Done
 - Test following a user multiple times does not make multiple follows -- Done
-- Test non-related User documents do not get modified when following users
+- Test non-related User documents do not get modified when following a public account
+- Test non-related User documents do not get modified when following a private account
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -211,4 +212,30 @@ test('If following a user multiple times does not create multiple follows', asyn
     expect(returned.data.message).toBe('Followed User');
     expect(followingUserAfter.following).toBe([userGettingFollowedData.secondId])
     expect(followedUserAfter.followers).toBe([userFollowingData.secondId])
+})
+
+
+test('that non-related User documents do not get modified when following a public account', async () => {
+    expect.assertions(5);
+    
+    await new User(userFollowingData).save();
+    await new User(userGettingFollowedData).save();
+
+    await User.insertMany([...new Array(10)].map((item, index) => {
+        return {
+            name: `${index}`
+        }
+    }))
+
+    const beforeNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowedData._id}}]}).lean()
+
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+
+    const afterNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowedData._id}}]}).lean()
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.message).toBe('Followed User')
+    expect(afterNotRelatedUsers).toHaveLength(10)
+    expect(beforeNotRelatedUsers).toHaveLength(10)
+    expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
 })
