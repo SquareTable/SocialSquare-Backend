@@ -39,9 +39,10 @@ TODO:
 - Test if follow fails if user following the account cannot be found -- Done
 - Test if follow fails if user following is blocked by the account to be followed -- Done
 - Test that if the user being followed is private that a follow request is added (and follower isn't added) -- Done
-- Test multiple follow requests from the same user cannot be added
-- Test following a user works (and updates both User documents) if the account being followed is public (and no request is made)
-- Test following a user multiple times does not make multiple follows
+- Test multiple follow requests from the same user cannot be added -- Done
+- Test following a user works (and updates both User documents) if the account being followed is public (and no request is made) -- Done
+- Test following a user multiple times does not make multiple follows -- Done
+- Test non-related User documents do not get modified when following users
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -158,9 +159,56 @@ test('that multiple account follow requests cannot be made from the same user', 
     await new User(userFollowingData).save();
     await new User(userGettingFollowed).save();
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+    for (let i = 0; i < 10; i++) {
+        await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+    }
+
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId)
+
+    const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Requested To Follow User')
     expect(followedUserAfter.accountFollowRequests).toBe([userFollowingData.secondId])
+})
+
+test('If a following a user works and updates both User documents and no account follow requests are made', async () => {
+    expect.assertions(8);
+
+    await new User(userFollowingData).save();
+    await new User(userGettingFollowedData).save();
+
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+
+    const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
+    const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.message).toBe('Followed User');
+    expect(followedUserAfter.followers).toBe([userFollowingData.secondId])
+    expect(followingUserAfter.followers).toHaveLength(0)
+    expect(followedUserAfter.accountFollowRequests).toBe(undefined)
+    expect(followingUserAfter.accountFollowRequests).toBe(undefined)
+    expect(followedUserAfter.following).toHaveLength(0)
+    expect(followingUserAfter.following).toBe([userGettingFollowedData.secondId])
+})
+
+test('If following a user multiple times does not create multiple follows', async () => {
+    expect.assertions(3);
+
+    await new User(userFollowingData).save();
+    await new User(userGettingFollowedData).save();
+
+    for (let i = 0; i < 10; i++) {
+        await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+    }
+
+    
+    const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
+    const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.message).toBe('Followed User');
+    expect(followingUserAfter.following).toBe([userGettingFollowedData.secondId])
+    expect(followedUserAfter.followers).toBe([userFollowingData.secondId])
 })
