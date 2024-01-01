@@ -146,7 +146,7 @@ test('If a private account gets followed, a follow request gets created (and not
     expect(returned.data.message).toBe('Requested To Follow User')
     expect(followedUserAfter.followers).toHaveLength(0)
     expect(followingUserAfter.followers).toHaveLength(0)
-    expect(followedUserAfter.accountFollowRequests).toBe([userFollowingData.secondId])
+    expect(followedUserAfter.accountFollowRequests).toStrictEqual([userFollowingData.secondId])
     expect(followingUserAfter.accountFollowRequests).toBe(undefined)
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toHaveLength(0)
@@ -186,12 +186,12 @@ test('If a following a user works and updates both User documents and no account
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Followed User');
-    expect(followedUserAfter.followers).toBe([userFollowingData.secondId])
+    expect(followedUserAfter.followers).toStrictEqual([userFollowingData.secondId])
     expect(followingUserAfter.followers).toHaveLength(0)
     expect(followedUserAfter.accountFollowRequests).toBe(undefined)
     expect(followingUserAfter.accountFollowRequests).toBe(undefined)
     expect(followedUserAfter.following).toHaveLength(0)
-    expect(followingUserAfter.following).toBe([userGettingFollowedData.secondId])
+    expect(followingUserAfter.following).toStrictEqual([userGettingFollowedData.secondId])
 })
 
 test('If following a user multiple times does not create multiple follows', async () => {
@@ -211,7 +211,7 @@ test('If following a user multiple times does not create multiple follows', asyn
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Followed User');
-    expect(followingUserAfter.following).toBe([userGettingFollowedData.secondId])
+    expect(followingUserAfter.following).toStrictEqual([userGettingFollowedData.secondId])
     expect(followedUserAfter.followers).toBe([userFollowingData.secondId])
 })
 
