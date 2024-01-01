@@ -1,4 +1,4 @@
-const User = require('../../libraries/User')
+const User = require('../../models/User')
 const MockMongoDBServer = require('../../libraries/MockDBServer')
 const TempController = require('../../controllers/Temp')
 
