@@ -11,11 +11,11 @@ jest.setTimeout(20_000)
 const DB = new MockMongoDBServer();
 
 beforeEach(async () => {
-    DB.startTest();
+    await DB.startTest();
 })
 
 afterEach(async () => {
-    DB.stopTest();
+    await DB.stopTest();
 })
 
 const userGettingFollowedData = {
