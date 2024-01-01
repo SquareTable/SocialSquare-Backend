@@ -6358,7 +6358,7 @@ class TempController {
                 if (!followerFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
 
                 User.findOne({secondId: {$eq: userPubId}}).lean().then(userFound => {
-                    if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userPubId.'))
+                    if (!userFound || userFound.blockedAccounts?.includes(followerFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find user.'))
 
                     if (userFound.privateAccount) {
                         User.findOneAndUpdate({secondId: {$eq: userPubId}}, {$addToSet: {accountFollowRequests: followerFound.secondId}}).then(() => {
@@ -6438,7 +6438,7 @@ class TempController {
                 if (!followerFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
 
                 User.findOne({secondId: {$eq: userPubId}}).lean().then(userFound => {
-                    if (!userFound || userFound.blockedAccounts.includes(followerFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find user.'))
+                    if (!userFound || userFound.blockedAccounts?.includes(followerFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find user.'))
 
                     if (userFound.privateAccount && userFound.accountFollowRequests.includes(followerFound.secondId)) {
                         User.findOneAndUpdate({secondId: {$eq: userPubId}}, {$pull: {accountFollowRequests: followerFound.secondId}}).then(() => {
