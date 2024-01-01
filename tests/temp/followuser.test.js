@@ -204,6 +204,7 @@ test('If following a user multiple times does not create multiple follows', asyn
         await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
     }
 
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
     
     const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
     const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
