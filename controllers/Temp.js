@@ -2723,21 +2723,19 @@ class TempController {
                             }
 
                             Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
-                                if (result.length) {
-                                    threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
-                                        const toSend = {
-                                            posts,
-                                            noMorePosts: posts.length < CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL
-                                        }
+                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {posts: [], noMorePosts: true})) 
+                                
+                                threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
+                                    const toSend = {
+                                        posts,
+                                        noMorePosts: posts.length < CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL
+                                    }
 
-                                        return resolve(HTTPWTHandler.OK('Posts found', toSend))
-                                    }).catch(error => {
-                                        console.error('An error occurred while processing thread posts. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while getting thread posts. Please try again.'))
-                                    })
-                                } else {
-                                    return resolve(HTTPWTHandler.notFound('No more thread posts could be found.', {posts: [], noMorePosts: true}))
-                                }
+                                    return resolve(HTTPWTHandler.OK('Posts found', toSend))
+                                }).catch(error => {
+                                    console.error('An error occurred while processing thread posts. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while getting thread posts. Please try again.'))
+                                })
                             }).catch(error => {
                                 console.error('An error occurred while finding threads with creatorId:', userid, '. The error was:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while finding threads. Please try again.'))
@@ -6240,7 +6238,7 @@ class TempController {
                             return resolve(HTTPWTHandler.notFound('Could not find post creator'))
                         }
 
-                        if (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Could not find post'))
+                        if (postCreator.blockedAccounts?.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers?.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Could not find post'))
 
                         mongoose.startSession().then(session => {
                             session.startTransaction();
