@@ -103,3 +103,17 @@ test('If follow fails if account to be followed could not be found', async () =>
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user.')
 })
+
+test('If follow fails if user following is blocked by the account to be followed', async () => {
+    expect.assertions(2);
+
+    const userGettingFollowed = {...userGettingFollowedData, blockedAccounts: [userFollowingData.secondId]}
+
+    await new User(userFollowingData).save();
+    await new User(userGettingFollowed).save();
+
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+
+    expect(returned.statusCode).toBe(404);
+    expect(returned.data.message).toBe('Could not find user.')
+})
