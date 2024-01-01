@@ -10,7 +10,6 @@ const RandomLibrary = require('../libraries/Random');
 const randomHandler = new RandomLibrary();
 
 const User = require('../models/User')
-const axios = require('axios')
 const RefreshToken = require('../models/RefreshToken')
 const bcrypt = require('bcrypt')
 const { v4: uuidv4 } = require('uuid');
@@ -329,19 +328,7 @@ class UserController {
 
     static #sendemailverificationcode = (userID, task, getAccountMethod, username, email, secondId) => {
         return new Promise(async resolve => {
-            let randomString;
-
-            try {
-                randomString = await randomHandler.generateRandomBase16String();
-        
-                if (randomString.length != 8) {
-                    console.log('An error occured while generating random string. The string is not 8 characters long. The random string that was generated is: ' + randomString)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again later.'))
-                }
-            } catch (error) {
-                console.error('An error occurred while getting a random string. Data returned from random.org axios call:' + randomString?.data, '.The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
-            }
+            const randomString = randomHandler.generateRandomHexString(8)
 
             let user;
         
