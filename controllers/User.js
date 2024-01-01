@@ -200,18 +200,7 @@ class UserController {
                 if (!passwordIsCorrect) return resolve(HTTPWTHandler.badInput('Invalid password entered!'))
 
                 if (userFound.authenticationFactorsEnabled?.includes('Email')) {
-                    let randomString;
-                    try {
-                        randomString = await randomHandler.generateRandomBase16String()
-                
-                        if (randomString.length != 8) {
-                            console.log('An error occured while generating random string. The random string that was generated is: ' + randomString)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while generating random string. Please try again.'))
-                        }
-                    } catch (error) {
-                        console.error('An error occurred while getting a random string. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while generating a random string. Please try again'))
-                    }
+                    const randomString = randomHandler.generateRandomHexString(8)
 
                     try {
                         var hashedRandomString = bcrypt.hashSync(randomString, CONSTANTS.EMAIL_VERIFICATION_CODE_SALT_ROUNDS);
