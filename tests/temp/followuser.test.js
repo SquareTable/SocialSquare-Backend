@@ -194,7 +194,7 @@ test('If a following a user works and updates both User documents and no account
 })
 
 test('If following a user multiple times does not create multiple follows', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     await new User(userFollowingData).save();
     await new User(userGettingFollowedData).save();
