@@ -128,7 +128,7 @@ test('If follow fails if user following is blocked by the account to be followed
 })
 
 test('If a private account gets followed, a follow request gets created (and not a follow)', async () => {
-    expect.assertions(2);
+    expect.assertions(8);
 
     const userGettingFollowed = {...userGettingFollowedData, privateAccount: true};
 
@@ -148,4 +148,19 @@ test('If a private account gets followed, a follow request gets created (and not
     expect(followingUserAfter.accountFollowRequests).toBe(undefined)
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toHaveLength(0)
+})
+
+test('that multiple account follow requests cannot be made from the same user', async () => {
+    expect.assertions(3);
+
+    const userGettingFollowed = {...userGettingFollowedData, privateAccount: true};
+
+    await new User(userFollowingData).save();
+    await new User(userGettingFollowed).save();
+
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.message).toBe('Requested To Follow User')
+    expect(followedUserAfter.accountFollowRequests).toBe([userFollowingData.secondId])
 })
