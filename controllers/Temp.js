@@ -6367,44 +6367,43 @@ class TempController {
                             console.error('An error occurred while adding:', followerFound.secondId, 'to set in accountFollowRequests for user with secondId:', userPubId, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while requesting to follow user. Please try again.'))
                         })
-                    }
+                    } else {
+                        //The account is not private, so follow the user and add the user to the follower's following array
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
 
-                    //The account is not private, so follow the user and add the user to the follower's following array
-
-                    mongoose.startSession().then(session => {
-                        session.startTransaction();
-
-                        const dbUpdates = [
-                            {
-                                updateOne: {
-                                    filter: {_id: {$eq: userFound._id}},
-                                    update: {$addToSet : {followers: followerFound.secondId}}
+                            const dbUpdates = [
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userFound._id}},
+                                        update: {$addToSet : {followers: followerFound.secondId}}
+                                    }
+                                },
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userId}},
+                                        update: { $addToSet : {following: userFound.secondId}}
+                                    }
                                 }
-                            },
-                            {
-                                updateOne: {
-                                    filter: {_id: {$eq: userId}},
-                                    update: { $addToSet : {following: userFound.secondId}}
-                                }
-                            }
-                        ]
+                            ]
 
-                        User.bulkWrite(dbUpdates).then(() => {
-                            mongooseSessionHelper.commitTransaction(session).then(() => {
-                                return resolve(HTTPWTHandler.OK('Followed User'))
-                            }).catch(() => {
-                                return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                            User.bulkWrite(dbUpdates).then(() => {
+                                mongooseSessionHelper.commitTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.OK('Followed User'))
+                                }).catch(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while making database updates to User collection:', dbUpdates, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                })
                             })
                         }).catch(error => {
-                            console.error('An error occurred while making database updates to User collection:', dbUpdates, '. The error was:', error)
-                            mongooseSessionHelper.abortTransaction(session).then(() => {
-                                return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
-                            })
+                            console.error('An error occurred while starting Mongoose session:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to follow user. Please try again.'))
                         })
-                    }).catch(error => {
-                        console.error('An error occurred while starting Mongoose session:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while starting to follow user. Please try again.'))
-                    })
+                    }
                 }).catch(error => {
                     console.error('An error occurred while finding user with secondId:', userPubId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding user to follow. Please try again.'))
@@ -6447,44 +6446,44 @@ class TempController {
                             console.error('An error occurred while pulling:', followerFound.secondId, 'from accountFollowRequests from user with secondId:', userPubId, '. The error was:', error)
                             return resolve(HTTPWTHandler.serverError('An error occurred while removing account follow requests.'))
                         })
-                    }
+                    } else {
+                        //There is no account follow request or the account is not private, so we remove the regular follow.
 
-                    //By this point, there is no account follow request or the account is not private, so we remove the regular follow.
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
 
-                    mongoose.startSession().then(session => {
-                        session.startTransaction();
-
-                        const dbUpdates = [
-                            {
-                                updateOne: {
-                                    filter: {_id: {$eq: userFound._id}},
-                                    update: {$pull : {followers: followerFound.secondId}}
+                            const dbUpdates = [
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userFound._id}},
+                                        update: {$pull : {followers: followerFound.secondId}}
+                                    }
+                                },
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userId}},
+                                        update: { $pull : {following: userFound.secondId}}
+                                    }
                                 }
-                            },
-                            {
-                                updateOne: {
-                                    filter: {_id: {$eq: userId}},
-                                    update: { $pull : {following: userFound.secondId}}
-                                }
-                            }
-                        ]
+                            ]
 
-                        User.bulkWrite(dbUpdates, {session}).then(() => {
-                            mongooseSessionHelper.commitTransaction(session).then(() => {
-                                return resolve(HTTPWTHandler.OK('UnFollowed user'))
-                            }).catch(() => {
-                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                            User.bulkWrite(dbUpdates, {session}).then(() => {
+                                mongooseSessionHelper.commitTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                }).catch(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while making these updates to the User collection:', dbUpdates, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                })
                             })
                         }).catch(error => {
-                            console.error('An error occurred while making these updates to the User collection:', dbUpdates, '. The error was:', error)
-                            mongooseSessionHelper.abortTransaction(session).then(() => {
-                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
-                            })
+                            console.error('There was an error while starting Mongoose session:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to unfollow user. Please try again.'))
                         })
-                    }).catch(error => {
-                        console.error('There was an error while starting Mongoose session:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while starting to unfollow user. Please try again.'))
-                    })
+                    }
                 }).catch(error => {
                     console.error('An error occurred while finding user with secondId:', userPubId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding user to unfollow. Please try again.'))
