@@ -179,7 +179,7 @@ test('If a following a user works and updates both User documents and no account
     await new User(userFollowingData).save();
     await new User(userGettingFollowedData).save();
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
 
     const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
     const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
