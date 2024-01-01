@@ -212,7 +212,7 @@ test('If following a user multiple times does not create multiple follows', asyn
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Followed User');
     expect(followingUserAfter.following).toStrictEqual([userGettingFollowedData.secondId])
-    expect(followedUserAfter.followers).toBe([userFollowingData.secondId])
+    expect(followedUserAfter.followers).toStrictEqual([userFollowingData.secondId])
 })
 
 
