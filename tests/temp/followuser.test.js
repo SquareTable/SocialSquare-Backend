@@ -31,11 +31,11 @@ const userFollowingData = {
 /*
 TODO:
 - Test if follow fails if userId is not a string -- Done
-- Test if follow fails if userId is not an ObjectId
+- Test if follow fails if userId is not an ObjectId -- Done
 - Test if follow fails if userPubId is not a string -- Done
 - Test if follow fails if userPubId is not a valid UUID v4
-- Test if follow fails if follower user cannot be found
-- Test if follow fails account to be followed cannot be found
+- Test if follow fails if follower user cannot be found -- Done
+- Test if follow fails if account to be followed cannot be found -- Done
 - Test if follow fails if user following is blocked by the account to be followed
 - Test that if the user being followed is private that a follow request is added (and follower isn't added)
 - Test multiple follow requests from the same user cannot be added
@@ -62,3 +62,30 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         expect(returned.data.message).toBe(`userPubId must be a string. Type provided: ${typeof notString}`);
     })
 }
+
+test('If follow fails if userId is not an ObjectId', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.followuser('i am not an objectid', userGettingFollowedData.secondId);
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('userId must be an ObjectId.')
+})
+
+test('If follow fails if userPubId is not a valid UUID v4', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.followuser(userFollowingData._id, 'i am not a UUID')
+
+    expect(returned.statusCode).toBe(400);
+    expect(returned.data.message).toBe('userPubId must be a valid version 4 UUID')
+})
+
+test('If follow fails if account to be followed could not be found', async () => {
+    expect.assertions(2);
+
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+
+    expect(returned.statusCode).toBe(404);
+    expect(returned.data.message).toBe('Could not find user with provided userId.')
+})
