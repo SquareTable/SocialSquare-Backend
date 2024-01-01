@@ -58,7 +58,6 @@ const CONSTANTS = {
     COMMENT_API_ALLOWED_POST_FORMATS: ["Image", "Poll", "Thread"], //Used by various comment related APIs to see post formats that are allowed and supported to have comments on them
     VOTE_API_ALLOWED_POST_FORMATS: ["Image", "Poll", "Thread"], //Used temp/voteonpost and temp/removevoteonpost to know what post formats are supported
     VOTE_API_ALLOWED_VOTE_TYPES: ["Up", "Down"], //Used by temp/voteonpost and temp/removevoteonpost to know what vote types are supported
-    RANDOM_EIGHT_CHARACTER_STRING_URL: 'https://www.random.org/integers/?num=1&min=268435456&max=1000000000&col=1&base=16&format=plain&rnd=new',
     CATEGORY_PERMISSIONS: [
         'deletePosts'
     ],
