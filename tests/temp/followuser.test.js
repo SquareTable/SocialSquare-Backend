@@ -29,19 +29,19 @@ const userFollowingData = {
 }
 
 /*
-TODO:
-- Test if follow fails if userId is not a string -- Done
-- Test if follow fails if userId is not an ObjectId -- Done
-- Test if follow fails if userPubId is not a string -- Done
-- Test if follow fails if userPubId is not a valid UUID v4 -- Done
-- Test if follow fails if follower user cannot be found -- Done
-- Test if follow fails if account to be followed cannot be found -- Done
-- Test if follow fails if user following the account cannot be found -- Done
-- Test if follow fails if user following is blocked by the account to be followed -- Done
-- Test that if the user being followed is private that a follow request is added (and follower isn't added) -- Done
-- Test multiple follow requests from the same user cannot be added -- Done
-- Test following a user works (and updates both User documents) if the account being followed is public (and no request is made) -- Done
-- Test following a user multiple times does not make multiple follows -- Done
+Tests:
+- Test if follow fails if userId is not a string
+- Test if follow fails if userId is not an ObjectId
+- Test if follow fails if userPubId is not a string
+- Test if follow fails if userPubId is not a valid UUID v4
+- Test if follow fails if follower user cannot be found
+- Test if follow fails if account to be followed cannot be found
+- Test if follow fails if user following the account cannot be found
+- Test if follow fails if user following is blocked by the account to be followed
+- Test that if the user being followed is private that a follow request is added (and follower isn't added)
+- Test multiple follow requests from the same user cannot be added
+- Test following a user works (and updates both User documents) if the account being followed is public (and no request is made)
+- Test following a user multiple times does not make multiple follows
 - Test non-related User documents do not get modified when following a public account
 - Test non-related User documents do not get modified when following a private account
 */
@@ -235,6 +235,33 @@ test('that non-related User documents do not get modified when following a publi
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Followed User')
+    expect(afterNotRelatedUsers).toHaveLength(10)
+    expect(beforeNotRelatedUsers).toHaveLength(10)
+    expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
+})
+
+test('that non-related User documents do not get modified when following a private account', async () => {
+    expect.assertions(5);
+
+    const userGettingFollowed = {...userGettingFollowedData, privateAccount: true}
+    
+    await new User(userFollowingData).save();
+    await new User(userGettingFollowed).save();
+
+    await User.insertMany([...new Array(10)].map((item, index) => {
+        return {
+            name: `${index}`
+        }
+    }))
+
+    const beforeNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowed._id}}]}).lean()
+
+    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+
+    const afterNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowed._id}}]}).lean()
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.message).toBe('Requested To Follow User')
     expect(afterNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
