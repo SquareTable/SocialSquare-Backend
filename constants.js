@@ -61,7 +61,8 @@ const CONSTANTS = {
     CATEGORY_PERMISSIONS: [
         'deletePosts'
     ],
-    MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL: 10
+    MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL: 10,
+    MAX_NOTIFICATIONS_PER_API_CALL: 10 //Used in temp/getnotifications
 }
 
 module.exports = CONSTANTS
