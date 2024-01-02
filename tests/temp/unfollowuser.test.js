@@ -38,7 +38,7 @@ TODO:
 - Test unfollow fails if account that is getting unfollowed cannot be found -- Done
 - Test unfollow fails if the follower is blocked -- Done
 - Test if follow request gets removed if the account is private (and not follow) -- Done
-- Test if follow gets removed if the account is public (and following item gets removed from the account following)
+- Test if follow gets removed if the account is public (and following item gets removed from the account following) -- Done
 - Test if non-related User accounts do not get modified during request removal
 - Test if non-related User accounts do not get modified during follow removal
 */
@@ -143,4 +143,39 @@ test('Unfollow removes follow request if account is private', async () => {
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Removed Request To Follow User');
     expect(beforeUser).toStrictEqual(afterUser);
+})
+
+test('Unfollow removes follow and following if account is public', async () => {
+    expect.assertions(4);
+
+    const randomUUID = uuid.v4();
+
+    const userGettingUnfollowed = {
+        ...userGettingUnfollowedData,
+        followers: [userUnfollowingData.secondId, randomUUID]
+    }
+
+    const userUnfollowing = {
+        ...userUnfollowingData,
+        following: [userGettingUnfollowedData.secondId, randomUUID]
+    }
+
+    await new User(userGettingUnfollowed).save();
+    await new User(userUnfollowing).save();
+
+    const beforeUnfollowingUser = await User.findOne({_id: {$eq: userUnfollowingData._id}}).lean();
+    const beforeUnfollowedUser = await User.findOne({_id: {$eq: userGettingUnfollowedData._id}}).lean();
+
+    const returned = await TempController.unfollowuser(userUnfollowingData._id, userGettingUnfollowedData.secondId);
+
+    const afterUnfollowingUser = await User.findOne({_id: {$eq: userUnfollowingData._id}}).lean();
+    const afterUnfollowedUser = await User.findOne({_id: {$eq: userGettingUnfollowedData._id}}).lean();
+
+    beforeUnfollowingUser.following = [randomUUID];
+    beforeUnfollowedUser.followers = [randomUUID];
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.message).toBe('UnFollowed user');
+    expect(beforeUnfollowedUser).toStrictEqual(afterUnfollowedUser);
+    expect(beforeUnfollowingUser).toStrictEqual(afterUnfollowingUser)
 })
