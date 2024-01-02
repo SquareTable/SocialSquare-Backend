@@ -38,7 +38,7 @@ TODO:
 - Test unfollow fails if account that is getting unfollowed cannot be found -- Done
 - Test unfollow fails if the follower is blocked -- Done
 - Test if follow request gets removed if the account is private (and not follow) -- Done
-- Test if follow gets removed if the account is public (and not follow requests) (and following item gets removed from the account following)
+- Test if follow gets removed if the account is public (and following item gets removed from the account following)
 - Test if non-related User accounts do not get modified during request removal
 - Test if non-related User accounts do not get modified during follow removal
 */
@@ -138,7 +138,7 @@ test('Unfollow removes follow request if account is private', async () => {
 
     const afterUser = await User.findOne({_id: {$eq: userGettingUnfollowed._id}}).lean();
 
-    afterUser.accountFollowRequests = [randomUUID];
+    beforeUser.accountFollowRequests = [randomUUID];
 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Removed Request To Follow User');
