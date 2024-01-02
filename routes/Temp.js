@@ -916,6 +916,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
 });
 
 router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changebio',
