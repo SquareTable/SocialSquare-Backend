@@ -558,11 +558,11 @@ describe('When Email 2FA is not enabled', () => {
     test('if already existing User documents do not get modified', async () => {
         expect.assertions(2);
 
-        const usersToInsert = [...new Array(10)].map(() => {
+        const usersToInsert = [...new Array(10)].map((itme, index) => {
             return {
                 _id: new mongoose.Types.ObjectId(),
                 secondId: uuidv4(),
-                name: 'sebastian',
+                name: `sebastian${index}`,
                 displayName: 'Sebastian',
                 __v: 0
             }
