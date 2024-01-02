@@ -34,7 +34,7 @@ TODO:
 - Test unfollow fails if userPubId is not a valid UUID v4 -- Done
 - Test unfollow fails if follower user cannot be found -- Done
 - Test unfollow fails if account that is getting unfollowed cannot be found -- Done
-- Test unfollow fails if the follower is blocked
+- Test unfollow fails if the follower is blocked -- Done
 - Test if follow request gets removed if the account is private (and not follow)
 - Test if follow gets removed if the account is public (and not follow requests) (and following item gets removed from the account following)
 - Test if non-related User accounts do not get modified during request removal
@@ -96,6 +96,20 @@ test('Unfollow fails if account getting unfollowed cannot be found', async () =>
     await new User(userFollowingData).save();
 
     const returned = await TempController.unfollowuser(userFollowingData._id, userGettingFollowedData.secondId);
+
+    expect(returned.statusCode).toBe(404);
+    expect(returned.data.message).toBe('Could not find user.')
+})
+
+test('Unfollow fails if follower is blocked', async () => {
+    expect.assertions(2);
+
+    const userGettingFollowed = {...userGettingFollowedData, blockedAccounts: [userFollowingData.secondId]}
+
+    await new User(userFollowingData).save();
+    await new User(userGettingFollowed).save();
+
+    const returned = await TempController.unfollowuser(userFollowingData._id, userGettingFollowed.secondId);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user.')
