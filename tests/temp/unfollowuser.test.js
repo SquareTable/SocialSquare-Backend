@@ -43,7 +43,7 @@ TODO:
 - Test if non-related User accounts do not get modified during follow removal
 */
 
-for (const notString of TEST_CONSTANTS) {
+for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`Unfollow fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
         expect.assertions(2);
 
