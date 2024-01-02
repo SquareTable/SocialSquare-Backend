@@ -20,12 +20,14 @@ afterEach(async () => {
 
 const userUnfollowingData = {
     _id: '659420149d67e23dd69f8865',
-    secondId: '07bd0de1-5d0e-45d7-9121-7e45963fa46e'
+    secondId: '07bd0de1-5d0e-45d7-9121-7e45963fa46e',
+    name: 'unfollowing'
 }
 
 const userGettingUnfollowedData = {
     _id: '6594201f37b2503c787edec3',
-    secondId: '3a37d41b-8bf2-4ed5-be0b-e975b52a3f16'
+    secondId: '3a37d41b-8bf2-4ed5-be0b-e975b52a3f16',
+    name: 'gettingunfollowed'
 }
 
 const randomTestUsers = [...new Array(20)].map((item, index) => {
