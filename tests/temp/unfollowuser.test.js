@@ -2,6 +2,8 @@ const TempController = require('../../controllers/Temp');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const User = require('../../models/User');
 
+const uuid = require('uuid')
+
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const {beforeEach, afterEach, test, expect} = require('@jest/globals');
@@ -35,7 +37,7 @@ TODO:
 - Test unfollow fails if follower user cannot be found -- Done
 - Test unfollow fails if account that is getting unfollowed cannot be found -- Done
 - Test unfollow fails if the follower is blocked -- Done
-- Test if follow request gets removed if the account is private (and not follow)
+- Test if follow request gets removed if the account is private (and not follow) -- Done
 - Test if follow gets removed if the account is public (and not follow requests) (and following item gets removed from the account following)
 - Test if non-related User accounts do not get modified during request removal
 - Test if non-related User accounts do not get modified during follow removal
@@ -113,4 +115,30 @@ test('Unfollow fails if follower is blocked', async () => {
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user.')
+})
+
+test('Unfollow removes follow request if account is private', async () => {
+    expect.assertions(3);
+
+    const userGettingFollowed = {
+        ...userGettingFollowedData,
+        privateAccount: true,
+        followers: [...new Array(10)].map(() => uuid.v4()),
+        accountFollowRequests: [userFollowingData.secondId]
+    }
+
+    await new User(userGettingFollowed).save();
+    await new User(userFollowingData).save();
+
+    const beforeUser = await User.findOne({_id: {$eq: userGettingFollowed._id}}).lean();
+
+    const returned = await TempController.unfollowuser(userFollowingData._id, userGettingFollowed.secondId);
+
+    const afterUser = await User.findOne({_id: {$eq: userGettingFollowed._id}}).lean();
+
+    afterUser.accountFollowRequests = [];
+
+    expect(returned.statusCode).toBe(200);
+    expect(returned.data.message).toBe('Removed Request To Follow User');
+    expect(beforeUser).toStrictEqual(afterUser);
 })
