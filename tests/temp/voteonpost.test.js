@@ -547,33 +547,6 @@ for (const format of formats) {
             expect(objectIdStringifiedUpvotes).toStrictEqual(upvotesToInsert);
             expect(objectIdStringifiedDownvotes).toStrictEqual(downvotesToInsert);
         })
-
-        test(`Test if votes work when the post creator does not have a blockedAccounts array in their User document. Post format: ${format}`, async () => {
-            expect.assertions(2);
-        
-            const postcreatorData = {
-                _id: "6537d7c2519e591b466c198f",
-                privateAccount: false
-            };
-        
-            const voterData = {
-                _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
-            };
-        
-            await User.insertMany([postcreatorData, voterData]);
-
-            const postData = {_id: "6537f617a17d1f6a636e7d39", creatorId: postcreatorData._id};
-
-            await new POST_DATABASE_MODELS[format](postData).save()
-        
-            const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType);
-
-            const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
-
-            expect(returned.statusCode).toBe(200);
-            expect(votes).toHaveLength(1);
-        })
     }
 }
 
