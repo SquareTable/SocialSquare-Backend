@@ -6313,7 +6313,7 @@ class TempController {
                     User.findOne({_id: {$eq: postFound.creatorId}}).lean().then(postCreator => {
                         if (!postCreator) return resolve(HTTPWTHandler.notFound('Could not find post creator.'))
 
-                        if (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Post could not be found.'))
+                        if (postCreator.blockedAccounts?.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Post could not be found.'))
 
                         VOTE_DATABASE_MODELS[voteType].deleteMany({userPublicId: {$eq: userFound.secondId}, postId: {$eq: postId}, postFormat: {$eq: postFormat}}).then(() => {
                             return resolve(HTTPWTHandler.OK('Removing vote was a success'))
