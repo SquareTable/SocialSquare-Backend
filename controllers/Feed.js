@@ -283,22 +283,7 @@ class FeedController {
                                     }
         
                                     const alreadyOnCurrentFeedIdsChecker = (propertyOfViewed, idTesting) => {
-                                        try {
-                                            //console.log(propertyOfViewed + " " + idTesting)
-                                            
-                                            const idVersionOfPropertyViewed = new mongodb.ObjectID(propertyOfViewed)
-        
-                                            if (idVersionOfPropertyViewed.equals(idTesting)) {
-                                                //console.log("Found match of ids in alreadyOnCurrentFeedIdsChecker " + propertyOfViewed + " " + idTesting)
-                                                return true
-                                            } else {    
-                                                //console.log("Not match of ids in alreadyOnCurrentFeedIdsChecker " + propertyOfViewed + " " + idTesting)
-                                                return false
-                                            }
-                                        } catch (err) {
-                                            //console.log(`alreadyOnCurrentFeedIdsChecker: ${err}`) //should happed a lot so commented out
-                                            return false
-                                        }
+                                        return propertyOfViewed == idTesting
                                     }
         
                                     const forAlreadyViewedOnes = (forSendBackItemsProcessed, postsForResponse) => {
