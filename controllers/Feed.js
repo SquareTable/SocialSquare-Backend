@@ -1,4 +1,3 @@
-const mongodb = require('mongodb');
 const { algorithmMain } = require('./../Algorithm/algorithmMain')
 
 //Schemas
