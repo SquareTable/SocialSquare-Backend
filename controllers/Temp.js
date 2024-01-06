@@ -6431,6 +6431,101 @@ class TempController {
         })
     }
 
+    static #getupvotedusersofpost = async (userId, postId, postFormat, lastUpvoteId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Type provided: ${typeof postId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
+            }
+
+            if (!CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
+                return resolve(HTTPWTHandler.badInput(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`))
+            }
+
+            if (typeof lastUpvoteId !== 'string' && lastUpvoteId !== undefined) {
+                return resolve(HTTPWTHandler.badInput('lastUpvoteId must be either a string or undefined.'))
+            }
+
+            if (lastUpvoteId !== undefined && !mongoose.isObjectIdOrHexString(lastUpvoteId)) {
+                return resolve(HTTPWTHandler.badInput('lastUpvoteId must be an ObjectId if it is going to be a string.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                POST_DATABASE_MODELS[postFormat].findOne({_id: {$eq: postId}}).lean().then(async postFound => {
+                    if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post.'))
+
+                    let postCreator;
+
+                    try {
+                        postCreator = postFound.creatorId == userId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean();
+                    } catch (error) {
+                        console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post creator. Please try again.'))
+                    }
+
+                    if (!postCreator) {
+                        console.error('Found', postFormat, 'post with id:', postId, 'that does not have a creator with id:', postFound.creatorId)
+                        return resolve(HTTPWTHandler.notFound('Could not find post creator'))
+                    }
+
+                    if (postCreator._id != userId && (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId)))) {
+                        //If the user requesting is not the post creator, and they are either blocked or not following the user (if the user that created the post is a private account)
+                        return resolve(HTTPWTHandler.notFound('Could not find post.'))
+                    }
+
+                    const dbQuery = {
+                        postId: {$eq: postId},
+                        postFormat: {$eq: postFormat}
+                    }
+
+                    if (lastUpvoteId) {
+                        dbQuery._id = {$lt: lastUpvoteId}
+                    }
+
+                    Upvote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(upvotes => {
+                        if (upvotes.length === 0) return resolve(HTTPWTHandler.OK('Success', {votes: [], noMoreVotes: true}))
+
+                        const userPubIds = upvotes.map(vote => vote.userPublicId);
+
+                        User.find({secondId: {$in: userPubIds}}).lean().then(users => {
+                            const toSend = {
+                                votes: users.map(user => userHandler.returnPublicInformation(user, userFound)),
+                                noMoreVotes: users.length < CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Success', toSend))
+                        }).catch(error => {
+                            console.error('An error occurred while finding users with secondIds inside of:', userPubIds, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding upvoted users. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding upvotes with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding upvotes. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one', postFormat, 'post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6753,6 +6848,10 @@ class TempController {
 
     static unfollowuser = async (userId, userPubId) => {
         return await this.#unfollowuser(userId, userPubId)
+    }
+
+    static getupvotedusersofpost = async (userId, postId, postFormat, lastUpvoteId) => {
+        return await this.#getupvotedusersofpost(userId, postId, postFormat, lastUpvoteId)
     }
 }
 

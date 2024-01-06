@@ -767,6 +767,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getupvotedusersofpost/:postFormat': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 12,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have retrieved the users that have upvoted a certain post too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -3146,6 +3155,35 @@ router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/unfollowuser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/getupvotedusersofpost/:postFormat', rateLimiters['/getupvotedusersofpost/:postFormat'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getupvotedusersofpost',
+            functionArgs: [req.tokenData, req.body.postId, req.path.postFormat, req.body.lastUpvoteId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/getupvotedusersofpost/:postFormat controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /getupvotedusersofpost/:postFormat:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getupvotedusersofpost/:postFormat controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
