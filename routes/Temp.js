@@ -532,15 +532,6 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/getCategoriesUserIsAPartOf': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested the categories you are part of too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/reportPost': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
         max: 100,
@@ -2398,35 +2389,6 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/getUserActivity controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPartOf'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'getCategoriesUserIsAPartOf',
-            functionArgs: [req.tokenData, req.body.previousCategoryMemberId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/getCategoriesUserIsAPartOf controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /getCategoriesUserIsAPartOf:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/getCategoriesUserIsAPartOf controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });

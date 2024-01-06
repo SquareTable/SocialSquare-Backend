@@ -4546,69 +4546,6 @@ class TempController {
         })
     }
 
-    static #getCategoriesUserIsAPartOf = (userId, previousCategoryMemberId) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
-            }
-
-            if (typeof previousCategoryMemberId !== 'undefined' && typeof previousCategoryMemberId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must either be undefined or a string. Provided type: ${typeof previousCategoryMemberId}`))
-            }
-
-            if (typeof previousCategoryMemberId === 'string' && !mongoose.isObjectIdOrHexString(previousCategoryMemberId)) {
-                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId must be an ObjectId string or undefined.'))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
-
-                const dbQuery = {
-                    userId: {$eq: userId}
-                }
-
-                if (previousCategoryMemberId) {
-                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousCategoryMemberId)}
-                }
-
-                CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoryMemberDocuments => {
-                    if (categoryMemberDocuments.length < 1) return resolve(HTTPWTHandler.OK('Successfully found no categories', {noMoreCategories: true, categories: []}))
-
-                    const categoryIds = categoryMemberDocuments.map(doc => doc.categoryId)
-                    Category.find({_id: {$in: categoryIds}}).then(categories => {
-                        const categoriesToSend = categories.map((category, index) => {
-                            const newCategory = {...category}
-                            newCategory.dateJoined = categoryMemberDocuments[index].dateJoined;
-                            return newCategory
-                        })
-
-                        const toSend = {
-                            noMoreCategories: categoryMemberDocuments.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL,
-                            categories: categoriesToSend
-                        }
-
-                        return resolve(HTTPWTHandler.OK(`Successfully found ${categoryMemberDocuments.length} categories`, toSend))
-                    }).catch(error => {
-                        console.error('An error occurred while finding categories with ids:', categoryIds, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding CategoryMembers with dbQuery:', dbQuery, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding categories you are a part of. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
     static #reportPost = (reporterId, postId, postFormat, reason) => {
         return new Promise(async resolve => {
             let post;
@@ -6713,10 +6650,6 @@ class TempController {
 
     static getUserActivity = async (userId, skip, voteType, postFormat) => {
         return await this.#getUserActivity(userId, skip, voteType, postFormat)
-    }
-
-    static getCategoriesUserIsAPartOf = async (userId, skip) => {
-        return await this.#getCategoriesUserIsAPartOf(userId, skip)
     }
 
     static reportPost = async (reporterId, postId, postFormat, reason) => {
