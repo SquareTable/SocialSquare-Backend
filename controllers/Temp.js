@@ -1342,8 +1342,7 @@ class TempController {
                     }
 
                     const userPublicID = secondData.secondId;
-                    const isOwner = userId == data._id.toString()
-                    if (isOwner === true) {
+                    if (userId == data._id) {
                         getImagesAndSendToUser(data, secondData)
                     } else if (data.blockedAccounts?.includes(userPublicID)) {
                         return resolve(HTTPWTHandler.notFound('User not found.'))
