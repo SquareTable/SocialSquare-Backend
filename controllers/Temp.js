@@ -6431,7 +6431,7 @@ class TempController {
         })
     }
 
-    static #getupvotedusersofpost = async (userId, postId, postFormat, lastUpvoteId) => {
+    static #getvotedusersofpost = async (userId, postId, postFormat, lastVoteId, voteType) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -6453,12 +6453,16 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`))
             }
 
-            if (typeof lastUpvoteId !== 'string' && lastUpvoteId !== undefined) {
-                return resolve(HTTPWTHandler.badInput('lastUpvoteId must be either a string or undefined.'))
+            if (typeof lastVoteId !== 'string' && lastVoteId !== undefined) {
+                return resolve(HTTPWTHandler.badInput('lastVoteId must be either a string or undefined.'))
             }
 
-            if (lastUpvoteId !== undefined && !mongoose.isObjectIdOrHexString(lastUpvoteId)) {
-                return resolve(HTTPWTHandler.badInput('lastUpvoteId must be an ObjectId if it is going to be a string.'))
+            if (lastVoteId !== undefined && !mongoose.isObjectIdOrHexString(lastVoteId)) {
+                return resolve(HTTPWTHandler.badInput('lastVoteId must be an ObjectId if it is going to be a string.'))
+            }
+
+            if (!CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.includes(voteType)) {
+                return resolve(HTTPWTHandler.badInput(`voteType must be one of thse values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -6491,8 +6495,8 @@ class TempController {
                         postFormat: {$eq: postFormat}
                     }
 
-                    if (lastUpvoteId) {
-                        dbQuery._id = {$lt: lastUpvoteId}
+                    if (lastVoteId) {
+                        dbQuery._id = {$lt: lastVoteId}
                     }
 
                     Upvote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(upvotes => {
@@ -6850,8 +6854,8 @@ class TempController {
         return await this.#unfollowuser(userId, userPubId)
     }
 
-    static getupvotedusersofpost = async (userId, postId, postFormat, lastUpvoteId) => {
-        return await this.#getupvotedusersofpost(userId, postId, postFormat, lastUpvoteId)
+    static getvotedusersofpost = async (userId, postId, postFormat, lastVoteId, voteType) => {
+        return await this.#getvotedusersofpost(userId, postId, postFormat, lastVoteId, voteType)
     }
 }
 
