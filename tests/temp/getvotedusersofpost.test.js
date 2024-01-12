@@ -169,7 +169,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     await VOTE_DATABASE_MODELS[voteType].insertMany(userPublicIds.map(pubId => {
                         return {
                             _id: new mongoose.Types.ObjectId(),
-                            postId,
+                            postId: postData._id,
                             postFormat,
                             interactionDate: Date.now(),
                             userPublicId: pubId
@@ -207,7 +207,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     const rawVoteData = userPublicIds.map(pubId => {
                         return {
                             _id: new mongoose.Types.ObjectId(),
-                            postId: postData._id,
+                            postId,
                             postFormat,
                             interactionDate: Date.now(),
                             userPublicId: pubId
@@ -220,7 +220,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, lastVoteId, voteType);
 
-                    const allVotes = VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).lean();
+                    const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).lean();
 
                     const expectedVotes = allVotes.splice(79, 10);
 
