@@ -27,7 +27,7 @@ const swaggerDocument = require('./swagger.json'); //For API docs
 const ImageLibrary = require('./libraries/Image');
 const imageHandler = new ImageLibrary();
 
-//require('dotenv').config();
+require('dotenv').config();
 const fs = require('fs')
 const S3 = require('aws-sdk/clients/s3')
 

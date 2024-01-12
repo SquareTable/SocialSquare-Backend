@@ -6462,7 +6462,7 @@ class TempController {
             }
 
             if (!CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.includes(voteType)) {
-                return resolve(HTTPWTHandler.badInput(`voteType must be one of thse values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`))
+                return resolve(HTTPWTHandler.badInput(`voteType must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -6485,7 +6485,10 @@ class TempController {
                         return resolve(HTTPWTHandler.notFound('Could not find post creator'))
                     }
 
-                    if (postCreator._id != userId && (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId)))) {
+                    const blocked = postCreator.blockedAccounts?.includes(userFound.secondId)
+                    const notAllowedToView = postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId);
+
+                    if ((blocked || notAllowedToView) && postCreator._id != userId) {
                         //If the user requesting is not the post creator, and they are either blocked or not following the user (if the user that created the post is a private account)
                         return resolve(HTTPWTHandler.notFound('Could not find post.'))
                     }
