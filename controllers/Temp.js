@@ -517,24 +517,20 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     User.find({$or: [ { name: {$regex: `^${val}`, $options: 'i'}}, { displayName: {$regex: `^${val}`, $options: 'i'}} ]}).skip(skip).limit(limit).lean().then(data =>{
+                        const noMoreItems = data.length < limit;
+
                         if (data.length) {
-                            var itemsProcessed = 0;
-                            data.forEach(function (item, index) {
-                                if (data[index].blockedAccounts?.includes(userFound.secondId)) {
-                                    itemsProcessed++;
-                                } else {
-                                    foundArray.push(userHandler.returnPublicInformation(data[index], userFound))
-                                }
-                                itemsProcessed++;
-                                if(itemsProcessed === data.length) {
-                                    console.log("Before Function")
-                                    console.log(foundArray)
-                                    sendResponse(foundArray);
-                                }
-                            });
+                            const processedUsers = [];
+
+                            for (const userFromSearch of data) {
+                                if (userFromSearch.blockedAccounts?.includes(userFound.secondId)) continue
+
+                                processedUsers.push(userHandler.returnPublicInformation(userFromSearch, userFound))
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Success', {items: processedUsers, noMoreItems}))
                         } else {
-                            const message = skip > 0 ? 'No more results' : 'No results'
-                            return resolve(HTTPWTHandler.notFound(message))
+                            return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems}))
                         }
                     }).catch(err => {
                         console.error('An error occured while finding users with names or displaynames similar to:', val, '. The error was:', err)
