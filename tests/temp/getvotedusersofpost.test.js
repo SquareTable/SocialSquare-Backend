@@ -228,7 +228,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
 
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user));
+                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequestingData));
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data).toBe(expectedData);
