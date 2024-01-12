@@ -184,7 +184,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
 
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user))
+                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequestingData))
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data).toStrictEqual(expectedData);
@@ -207,7 +207,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     const rawVoteData = userPublicIds.map(pubId => {
                         return {
                             _id: new mongoose.Types.ObjectId(),
-                            postId,
+                            postId: postData._id,
                             postFormat,
                             interactionDate: Date.now(),
                             userPublicId: pubId
