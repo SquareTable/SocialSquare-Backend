@@ -517,24 +517,20 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     User.find({$or: [ { name: {$regex: `^${val}`, $options: 'i'}}, { displayName: {$regex: `^${val}`, $options: 'i'}} ]}).skip(skip).limit(limit).lean().then(data =>{
+                        const noMoreItems = data.length < limit;
+
                         if (data.length) {
-                            var itemsProcessed = 0;
-                            data.forEach(function (item, index) {
-                                if (data[index].blockedAccounts?.includes(userFound.secondId)) {
-                                    itemsProcessed++;
-                                } else {
-                                    foundArray.push(userHandler.returnPublicInformation(data[index], userFound))
-                                }
-                                itemsProcessed++;
-                                if(itemsProcessed === data.length) {
-                                    console.log("Before Function")
-                                    console.log(foundArray)
-                                    sendResponse(foundArray);
-                                }
-                            });
+                            const processedUsers = [];
+
+                            for (const userFromSearch of data) {
+                                if (userFromSearch.blockedAccounts?.includes(userFound.secondId)) continue
+
+                                processedUsers.push(userHandler.returnPublicInformation(userFromSearch, userFound))
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Success', {items: processedUsers, noMoreItems}))
                         } else {
-                            const message = skip > 0 ? 'No more results' : 'No results'
-                            return resolve(HTTPWTHandler.notFound(message))
+                            return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems}))
                         }
                     }).catch(err => {
                         console.error('An error occured while finding users with names or displaynames similar to:', val, '. The error was:', err)
@@ -6431,6 +6427,108 @@ class TempController {
         })
     }
 
+    static #getvotedusersofpost = async (userId, postId, postFormat, lastVoteId, voteType) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Type provided: ${typeof postId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
+            }
+
+            if (!CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
+                return resolve(HTTPWTHandler.badInput(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`))
+            }
+
+            if (typeof lastVoteId !== 'string' && lastVoteId !== undefined) {
+                return resolve(HTTPWTHandler.badInput('lastVoteId must be either a string or undefined.'))
+            }
+
+            if (lastVoteId !== undefined && !mongoose.isObjectIdOrHexString(lastVoteId)) {
+                return resolve(HTTPWTHandler.badInput('lastVoteId must be an ObjectId if it is going to be a string.'))
+            }
+
+            if (!CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.includes(voteType)) {
+                return resolve(HTTPWTHandler.badInput(`voteType must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                POST_DATABASE_MODELS[postFormat].findOne({_id: {$eq: postId}}).lean().then(async postFound => {
+                    if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post.'))
+
+                    let postCreator;
+
+                    try {
+                        postCreator = postFound.creatorId == userId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean();
+                    } catch (error) {
+                        console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post creator. Please try again.'))
+                    }
+
+                    if (!postCreator) {
+                        console.error('Found', postFormat, 'post with id:', postId, 'that does not have a creator with id:', postFound.creatorId)
+                        return resolve(HTTPWTHandler.notFound('Could not find post creator'))
+                    }
+
+                    const blocked = postCreator.blockedAccounts?.includes(userFound.secondId)
+                    const notAllowedToView = postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId);
+
+                    if ((blocked || notAllowedToView) && postCreator._id != userId) {
+                        //If the user requesting is not the post creator, and they are either blocked or not following the user (if the user that created the post is a private account)
+                        return resolve(HTTPWTHandler.notFound('Could not find post.'))
+                    }
+
+                    const dbQuery = {
+                        postId: {$eq: postId},
+                        postFormat: {$eq: postFormat}
+                    }
+
+                    if (lastVoteId) {
+                        dbQuery._id = {$lt: lastVoteId}
+                    }
+
+                    Upvote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(upvotes => {
+                        if (upvotes.length === 0) return resolve(HTTPWTHandler.OK('Success', {votes: [], noMoreVotes: true}))
+
+                        const userPubIds = upvotes.map(vote => vote.userPublicId);
+
+                        User.find({secondId: {$in: userPubIds}}).lean().then(users => {
+                            const toSend = {
+                                votes: users.map(user => userHandler.returnPublicInformation(user, userFound)),
+                                noMoreVotes: users.length < CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Success', toSend))
+                        }).catch(error => {
+                            console.error('An error occurred while finding users with secondIds inside of:', userPubIds, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding upvoted users. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding upvotes with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding upvotes. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one', postFormat, 'post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6753,6 +6851,10 @@ class TempController {
 
     static unfollowuser = async (userId, userPubId) => {
         return await this.#unfollowuser(userId, userPubId)
+    }
+
+    static getvotedusersofpost = async (userId, postId, postFormat, lastVoteId, voteType) => {
+        return await this.#getvotedusersofpost(userId, postId, postFormat, lastVoteId, voteType)
     }
 }
 
