@@ -207,7 +207,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     const rawVoteData = userPublicIds.map(pubId => {
                         return {
                             _id: new mongoose.Types.ObjectId(),
-                            postId,
+                            postId: postData._id,
                             postFormat,
                             interactionDate: Date.now(),
                             userPublicId: pubId
