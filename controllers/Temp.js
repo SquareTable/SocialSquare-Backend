@@ -6499,14 +6499,14 @@ class TempController {
                     }
 
                     Upvote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(upvotes => {
-                        if (upvotes.length === 0) return resolve(HTTPWTHandler.OK('Success', {votes: [], noMoreVotes: true}))
+                        if (upvotes.length === 0) return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems: true}))
 
                         const userPubIds = upvotes.map(vote => vote.userPublicId);
 
                         User.find({secondId: {$in: userPubIds}}).lean().then(users => {
                             const toSend = {
-                                votes: users.map(user => userHandler.returnPublicInformation(user, userFound)),
-                                noMoreVotes: users.length < CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL
+                                items: users.map(user => userHandler.returnPublicInformation(user, userFound)),
+                                noMoreItems: users.length < CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL
                             }
 
                             return resolve(HTTPWTHandler.OK('Success', toSend))
