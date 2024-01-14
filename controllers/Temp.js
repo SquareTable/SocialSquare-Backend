@@ -784,13 +784,13 @@ class TempController {
                                     console.log('TIME TO PROCESS 10 POLLS:', time2 - time1, 'MILLISECONDS.')
                                     if (data.length) {
                                         const toSend = {
-                                            posts: data,
-                                            noMorePosts: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
+                                            items: data,
+                                            noMoreItems: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
                                         }
 
                                         return resolve(HTTPWTHandler.OK('Poll search successful', toSend))
                                     } else {
-                                        return resolve(HTTPWTHandler.OK('No more poll posts could be found', {posts: [], noMorePosts: true}))
+                                        return resolve(HTTPWTHandler.OK('No more poll posts could be found', {items: [], noMoreItems: true}))
                                     }
                                 }).catch(error => {
                                     console.error('An error occured while finding polls with a creatorId of:', result._id, '. The error was:', error)
@@ -1311,13 +1311,13 @@ class TempController {
                 ImagePost.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
                     if (result.length) {
                         const toSend = {
-                            posts: result,
-                            noMorePosts: result.length < CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL
+                            items: result,
+                            noMoreItems: result.length < CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL
                         }
 
                         return resolve(HTTPWTHandler.OK('Posts found', toSend))
                     } else {
-                        return resolve(HTTPWTHandler.OK('No more image posts could be found', {posts: [], noMorePosts: true}))
+                        return resolve(HTTPWTHandler.OK('No more image posts could be found', {items: [], noMoreItems: true}))
                     }
                 }).catch(error => {
                     console.error('An error occured while getting user images from user with id:', postOwner._id, '. The error was:', error)
@@ -1913,8 +1913,8 @@ class TempController {
                         })
 
                         const toSend = {
-                            categories,
-                            noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
+                            items: categories,
+                            noMoreItems: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
                         }
 
                         return resolve(HTTPWTHandler.OK('Search successful', toSend))
@@ -2073,7 +2073,7 @@ class TempController {
                         }
 
                         CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
-                            if (data.length < 1) return resolve(HTTPWTHandler.OK('No more categories could be found', {categories: [], noMoreCategories: true}))
+                            if (data.length < 1) return resolve(HTTPWTHandler.OK('No more categories could be found', {items: [], noMoreItems: true}))
 
                             const categoryIds = Array.from(new Set(data.map(member => member.categoryId)));
 
@@ -2109,7 +2109,7 @@ class TempController {
                                         }
                                     })
 
-                                    return resolve(HTTPWTHandler.OK('Categories search successful', {categories: toSend, noMoreCategories: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
+                                    return resolve(HTTPWTHandler.OK('Categories search successful', {items: toSend, noMoreItems: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
                                 }).catch(error => {
                                     console.error('An error occurred while getting member counts from categories in this pair list:', memberCategoryPairs, '. The error was:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occured while finding member counts for the categories. Please try again.'))
@@ -2718,12 +2718,12 @@ class TempController {
                             }
 
                             Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
-                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {posts: [], noMorePosts: true})) 
+                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {items: [], noMoreItems: true})) 
                                 
                                 threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
                                     const toSend = {
-                                        posts,
-                                        noMorePosts: posts.length < CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL
+                                        items: posts,
+                                        noMoreItems: posts.length < CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL
                                     }
 
                                     return resolve(HTTPWTHandler.OK('Posts found', toSend))
@@ -3265,7 +3265,7 @@ class TempController {
 
                 if (Array.isArray(userFound.accountFollowRequests)) {
                     if (userFound.accountFollowRequests.length < 1) {
-                        return resolve(HTTPWTHandler.OK('No account follow requests', {requesters: [], noMoreItems: true, skip: 0}))
+                        return resolve(HTTPWTHandler.OK('No account follow requests', {items: [], noMoreItems: true, skip: 0}))
                     }
 
                     const {items, noMoreItems} = arrayHelper.returnSomeItems(userFound.accountFollowRequests, parsedSkip, CONSTANTS.MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL);
@@ -3281,13 +3281,13 @@ class TempController {
                             return userHandler.returnPublicInformation(item, userFound)
                         })
 
-                        return resolve(HTTPWTHandler.OK('Successfully found requests', {requesters: toSend, noMoreItems, skip: parsedSkip + items.length}))
+                        return resolve(HTTPWTHandler.OK('Successfully found requests', {items: toSend, noMoreItems, skip: parsedSkip + items.length}))
                     }).catch(error => {
                         console.error('An error occurred while finding users with ids in:', items, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding account follow requests. Please try again.'))
                     })
                 } else {
-                    return resolve(HTTPWTHandler.OK('accountFollowRequests is not an array - there are no requests', {requesters: [], noMoreItems: true, skip: 0}))
+                    return resolve(HTTPWTHandler.OK('accountFollowRequests is not an array - there are no requests', {items: [], noMoreItems: true, skip: 0}))
                 }
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -3589,7 +3589,7 @@ class TempController {
                         return data
                     })
 
-                    return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', {blockedAccounts: publicInformation, noMoreItems}))
+                    return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', {items: publicInformation, noMoreItems}))
                 }).catch(error => {
                     console.error('An error occurred while finding users with secondIds in this array:', blockedAccounts, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
@@ -4435,13 +4435,13 @@ class TempController {
             }
 
             const lastVoteId = votes.length > 0 ? votes[votes.length - 1]._id.toString() : null
-            const noMoreVotes = votes.length < CONSTANTS.GET_USER_ACTIVITY_API_LIMIT
+            const noMoreItems = votes.length < CONSTANTS.GET_USER_ACTIVITY_API_LIMIT
 
             if (votes.length < 1) {
                 const toSend = {
-                    posts: [],
+                    items: [],
                     lastVoteId,
-                    noMoreVotes
+                    noMoreItems
                 }
 
                 return resolve(HTTPWTHandler.OK('Found no activity', toSend))
@@ -4528,9 +4528,9 @@ class TempController {
 
             Promise.all(promises).then(arrays => {
                 const toSend = {
-                    posts: [].concat(...arrays),
+                    items: [].concat(...arrays),
                     lastVoteId,
-                    noMoreVotes
+                    noMoreItems
                 }
 
                 return resolve(HTTPWTHandler.OK(`Successfully found ${postFormat.toLowerCase()} posts ${skip} - ${skip + toSend.length}`, toSend))
