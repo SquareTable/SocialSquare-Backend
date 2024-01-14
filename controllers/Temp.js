@@ -1852,7 +1852,7 @@ class TempController {
         })
     }
 
-    static #searchpagesearchcategories = (userId, val, lastCategoryId) => {
+    static #searchpagesearchcategories = (userId, val, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -1870,12 +1870,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('Search box cannot be empty!'))
             }
 
-            if (lastCategoryId !== undefined && typeof lastCategoryId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`lastCategoryId must be undefined or a string. Provided type: ${typeof lastCategoryId}`))
+            if (lastItemId !== undefined && typeof lastItemId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be undefined or a string. Provided type: ${typeof lastItemId}`))
             }
 
-            if (typeof lastCategoryId === 'string' && !mongoose.isObjectIdOrHexString(lastCategoryId)) {
-                return resolve(HTTPWTHandler.badInput('lastCategoryId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -1887,8 +1887,8 @@ class TempController {
                     categoryTitle: {$regex: `^${val}`, $options: 'i'}
                 }
 
-                if (lastCategoryId !== undefined) {
-                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(lastCategoryId)}
+                if (lastItemId !== undefined) {
+                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(lastItemId)}
                 }
 
                 Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
@@ -4434,13 +4434,13 @@ class TempController {
                 }
             }
 
-            const lastVoteId = votes.length > 0 ? votes[votes.length - 1]._id.toString() : null
+            const lastItemId = votes.length > 0 ? votes[votes.length - 1]._id.toString() : null
             const noMoreItems = votes.length < CONSTANTS.GET_USER_ACTIVITY_API_LIMIT
 
             if (votes.length < 1) {
                 const toSend = {
                     items: [],
-                    lastVoteId,
+                    lastItemId,
                     noMoreItems
                 }
 
@@ -4529,7 +4529,7 @@ class TempController {
             Promise.all(promises).then(arrays => {
                 const toSend = {
                     items: [].concat(...arrays),
-                    lastVoteId,
+                    lastItemId,
                     noMoreItems
                 }
 
@@ -6427,7 +6427,7 @@ class TempController {
         })
     }
 
-    static #getvotedusersofpost = async (userId, postId, postFormat, lastVoteId, voteType) => {
+    static #getvotedusersofpost = async (userId, postId, postFormat, lastItemId, voteType) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -6449,12 +6449,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`))
             }
 
-            if (typeof lastVoteId !== 'string' && lastVoteId !== undefined) {
-                return resolve(HTTPWTHandler.badInput('lastVoteId must be either a string or undefined.'))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be either a string or undefined.'))
             }
 
-            if (lastVoteId !== undefined && !mongoose.isObjectIdOrHexString(lastVoteId)) {
-                return resolve(HTTPWTHandler.badInput('lastVoteId must be an ObjectId if it is going to be a string.'))
+            if (lastItemId !== undefined && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId if it is going to be a string.'))
             }
 
             if (!CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.includes(voteType)) {
@@ -6494,8 +6494,8 @@ class TempController {
                         postFormat: {$eq: postFormat}
                     }
 
-                    if (lastVoteId) {
-                        dbQuery._id = {$lt: lastVoteId}
+                    if (lastItemId) {
+                        dbQuery._id = {$lt: lastItemId}
                     }
 
                     Upvote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(upvotes => {
@@ -6609,8 +6609,8 @@ class TempController {
         return await this.#postcategorywithoutimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots)
     }
 
-    static searchpagesearchcategories = async (userId, val, lastCategoryId) => {
-        return await this.#searchpagesearchcategories(userId, val, lastCategoryId)
+    static searchpagesearchcategories = async (userId, val, lastItemId) => {
+        return await this.#searchpagesearchcategories(userId, val, lastItemId)
     }
 
     static getcategoryimage = async (val) => {
@@ -6853,8 +6853,8 @@ class TempController {
         return await this.#unfollowuser(userId, userPubId)
     }
 
-    static getvotedusersofpost = async (userId, postId, postFormat, lastVoteId, voteType) => {
-        return await this.#getvotedusersofpost(userId, postId, postFormat, lastVoteId, voteType)
+    static getvotedusersofpost = async (userId, postId, postFormat, lastItemId, voteType) => {
+        return await this.#getvotedusersofpost(userId, postId, postFormat, lastItemId, voteType)
     }
 }
 

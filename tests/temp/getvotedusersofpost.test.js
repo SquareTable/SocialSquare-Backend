@@ -52,14 +52,14 @@ Tests:
 - Test if request fails if postId is not a string
 - Test if request fails if postId is not an ObjectId
 - Test if request fails if postFormat is not supported in constants file
-- Test if request fails if lastVoteId is not a string or undefined
-- Test if request fails if lastVoteId is a string and not an ObjectId
+- Test if request fails if lastItemId is not a string or undefined
+- Test if request fails if lastItemId is a string and not an ObjectId
 - Test if request fails if voteType is not supported in constants file
 - Test if request fails if user requesting cannot be found
 - Test if request fails if post cannot be found
 - Test if request fails if postCreator could not be found
-- Test if request with no lastVoteId returns correct data
-- Test if request with lastVoteId returns correct votes
+- Test if request with no lastItemId returns correct data
+- Test if request with lastItemId returns correct votes
 - Test if request fails if user is blocked by post creator
 - Test if request fails if user is not following the post creator and the post creator account is private
 */
@@ -108,13 +108,13 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                         })
             
                         if (notString !== undefined) {
-                            test(`If request fails if lastVoteId is not a string or undefined.`, async () => {
+                            test(`If request fails if lastItemId is not a string or undefined.`, async () => {
                                 expect.assertions(2);
             
                                 const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, notString, voteType);
             
                                 expect(returned.statusCode).toBe(400);
-                                expect(returned.data.message).toBe('lastVoteId must be either a string or undefined.')
+                                expect(returned.data.message).toBe('lastItemId must be either a string or undefined.')
                             })
                         }
                     })
@@ -152,7 +152,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     expect(returned.data.message).toBe('Could not find post creator')
                 })
 
-                test('If request sends correct data with lastVoteId undefined', async () => {
+                test('If request sends correct data with lastItemId undefined', async () => {
                     expect.assertions(2);
 
                     await new User(userRequestingData).save();
@@ -192,7 +192,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     expect(returned.data.data.votes).toStrictEqual(expectedData);
                 })
 
-                test('If request sends correct data when lastVoteId is an ObjectId', async () => {
+                test('If request sends correct data when lastItemId is an ObjectId', async () => {
                     expect.assertions(2);
 
                     await new User(userRequestingData).save();
@@ -218,9 +218,9 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await VOTE_DATABASE_MODELS[voteType].insertMany(rawVoteData)
 
-                    const lastVoteId = rawVoteData[89]._id.toString();
+                    const lastItemId = rawVoteData[89]._id.toString();
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, lastVoteId, voteType);
+                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, lastItemId, voteType);
 
                     const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).lean();
 
@@ -309,13 +309,13 @@ test('If request fails if postFormat is not supported in constants file', async 
     expect(returned.data.message).toBe(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`)
 })
 
-test('If request fails if lastVoteId is a string and not an ObjectId', async () => {
+test('If request fails if lastItemId is a string and not an ObjectId', async () => {
     expect.assertions(2);
 
     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'Image', 'i am not an objectid', 'Up');
 
     expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('lastVoteId must be an ObjectId if it is going to be a string.')
+    expect(returned.data.message).toBe('lastItemId must be an ObjectId if it is going to be a string.')
 })
 
 test('If request fails if voteType is not supported in constants file', async () => {

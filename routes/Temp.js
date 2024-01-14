@@ -1386,7 +1386,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpagesearchcategories',
-            functionArgs: [req.tokenData, req.body.val, req.body.lastCategoryId]
+            functionArgs: [req.tokenData, req.body.val, req.body.lastItemId]
         }
     })
 
@@ -3164,7 +3164,7 @@ router.post('/getvotedusersofpost/:postFormat/:voteType', rateLimiters['/getvote
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getvotedusersofpost',
-            functionArgs: [req.tokenData, req.body.postId, req.path.postFormat, req.body.lastVoteId, req.path.voteType]
+            functionArgs: [req.tokenData, req.body.postId, req.path.postFormat, req.body.lastItemId, req.path.voteType]
         }
     })
 
