@@ -169,7 +169,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     await VOTE_DATABASE_MODELS[voteType].insertMany(userPublicIds.map(pubId => {
                         return {
                             _id: new mongoose.Types.ObjectId(),
-                            postId,
+                            postId: postData._id,
                             postFormat,
                             interactionDate: Date.now(),
                             userPublicId: pubId
@@ -184,10 +184,12 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
 
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user))
+                    const userRequesting = await User.findOne({_id: {$eq: userRequestingData._id}}).lean();
+
+                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting))
 
                     expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data).toStrictEqual(expectedData);
+                    expect(returned.data.data.votes).toStrictEqual(expectedData);
                 })
 
                 test('If request sends correct data when lastVoteId is an ObjectId', async () => {
@@ -228,7 +230,9 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
 
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user));
+                    const userRequesting = await User.findOne({_id: {$eq: userRequestingData._id}}).lean();
+
+                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting));
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data).toBe(expectedData);
