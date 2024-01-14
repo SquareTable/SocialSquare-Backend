@@ -178,7 +178,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
 
-                    const votes = VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean();
+                    const votes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean();
 
                     const voteUserPublicIds = votes.map(vote => vote.userPublicId)
 
