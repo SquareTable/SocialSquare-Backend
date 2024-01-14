@@ -184,7 +184,9 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
 
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequestingData))
+                    const userRequesting = await User.findOne({_id: {$eq: userRequestingData._id}}).lean();
+
+                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting))
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data.votes).toStrictEqual(expectedData);
@@ -228,7 +230,9 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
 
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequestingData));
+                    const userRequesting = await User.findOne({_id: {$eq: userRequestingData._id}}).lean();
+
+                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting));
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data).toBe(expectedData);
