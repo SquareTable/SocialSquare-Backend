@@ -1036,7 +1036,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollposts',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
@@ -1239,7 +1239,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getImagesFromProfile',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
@@ -1473,7 +1473,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategoryfromprofile',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousCategoryMemberId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
@@ -1651,7 +1651,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getthreadsfromprofile',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
