@@ -731,7 +731,7 @@ class TempController {
         })
     }
 
-    static #searchforpollposts = (userId, pubId, previousPostId) => {
+    static #searchforpollposts = (userId, pubId, lastItemId) => {
         //userId is the ID of the user requesting the poll posts
         //pubId is the secondId of the user with the poll posts that are being searched for
         return new Promise(resolve => {
@@ -747,8 +747,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
             }
 
-            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousPostId must be either a string or undefined`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be either a string or undefined`))
             }
 
             if (pubId.length < 1) {
@@ -771,11 +771,11 @@ class TempController {
                                     creatorId: {$eq: result._id}
                                 }
 
-                                if (previousPostId) {
-                                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousPostId)}
+                                if (lastItemId) {
+                                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(lastItemId)}
                                 }
 
-                                console.log('previousPostId:', previousPostId)
+                                console.log('lastItemId:', lastItemId)
                                 console.log('dbQuery:', dbQuery)
 
                                 const time1 = performance.now()
@@ -1269,7 +1269,7 @@ class TempController {
         })
     }
 
-    static #getImagesFromProfile = (userId, pubId, previousPostId) => {
+    static #getImagesFromProfile = (userId, pubId, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -1287,16 +1287,16 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousPostId must be a string or undefined. Type provided: ${typeof previousPostId}`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be a string or undefined. Type provided: ${typeof lastItemId}`))
             }
 
-            if (previousPostId?.length === 0) {
-                return resolve(HTTPWTHandler.badInput('previousPostId cannot be a blank string'))
+            if (lastItemId?.length === 0) {
+                return resolve(HTTPWTHandler.badInput('lastItemId cannot be a blank string'))
             }
 
-            if (typeof previousPostId === 'string' && !mongoose.isObjectIdOrHexString(previousPostId)) {
-                return resolve(HTTPWTHandler.badInput('previousPostId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             const getImagesAndSendToUser = (postOwner, userRequesting) => {
@@ -1304,8 +1304,8 @@ class TempController {
                     creatorId: postOwner._id
                 }
 
-                if (previousPostId != undefined) {
-                    dbQuery._id = {$lt: previousPostId}
+                if (lastItemId != undefined) {
+                    dbQuery._id = {$lt: lastItemId}
                 }
 
                 ImagePost.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
@@ -2023,7 +2023,7 @@ class TempController {
         })
     }
 
-    static #findcategoryfromprofile = (userId, pubId, previousCategoryMemberId) => {
+    static #findcategoryfromprofile = (userId, pubId, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -2041,12 +2041,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousCategoryMemberId !== 'string' && previousCategoryMemberId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must be a string or undefined. Type provided: ${typeof previousCategoryMemberId}`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be a string or undefined. Type provided: ${typeof lastItemId}`))
             }
 
-            if (typeof previousCategoryMemberId === 'string' && !mongoose.isObjectIdOrHexString(previousCategoryMemberId)) {
-                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
@@ -2068,8 +2068,8 @@ class TempController {
                             userId: {$eq: userId}
                         }
 
-                        if (previousCategoryMemberId) {
-                            dbQuery._id = {$lt: previousCategoryMemberId}
+                        if (lastItemId) {
+                            dbQuery._id = {$lt: lastItemId}
                         }
 
                         CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
@@ -2672,7 +2672,7 @@ class TempController {
         })
     }
 
-    static #getthreadsfromprofile = (userId, pubId, previousPostId) => {
+    static #getthreadsfromprofile = (userId, pubId, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -2690,12 +2690,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousPostId must either be a string or undefined. Type provided: ${typeof previousPostId}`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must either be a string or undefined. Type provided: ${typeof lastItemId}`))
             }
 
-            if (typeof previousPostId === 'string' && !mongoose.isObjectIdOrHexString(previousPostId)) {
-                return resolve(HTTPWTHandler.badInput('previousPostId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({secondId: {$eq: pubId}}).lean().then(userResult => {
@@ -2713,8 +2713,8 @@ class TempController {
                                 creatorId: {$eq: userid}
                             }
 
-                            if (previousPostId) {
-                                dbQuery._id = {$lt: previousPostId}
+                            if (lastItemId) {
+                                dbQuery._id = {$lt: lastItemId}
                             }
 
                             Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
@@ -6561,8 +6561,8 @@ class TempController {
         return await this.#createpollpost(userId, pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots)
     }
 
-    static searchforpollposts = async (userId, pubId, previousPostId) => {
-        return await this.#searchforpollposts(userId, pubId, previousPostId)
+    static searchforpollposts = async (userId, pubId, lastItemId) => {
+        return await this.#searchforpollposts(userId, pubId, lastItemId)
     }
 
     static voteonpoll = async (userId, optionSelected, pollId) => {
@@ -6589,8 +6589,8 @@ class TempController {
         return await this.#postProfileImage(userId, file)
     }
 
-    static getImagesFromProfile = async (userId, pubId, previousPostId) => {
-        return await this.#getImagesFromProfile(userId, pubId, previousPostId)
+    static getImagesFromProfile = async (userId, pubId, lastItemId) => {
+        return await this.#getImagesFromProfile(userId, pubId, lastItemId)
     }
 
     static getProfilePic = async (pubId) => {
@@ -6645,8 +6645,8 @@ class TempController {
         return await this.#getthreadsfromcategory(userId, categoryId)
     }
 
-    static getthreadsfromprofile = async (userId, pubId, previousPostId) => {
-        return await this.#getthreadsfromprofile(userId, pubId, previousPostId)
+    static getthreadsfromprofile = async (userId, pubId, lastItemId) => {
+        return await this.#getthreadsfromprofile(userId, pubId, lastItemId)
     }
 
     static getthreadbyid = async (userId, threadId) => {
