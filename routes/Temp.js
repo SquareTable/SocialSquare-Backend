@@ -3164,7 +3164,7 @@ router.post('/getvotedusersofpost/:postFormat/:voteType', rateLimiters['/getvote
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getvotedusersofpost',
-            functionArgs: [req.tokenData, req.body.postId, req.path.postFormat, req.body.lastItemId, req.path.voteType]
+            functionArgs: [req.tokenData, req.body.postId, req.params.postFormat, req.body.lastItemId, req.params.voteType]
         }
     })
 
