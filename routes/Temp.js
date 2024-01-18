@@ -767,7 +767,7 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/getvotedusersofpost/:postFormat/:voteType': rateLimit({
+    '/getvotedusersofpost': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 12,
         standardHeaders: false,
@@ -3159,12 +3159,12 @@ router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
     })
 });
 
-router.post('/getvotedusersofpost/:postFormat/:voteType', rateLimiters['/getvotedusersofpost/:postFormat/:voteType'], (req, res) => {
+router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, res) => {
     let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getvotedusersofpost',
-            functionArgs: [req.tokenData, req.body.postId, req.params.postFormat, req.body.lastItemId, req.params.voteType]
+            functionArgs: [req.tokenData, req.body.postId, req.body.postFormat, req.body.lastItemId, req.body.voteType]
         }
     })
 
@@ -3173,17 +3173,17 @@ router.post('/getvotedusersofpost/:postFormat/:voteType', rateLimiters['/getvote
             HTTPHeadersSent = true;
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('POST temp/getvotedusersofpost/:postFormat/:voteType controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+            console.error('POST temp/getvotedusersofpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
     worker.on('error', (error) => {
         if (!HTTPHeadersSent) {
             HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /getvotedusersofpost/:postFormat/:voteType:', error)
+            console.error('An error occurred from TempWorker for POST /getvotedusersofpost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
-            console.error('POST temp/getvotedusersofpost/:postFormat/:voteType controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+            console.error('POST temp/getvotedusersofpost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
