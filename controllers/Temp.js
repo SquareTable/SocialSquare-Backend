@@ -6498,10 +6498,10 @@ class TempController {
                         dbQuery._id = {$lt: lastItemId}
                     }
 
-                    Upvote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(upvotes => {
-                        if (upvotes.length === 0) return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems: true}))
+                    VOTE_DATABASE_MODELS[voteType].find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(votes => {
+                        if (votes.length === 0) return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems: true}))
 
-                        const userPubIds = upvotes.map(vote => vote.userPublicId);
+                        const userPubIds = votes.map(vote => vote.userPublicId);
 
                         User.find({secondId: {$in: userPubIds}}).lean().then(users => {
                             const toSend = {
