@@ -309,13 +309,13 @@ test('If request fails if postFormat is not supported in constants file', async 
     expect(returned.data.message).toBe(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`)
 })
 
-test('If request fails if lastItemId is a string and not an ObjectId', async () => {
+test('If request fails if lastItemId is a string and not a UUIDv4', async () => {
     expect.assertions(2);
 
-    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'Image', 'i am not an objectid', 'Up');
+    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'Image', 'i am not a UUIDv4', 'Up');
 
     expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('lastItemId must be an ObjectId if it is going to be a string.')
+    expect(returned.data.message).toBe('lastItemId must be a valid UUIDv4 if it is going to be a string.')
 })
 
 test('If request fails if voteType is not supported in constants file', async () => {
