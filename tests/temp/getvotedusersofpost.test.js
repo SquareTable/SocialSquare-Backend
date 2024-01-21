@@ -218,7 +218,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await VOTE_DATABASE_MODELS[voteType].insertMany(rawVoteData)
 
-                    const lastItemId = rawVoteData[89]._id.toString();
+                    const lastItemId = rawVoteData[89].secondId;
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, lastItemId, voteType);
 
