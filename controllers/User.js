@@ -16,8 +16,6 @@ const { v4: uuidv4 } = require('uuid');
 
 const mongoose = require('mongoose');
 
-const { setCacheItem, getCacheItem, delCacheItem } = require('../memoryCache.js')
-
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
 const EmailVerificationCode = require('../models/EmailVerificationCode');
 
