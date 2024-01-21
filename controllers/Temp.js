@@ -6291,6 +6291,7 @@ class TempController {
 
                 User.findOne({secondId: {$eq: userPubId}}).lean().then(userFound => {
                     if (!userFound || userFound.blockedAccounts?.includes(followerFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find user.'))
+                    if (userId == userFound._id) return resolve(HTTPWTHandler.forbidden('You cannot follow yourself.'))
 
                     if (userFound.privateAccount) {
                         User.findOneAndUpdate({secondId: {$eq: userPubId}}, {$addToSet: {accountFollowRequests: followerFound.secondId}}).then(() => {

@@ -44,6 +44,7 @@ Tests:
 - Test following a user multiple times does not make multiple follows
 - Test non-related User documents do not get modified when following a public account
 - Test non-related User documents do not get modified when following a private account
+- Test following yourself fails
 */
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -266,4 +267,20 @@ test('that non-related User documents do not get modified when following a priva
     expect(afterNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
+})
+
+test('Following yourself fails', async () => {
+    expect.assertions(3);
+
+    await new User(userFollowingData).save();
+
+    const beforeUsers = await User.find({}).lean();
+
+    const returned = await TempController.followuser(userFollowingData._id, userFollowingData.secondId);
+
+    const afterUsers = await User.find({}).lean();
+
+    expect(returned.statusCode).toBe(403);
+    expect(returned.data.message).toBe('You cannot follow yourself.');
+    expect(beforeUsers).toStrictEqual(afterUsers);
 })
