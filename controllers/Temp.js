@@ -6453,8 +6453,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('lastItemId must be either a string or undefined.'))
             }
 
-            if (lastItemId !== undefined && !mongoose.isObjectIdOrHexString(lastItemId)) {
-                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId if it is going to be a string.'))
+            if (lastItemId !== undefined && !uuidHelper.validateV4(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be a valid UUIDv4 if it is going to be a string.'))
             }
 
             if (!CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.includes(voteType)) {
@@ -6495,7 +6495,7 @@ class TempController {
                     }
 
                     if (lastItemId) {
-                        dbQuery._id = {$lt: lastItemId}
+                        dbQuery.secondId = {$lt: lastItemId}
                     }
 
                     VOTE_DATABASE_MODELS[voteType].find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(votes => {
