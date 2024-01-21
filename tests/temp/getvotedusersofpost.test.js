@@ -235,7 +235,8 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting));
 
                     expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data).toBe(expectedData);
+                    expect(returned.data.data.items).toBe(expectedData);
+                    expect(returned.data.data.noMoreItems).toBe(false);
                 })
 
                 test('If request fails if user is blocked by post creator', async () => {
