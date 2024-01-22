@@ -189,10 +189,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting))
 
                     expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data.votes).toStrictEqual(expectedData);
+                    expect(returned.data.data.items).toStrictEqual(expectedData);
                 })
 
-                test('If request sends correct data when lastItemId is an ObjectId', async () => {
+                test('If request sends correct data when lastItemId is a UUIDv4', async () => {
                     expect.assertions(2);
 
                     await new User(userRequestingData).save();
