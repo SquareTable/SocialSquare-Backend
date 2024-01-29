@@ -2393,6 +2393,7 @@ class TempController {
             }
 
             const deleteImage = () => {
+                console.log('Deleting temp image in postimagethread API')
                 imageHandler.deleteMulterTempImage(file.filename)
             }
 
@@ -2539,7 +2540,7 @@ class TempController {
                                 const newThreadObject = {
                                     threadType: "Images",
                                     comments: [],
-                                    creatorId: creatorId,
+                                    creatorId: userId,
                                     threadTitle: threadTitle,
                                     threadSubtitle: threadSubtitle,
                                     threadTags: threadTags,
