@@ -75,7 +75,7 @@ class Image {
         }
 
         fs.unlink(filepath, (err) => {
-            console.error('An error occurred while deleting MulterTempImage with filepath:', filepath, '. The error was:', error)
+            console.error('An error occurred while deleting MulterTempImage with filepath:', filepath, '. The error was:', err)
         })
     }
 }
