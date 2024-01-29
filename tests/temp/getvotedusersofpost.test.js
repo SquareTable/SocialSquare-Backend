@@ -222,7 +222,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, lastItemId, voteType);
 
-                    const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).lean();
+                    const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: 1}).lean();
 
                     const expectedVotes = allVotes.splice(90, 10);
 
