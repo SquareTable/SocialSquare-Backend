@@ -2478,7 +2478,7 @@ class TempController {
 
             if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
                 deleteImage()
-                return HTTPWTHandler.badInput(`threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`)
+                return resolve(HTTPWTHandler.badInput(`threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`))
             }
 
             if (!CONSTANTS.VALID_THREAD_TITLE_TEST.test(threadTitle)) {
@@ -2488,7 +2488,7 @@ class TempController {
 
             if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
                 deleteImage()
-                return HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`)
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`))
             }
 
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
@@ -2498,7 +2498,7 @@ class TempController {
 
             if (threadTags.length > CONSTANTS.MAX_THREAD_TAGS_LENGTH) {
                 deleteImage()
-                return HTTPWTHandler.badInput(`threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`)
+                return resolve(HTTPWTHandler.badInput(`threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`))
             }
 
             if (!CONSTANTS.VALID_THREAD_TAGS_TEST.test(threadTags)) {
@@ -2508,7 +2508,7 @@ class TempController {
 
             if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH || threadImageDescription.length == 0) {
                 deleteImage()
-                return HTTPWTHandler.badInput(`threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`)
+                return resolve(HTTPWTHandler.badInput(`threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`))
             }
 
             if (!CONSTANTS.VALID_THREAD_IMAGE_DESCRIPTION_TEST.test(threadImageDescription)) {
