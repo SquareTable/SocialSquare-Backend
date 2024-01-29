@@ -228,7 +228,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const voteUserPublicIds = expectedVotes.map(vote => vote.userPublicId);
 
-                    const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
+                    const users = await User.find({secondId: {$in: voteUserPublicIds}}).sort({_id: -1}).lean();
 
                     const userRequesting = await User.findOne({_id: {$eq: userRequestingData._id}}).lean();
 
