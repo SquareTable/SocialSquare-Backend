@@ -537,7 +537,6 @@ class TempController {
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
                     });
                 } else {
-                    HTTPHandler.badInput(res, 'Your user could not be found')
                     return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
                 }
             }).catch(error => {
@@ -2479,7 +2478,7 @@ class TempController {
 
             if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`)
+                return HTTPWTHandler.badInput(`threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`)
             }
 
             if (!CONSTANTS.VALID_THREAD_TITLE_TEST.test(threadTitle)) {
@@ -2489,7 +2488,7 @@ class TempController {
 
             if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`)
+                return HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`)
             }
 
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
@@ -2499,7 +2498,7 @@ class TempController {
 
             if (threadTags.length > CONSTANTS.MAX_THREAD_TAGS_LENGTH) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`)
+                return HTTPWTHandler.badInput(`threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`)
             }
 
             if (!CONSTANTS.VALID_THREAD_TAGS_TEST.test(threadTags)) {
@@ -2509,7 +2508,7 @@ class TempController {
 
             if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH || threadImageDescription.length == 0) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`)
+                return HTTPWTHandler.badInput(`threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`)
             }
 
             if (!CONSTANTS.VALID_THREAD_IMAGE_DESCRIPTION_TEST.test(threadImageDescription)) {
@@ -5890,7 +5889,7 @@ class TempController {
             }
 
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
-                return HTTPHandler.badInput(res, `comment cannot be longer than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters.`)
+                return HTTPWTHandler.badInput(`comment cannot be longer than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters.`)
             }
 
             if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
