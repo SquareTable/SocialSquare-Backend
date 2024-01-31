@@ -2300,8 +2300,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
 
-            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
-                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`))
+            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} or less characters long.`))
             }
 
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
@@ -2487,9 +2487,9 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
 
-            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
+            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH) {
                 deleteImage()
-                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`))
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} or less characters long.`))
             }
 
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
@@ -2507,9 +2507,9 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE))
             }
 
-            if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH || threadImageDescription.length == 0) {
+            if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH) {
                 deleteImage()
-                return resolve(HTTPWTHandler.badInput(`threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`))
+                return resolve(HTTPWTHandler.badInput(`threadImageDescription must be ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} or less characters long`))
             }
 
             if (!CONSTANTS.VALID_THREAD_IMAGE_DESCRIPTION_TEST.test(threadImageDescription)) {
