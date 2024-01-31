@@ -218,7 +218,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: 1}).lean();
 
-                    const expectedUsers = allVotes.splice(90, 10).map(vote => vote.userPublicId);
+                    const expectedUsers = allVotes.splice(0, 10).map(vote => vote.userPublicId);
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data.items.map(user => user.pubId)).toStrictEqual(expectedUsers);
