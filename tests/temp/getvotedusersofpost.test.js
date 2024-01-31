@@ -180,14 +180,14 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const votes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean();
 
-                    const expectedUsers = allVotes.splice(90, 10).map(vote => vote.userPublicId);
+                    const expectedUsers = votes.splice(90, 10).map(vote => vote.userPublicId);
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data.items.map(user => user.pubId)).toStrictEqual(expectedUsers);
                 })
 
                 test('If request sends correct data when lastItemId is a UUIDv4', async () => {
-                    expect.assertions(2);
+                    expect.assertions(3);
 
                     await new User(userRequestingData).save();
                     await new POST_DATABASE_MODELS[postFormat](postData).save();
