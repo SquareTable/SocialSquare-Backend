@@ -65,7 +65,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4.1.1
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4.0.1
         with:
           node-version: ${{ matrix.node-version }}
