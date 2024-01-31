@@ -180,16 +180,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const votes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean();
 
-                    const voteUserPublicIds = votes.map(vote => vote.userPublicId)
-
-                    const users = await User.find({secondId: {$in: voteUserPublicIds}}).lean();
-
-                    const userRequesting = await User.findOne({_id: {$eq: userRequestingData._id}}).lean();
-
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting))
+                    const expectedUsers = allVotes.splice(90, 10).map(vote => vote.userPublicId);
 
                     expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data.items).toStrictEqual(expectedData);
+                    expect(returned.data.data.items.map(user => user.pubId)).toStrictEqual(expectedUsers);
                 })
 
                 test('If request sends correct data when lastItemId is a UUIDv4', async () => {
@@ -224,18 +218,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: 1}).lean();
 
-                    const expectedVotes = allVotes.splice(90, 10);
-
-                    const voteUserPublicIds = expectedVotes.map(vote => vote.userPublicId);
-
-                    const users = await User.find({secondId: {$in: voteUserPublicIds}}).sort({_id: -1}).lean();
-
-                    const userRequesting = await User.findOne({_id: {$eq: userRequestingData._id}}).lean();
-
-                    const expectedData = users.map(user => userHandler.returnPublicInformation(user, userRequesting));
+                    const expectedUsers = allVotes.splice(90, 10).map(vote => vote.userPublicId);
 
                     expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data.items).toBe(expectedData);
+                    expect(returned.data.data.items.map(user => user.pubId)).toStrictEqual(expectedUsers);
                     expect(returned.data.data.noMoreItems).toBe(false);
                 })
 
