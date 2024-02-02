@@ -6505,9 +6505,15 @@ class TempController {
                         const userPubIds = votes.map(vote => vote.userPublicId);
 
                         User.find({secondId: {$in: userPubIds}}).lean().then(users => {
+                            const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(userPubIds, users, 'secondId');
+
+                            if (missingDocuments.length > 0) {
+                                console.error('Missing users found that have', voteType, 'voted post with id:', postId, '. The users are:', missingDocuments);
+                            }
+
                             const toSend = {
-                                items: users.map(user => userHandler.returnPublicInformation(user, userFound)),
-                                noMoreItems: users.length < CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL
+                                items: foundDocuments.map(user => userHandler.returnPublicInformation(user, userFound)),
+                                noMoreItems: userPubIds.length < CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL
                             }
 
                             return resolve(HTTPWTHandler.OK('Success', toSend))
