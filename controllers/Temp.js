@@ -1893,7 +1893,7 @@ class TempController {
                 Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
                     Promise.all(
                         data.map(category => {
-                            return CategoryMember.estimatedDocumentCount({categoryId: {$eq: category._id}})
+                            return CategoryMember.countDocuments({categoryId: {$eq: category._id}})
                         })
                     ).then(memberCounts => {
                         const categories = data.map((category, index) => {
