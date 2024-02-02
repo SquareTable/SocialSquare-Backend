@@ -2064,7 +2064,7 @@ class TempController {
                         console.log(profilesId)
 
                         const dbQuery = {
-                            userId: {$eq: userId}
+                            userId: {$eq: result._id}
                         }
 
                         if (lastItemId) {
