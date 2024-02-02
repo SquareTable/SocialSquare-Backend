@@ -187,7 +187,9 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: expectedUserIds}}).lean();
 
-                    const {foundDocuments: expectedUserDocuments} = arrayHandler.returnDocumentsFromIdArray(expectedUserIds, users, 'secondId')
+                    const {foundDocuments} = arrayHandler.returnDocumentsFromIdArray(expectedUserIds, users, 'secondId')
+
+                    const expectedUserDocuments = foundDocuments.map(user => userHandler.returnPublicInformation(user))
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data.items).toStrictEqual(expectedUserDocuments);
@@ -229,7 +231,9 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const users = await User.find({secondId: {$in: expectedUserIds}}).lean();
 
-                    const {foundDocuments: expectedUserDocuments} = arrayHandler.returnDocumentsFromIdArray(expectedUserIds, users, 'secondId')
+                    const {foundDocuments} = arrayHandler.returnDocumentsFromIdArray(expectedUserIds, users, 'secondId')
+
+                    const expectedUserDocuments = foundDocuments.map(user => userHandler.returnPublicInformation(user))
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data.items).toStrictEqual(expectedUserDocuments);
