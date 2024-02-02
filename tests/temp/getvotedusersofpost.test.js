@@ -15,6 +15,9 @@ const userHandler = new UserLibrary();
 const Upvote = require('../../models/Upvote');
 const Downvote = require('../../models/Downvote');
 
+const ArrayLibrary = require('../../libraries/Array');
+const arrayHandler = new ArrayLibrary();
+
 const POST_DATABASE_MODELS = {
     Image: ImagePost,
     Poll,
@@ -180,10 +183,14 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const votes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).lean();
 
-                    const expectedUsers = votes.splice(0, 10).map(vote => vote.userPublicId);
+                    const expectedUserIds = votes.splice(0, 10).map(vote => vote.userPublicId);
+
+                    const users = await User.find({secondId: {$in: expectedUserIds}}).lean();
+
+                    const {foundDocuments: expectedUserDocuments} = arrayHandler.returnDocumentsFromIdArray(expectedUserIds, users, 'secondId')
 
                     expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data.items.map(user => user.pubId)).toStrictEqual(expectedUsers);
+                    expect(returned.data.data.items).toStrictEqual(expectedUserDocuments);
                 })
 
                 test('If request sends correct data when lastItemId is a UUIDv4', async () => {
