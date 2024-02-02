@@ -2972,16 +2972,7 @@ class TempController {
                             if (userData.blockedAccounts?.includes(userSearchingPubId)) {
                                 return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                             } else {
-                                const userDataToSend = {
-                                    name: userData.name,
-                                    displayName: userData.displayName,
-                                    followers: userData.followers.length,
-                                    following: userData.following.length,
-                                    totalLikes: userData.totalLikes,
-                                    profileKey: userData.profileImageKey,
-                                    badges: userData.badges,
-                                    privateAccount: !!userData.privateAccount
-                                };
+                                const userDataToSend = userHandler.returnPublicInformation(userData, userSearching);
 
                                 if (userData.privateAccount == true) {
                                     if (userData.accountFollowRequests.includes(userSearchingPubId)) {
