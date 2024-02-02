@@ -4850,13 +4850,20 @@ class TempController {
                     return resolve(HTTPWTHandler.OK('Successfully found no users', {items: [], noMoreItems: true}))
                 }
 
-                User.find({secondId: {$in: items}}).lean().then(items => {
-                    const newItems = [];
-                    for (let i = 0; i < items.length; i++) {
-                        newItems.push(userHandler.returnPublicInformation(items[i], userRequesting))
+                User.find({secondId: {$in: items}}).lean().then(users => {
+                    const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(items, users, 'secondId');
+
+                    if (missingDocuments.length > 0) {
+                        console.log('Users with ids:', missingDocuments, 'were found when checking the stat:', stat, 'for user with secondId:', profilePublicId, '. These users could not be found in the database.')
                     }
 
-                    return resolve(HTTPWTHandler.OK('Successfully retrieved data', {items: newItems, noMoreItems}))
+                    const toSend = {
+                        items: foundDocuments.map(user => userHandler.returnPublicInformation(user, userRequesting)),
+                        noMoreItems,
+                        skip: skip + items.length
+                    }
+
+                    return resolve(HTTPWTHandler.OK('Successfully retrieved data', toSend))
                 }).catch(error => {
                     console.error('An error occured while finding users with a secondId that is inside of an array. The array is:', items, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
