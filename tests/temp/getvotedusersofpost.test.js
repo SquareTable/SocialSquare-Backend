@@ -225,7 +225,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: 1}).lean();
 
-                    const expectedUserIds = allVotes.splice(90, 10);
+                    const expectedUserIds = allVotes.splice(90, 10).map(vote => vote.userPublicId);
 
                     const users = await User.find({secondId: {$in: expectedUserIds}}).lean();
 
