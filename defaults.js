@@ -27,12 +27,6 @@ const DEFAULTS = {
         getIP: false,
         getDeviceType: false,
         getLocation: false
-    },
-    userAlgorithmSettings: {
-        enabled: false,
-        useUserUpvoteData: false,
-        useUserDownvoteData: false,
-        useUserFollowingData: false
     }
 }
 
