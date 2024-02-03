@@ -1238,6 +1238,7 @@ class TempController {
                             try {
                                 await imageHandler.deleteImagePromiseByKey(result.profileImageKey);
                             } catch (error) {
+                                imageHandler.deleteImageByKey(imageKey)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while deleting your previous profile picrture. Please try again.'))
                             }
                         }
