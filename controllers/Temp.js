@@ -3644,12 +3644,11 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
                 }
 
-                let newSettings = {...userFound.settings};
-                newSettings.algorithmSettings.enabled = true;
-                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
+                User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {'settings.algorithmSettings.enabled': true}}).then(() => {
                     return resolve(HTTPWTHandler.OK('Algorithm has now been enabled.'))
                 }).catch(error => {
-                    console.error('An error occurred while updating settings for user with id:', userId, '. The old settings were:', userFound.settings, ' The new settings are:', newSettings, '. The error was:', error)
+                    console.error('An error occurred while setting settings.algorithmSettings.enabled to true for user with id:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while enabling algorithm. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -3696,13 +3695,10 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
 
-                let newSettings = {...userFound.settings}
-                newSettings.algorithmSettings.enabled = false;
-
-                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
+                User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {'settings.algorithmSettings.enabled': false}}).then(() => {
                     return resolve(HTTPWTHandler.OK('Algorithm has now been disabled.'))
                 }).catch(error => {
-                    console.error('An error occurred while updating algorithm settings for user with id:', userId, ' Old settings:', userFound.settings, 'New settings:', newSettings, '. The error was:', error)
+                    console.error('An error occurred while setting settings.algorithmSettings.enabled to false for user with id:', userId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while disabling algorithm. Please try again.'))
                 })
             }).catch(error => {
@@ -4691,8 +4687,7 @@ class TempController {
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
-                    let newUserSettings = userFound.settings;
-                    let newAlgorithmSettings = newUserSettings.algorithmSettings;
+                    let newAlgorithmSettings = {...newUserSettings.algorithmSettings};
                     if (typeof algorithmSettings.algorithmEnabled == 'boolean') {
                         newAlgorithmSettings.algorithmEnabled = algorithmSettings.algorithmEnabled;
                     }
@@ -4705,12 +4700,11 @@ class TempController {
                     if (typeof algorithmSettings.useUserFollowingData == 'boolean') {
                         newAlgorithmSettings.useUserFollowingData = algorithmSettings.useUserFollowingData;
                     }
-                    newUserSettings.algorithmSettings = newAlgorithmSettings;
 
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newUserSettings}).then(function() {
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {'settings.algorithmSettings': newAlgorithmSettings}}).then(function() {
                         return resolve(HTTPWTHandler.OK('Algorithm settings updated successfully.'))
                     }).catch(error => {
-                        console.error('An error occured while changing settings for user with ID:', userId, 'The new settings are:', newUserSettings, '. Only algorithm settings got changed. These are the new algorithm settings:', newAlgorithmSettings, '. The error was:', error);
+                        console.error('An error occured while changing settings for user with ID:', userId, '. These are the new algorithm settings:', newAlgorithmSettings, '. The error was:', error);
                         return resolve(HTTPWTHandler.serverError('An error occurred while updating algorithm settings. Please try again.'))
                     })
                 } else {
