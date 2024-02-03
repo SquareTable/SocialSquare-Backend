@@ -29,12 +29,7 @@ const UserSchema = new Schema({
             SendGainsFollower: true,
             SendFollowRequests: true
         },
-        algorithmSettings: {
-            enabled: false,
-            useUserUpvoteData: false,
-            useUserDownvoteData: false,
-            useUserFollowingData: false
-        },
+        algorithmSettings: DEFAULTS.userAlgorithmSettings,
         privacySettings: {
             viewFollowers: 'followers', //Options are 'no-one', 'followers', and 'everyone'
             viewFollowing: 'followers', //Options are 'no-one', 'followers', and 'everyone',
