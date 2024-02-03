@@ -6534,6 +6534,43 @@ class TempController {
         })
     }
 
+    static #getcategorymembers = async (userId, categoryId, lastItemId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Type provided: ${typeof categoryId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(categoryId)) {
+                return resolve(HTTPWTHandler.badInput('categoryId must be an ObjectId.'))
+            }
+
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must either be a string or undefined. Type provided: ${typeof lastItemId}`))
+            }
+
+            if (lastItemId !== undefined && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId if it is not going to be undefined.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+
+                
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6860,6 +6897,10 @@ class TempController {
 
     static getvotedusersofpost = async (userId, postId, postFormat, lastItemId, voteType) => {
         return await this.#getvotedusersofpost(userId, postId, postFormat, lastItemId, voteType)
+    }
+
+    static getcategorymembers = async (userId, categoryId, lastItemId) => {
+        return await this.#getcategorymembers(userId, categoryId, lastItemId);
     }
 }
 

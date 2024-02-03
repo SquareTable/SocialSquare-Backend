@@ -776,6 +776,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/getcategorymembers': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 5,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have retrieved the members of a category too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -3184,6 +3193,35 @@ router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, 
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/getvotedusersofpost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/getcategorymembers', rateLimiters['/getcategorymembers'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getcategorymembers',
+            functionArgs: [req.tokenData, req.body.categoryId, req.body.lastItemId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/getcategorymembers controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /getcategorymembers:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getcategorymembers controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
