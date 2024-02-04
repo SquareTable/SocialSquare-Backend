@@ -226,7 +226,7 @@ class TempController {
                         }
 
                         if (!passwordIsCorrect) return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
-                        
+
                         User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
                             return resolve(HTTPWTHandler.OK('Change Email Successful'))
                         }).catch(error => {
@@ -2719,8 +2719,8 @@ class TempController {
                             }
 
                             Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
-                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {items: [], noMoreItems: true})) 
-                                
+                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {items: [], noMoreItems: true}))
+
                                 threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
                                     const toSend = {
                                         items: posts,
@@ -6529,6 +6529,80 @@ class TempController {
         })
     }
 
+    static #getcategorymembers = async (userId, categoryId, lastItemId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Type provided: ${typeof categoryId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(categoryId)) {
+                return resolve(HTTPWTHandler.badInput('categoryId must be an ObjectId.'))
+            }
+
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must either be a string or undefined. Type provided: ${typeof lastItemId}`))
+            }
+
+            if (lastItemId !== undefined && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId if it is not going to be undefined.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(categoryFound => {
+                    if (!categoryFound) return resolve(HTTPWTHandler.notFound('Could not find category with categoryId provided.'))
+
+                    const dbQuery = {
+                        categoryId: {$eq: categoryId}
+                    }
+
+                    if (lastItemId) {
+                        dbQuery._id = {$lt: lastItemId}
+                    }
+
+                    CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.MAX_CATEGORY_MEMBERS_PER_API_CALL).lean().then(members => {
+                        if (members.length === 0) return resolve(HTTPWTHandler.OK('No members found', {items: [], noMoreItems: true}))
+
+                        const memberIds = members.map(member => member.userId);
+
+                        User.find({_id: {$in: memberIds}}).lean().then(users => {
+                            const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(memberIds, users, '_id');
+
+                            if (missingDocuments.length > 0) {
+                                console.error('Users have been found being members to category with id:', categoryId, 'but they cannot be found in the database. The user documents are:', missingDocuments)
+                            }
+
+                            const toSend = {
+                                items: foundDocuments.map(document => userHandler.returnPublicInformation(document)),
+                                noMoreItems: memberIds.length < CONSTANTS.MAX_CATEGORY_MEMBERS_PER_API_CALL
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Found members', toSend))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding category members with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding the category members. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding the category. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6855,6 +6929,10 @@ class TempController {
 
     static getvotedusersofpost = async (userId, postId, postFormat, lastItemId, voteType) => {
         return await this.#getvotedusersofpost(userId, postId, postFormat, lastItemId, voteType)
+    }
+
+    static getcategorymembers = async (userId, categoryId, lastItemId) => {
+        return await this.#getcategorymembers(userId, categoryId, lastItemId);
     }
 }
 
