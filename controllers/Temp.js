@@ -226,7 +226,7 @@ class TempController {
                         }
 
                         if (!passwordIsCorrect) return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
-                        
+
                         User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
                             return resolve(HTTPWTHandler.OK('Change Email Successful'))
                         }).catch(error => {
@@ -2718,8 +2718,8 @@ class TempController {
                             }
 
                             Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
-                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {items: [], noMoreItems: true})) 
-                                
+                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {items: [], noMoreItems: true}))
+
                                 threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
                                     const toSend = {
                                         items: posts,
@@ -6563,9 +6563,37 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
 
-                
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(categoryFound => {
+                    if (!categoryFound) return resolve(HTTPWTHandler.notFound('Could not find category with categoryId provided.'))
+
+                    const dbQuery = {
+                        categoryId: {$eq: categoryId}
+                    }
+
+                    if (lastItemId) {
+                        dbQuery._id = {$lt: lastItemId}
+                    }
+
+                    CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.MAX_CATEGORY_MEMBERS_PER_API_CALL).lean().then(members => {
+                        if (members.length === 0) return resolve(HTTPWTHandler.OK('No members found', {items: [], noMoreItems: true}))
+
+                        const memberIds = members.map(member => member.userId);
+
+                        User.find({_id: {$in: memberIds}}).lean().then(users => {
+                            const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(memberIds, users, '_id');
+
+                            
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding category members with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding the category members. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding the category. Please try again.'))
+                })
             }).catch(error => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
