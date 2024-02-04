@@ -6582,7 +6582,16 @@ class TempController {
                         User.find({_id: {$in: memberIds}}).lean().then(users => {
                             const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(memberIds, users, '_id');
 
-                            
+                            if (missingDocuments.length > 0) {
+                                console.error('Users have been found being members to category with id:', categoryId, 'but they cannot be found in the database. The user documents are:', missingDocuments)
+                            }
+
+                            const toSend = {
+                                items: foundDocuments.map(document => userHandler.returnPublicInformation(document)),
+                                noMoreItems: memberIds.length < CONSTANTS.MAX_CATEGORY_MEMBERS_PER_API_CALL
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Found members', toSend))
                         })
                     }).catch(error => {
                         console.error('An error occurred while finding category members with dbQuery:', dbQuery, '. The error was:', error)
