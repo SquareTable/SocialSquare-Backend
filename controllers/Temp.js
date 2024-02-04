@@ -6582,7 +6582,7 @@ class TempController {
                             }
 
                             const toSend = {
-                                items: foundDocuments.map(document => userHandler.returnPublicInformation(document)),
+                                items: foundDocuments.map(document => userHandler.returnPublicInformation(document, userFound)),
                                 noMoreItems: memberIds.length < CONSTANTS.MAX_CATEGORY_MEMBERS_PER_API_CALL
                             }
 
