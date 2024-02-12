@@ -6421,7 +6421,7 @@ class TempController {
         })
     }
 
-    static #getvotedusersofpost = async (userId, postId, postFormat, lastItemId, voteType) => {
+    static #getvotedusersofpost = (userId, postId, postFormat, lastItemId, voteType) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -6529,7 +6529,7 @@ class TempController {
         })
     }
 
-    static #getcategorymembers = async (userId, categoryId, lastItemId) => {
+    static #getcategorymembers = (userId, categoryId, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -6598,6 +6598,106 @@ class TempController {
                 })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #getpollvoteusers = (userId, pollId, pollOption, lastItemId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof pollId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(pollId)) {
+                return resolve(HTTPWTHandler.badInput('pollId must be an ObjectId.'))
+            }
+
+            if (!CONSTANTS.POLL_OPTIONS.includes(pollOption)) {
+                return resolve(HTTPWTHandler.badInput(`pollOption must be one of these values: ${CONSTANTS.POLL_OPTIONS.join(', ')}`))
+            }
+
+            if (lastItemId !== undefined && typeof lastItemId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be undefined or a string. Type provided: ${typeof lastItemId}`))
+            }
+
+            if (lastItemId !== undefined && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId if it is going to be a string.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+
+                Poll.findOne({_id: {$eq: pollId}}).lean().then(async pollFound => {
+                    if (!pollFound) return resolve(HTTPWTHandler.notFound('Could not find poll.'))
+
+                    const pollIsByRequester = pollFound.creatorId == userId;
+
+                    let creator;
+
+                    try {
+                        creator = pollIsByRequester ? userFound : await User.findOne({_id: {$eq: pollFound.creatorId}}).lean()
+                    } catch (error) {
+                        console.error('An error occurred while finding one user with id:', pollFound.creatorId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll creator. Please try again.'))
+                    }
+
+                    if (!creator) return resolve(HTTPWTHandler.notFound('Could not find poll creator.'))
+
+                    if (!pollIsByRequester && creator.blockedAccounts?.includes(userFound.secondId)) {
+                        return resolve(HTTPWTHandler.notFound('Could not find poll creator.'))
+                    }
+
+                    if (!pollIsByRequester && creator.privateAccount === true && !creator.followers.includes(userFound.secondId)) {
+                        return resolve(HTTPWTHandler.notFound('Could not find poll.'))
+                    }
+
+                    const dbQuery = {
+                        pollId: {$eq: pollId},
+                        vote: {$eq: pollOption}
+                    }
+
+                    if (lastItemId) {
+                        dbQuery._id = {$lt: lastItemId}
+                    }
+
+                    PollVote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL).lean().then(votes => {
+                        if (votes.length === 0) return resolve(HTTPWTHandler.OK('No votes found', {items: [], noMoreItems: true}))
+
+                        const userIds = votes.map(vote => vote.userId);
+
+                        User.find({_id: {$in: userIds}}).lean().then(users => {
+                            const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(userIds, users, '_id');
+
+                            if (missingDocuments.length > 0) {
+                                console.error('Missing users found while finding votes on poll option:', pollOption, 'on poll with id:', pollId, '. The missing documents are:', missingDocuments)
+                            }
+
+                            const userInformation = users.map(user => userHandler.returnPublicInformation(user));
+
+                            return resolve(HTTPWTHandler.OK('Found votes', {items: userInformation, noMoreItems: userIds.length < CONSTANTS.MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL}))
+                        }).catch(error => {
+                            console.error('An error occurred while finding users in:', userIds, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding users that voted on the poll option. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding poll votes with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll votes.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding poll with id:', pollId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -6933,6 +7033,10 @@ class TempController {
 
     static getcategorymembers = async (userId, categoryId, lastItemId) => {
         return await this.#getcategorymembers(userId, categoryId, lastItemId);
+    }
+
+    static getpollvoteusers = async (userId, pollId, pollOption, lastItemId) => {
+        return await this.#getpollvoteusers(userId, pollId, pollOption, lastItemId)
     }
 }
 
