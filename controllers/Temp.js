@@ -6681,7 +6681,7 @@ class TempController {
                                 console.error('Missing users found while finding votes on poll option:', pollOption, 'on poll with id:', pollId, '. The missing documents are:', missingDocuments)
                             }
 
-                            const userInformation = users.map(user => userHandler.returnPublicInformation(user));
+                            const userInformation = foundDocuments.map(user => userHandler.returnPublicInformation(user));
 
                             return resolve(HTTPWTHandler.OK('Found votes', {items: userInformation, noMoreItems: userIds.length < CONSTANTS.MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL}))
                         }).catch(error => {
