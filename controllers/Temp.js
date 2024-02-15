@@ -1308,7 +1308,7 @@ class TempController {
                     dbQuery._id = {$lt: lastItemId}
                 }
 
-                ImagePost.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
+                ImagePost.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
                     if (result.length) {
                         const toSend = {
                             items: result,
