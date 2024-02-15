@@ -2718,7 +2718,7 @@ class TempController {
                                 dbQuery._id = {$lt: lastItemId}
                             }
 
-                            Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
+                            Thread.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
                                 if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {items: [], noMoreItems: true}))
 
                                 threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
