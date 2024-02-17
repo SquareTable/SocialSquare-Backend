@@ -772,7 +772,7 @@ const rateLimiters = {
         max: 12,
         standardHeaders: false,
         legacyHeaders: false,
-        message: {status: "FAILED", message: "You have retrieved the users that have upvoted a certain post too many times in the last minute. Please try again in 60 seconds."},
+        message: {status: "FAILED", message: "You have retrieved the users that have voted on a certain post too many times in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
