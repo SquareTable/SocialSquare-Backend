@@ -6489,7 +6489,7 @@ class TempController {
                     }
 
                     if (lastItemId) {
-                        dbQuery.secondId = {$lt: lastItemId}
+                        dbQuery.userPublicId = {$lt: lastItemId}
                     }
 
                     VOTE_DATABASE_MODELS[voteType].find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(votes => {
