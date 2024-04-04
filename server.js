@@ -360,7 +360,11 @@ if (process.env.NO_HTTPS) {
           fs.readFileSync('./ssl/intermediate.crt'),
           fs.readFileSync('./ssl/root.crt')
         ]
-      };
+    };
+
+    if (process.env.SSL_PASSPHRASE) {
+        options.passphrase = process.env.SSL_PASSPHRASE
+    }
       
     server = https.createServer(options, app).listen(port, () => {
         console.log(`Server running on port ${port}`);
