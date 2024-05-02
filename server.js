@@ -363,7 +363,7 @@ if (process.env.NO_HTTPS) {
     };
 
     if (process.env.SSL_PASSPHRASE_FILEPATH) {
-        options.passphrase = fs.readFileSync('./ssl/passphrase.txt')
+        options.passphrase = fs.readFileSync('./ssl/passphrase.txt').toString()
     } else if (process.env.SSL_PASSPHRASE) {
         options.passphrase = process.env.SSL_PASSPHRASE
     } else {
