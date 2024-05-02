@@ -362,8 +362,12 @@ if (process.env.NO_HTTPS) {
         ]
     };
 
-    if (process.env.SSL_PASSPHRASE) {
+    if (process.env.SSL_PASSPHRASE_FILEPATH) {
+        options.passphrase = fs.readFileSync('./ssl/passphrase.txt')
+    } else if (process.env.SSL_PASSPHRASE) {
         options.passphrase = process.env.SSL_PASSPHRASE
+    } else {
+        console.warn('SSL passphrase was not provided.')
     }
       
     server = https.createServer(options, app).listen(port, () => {
