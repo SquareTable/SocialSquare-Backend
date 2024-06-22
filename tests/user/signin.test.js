@@ -73,53 +73,68 @@ Tests if email 2FA is not enabled:
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If signin fails if email is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await UserController.signin(notString, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`email must be a string. Provided type: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 
     test(`If signin fails if password is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await UserController.signin(validEmail, notString, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`password must be a string. Provided type: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 test(`If signin fails if email is an empty string`, async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signin('', validPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Email cannot be blank')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If signin fails if password is an empty string', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signin(validEmail, '', validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Password cannot be blank")
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If signin fails if user with specified email could not be found', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signin(validEmail, validPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe("A user with the specified email does not exist.")
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If signin fails if password is wrong', async () => {
-    expect.assertions(6);
+    expect.assertions(7);
 
     const userData = {
         email: validEmail,
@@ -127,6 +142,8 @@ test('If signin fails if password is wrong', async () => {
     }
 
     await new User(userData).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signin(userData.email, 'wrongpassword', validIP, validDeviceName);
 
@@ -136,6 +153,7 @@ test('If signin fails if password is wrong', async () => {
     expect(returned.data.token).toBe(undefined);
     expect(returned.data.refreshToken).toBe(undefined);
     expect(returned.data.refreshTokenId).toBe(undefined);
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 describe('When Email 2FA is enabled', () => {
