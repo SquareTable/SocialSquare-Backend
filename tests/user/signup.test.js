@@ -80,7 +80,7 @@ for (const invalidName of TEST_CONSTANTS.NOT_STRINGS) {
         
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`name must be a string. Provided type: ${typeof invalidName}`);
-        expect(DB.noChangesMade()).resolves.toBe(true)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
@@ -94,7 +94,7 @@ for (const invalidEmail of TEST_CONSTANTS.NOT_STRINGS) {
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`email must be a string. Provided type: ${typeof invalidEmail}`);
-        expect(DB.noChangesMade()).resolves.toBe(true)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
@@ -108,7 +108,7 @@ for (const invalidPassword of TEST_CONSTANTS.NOT_STRINGS) {
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`password must be a string. Provided type: ${typeof invalidPassword}`);
-        expect(DB.noChangesMade()).resolves.toBe(true)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
@@ -121,7 +121,7 @@ test('If signup fails if name is an empty string', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Name input field cannot be empty!");
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If signup fails if email is an empty string', async () => {
@@ -133,7 +133,7 @@ test('If signup fails if email is an empty string', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Email input field cannot be empty!");
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If signup fails if password is an empty string', async () => {
@@ -145,7 +145,7 @@ test('If signup fails if password is an empty string', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Password input field cannot be empty!")
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 for (const invalidName of INVALID_NAMES) {
@@ -158,7 +158,7 @@ for (const invalidName of INVALID_NAMES) {
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
-        expect(DB.noChangesMade()).resolves.toBe(true)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
@@ -172,7 +172,7 @@ for (const invalidEmail of TEST_CONSTANTS.INVALID_EMAILS) {
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe("Invalid email entered")
-        expect(DB.noChangesMade()).resolves.toBe(true)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
@@ -185,7 +185,7 @@ test('If signup fails if password is less than 8 characters long', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Password is too short! Password must be 8 characters or longer")
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('if signup fails if name is longer than 20 characters', async () => {
@@ -197,7 +197,7 @@ test('if signup fails if name is longer than 20 characters', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Username is too long! Please keep your username at 20 characters or less.")
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('if signup fails if password is longer than 17 characters (due to bcrypt limitations)', async () => {
@@ -209,7 +209,7 @@ test('if signup fails if password is longer than 17 characters (due to bcrypt li
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Password is too long! Due to current limitations, please keep your password at 17 or less characters.")
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('if signup fails if a user with the same email already exists', async () => {
@@ -231,7 +231,7 @@ test('if signup fails if a user with the same email already exists', async () =>
     expect(users).toHaveLength(1);
     expect(returned.statusCode).toBe(409);
     expect(returned.data.message).toBe("User with the provided email already exists.")
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('if signup fails if a user with the same name already exists', async () => {
@@ -253,7 +253,7 @@ test('if signup fails if a user with the same name already exists', async () => 
     expect(users).toHaveLength(1);
     expect(returned.statusCode).toBe(409);
     expect(returned.data.message).toBe("User with the provided username already exists")
-    expect(DB.noChangesMade()).resolves.toBe(true)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 for (const validUserEmail of VALID_EMAILS) {
