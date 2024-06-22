@@ -1,0 +1,54 @@
+name: ExtraCI
+
+on:
+  push:
+
+jobs:
+  calc-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.1
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4.0.1
+        with:
+          node-version: 20.x
+
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Install Jest
+        run: npm install --location=global jest
+
+      - name: Calculate coverage
+        run: jest --coverage=true --runInBand
+
+  extra-node-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [21.x, 22.x]
+        os: [ubuntu-22.04]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.1
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4.0.1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Install Jest
+        run: npm install --location=global jest
+
+      - name: Run tests
+        run: jest --runInBand

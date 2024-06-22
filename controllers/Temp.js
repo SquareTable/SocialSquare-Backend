@@ -49,6 +49,9 @@ const mongooseSessionHelper = new MongooseSessionLibrary();
 const CategoryLibrary = require('../libraries/Category.js');
 const categoryHelper = new CategoryLibrary();
 
+const UUIDLibrary = require('../libraries/UUID.js');
+const uuidHelper = new UUIDLibrary();
+
 const NotificationLibrary = require('../libraries/Notifications.js');
 const notificationHelper = new NotificationLibrary();
 
@@ -216,24 +219,24 @@ class TempController {
                         return resolve(HTTPWTHandler.forbidden('User with the desired email already exists'))
                     } else {
                         const hashedPassword = userFound.password;
-                        bcrypt.compare(password, hashedPassword).then((result) => {
-                            if (result) {
-                                // Password match
-                                User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
-                                    return resolve(HTTPWTHandler.OK('Change Email Successful'))
-                                })
-                                .catch(err => {
-                                    console.error('An error occurred while changing email for user with id:', userId, 'to: ', String(desiredEmail), '. The error was:', err)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
-                                });
-                            } else {
-                                return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
-                            }
-                        })
-                        .catch(err => {
-                            console.error('An error occured while comparing passwords:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
-                        })
+
+                        let passwordIsCorrect;
+
+                        try {
+                            passwordIsCorrect = bcrypt.compareSync(password, hashedPassword);
+                        } catch (error) {
+                            console.error('An error occurred while comparing passwords for user with id:', userId, '. The error was:', error);
+                            return resolve(HTTPWTHandler.serverError('An error occurred while authenticating you. Please try again.'))
+                        }
+
+                        if (!passwordIsCorrect) return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
+
+                        User.findOneAndUpdate({_id: {$eq: userId}}, {email: String(desiredEmail)}).then(function(){
+                            return resolve(HTTPWTHandler.OK('Change Email Successful'))
+                        }).catch(error => {
+                            console.error('An error occurred while changing email for user with id:', userId, 'to: ', String(desiredEmail), '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while updating email'))
+                        });
                     }
                 }).catch(error => {
                     console.error('An error occured while finding a user with email:', desiredEmail, '. The error was:', error)
@@ -301,80 +304,84 @@ class TempController {
                 if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
 
                 const hashedPassword = userFound.password;
-                bcrypt.compare(currentPassword, hashedPassword).then((result) => {
-                    if (result) {
-                        //Password match
-                        const saltRounds = 10;
-                        bcrypt.hash(newPassword, saltRounds).then((hashedPassword) => {
-                            const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userId)
 
-                            const newRefreshTokenObject = {
-                                encryptedRefreshToken,
-                                userId: userId,
-                                createdAt: Date.now(),
-                                admin: false
-                            }
+                let passwordIsCorrect;
 
-                            const formattedIP = HTTPHandler.formatIP(IP)
+                try {
+                    passwordIsCorrect = bcrypt.compareSync(currentPassword, hashedPassword);
+                } catch (error) {
+                    console.error('An error occurred while comparing passwords for user with id:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while authenticating you. Please try again.'))
+                }
 
-                            if (userFound?.settings?.loginActivitySettings?.getIP) {
-                                newRefreshTokenObject.IP = formattedIP
-                            }
+                if (!passwordIsCorrect) return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
 
-                            if (userFound?.settings?.loginActivitySettings?.getLocation) {
-                                const location = geoIPLite.lookup(formattedIP)
-                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
-                            }
+                let newHashedPassword;
 
-                            if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
-                                newRefreshTokenObject.deviceType = deviceType
-                            }
+                try {
+                    newHashedPassword = bcrypt.hashSync(newPassword, CONSTANTS.BCRYPT_COST_FACTOR);
+                } catch (error) {
+                    console.error('An error occurred while hashing new password. The error was:', error)
+                }
 
-                            const newRefreshToken = new RefreshToken(newRefreshTokenObject)
+                const {token, refreshToken, encryptedRefreshToken} = userHandler.generateNewAuthAndRefreshTokens(userId)
 
-                            mongoose.startSession().then(session => {
-                                session.startTransaction();
+                const newRefreshTokenObject = {
+                    encryptedRefreshToken,
+                    userId: userId,
+                    createdAt: Date.now(),
+                    admin: false
+                }
 
-                                RefreshToken.deleteMany({userId: {$eq: userId}, admin: false}, {session}).then(() => {
-                                    newRefreshToken.save({session}).then(savedRefreshToken => {
-                                        User.findOneAndUpdate({_id: {$eq: userId}}, {password: hashedPassword}, {session}).then(() => {
-                                            mongooseSessionHelper.commitTransaction(session).then(() => {
-                                                return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(savedRefreshToken._id)}))
-                                            }).catch(() => {
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while saving new password. Please try again.'))
-                                            })
-                                        }).catch(error => {
-                                            console.error('An error occurred while finding user with id:', userId, 'and updating password. The error was:', error)
-                                            mongooseSessionHelper.abortTransaction(session).then(() => {
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
-                                            })
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while saving new refresh token with data:', newRefreshTokenObject, '. The error was:', error)
-                                        mongooseSessionHelper.abortTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
-                                        })
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while deleting many RefreshTokens with userId:', userId, ' and with admin set to false. The error was:', error)
-                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while logging out other devices. Please try again.'))
-                                    })
+                const formattedIP = HTTPHandler.formatIP(IP)
+
+                if (userFound?.settings?.loginActivitySettings?.getIP) {
+                    newRefreshTokenObject.IP = formattedIP
+                }
+
+                if (userFound?.settings?.loginActivitySettings?.getLocation) {
+                    const location = geoIPLite.lookup(formattedIP)
+                    newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                }
+
+                if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
+                    newRefreshTokenObject.deviceType = deviceType
+                }
+
+                const newRefreshToken = new RefreshToken(newRefreshTokenObject)
+
+                mongoose.startSession().then(session => {
+                    session.startTransaction();
+
+                    RefreshToken.deleteMany({userId: {$eq: userId}, admin: false}, {session}).then(() => {
+                        newRefreshToken.save({session}).then(savedRefreshToken => {
+                            User.findOneAndUpdate({_id: {$eq: userId}}, {password: newHashedPassword}, {session}).then(() => {
+                                mongooseSessionHelper.commitTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.OK('Changing password was a success!', {}, {token: `Bearer ${token}`, refreshToken: `Bearer ${refreshToken}`, refreshTokenId: String(savedRefreshToken._id)}))
+                                }).catch(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while saving new password. Please try again.'))
                                 })
                             }).catch(error => {
-                                console.error('An error occurred while starting Mongoose session:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while starting to change password. Please try again.'))
+                                console.error('An error occurred while finding user with id:', userId, 'and updating password. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                                })
                             })
-                        }).catch((error) => {
-                            console.error('An error occured while hashing password:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while hashing password. Please try again.'))
+                        }).catch(error => {
+                            console.error('An error occurred while saving new refresh token with data:', newRefreshTokenObject, '. The error was:', error)
+                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                return resolve(HTTPWTHandler.serverError('An error occurred while changing password. Please try again.'))
+                            })
                         })
-                    } else {
-                        return resolve(HTTPWTHandler.unauthorized('Wrong password entered!'))
-                    }
-                }).catch((error) => {
-                    console.error('An error occured while comparing passwords:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while comparing passwords'))
+                    }).catch(error => {
+                        console.error('An error occurred while deleting many RefreshTokens with userId:', userId, ' and with admin set to false. The error was:', error)
+                        mongooseSessionHelper.abortTransaction(session).then(() => {
+                            return resolve(HTTPWTHandler.serverError('An error occurred while logging out other devices. Please try again.'))
+                        })
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while starting Mongoose session:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while starting to change password. Please try again.'))
                 })
             }).catch((error) => {
                 console.error('An error occured while finding user with id:', userId, '. The error was:', error)
@@ -514,31 +521,26 @@ class TempController {
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
                     User.find({$or: [ { name: {$regex: `^${val}`, $options: 'i'}}, { displayName: {$regex: `^${val}`, $options: 'i'}} ]}).skip(skip).limit(limit).lean().then(data =>{
+                        const noMoreItems = data.length < limit;
+
                         if (data.length) {
-                            var itemsProcessed = 0;
-                            data.forEach(function (item, index) {
-                                if (data[index].blockedAccounts?.includes(userFound.secondId)) {
-                                    itemsProcessed++;
-                                } else {
-                                    foundArray.push(userHandler.returnPublicInformation(data[index], userFound))
-                                }
-                                itemsProcessed++;
-                                if(itemsProcessed === data.length) {
-                                    console.log("Before Function")
-                                    console.log(foundArray)
-                                    sendResponse(foundArray);
-                                }
-                            });
+                            const processedUsers = [];
+
+                            for (const userFromSearch of data) {
+                                if (userFromSearch.blockedAccounts?.includes(userFound.secondId)) continue
+
+                                processedUsers.push(userHandler.returnPublicInformation(userFromSearch, userFound))
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Success', {items: processedUsers, noMoreItems}))
                         } else {
-                            const message = skip > 0 ? 'No more results' : 'No results'
-                            return resolve(HTTPWTHandler.notFound(message))
+                            return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems}))
                         }
                     }).catch(err => {
                         console.error('An error occured while finding users with names or displaynames similar to:', val, '. The error was:', err)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
                     });
                 } else {
-                    HTTPHandler.badInput(res, 'Your user could not be found')
                     return resolve(HTTPWTHandler.badInput('User could not be found with provided userId'))
                 }
             }).catch(error => {
@@ -732,7 +734,7 @@ class TempController {
         })
     }
 
-    static #searchforpollposts = (userId, pubId, previousPostId) => {
+    static #searchforpollposts = (userId, pubId, lastItemId) => {
         //userId is the ID of the user requesting the poll posts
         //pubId is the secondId of the user with the poll posts that are being searched for
         return new Promise(resolve => {
@@ -748,8 +750,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`pubId must be a string. Provided type: ${typeof pubId}`))
             }
 
-            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousPostId must be either a string or undefined`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be either a string or undefined`))
             }
 
             if (pubId.length < 1) {
@@ -772,26 +774,26 @@ class TempController {
                                     creatorId: {$eq: result._id}
                                 }
 
-                                if (previousPostId) {
-                                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousPostId)}
+                                if (lastItemId) {
+                                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(lastItemId)}
                                 }
 
-                                console.log('previousPostId:', previousPostId)
+                                console.log('lastItemId:', lastItemId)
                                 console.log('dbQuery:', dbQuery)
 
                                 const time1 = performance.now()
-                                Poll.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
+                                Poll.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL).lean().then(data => pollPostHandler.processMultiplePostDataFromOneOwner(data, result, userGettingPollPosts)).then(data => {
                                     const time2 = performance.now()
                                     console.log('TIME TO PROCESS 10 POLLS:', time2 - time1, 'MILLISECONDS.')
                                     if (data.length) {
                                         const toSend = {
-                                            posts: data,
-                                            noMorePosts: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
+                                            items: data,
+                                            noMoreItems: data.length < CONSTANTS.NUM_POLLS_TO_SEND_PER_API_CALL
                                         }
 
                                         return resolve(HTTPWTHandler.OK('Poll search successful', toSend))
                                     } else {
-                                        return resolve(HTTPWTHandler.OK('No more poll posts could be found', {posts: [], noMorePosts: true}))
+                                        return resolve(HTTPWTHandler.OK('No more poll posts could be found', {items: [], noMoreItems: true}))
                                     }
                                 }).catch(error => {
                                     console.error('An error occured while finding polls with a creatorId of:', result._id, '. The error was:', error)
@@ -1240,6 +1242,7 @@ class TempController {
                             try {
                                 await imageHandler.deleteImagePromiseByKey(result.profileImageKey);
                             } catch (error) {
+                                imageHandler.deleteImageByKey(imageKey)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while deleting your previous profile picrture. Please try again.'))
                             }
                         }
@@ -1270,7 +1273,7 @@ class TempController {
         })
     }
 
-    static #getImagesFromProfile = (userId, pubId, previousPostId) => {
+    static #getImagesFromProfile = (userId, pubId, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -1288,16 +1291,16 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousPostId must be a string or undefined. Type provided: ${typeof previousPostId}`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be a string or undefined. Type provided: ${typeof lastItemId}`))
             }
 
-            if (previousPostId?.length === 0) {
-                return resolve(HTTPWTHandler.badInput('previousPostId cannot be a blank string'))
+            if (lastItemId?.length === 0) {
+                return resolve(HTTPWTHandler.badInput('lastItemId cannot be a blank string'))
             }
 
-            if (typeof previousPostId === 'string' && !mongoose.isObjectIdOrHexString(previousPostId)) {
-                return resolve(HTTPWTHandler.badInput('previousPostId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             const getImagesAndSendToUser = (postOwner, userRequesting) => {
@@ -1305,20 +1308,20 @@ class TempController {
                     creatorId: postOwner._id
                 }
 
-                if (previousPostId != undefined) {
-                    dbQuery._id = {$lt: previousPostId}
+                if (lastItemId != undefined) {
+                    dbQuery._id = {$lt: lastItemId}
                 }
 
-                ImagePost.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
+                ImagePost.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL).lean().then(result => imagePostHandler.processMultiplePostDataFromOneOwner(result, postOwner, userRequesting)).then(result => {
                     if (result.length) {
                         const toSend = {
-                            posts: result,
-                            noMorePosts: result.length < CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL
+                            items: result,
+                            noMoreItems: result.length < CONSTANTS.NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL
                         }
 
                         return resolve(HTTPWTHandler.OK('Posts found', toSend))
                     } else {
-                        return resolve(HTTPWTHandler.OK('No more image posts could be found', {posts: [], noMorePosts: true}))
+                        return resolve(HTTPWTHandler.OK('No more image posts could be found', {items: [], noMoreItems: true}))
                     }
                 }).catch(error => {
                     console.error('An error occured while getting user images from user with id:', postOwner._id, '. The error was:', error)
@@ -1339,8 +1342,7 @@ class TempController {
                     }
 
                     const userPublicID = secondData.secondId;
-                    const isOwner = userId == data._id.toString()
-                    if (isOwner === true) {
+                    if (userId == data._id) {
                         getImagesAndSendToUser(data, secondData)
                     } else if (data.blockedAccounts?.includes(userPublicID)) {
                         return resolve(HTTPWTHandler.notFound('User not found.'))
@@ -1589,7 +1591,7 @@ class TempController {
             }
 
             if (typeof postId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`imageId must be a string. Provided type: ${typeof postId}`))
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Provided type: ${typeof postId}`))
             }
 
             if (!mongoose.isObjectIdOrHexString(userId)) {
@@ -1854,7 +1856,7 @@ class TempController {
         })
     }
 
-    static #searchpagesearchcategories = (userId, val, lastCategoryId) => {
+    static #searchpagesearchcategories = (userId, val, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -1872,12 +1874,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('Search box cannot be empty!'))
             }
 
-            if (lastCategoryId !== undefined && typeof lastCategoryId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`lastCategoryId must be undefined or a string. Provided type: ${typeof lastCategoryId}`))
+            if (lastItemId !== undefined && typeof lastItemId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be undefined or a string. Provided type: ${typeof lastItemId}`))
             }
 
-            if (typeof lastCategoryId === 'string' && !mongoose.isObjectIdOrHexString(lastCategoryId)) {
-                return resolve(HTTPWTHandler.badInput('lastCategoryId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
@@ -1889,14 +1891,14 @@ class TempController {
                     categoryTitle: {$regex: `^${val}`, $options: 'i'}
                 }
 
-                if (lastCategoryId !== undefined) {
-                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(lastCategoryId)}
+                if (lastItemId !== undefined) {
+                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(lastItemId)}
                 }
 
                 Category.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
                     Promise.all(
                         data.map(category => {
-                            return CategoryMember.estimatedDocumentCount({categoryId: {$eq: category._id}})
+                            return CategoryMember.countDocuments({categoryId: {$eq: category._id}})
                         })
                     ).then(memberCounts => {
                         const categories = data.map((category, index) => {
@@ -1915,8 +1917,8 @@ class TempController {
                         })
 
                         const toSend = {
-                            categories,
-                            noMoreCategories: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
+                            items: categories,
+                            noMoreItems: data.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL
                         }
 
                         return resolve(HTTPWTHandler.OK('Search successful', toSend))
@@ -2025,7 +2027,7 @@ class TempController {
         })
     }
 
-    static #findcategoryfromprofile = (userId, pubId, previousCategoryMemberId) => {
+    static #findcategoryfromprofile = (userId, pubId, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -2043,12 +2045,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousCategoryMemberId !== 'string' && previousCategoryMemberId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must be a string or undefined. Type provided: ${typeof previousCategoryMemberId}`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be a string or undefined. Type provided: ${typeof lastItemId}`))
             }
 
-            if (typeof previousCategoryMemberId === 'string' && !mongoose.isObjectIdOrHexString(previousCategoryMemberId)) {
-                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({secondId: {$eq: pubId}}).lean().then(result => {
@@ -2067,15 +2069,15 @@ class TempController {
                         console.log(profilesId)
 
                         const dbQuery = {
-                            userId: {$eq: userId}
+                            userId: {$eq: result._id}
                         }
 
-                        if (previousCategoryMemberId) {
-                            dbQuery._id = {$lt: previousCategoryMemberId}
+                        if (lastItemId) {
+                            dbQuery._id = {$lt: lastItemId}
                         }
 
                         CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(data => {
-                            if (data.length < 1) return resolve(HTTPWTHandler.OK('No more categories could be found', {categories: [], noMoreCategories: true}))
+                            if (data.length < 1) return resolve(HTTPWTHandler.OK('No more categories could be found', {items: [], noMoreItems: true}))
 
                             const categoryIds = Array.from(new Set(data.map(member => member.categoryId)));
 
@@ -2111,7 +2113,7 @@ class TempController {
                                         }
                                     })
 
-                                    return resolve(HTTPWTHandler.OK('Categories search successful', {categories: toSend, noMoreCategories: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
+                                    return resolve(HTTPWTHandler.OK('Categories search successful', {items: toSend, noMoreItems: toSend.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL}))
                                 }).catch(error => {
                                     console.error('An error occurred while getting member counts from categories in this pair list:', memberCategoryPairs, '. The error was:', error)
                                     return resolve(HTTPWTHandler.serverError('An error occured while finding member counts for the categories. Please try again.'))
@@ -2303,8 +2305,8 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
 
-            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
-                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`))
+            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH) {
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} or less characters long.`))
             }
 
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
@@ -2396,6 +2398,7 @@ class TempController {
             }
 
             const deleteImage = () => {
+                console.log('Deleting temp image in postimagethread API')
                 imageHandler.deleteMulterTempImage(file.filename)
             }
 
@@ -2481,7 +2484,7 @@ class TempController {
 
             if (threadTitle.length > CONSTANTS.MAX_THREAD_TITLE_LENGTH || threadTitle.length == 0) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`)
+                return resolve(HTTPWTHandler.badInput(`threadTitle must be between 1 and ${CONSTANTS.MAX_THREAD_TITLE_LENGTH} characters long.`))
             }
 
             if (!CONSTANTS.VALID_THREAD_TITLE_TEST.test(threadTitle)) {
@@ -2489,9 +2492,9 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
 
-            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH || threadSubtitle.length == 0) {
+            if (threadSubtitle.length > CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadSubtitle must be between 1 and ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} characters long.`)
+                return resolve(HTTPWTHandler.badInput(`threadSubtitle must be ${CONSTANTS.MAX_THREAD_SUBTITLE_LENGTH} or less characters long.`))
             }
 
             if (!CONSTANTS.VALID_THREAD_SUBTITLE_TEST.test(threadSubtitle)) {
@@ -2501,7 +2504,7 @@ class TempController {
 
             if (threadTags.length > CONSTANTS.MAX_THREAD_TAGS_LENGTH) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`)
+                return resolve(HTTPWTHandler.badInput(`threadTags must not be longer than ${CONSTANTS.MAX_THREAD_TAGS_LENGTH} characters`))
             }
 
             if (!CONSTANTS.VALID_THREAD_TAGS_TEST.test(threadTags)) {
@@ -2509,9 +2512,9 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE))
             }
 
-            if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH || threadImageDescription.length == 0) {
+            if (threadImageDescription.length > CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH) {
                 deleteImage()
-                return HTTPHandler.badInput(res, `threadImageDescription must be between 1 and ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} characters long`)
+                return resolve(HTTPWTHandler.badInput(`threadImageDescription must be ${CONSTANTS.MAX_THREAD_IMAGE_DESCRIPTION_LENGTH} or less characters long`))
             }
 
             if (!CONSTANTS.VALID_THREAD_IMAGE_DESCRIPTION_TEST.test(threadImageDescription)) {
@@ -2542,7 +2545,7 @@ class TempController {
                                 const newThreadObject = {
                                     threadType: "Images",
                                     comments: [],
-                                    creatorId: creatorId,
+                                    creatorId: userId,
                                     threadTitle: threadTitle,
                                     threadSubtitle: threadSubtitle,
                                     threadTags: threadTags,
@@ -2674,7 +2677,7 @@ class TempController {
         })
     }
 
-    static #getthreadsfromprofile = (userId, pubId, previousPostId) => {
+    static #getthreadsfromprofile = (userId, pubId, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -2692,12 +2695,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pubId cannot be an empty string.'))
             }
 
-            if (typeof previousPostId !== 'string' && previousPostId !== undefined) {
-                return resolve(HTTPWTHandler.badInput(`previousPostId must either be a string or undefined. Type provided: ${typeof previousPostId}`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must either be a string or undefined. Type provided: ${typeof lastItemId}`))
             }
 
-            if (typeof previousPostId === 'string' && !mongoose.isObjectIdOrHexString(previousPostId)) {
-                return resolve(HTTPWTHandler.badInput('previousPostId must be an ObjectId string or undefined.'))
+            if (typeof lastItemId === 'string' && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId string or undefined.'))
             }
 
             User.findOne({secondId: {$eq: pubId}}).lean().then(userResult => {
@@ -2715,26 +2718,24 @@ class TempController {
                                 creatorId: {$eq: userid}
                             }
 
-                            if (previousPostId) {
-                                dbQuery._id = {$lt: previousPostId}
+                            if (lastItemId) {
+                                dbQuery._id = {$lt: lastItemId}
                             }
 
-                            Thread.find(dbQuery).sort({datePosted: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
-                                if (result.length) {
-                                    threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
-                                        const toSend = {
-                                            posts,
-                                            noMorePosts: posts.length < CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL
-                                        }
+                            Thread.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL).lean().then(result => {
+                                if (result.length === 0) return resolve(HTTPWTHandler.OK('No more threads to show.', {items: [], noMoreItems: true}))
 
-                                        return resolve(HTTPWTHandler.OK('Posts found', toSend))
-                                    }).catch(error => {
-                                        console.error('An error occurred while processing thread posts. The error was:', error)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while getting thread posts. Please try again.'))
-                                    })
-                                } else {
-                                    return resolve(HTTPWTHandler.notFound('No more thread posts could be found.', {posts: [], noMorePosts: true}))
-                                }
+                                threadPostHandler.processMultiplePostDataFromOneOwner(result, userResult, userRequestingThreads).then(posts => {
+                                    const toSend = {
+                                        items: posts,
+                                        noMoreItems: posts.length < CONSTANTS.NUM_THREAD_POSTS_TO_SEND_PER_API_CALL
+                                    }
+
+                                    return resolve(HTTPWTHandler.OK('Posts found', toSend))
+                                }).catch(error => {
+                                    console.error('An error occurred while processing thread posts. The error was:', error)
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while getting thread posts. Please try again.'))
+                                })
                             }).catch(error => {
                                 console.error('An error occurred while finding threads with creatorId:', userid, '. The error was:', error)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while finding threads. Please try again.'))
@@ -2948,168 +2949,6 @@ class TempController {
         })
     }
 
-    static #toggleFollowOfAUser = (userId, userToFollowPubId) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
-            }
-
-            if (typeof userToFollowPubId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userToFollowPubId must be a string. Provided type: ${typeof userToFollowPubId}`))
-            }
-
-            if (userToFollowPubId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('userToFollowPubId cannot be a blank string.'))
-            }
-
-            //Check for userId validity and get user for their pub Id
-            User.findOne({_id: {$eq: userId}}).lean().then(userFollowingFound => {
-                if (userFollowingFound) {
-                    //Check for other user for validity and to make sure they exist
-                    User.findOne({secondId: {$eq: userToFollowPubId}}).lean().then(userGettingFollowed => {
-                        if (!userGettingFollowed || userGettingFollowed.blockedAccounts?.includes(userFollowingFound.secondId)) {
-                            //If the user could not be found or if the user has blocked the user trying to follow
-                            return resolve(HTTPWTHandler.notFound('User not found'))
-                        }
-
-                        if (userId === String(userGettingFollowed._id)) {
-                            return resolve(HTTPWTHandler.forbidden('You cannot follow yourself'))
-                        }
-
-                        if (userGettingFollowed.followers.includes(userFollowingFound.secondId)) {
-                            //Already following account
-
-                            mongoose.startSession().then(session => {
-                                session.startTransaction();
-
-                                const dbUpdates = [
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userGettingFollowed._id}},
-                                            update: {$pull : {followers: userFollowingFound.secondId}}
-                                        }
-                                    },
-                                    {
-                                        updateOne: {
-                                            filter: {_id: {$eq: userId}},
-                                            update: { $pull : {following: userGettingFollowed.secondId}}
-                                        }
-                                    }
-                                ]
-
-                                User.bulkWrite(dbUpdates, {session}).then(() => {
-                                    mongooseSessionHelper.commitTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.OK('UnFollowed user'))
-                                    }).catch(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
-                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
-                                    })
-                                })
-                            }).catch(error => {
-                                console.error('An error occurred while starting mongoose session. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing account. Please try again.'))
-                            })
-                        } else {
-                            //Is not following account
-                            if (userGettingFollowed.privateAccount == true) {
-                                if (!userGettingFollowed.accountFollowRequests.includes(userFollowingFound.secondId)) {
-                                    //Request to follow the account
-                                    User.findOneAndUpdate({_id: userGettingFollowed._id}, {$addToSet: {accountFollowRequests: userFollowingFound.secondId}}).then(function() {
-                                        if (userFollowingFound.settings.notificationSettings.SendFollowRequests && userGettingFollowed.settings.notificationSettings.FollowRequests) {
-                                            //If the user following has SENDING follow requests notifications ON and user getting followed has follow requests notifications ON
-                                            var notifMessage = {
-                                                title: "New Follow Request",
-                                                body: userFollowingFound.name + " has requested to follow you."
-                                            }
-                                            var notifData = {
-                                                type: "Follow request",
-                                                pubIdOfFollower: userFollowingFound.secondId
-                                            }
-                                            sendNotifications(userGettingFollowed._id, notifMessage, notifData)
-                                        }
-                                        return resolve(HTTPWTHandler.OK('Requested To Follow User'))
-                                    }).catch(err => {
-                                        console.error('An error occurred while adding to set:', userFollowingFound.secondId, 'to accountFollowRequests on user with id:', userGettingFollowed._id, '. The error was:', err)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while sending follow request to user. Please try again.'))
-                                    })
-                                } else {
-                                    //Remove request to follow the account
-                                    User.findOneAndUpdate({_id: userGettingFollowed._id}, {$pull: {accountFollowRequests: userFollowingFound.secondId}}).then(function() {
-                                        return resolve(HTTPWTHandler.OK('Removed Request To Follow User'))
-                                    }).catch(err => {
-                                        console.error('An error occurred while pulling:', userFollowingFound.secondId, 'from accountFollowRequests for user with id:', userGettingFollowed._id, '. The error was:', err)
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing request to follow user. Please try again.'))
-                                    })
-                                }
-                            } else {
-                                mongoose.startSession().then(session => {
-                                    session.startTransaction();
-
-                                    const dbUpdates = [
-                                        {
-                                            updateOne: {
-                                                filter: {_id: {$eq: userGettingFollowed._id}},
-                                                update: {$addToSet : {followers: userFollowingFound.secondId}}
-                                            }
-                                        },
-                                        {
-                                            updateOne: {
-                                                filter: {_id: {$eq: userId}},
-                                                update: { $addToSet : {following: userGettingFollowed.secondId}}
-                                            }
-                                        }
-                                    ]
-
-                                    User.bulkWrite(dbUpdates, {session}).then(() => {
-                                        var notifMessage = {
-                                            title: "New Follower",
-                                            body: userFollowingFound[0].name + " has followed you."
-                                        }
-                                        var notifData = {
-                                            type: "Follow",
-                                            pubIdOfFollower: userFollowingFound[0].secondId
-                                        }
-                                        sendNotifications(userGettingFollowed[0]._id, notifMessage, notifData)
-
-                                        mongooseSessionHelper.commitTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.OK('Followed User'))
-                                        }).catch(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while making a bulkWrite operation on the User collection:', dbUpdates, '. The error was:', error)
-                                        mongooseSessionHelper.abortTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
-                                        })
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while starting a mongoose session. The error was:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while following account. Please try again.'))
-                                })
-                            }
-                        }
-                    }).catch(err => {
-                        console.error('An error occurred while finding user with secondId:', userToFollowPubId, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user to follow. Please try again.'))
-                    })
-                } else {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
-            }).catch(err => {
-                console.error('An error occurred while finding user with id:', userId, '. The error was:', err)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
     static #reloadUsersDetails = (userId, usersPubId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
@@ -3138,16 +2977,7 @@ class TempController {
                             if (userData.blockedAccounts?.includes(userSearchingPubId)) {
                                 return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
                             } else {
-                                const userDataToSend = {
-                                    name: userData.name,
-                                    displayName: userData.displayName,
-                                    followers: userData.followers.length,
-                                    following: userData.following.length,
-                                    totalLikes: userData.totalLikes,
-                                    profileKey: userData.profileImageKey,
-                                    badges: userData.badges,
-                                    privateAccount: !!userData.privateAccount
-                                };
+                                const userDataToSend = userHandler.returnPublicInformation(userData, userSearching);
 
                                 if (userData.privateAccount == true) {
                                     if (userData.accountFollowRequests.includes(userSearchingPubId)) {
@@ -3431,7 +3261,7 @@ class TempController {
 
                 if (Array.isArray(userFound.accountFollowRequests)) {
                     if (userFound.accountFollowRequests.length < 1) {
-                        return resolve(HTTPWTHandler.OK('No account follow requests', {requesters: [], noMoreItems: true, skip: 0}))
+                        return resolve(HTTPWTHandler.OK('No account follow requests', {items: [], noMoreItems: true, skip: 0}))
                     }
 
                     const {items, noMoreItems} = arrayHelper.returnSomeItems(userFound.accountFollowRequests, parsedSkip, CONSTANTS.MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL);
@@ -3447,13 +3277,13 @@ class TempController {
                             return userHandler.returnPublicInformation(item, userFound)
                         })
 
-                        return resolve(HTTPWTHandler.OK('Successfully found requests', {requesters: toSend, noMoreItems, skip: parsedSkip + items.length}))
+                        return resolve(HTTPWTHandler.OK('Successfully found requests', {items: toSend, noMoreItems, skip: parsedSkip + items.length}))
                     }).catch(error => {
                         console.error('An error occurred while finding users with ids in:', items, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding account follow requests. Please try again.'))
                     })
                 } else {
-                    return resolve(HTTPWTHandler.OK('accountFollowRequests is not an array - there are no requests', {requesters: [], noMoreItems: true, skip: 0}))
+                    return resolve(HTTPWTHandler.OK('accountFollowRequests is not an array - there are no requests', {items: [], noMoreItems: true, skip: 0}))
                 }
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -3755,7 +3585,7 @@ class TempController {
                         return data
                     })
 
-                    return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', {blockedAccounts: publicInformation, noMoreItems}))
+                    return resolve(HTTPWTHandler.OK('Successfully found blocked accounts', {items: publicInformation, noMoreItems}))
                 }).catch(error => {
                     console.error('An error occurred while finding users with secondIds in this array:', blockedAccounts, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
@@ -3818,12 +3648,11 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with userId provided'))
                 }
 
-                let newSettings = {...userFound.settings};
-                newSettings.algorithmSettings.enabled = true;
-                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
+                User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {'settings.algorithmSettings.enabled': true}}).then(() => {
                     return resolve(HTTPWTHandler.OK('Algorithm has now been enabled.'))
                 }).catch(error => {
-                    console.error('An error occurred while updating settings for user with id:', userId, '. The old settings were:', userFound.settings, ' The new settings are:', newSettings, '. The error was:', error)
+                    console.error('An error occurred while setting settings.algorithmSettings.enabled to true for user with id:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while enabling algorithm. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
@@ -3870,13 +3699,10 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
 
-                let newSettings = {...userFound.settings}
-                newSettings.algorithmSettings.enabled = false;
-
-                User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newSettings}).then(() => {
+                User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {'settings.algorithmSettings.enabled': false}}).then(() => {
                     return resolve(HTTPWTHandler.OK('Algorithm has now been disabled.'))
                 }).catch(error => {
-                    console.error('An error occurred while updating algorithm settings for user with id:', userId, ' Old settings:', userFound.settings, 'New settings:', newSettings, '. The error was:', error)
+                    console.error('An error occurred while setting settings.algorithmSettings.enabled to false for user with id:', userId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while disabling algorithm. Please try again.'))
                 })
             }).catch(error => {
@@ -3968,7 +3794,7 @@ class TempController {
                 }
 
                 PopularPosts.findOne({}).lean().then(async popularPostDocument => {
-                    const popularPosts = popularPostDocument.popularPosts
+                    const popularPosts = popularPostDocument ? popularPostDocument.popularPosts : []
                     const newPopularPosts = popularPosts.filter(post => post.creatorId.toString() !== userId)
 
 
@@ -4600,14 +4426,14 @@ class TempController {
                 }
             }
 
-            const lastVoteId = votes.length > 0 ? votes[votes.length - 1]._id.toString() : null
-            const noMoreVotes = votes.length < CONSTANTS.GET_USER_ACTIVITY_API_LIMIT
+            const lastItemId = votes.length > 0 ? votes[votes.length - 1]._id.toString() : null
+            const noMoreItems = votes.length < CONSTANTS.GET_USER_ACTIVITY_API_LIMIT
 
             if (votes.length < 1) {
                 const toSend = {
-                    posts: [],
-                    lastVoteId,
-                    noMoreVotes
+                    items: [],
+                    lastItemId,
+                    noMoreItems
                 }
 
                 return resolve(HTTPWTHandler.OK('Found no activity', toSend))
@@ -4694,78 +4520,15 @@ class TempController {
 
             Promise.all(promises).then(arrays => {
                 const toSend = {
-                    posts: [].concat(...arrays),
-                    lastVoteId,
-                    noMoreVotes
+                    items: [].concat(...arrays),
+                    lastItemId,
+                    noMoreItems
                 }
 
                 return resolve(HTTPWTHandler.OK(`Successfully found ${postFormat.toLowerCase()} posts ${skip} - ${skip + toSend.length}`, toSend))
             }).catch(error => {
                 console.error('An error occurred while processing image posts. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while processing image posts. Please try again.'))
-            })
-        })
-    }
-
-    static #getCategoriesUserIsAPartOf = (userId, previousCategoryMemberId) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
-            }
-
-            if (typeof previousCategoryMemberId !== 'undefined' && typeof previousCategoryMemberId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`previousCategoryMemberId must either be undefined or a string. Provided type: ${typeof previousCategoryMemberId}`))
-            }
-
-            if (typeof previousCategoryMemberId === 'string' && !mongoose.isObjectIdOrHexString(previousCategoryMemberId)) {
-                return resolve(HTTPWTHandler.badInput('previousCategoryMemberId must be an ObjectId string or undefined.'))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) {
-                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-                }
-
-                const dbQuery = {
-                    userId: {$eq: userId}
-                }
-
-                if (previousCategoryMemberId) {
-                    dbQuery._id = {$lt: new mongoose.Types.ObjectId(previousCategoryMemberId)}
-                }
-
-                CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL).lean().then(categoryMemberDocuments => {
-                    if (categoryMemberDocuments.length < 1) return resolve(HTTPWTHandler.OK('Successfully found no categories', {noMoreCategories: true, categories: []}))
-
-                    const categoryIds = categoryMemberDocuments.map(doc => doc.categoryId)
-                    Category.find({_id: {$in: categoryIds}}).then(categories => {
-                        const categoriesToSend = categories.map((category, index) => {
-                            const newCategory = {...category}
-                            newCategory.dateJoined = categoryMemberDocuments[index].dateJoined;
-                            return newCategory
-                        })
-
-                        const toSend = {
-                            noMoreCategories: categoryMemberDocuments.length < CONSTANTS.NUM_CATEGORIES_TO_SEND_PER_API_CALL,
-                            categories: categoriesToSend
-                        }
-
-                        return resolve(HTTPWTHandler.OK(`Successfully found ${categoryMemberDocuments.length} categories`, toSend))
-                    }).catch(error => {
-                        console.error('An error occurred while finding categories with ids:', categoryIds, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding categories. Please try again.'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding CategoryMembers with dbQuery:', dbQuery, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding categories you are a part of. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
     }
@@ -4928,8 +4691,7 @@ class TempController {
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
-                    let newUserSettings = userFound.settings;
-                    let newAlgorithmSettings = newUserSettings.algorithmSettings;
+                    let newAlgorithmSettings = {...newUserSettings.algorithmSettings};
                     if (typeof algorithmSettings.algorithmEnabled == 'boolean') {
                         newAlgorithmSettings.algorithmEnabled = algorithmSettings.algorithmEnabled;
                     }
@@ -4942,12 +4704,11 @@ class TempController {
                     if (typeof algorithmSettings.useUserFollowingData == 'boolean') {
                         newAlgorithmSettings.useUserFollowingData = algorithmSettings.useUserFollowingData;
                     }
-                    newUserSettings.algorithmSettings = newAlgorithmSettings;
 
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {settings: newUserSettings}).then(function() {
+                    User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {'settings.algorithmSettings': newAlgorithmSettings}}).then(function() {
                         return resolve(HTTPWTHandler.OK('Algorithm settings updated successfully.'))
                     }).catch(error => {
-                        console.error('An error occured while changing settings for user with ID:', userId, 'The new settings are:', newUserSettings, '. Only algorithm settings got changed. These are the new algorithm settings:', newAlgorithmSettings, '. The error was:', error);
+                        console.error('An error occured while changing settings for user with ID:', userId, '. These are the new algorithm settings:', newAlgorithmSettings, '. The error was:', error);
                         return resolve(HTTPWTHandler.serverError('An error occurred while updating algorithm settings. Please try again.'))
                     })
                 } else {
@@ -5079,13 +4840,20 @@ class TempController {
                     return resolve(HTTPWTHandler.OK('Successfully found no users', {items: [], noMoreItems: true}))
                 }
 
-                User.find({secondId: {$in: items}}).lean().then(items => {
-                    const newItems = [];
-                    for (let i = 0; i < items.length; i++) {
-                        newItems.push(userHandler.returnPublicInformation(items[i], userRequesting))
+                User.find({secondId: {$in: items}}).lean().then(users => {
+                    const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(items, users, 'secondId');
+
+                    if (missingDocuments.length > 0) {
+                        console.log('Users with ids:', missingDocuments, 'were found when checking the stat:', stat, 'for user with secondId:', profilePublicId, '. These users could not be found in the database.')
                     }
 
-                    return resolve(HTTPWTHandler.OK('Successfully retrieved data', {items: newItems, noMoreItems}))
+                    const toSend = {
+                        items: foundDocuments.map(user => userHandler.returnPublicInformation(user, userRequesting)),
+                        noMoreItems,
+                        skip: skip + items.length
+                    }
+
+                    return resolve(HTTPWTHandler.OK('Successfully retrieved data', toSend))
                 }).catch(error => {
                     console.error('An error occured while finding users with a secondId that is inside of an array. The array is:', items, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
@@ -6119,7 +5887,7 @@ class TempController {
             }
 
             if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
-                return HTTPHandler.badInput(res, `comment cannot be longer than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters.`)
+                return HTTPWTHandler.badInput(`comment cannot be longer than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters.`)
             }
 
             if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
@@ -6399,7 +6167,7 @@ class TempController {
                             return resolve(HTTPWTHandler.notFound('Could not find post creator'))
                         }
 
-                        if (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Could not find post'))
+                        if (postCreator.blockedAccounts?.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers?.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Could not find post'))
 
                         mongoose.startSession().then(session => {
                             session.startTransaction();
@@ -6474,7 +6242,7 @@ class TempController {
                     User.findOne({_id: {$eq: postFound.creatorId}}).lean().then(postCreator => {
                         if (!postCreator) return resolve(HTTPWTHandler.notFound('Could not find post creator.'))
 
-                        if (postCreator.blockedAccounts.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Post could not be found.'))
+                        if (postCreator.blockedAccounts?.includes(userFound.secondId) || (postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId))) return resolve(HTTPWTHandler.notFound('Post could not be found.'))
 
                         VOTE_DATABASE_MODELS[voteType].deleteMany({userPublicId: {$eq: userFound.secondId}, postId: {$eq: postId}, postFormat: {$eq: postFormat}}).then(() => {
                             return resolve(HTTPWTHandler.OK('Removing vote was a success'))
@@ -6489,6 +6257,448 @@ class TempController {
                 }).catch(error => {
                     console.error('An error occurred while finding', postFormat, 'post with id:', postId, '. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while finding post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #followuser = (userId, userPubId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof userPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userPubId must be a string. Type provided: ${typeof userPubId}`))
+            }
+
+            if (!uuidHelper.validateV4(userPubId)) {
+                return resolve(HTTPWTHandler.badInput('userPubId must be a valid version 4 UUID'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(followerFound => {
+                if (!followerFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                User.findOne({secondId: {$eq: userPubId}}).lean().then(userFound => {
+                    if (!userFound || userFound.blockedAccounts?.includes(followerFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find user.'))
+                    if (userId == userFound._id) return resolve(HTTPWTHandler.forbidden('You cannot follow yourself.'))
+
+                    if (userFound.privateAccount) {
+                        User.findOneAndUpdate({secondId: {$eq: userPubId}}, {$addToSet: {accountFollowRequests: followerFound.secondId}}).then(() => {
+                            return resolve(HTTPWTHandler.OK('Requested To Follow User'))
+                        }).catch(error => {
+                            console.error('An error occurred while adding:', followerFound.secondId, 'to set in accountFollowRequests for user with secondId:', userPubId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while requesting to follow user. Please try again.'))
+                        })
+                    } else {
+                        //The account is not private, so follow the user and add the user to the follower's following array
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
+
+                            const dbUpdates = [
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userFound._id}},
+                                        update: {$addToSet : {followers: followerFound.secondId}}
+                                    }
+                                },
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userId}},
+                                        update: { $addToSet : {following: userFound.secondId}}
+                                    }
+                                }
+                            ]
+
+                            User.bulkWrite(dbUpdates).then(() => {
+                                mongooseSessionHelper.commitTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.OK('Followed User'))
+                                }).catch(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while making database updates to User collection:', dbUpdates, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while following user. Please try again.'))
+                                })
+                            })
+                        }).catch(error => {
+                            console.error('An error occurred while starting Mongoose session:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to follow user. Please try again.'))
+                        })
+                    }
+                }).catch(error => {
+                    console.error('An error occurred while finding user with secondId:', userPubId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user to follow. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #unfollowuser = (userId, userPubId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof userPubId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userPubId must be a string. Type provided: ${typeof userPubId}`))
+            }
+
+            if (!uuidHelper.validateV4(userPubId)) {
+                return resolve(HTTPWTHandler.badInput('userPubId must be a valid version 4 UUID'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(followerFound => {
+                if (!followerFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                User.findOne({secondId: {$eq: userPubId}}).lean().then(userFound => {
+                    if (!userFound || userFound.blockedAccounts?.includes(followerFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find user.'))
+
+                    if (userFound.privateAccount && userFound.accountFollowRequests.includes(followerFound.secondId)) {
+                        User.findOneAndUpdate({secondId: {$eq: userPubId}}, {$pull: {accountFollowRequests: followerFound.secondId}}).then(() => {
+                            return resolve(HTTPWTHandler.OK('Removed Request To Follow User'))
+                        }).catch(error => {
+                            console.error('An error occurred while pulling:', followerFound.secondId, 'from accountFollowRequests from user with secondId:', userPubId, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while removing account follow requests.'))
+                        })
+                    } else {
+                        //There is no account follow request or the account is not private, so we remove the regular follow.
+
+                        mongoose.startSession().then(session => {
+                            session.startTransaction();
+
+                            const dbUpdates = [
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userFound._id}},
+                                        update: {$pull : {followers: followerFound.secondId}}
+                                    }
+                                },
+                                {
+                                    updateOne: {
+                                        filter: {_id: {$eq: userId}},
+                                        update: { $pull : {following: userFound.secondId}}
+                                    }
+                                }
+                            ]
+
+                            User.bulkWrite(dbUpdates, {session}).then(() => {
+                                mongooseSessionHelper.commitTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.OK('UnFollowed user'))
+                                }).catch(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                })
+                            }).catch(error => {
+                                console.error('An error occurred while making these updates to the User collection:', dbUpdates, '. The error was:', error)
+                                mongooseSessionHelper.abortTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while unfollowing user. Please try again.'))
+                                })
+                            })
+                        }).catch(error => {
+                            console.error('There was an error while starting Mongoose session:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to unfollow user. Please try again.'))
+                        })
+                    }
+                }).catch(error => {
+                    console.error('An error occurred while finding user with secondId:', userPubId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user to unfollow. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #getvotedusersofpost = (userId, postId, postFormat, lastItemId, voteType) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof postId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`postId must be a string. Type provided: ${typeof postId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(postId)) {
+                return resolve(HTTPWTHandler.badInput('postId must be an ObjectId.'))
+            }
+
+            if (!CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.includes(postFormat)) {
+                return resolve(HTTPWTHandler.badInput(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`))
+            }
+
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be either a string or undefined.'))
+            }
+
+            if (lastItemId !== undefined && !uuidHelper.validateV4(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be a valid UUIDv4 if it is going to be a string.'))
+            }
+
+            if (!CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.includes(voteType)) {
+                return resolve(HTTPWTHandler.badInput(`voteType must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                POST_DATABASE_MODELS[postFormat].findOne({_id: {$eq: postId}}).lean().then(async postFound => {
+                    if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post.'))
+
+                    let postCreator;
+
+                    try {
+                        postCreator = postFound.creatorId == userId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean();
+                    } catch (error) {
+                        console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post creator. Please try again.'))
+                    }
+
+                    if (!postCreator) {
+                        console.error('Found', postFormat, 'post with id:', postId, 'that does not have a creator with id:', postFound.creatorId)
+                        return resolve(HTTPWTHandler.notFound('Could not find post creator'))
+                    }
+
+                    const blocked = postCreator.blockedAccounts?.includes(userFound.secondId)
+                    const notAllowedToView = postCreator.privateAccount === true && !postCreator.followers.includes(userFound.secondId);
+
+                    if ((blocked || notAllowedToView) && postCreator._id != userId) {
+                        //If the user requesting is not the post creator, and they are either blocked or not following the user (if the user that created the post is a private account)
+                        return resolve(HTTPWTHandler.notFound('Could not find post.'))
+                    }
+
+                    const dbQuery = {
+                        postId: {$eq: postId},
+                        postFormat: {$eq: postFormat}
+                    }
+
+                    if (lastItemId) {
+                        dbQuery.userPublicId = {$lt: lastItemId}
+                    }
+
+                    VOTE_DATABASE_MODELS[voteType].find(dbQuery).sort({_id: -1}).limit(CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL).lean().then(votes => {
+                        if (votes.length === 0) return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems: true}))
+
+                        const userPubIds = votes.map(vote => vote.userPublicId);
+
+                        User.find({secondId: {$in: userPubIds}}).lean().then(users => {
+                            const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(userPubIds, users, 'secondId');
+
+                            if (missingDocuments.length > 0) {
+                                console.error('Missing users found that have', voteType, 'voted post with id:', postId, '. The users are:', missingDocuments);
+                            }
+
+                            const toSend = {
+                                items: foundDocuments.map(user => userHandler.returnPublicInformation(user, userFound)),
+                                noMoreItems: userPubIds.length < CONSTANTS.VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Success', toSend))
+                        }).catch(error => {
+                            console.error('An error occurred while finding users with secondIds inside of:', userPubIds, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding upvoted users. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding upvotes with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding upvotes. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one', postFormat, 'post with id:', postId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding post. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #getcategorymembers = (userId, categoryId, lastItemId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof categoryId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`categoryId must be a string. Type provided: ${typeof categoryId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(categoryId)) {
+                return resolve(HTTPWTHandler.badInput('categoryId must be an ObjectId.'))
+            }
+
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must either be a string or undefined. Type provided: ${typeof lastItemId}`))
+            }
+
+            if (lastItemId !== undefined && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId if it is not going to be undefined.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+
+                Category.findOne({_id: {$eq: categoryId}}).lean().then(categoryFound => {
+                    if (!categoryFound) return resolve(HTTPWTHandler.notFound('Could not find category with categoryId provided.'))
+
+                    const dbQuery = {
+                        categoryId: {$eq: categoryId}
+                    }
+
+                    if (lastItemId) {
+                        dbQuery._id = {$lt: lastItemId}
+                    }
+
+                    CategoryMember.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.MAX_CATEGORY_MEMBERS_PER_API_CALL).lean().then(members => {
+                        if (members.length === 0) return resolve(HTTPWTHandler.OK('No members found', {items: [], noMoreItems: true}))
+
+                        const memberIds = members.map(member => member.userId);
+
+                        User.find({_id: {$in: memberIds}}).lean().then(users => {
+                            const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(memberIds, users, '_id');
+
+                            if (missingDocuments.length > 0) {
+                                console.error('Users have been found being members to category with id:', categoryId, 'but they cannot be found in the database. The user documents are:', missingDocuments)
+                            }
+
+                            const toSend = {
+                                items: foundDocuments.map(document => userHandler.returnPublicInformation(document, userFound)),
+                                noMoreItems: memberIds.length < CONSTANTS.MAX_CATEGORY_MEMBERS_PER_API_CALL
+                            }
+
+                            return resolve(HTTPWTHandler.OK('Found members', toSend))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding category members with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding the category members. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding one category with id:', categoryId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding the category. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #getpollvoteusers = (userId, pollId, pollOption, lastItemId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof pollId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(pollId)) {
+                return resolve(HTTPWTHandler.badInput('pollId must be an ObjectId.'))
+            }
+
+            if (!CONSTANTS.POLL_OPTIONS.includes(pollOption)) {
+                return resolve(HTTPWTHandler.badInput(`pollOption must be one of these values: ${CONSTANTS.POLL_OPTIONS.join(', ')}`))
+            }
+
+            if (lastItemId !== undefined && typeof lastItemId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be undefined or a string. Type provided: ${typeof lastItemId}`))
+            }
+
+            if (lastItemId !== undefined && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId if it is going to be a string.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with userId provided.'))
+
+                Poll.findOne({_id: {$eq: pollId}}).lean().then(async pollFound => {
+                    if (!pollFound) return resolve(HTTPWTHandler.notFound('Could not find poll.'))
+
+                    const pollIsByRequester = pollFound.creatorId == userId;
+
+                    let creator;
+
+                    try {
+                        creator = pollIsByRequester ? userFound : await User.findOne({_id: {$eq: pollFound.creatorId}}).lean()
+                    } catch (error) {
+                        console.error('An error occurred while finding one user with id:', pollFound.creatorId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll creator. Please try again.'))
+                    }
+
+                    if (!creator) return resolve(HTTPWTHandler.notFound('Could not find poll creator.'))
+
+                    if (!pollIsByRequester && creator.blockedAccounts?.includes(userFound.secondId)) {
+                        return resolve(HTTPWTHandler.notFound('Could not find poll creator.'))
+                    }
+
+                    if (!pollIsByRequester && creator.privateAccount === true && !creator.followers.includes(userFound.secondId)) {
+                        return resolve(HTTPWTHandler.notFound('Could not find poll.'))
+                    }
+
+                    const dbQuery = {
+                        pollId: {$eq: pollId},
+                        vote: {$eq: pollOption}
+                    }
+
+                    if (lastItemId) {
+                        dbQuery._id = {$lt: lastItemId}
+                    }
+
+                    PollVote.find(dbQuery).sort({_id: -1}).limit(CONSTANTS.MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL).lean().then(votes => {
+                        if (votes.length === 0) return resolve(HTTPWTHandler.OK('No votes found', {items: [], noMoreItems: true}))
+
+                        const userIds = votes.map(vote => vote.userId);
+
+                        User.find({_id: {$in: userIds}}).lean().then(users => {
+                            const {foundDocuments, missingDocuments} = arrayHelper.returnDocumentsFromIdArray(userIds, users, '_id');
+
+                            if (missingDocuments.length > 0) {
+                                console.error('Missing users found while finding votes on poll option:', pollOption, 'on poll with id:', pollId, '. The missing documents are:', missingDocuments)
+                            }
+
+                            const userInformation = foundDocuments.map(user => userHandler.returnPublicInformation(user, userFound));
+
+                            return resolve(HTTPWTHandler.OK('Found votes', {items: userInformation, noMoreItems: userIds.length < CONSTANTS.MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL}))
+                        }).catch(error => {
+                            console.error('An error occurred while finding users in:', userIds, '. The error was:', error)
+                            return resolve(HTTPWTHandler.serverError('An error occurred while finding users that voted on the poll option. Please try again.'))
+                        })
+                    }).catch(error => {
+                        console.error('An error occurred while finding poll votes with dbQuery:', dbQuery, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll votes.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occurred while finding poll with id:', pollId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
                 })
             }).catch(error => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
@@ -6646,8 +6856,8 @@ class TempController {
         return await this.#createpollpost(userId, pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots)
     }
 
-    static searchforpollposts = async (userId, pubId, previousPostId) => {
-        return await this.#searchforpollposts(userId, pubId, previousPostId)
+    static searchforpollposts = async (userId, pubId, lastItemId) => {
+        return await this.#searchforpollposts(userId, pubId, lastItemId)
     }
 
     static voteonpoll = async (userId, optionSelected, pollId) => {
@@ -6674,8 +6884,8 @@ class TempController {
         return await this.#postProfileImage(userId, file)
     }
 
-    static getImagesFromProfile = async (userId, pubId, previousPostId) => {
-        return await this.#getImagesFromProfile(userId, pubId, previousPostId)
+    static getImagesFromProfile = async (userId, pubId, lastItemId) => {
+        return await this.#getImagesFromProfile(userId, pubId, lastItemId)
     }
 
     static getProfilePic = async (pubId) => {
@@ -6694,8 +6904,8 @@ class TempController {
         return await this.#postcategorywithoutimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots)
     }
 
-    static searchpagesearchcategories = async (userId, val, lastCategoryId) => {
-        return await this.#searchpagesearchcategories(userId, val, lastCategoryId)
+    static searchpagesearchcategories = async (userId, val, lastItemId) => {
+        return await this.#searchpagesearchcategories(userId, val, lastItemId)
     }
 
     static getcategoryimage = async (val) => {
@@ -6730,8 +6940,8 @@ class TempController {
         return await this.#getthreadsfromcategory(userId, categoryId)
     }
 
-    static getthreadsfromprofile = async (userId, pubId, previousPostId) => {
-        return await this.#getthreadsfromprofile(userId, pubId, previousPostId)
+    static getthreadsfromprofile = async (userId, pubId, lastItemId) => {
+        return await this.#getthreadsfromprofile(userId, pubId, lastItemId)
     }
 
     static getthreadbyid = async (userId, threadId) => {
@@ -6740,10 +6950,6 @@ class TempController {
 
     static deletethread = async (userId, threadId) => {
         return await this.#deletethread(userId, threadId)
-    }
-
-    static toggleFollowOfAUser = async (userId, userToFollowPubId) => {
-        return await this.#toggleFollowOfAUser(userId, userToFollowPubId)
     }
 
     static reloadUsersDetails = async (userId, usersPubId) => {
@@ -6836,10 +7042,6 @@ class TempController {
 
     static getUserActivity = async (userId, skip, voteType, postFormat) => {
         return await this.#getUserActivity(userId, skip, voteType, postFormat)
-    }
-
-    static getCategoriesUserIsAPartOf = async (userId, skip) => {
-        return await this.#getCategoriesUserIsAPartOf(userId, skip)
     }
 
     static reportPost = async (reporterId, postId, postFormat, reason) => {
@@ -6936,6 +7138,26 @@ class TempController {
 
     static removevoteonpost = async (userId, postId, postFormat, voteType) => {
         return await this.#removevoteonpost(userId, postId, postFormat, voteType);
+    }
+
+    static followuser = async (userId, userPubId) => {
+        return await this.#followuser(userId, userPubId)
+    }
+
+    static unfollowuser = async (userId, userPubId) => {
+        return await this.#unfollowuser(userId, userPubId)
+    }
+
+    static getvotedusersofpost = async (userId, postId, postFormat, lastItemId, voteType) => {
+        return await this.#getvotedusersofpost(userId, postId, postFormat, lastItemId, voteType)
+    }
+
+    static getcategorymembers = async (userId, categoryId, lastItemId) => {
+        return await this.#getcategorymembers(userId, categoryId, lastItemId);
+    }
+
+    static getpollvoteusers = async (userId, pollId, pollOption, lastItemId) => {
+        return await this.#getpollvoteusers(userId, pollId, pollOption, lastItemId)
     }
 
     static clearnotifications = async (userId) => {

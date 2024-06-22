@@ -324,15 +324,6 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/toggleFollowOfAUser': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 6,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have toggled following of users too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/reloadUsersDetails': rateLimit({
         windowMs: 1000 * 60, //1 minute
         max: 60,
@@ -538,15 +529,6 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested user activity too many times in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/getCategoriesUserIsAPartOf': rateLimit({
-        windowMs: 1000 * 60, //1 minute
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have requested the categories you are part of too many times in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -793,7 +775,52 @@ const rateLimiters = {
         message: {status: "FAILED", message: "You have retrieved your notifications too many times in the last minute. Please try again in 60 seconds."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    })
+    }),
+    '/followuser': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 6,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have followed too many accounts in the past minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/unfollowuser': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 6,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have unfollowed too many accounts in the past minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/getvotedusersofpost': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 12,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have retrieved the users that have voted on a certain post too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/getcategorymembers': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 5,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have retrieved the members of a category too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
+    '/getpollvoteusers': rateLimit({
+        windowMs: 1000 * 60, //1 minute
+        max: 5,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "You have retrieved the users that have voted on this poll too many times in the last minute. Please try again in 60 seconds."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -943,6 +970,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
 });
 
 router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
+    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changebio',
@@ -1053,7 +1081,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollposts',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
@@ -1256,7 +1284,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getImagesFromProfile',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
@@ -1403,7 +1431,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpagesearchcategories',
-            functionArgs: [req.tokenData, req.body.val, req.body.lastCategoryId]
+            functionArgs: [req.tokenData, req.body.val, req.body.lastItemId]
         }
     })
 
@@ -1490,7 +1518,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategoryfromprofile',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousCategoryMemberId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
@@ -1668,7 +1696,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getthreadsfromprofile',
-            functionArgs: [req.tokenData, req.body.pubId, req.body.previousPostId]
+            functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
         }
     })
 
@@ -1746,35 +1774,6 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/deletethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/toggleFollowOfAUser', rateLimiters['/toggleFollowOfAUser'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'toggleFollowOfAUser',
-            functionArgs: [req.tokenData, req.body.userToFollowPubId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/toggleFollowOfAUser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /toggleFollowOfAUser:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/toggleFollowOfAUser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -2444,35 +2443,6 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/getUserActivity controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/getCategoriesUserIsAPartOf', rateLimiters['/getCategoriesUserIsAPartOf'], (req, res) => {
-    let HTTPHeadersSent = false;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'getCategoriesUserIsAPartOf',
-            functionArgs: [req.tokenData, req.body.previousCategoryMemberId]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/getCategoriesUserIsAPartOf controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
-            console.error('An error occurred from TempWorker for POST /getCategoriesUserIsAPartOf:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/getCategoriesUserIsAPartOf controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -3259,6 +3229,151 @@ router.post('/getnotifications', rateLimiters['/getnotifications'], (req, res) =
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('GET temp/getnotifications controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/followuser', rateLimiters['/followuser'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'followuser',
+            functionArgs: [req.tokenData, req.body.userPubId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/followuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /followuser:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/followuser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'unfollowuser',
+            functionArgs: [req.tokenData, req.body.userPubId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/unfollowuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /unfollowuser:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/unfollowuser controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getvotedusersofpost',
+            functionArgs: [req.tokenData, req.body.postId, req.body.postFormat, req.body.lastItemId, req.body.voteType]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/getvotedusersofpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /getvotedusersofpost:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getvotedusersofpost controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/getcategorymembers', rateLimiters['/getcategorymembers'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getcategorymembers',
+            functionArgs: [req.tokenData, req.body.categoryId, req.body.lastItemId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/getcategorymembers controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /getcategorymembers:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getcategorymembers controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/getpollvoteusers', rateLimiters['/getpollvoteusers'], (req, res) => {
+    let HTTPHeadersSent = false;
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'getpollvoteusers',
+            functionArgs: [req.tokenData, req.body.pollId, req.body.pollOption, req.body.lastItemId]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/getpollvoteusers controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!HTTPHeadersSent) {
+            HTTPHeadersSent = true;
+            console.error('An error occurred from TempWorker for POST /getpollvoteusers:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/getpollvoteusers controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });

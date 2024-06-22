@@ -63,7 +63,7 @@ class Image {
 
     deleteMulterTempImage(filename, returnPromise = false) {
         const sanitizedFilename = sanitizeFilename(filename)
-        const filepath = process.env.TEMP_IMAGES_PATH + sanitizedFilename
+        const filepath = process.env.TEMP_IMAGES_PATH + '/' + sanitizedFilename
 
         if (returnPromise === true) {
             return new Promise((resolve, reject) => {
@@ -75,7 +75,7 @@ class Image {
         }
 
         fs.unlink(filepath, (err) => {
-            console.error('An error occurred while deleting MulterTempImage with filepath:', filepath, '. The error was:', error)
+            if (err) console.error('An error occurred while deleting MulterTempImage with filepath:', filepath, '. The error was:', err)
         })
     }
 }

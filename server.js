@@ -27,7 +27,7 @@ const swaggerDocument = require('./swagger.json'); //For API docs
 const ImageLibrary = require('./libraries/Image');
 const imageHandler = new ImageLibrary();
 
-//require('dotenv').config();
+require('dotenv').config();
 const fs = require('fs')
 const S3 = require('aws-sdk/clients/s3')
 
@@ -360,7 +360,15 @@ if (process.env.NO_HTTPS) {
           fs.readFileSync('./ssl/intermediate.crt'),
           fs.readFileSync('./ssl/root.crt')
         ]
-      };
+    };
+
+    if (process.env.SSL_PASSPHRASE_FILEPATH) {
+        options.passphrase = fs.readFileSync('./ssl/passphrase.txt').toString()
+    } else if (process.env.SSL_PASSPHRASE) {
+        options.passphrase = process.env.SSL_PASSPHRASE
+    } else {
+        console.warn('SSL passphrase was not provided.')
+    }
       
     server = https.createServer(options, app).listen(port, () => {
         console.log(`Server running on port ${port}`);
@@ -2247,4 +2255,11 @@ app.get('/checkIfRealSocialSquareServer', (req, res) => {
         status: "SUCCESS",
         message: "Yes. This is a real SocialSquare server."
     })
+})
+
+app.all('*', (req, res) => {
+  res.status(400).json({
+    status: "FAILED",
+    message: "Unknown route or method"
+  })
 })

@@ -289,32 +289,33 @@ class AdminClass {
                 if (data) {
                     //Admin Exists
                     const hashedPassword = data.password
-                    bcrypt.compare(password, hashedPassword).then(async (result) => {
-                        if (result) {
-                            // Password match
-                            
-                            const token = this.#generateAuthJWT(data._id);
-                            const refreshToken = this.#generateRefreshToken(data._id);
-                            const encryptedRefreshToken = refreshTokenEncryption(refreshToken)
-                            Admin.findOneAndUpdate({_id: {$eq: data._id}}, {$push: {refreshTokens: encryptedRefreshToken}}).then(() => {
-                                const filteredAdminData = this.#filterAdminInformationToSend(data)
-                                const toSend = {
-                                    data: filteredAdminData,
-                                    token: `Bearer ${token}`,
-                                    refreshToken: `Bearer ${refreshToken}`
-                                }
-                                resolve(toSend)
-                            }).catch(error => {
-                                console.error('An error occured while pushing refresh token to Admin with id:', data._id)
-                                console.error('The error was:', error)
-                                reject("An error occured while pushing refresh token to Admin document")
-                            })
-                        } else {
-                            reject("Invalid password entered!")
+
+                    let passwordIsCorrect;
+
+                    try {
+                        passwordIsCorrect =  bcrypt.compareSync(password, hashedPassword);
+                    } catch (error) {
+                        console.error('An error occurred while comparing passwords for admin with email:', email, '. The error was:', error)
+                        reject("An error occurred while comparing passwords")
+                    }
+
+                    if (!passwordIsCorrect) return reject("Invalid password entered!")
+                   
+                    const token = this.#generateAuthJWT(data._id);
+                    const refreshToken = this.#generateRefreshToken(data._id);
+                    const encryptedRefreshToken = refreshTokenEncryption(refreshToken)
+                    Admin.findOneAndUpdate({_id: {$eq: data._id}}, {$push: {refreshTokens: encryptedRefreshToken}}).then(() => {
+                        const filteredAdminData = this.#filterAdminInformationToSend(data)
+                        const toSend = {
+                            data: filteredAdminData,
+                            token: `Bearer ${token}`,
+                            refreshToken: `Bearer ${refreshToken}`
                         }
-                    }).catch(err => {
-                        console.error('An error occured while comparing passwords:', err)
-                        reject("An error occured while comparing passwords!")
+                        resolve(toSend)
+                    }).catch(error => {
+                        console.error('An error occured while pushing refresh token to Admin with id:', data._id)
+                        console.error('The error was:', error)
+                        reject("An error occured while pushing refresh token to Admin document")
                     })
                 } else {
                     reject("Invalid credentials entered!")

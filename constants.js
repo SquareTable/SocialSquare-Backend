@@ -5,6 +5,7 @@ const CONSTANTS = {
     MAX_USER_USERNAME_LENGTH: 20,
     VALID_EMAIL_TEST: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
     VALID_USERNAME_TEST: /^[a-z0-9]*$/,
+    VALID_USERNAME_TEST_READABLE_REQUIREMENTS: 'Your username must only contain lowercase a - z characters and numbers', //Update this when username test is updated
     MAX_USER_DISPLAY_NAME_LENGTH: 20,
     VALID_DISPLAY_NAME_TEST: /^[A-Za-z]+$/,
     MAX_USER_BIO_LENGTH: 250,
@@ -51,18 +52,23 @@ const CONSTANTS = {
     NUM_POLLS_TO_SEND_PER_API_CALL: 10, //Used for temp/searchforpollposts API - Determines how many polls to send per API call
     NUM_IMAGE_POSTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getImagesFromProfile API - Determines how many image posts to send per API call
     NUM_THREAD_POSTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getthreadsfromprofile API - Determines how many thread posts to send per API call
-    NUM_CATEGORIES_TO_SEND_PER_API_CALL: 10, //Used for temp/findcategoryfromprofile, temp/getCategoriesUserIsAPartOf, and temp/searchpagesearchcategories APIs - Determines how many categories to send per API call
+    NUM_CATEGORIES_TO_SEND_PER_API_CALL: 10, //Used for temp/findcategoryfromprofile, and temp/searchpagesearchcategories APIs - Determines how many categories to send per API call
     NUM_USERS_TO_SEND_PER_PROFILE_STATS_API_CALL: 10, //Used for temp/getProfileStats API - Determines how many users they are following or users that follow them to send per API call
     NUM_BLOCKED_ACCOUNTS_TO_SEND_PER_API_CALL: 10, //Used for temp/getuserblockedaccounts API - Determines how many blocked accounts to send per API call
     COMMENT_API_ALLOWED_POST_FORMATS: ["Image", "Poll", "Thread"], //Used by various comment related APIs to see post formats that are allowed and supported to have comments on them
     VOTE_API_ALLOWED_POST_FORMATS: ["Image", "Poll", "Thread"], //Used temp/voteonpost and temp/removevoteonpost to know what post formats are supported
     VOTE_API_ALLOWED_VOTE_TYPES: ["Up", "Down"], //Used by temp/voteonpost and temp/removevoteonpost to know what vote types are supported
-    RANDOM_EIGHT_CHARACTER_STRING_URL: 'https://www.random.org/integers/?num=1&min=268435456&max=1000000000&col=1&base=16&format=plain&rnd=new',
     CATEGORY_PERMISSIONS: [
         'deletePosts'
     ],
     MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL: 10,
-    MAX_NOTIFICATIONS_PER_API_CALL: 10 //Used in temp/getnotifications
+    MAX_NOTIFICATIONS_PER_API_CALL: 10, //Used in temp/getnotifications
+    VOTED_USERS_API_ALLOWED_POST_FORMATS: ['Image', 'Poll', 'Thread'],
+    VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL: 10,
+    VOTED_USERS_API_ALLOWED_VOTE_TYPES: ["Up", "Down"],
+    MAX_CATEGORY_MEMBERS_PER_API_CALL: 10,
+    POLL_OPTIONS: ["One", "Two", "Three", "Four", "Five", "Six"],
+    MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL: 10
 }
 
 module.exports = CONSTANTS

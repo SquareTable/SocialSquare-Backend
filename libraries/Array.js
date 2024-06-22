@@ -69,7 +69,7 @@ class ArrayClass {
         const missingDocuments = [];
 
         for (const id of ids) {
-            const doc = documents[id];
+            const doc = documents[String(id)];
 
             if (doc) {
                 foundDocuments.push(doc)

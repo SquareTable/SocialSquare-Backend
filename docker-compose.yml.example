@@ -8,5 +8,15 @@ services:
                   - TEMP_IMAGES_PATH=/Local-Images
                   - UPLOADED_PATH=/server/Local-Images
                   - NO_HTTPS=false
+                  - MONGODB_URI=MONGODB-URI-HERE
+                  - SECRET_FOR_TOKENS=YOUR SECRET HERE
+                  - SECRET_FOR_REFRESH_TOKENS=YOUR SECRET HERE
+                  - REFRESH_TOKEN_ENCRYPTION_KEY=YOUR SECRET HERE
+                  - SMTP_SERVER=YOUR SMTP SERVER ADDRESS HERE
+                  - SMTP_PORT=YOUR SMTP SERVER PORT HERE
+                  - SMTP_USER=YOUR SMTP USER HERE
+                  - SMTP_PASSWORD=YOUR SMTP USER PASSWORD HERE
+                  - SMTP_EMAIL=YOUR SMTP EMAIL
+                  - SS_MODERATION_EMAIL=MODERATION EMAIL HERE
             volumes:
                   - DIRECTORY-TO-SAVE-IMAGES-TO:/server/Local-Images

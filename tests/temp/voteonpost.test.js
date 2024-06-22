@@ -40,6 +40,7 @@ afterEach(async () => {
 /*
 API Tests:
 Test if votes work for non-private non-blocked accounts when voter is not the post creator
+Test if votes work when the post creator does not have a blockedAccounts array in their User document -- TODO
 Test if voting fails if the voter is the post creator
 Test if votes work for private accounts where the voter is following the private account
 Test if voting fails if userId is not a string

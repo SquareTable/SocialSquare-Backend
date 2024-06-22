@@ -13,6 +13,7 @@ const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const {expect, beforeEach, afterEach} = require('@jest/globals');
 const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 const RefreshToken = require('../../models/RefreshToken');
+const CONSTANTS = require('../../constants');
 
 const INVALID_NAMES = ["abc12!", "abc._.abc", "abc!@#$%^&*()", "(", ")", "$%^&*wegyf"]
 
@@ -136,7 +137,7 @@ for (const invalidName of INVALID_NAMES) {
         const returned = await UserController.signup(invalidName, validEmail, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe("Invalid name entered")
+        expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
     })
 }
 
