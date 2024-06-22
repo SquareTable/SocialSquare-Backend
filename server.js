@@ -2256,3 +2256,10 @@ app.get('/checkIfRealSocialSquareServer', (req, res) => {
         message: "Yes. This is a real SocialSquare server."
     })
 })
+
+app.all('*', (req, res) => {
+  res.status(400).json({
+    status: "FAILED",
+    message: "Unknown route or method"
+  })
+})
