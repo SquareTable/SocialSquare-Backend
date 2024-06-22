@@ -1,8 +1,10 @@
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const mongoose = require('mongoose')
+const models = require('../models/index')
 
 class MockMongoDBServer {
     #replicaSetServer = null;
+    #snapshot = null;
 
     async startTest() {
         await this.#startServer();
@@ -11,7 +13,16 @@ class MockMongoDBServer {
 
     async stopTest() {
         await mongoose.disconnect();
+        this.#snapshot = null;
         if (this.#replicaSetServer) await this.#stopServer();
+    }
+
+    async takeDBSnapshot() {
+      this.#snapshot = await this.#createSnapshot()
+    }
+
+    async noChangesMade() {
+      return JSON.stringify(this.#snapshot) === JSON.stringify(await this.#createSnapshot())
     }
 
     #startServer() {
@@ -39,6 +50,10 @@ class MockMongoDBServer {
                 reject(error)
             }
         })
+    }
+
+    async #createSnapshot() {
+      return await Promise.all(Object.values(models).map(model => model.find({}).lean()))
     }
 }
 

@@ -72,115 +72,148 @@ Test that user creation does not modify other users in the database
 
 for (const invalidName of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If signup fails if name is not a string. Testing: ${JSON.stringify(invalidName)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot();
 
         const returned = await UserController.signup(invalidName, validEmail, validPassword, validIP, validDeviceName);
         
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`name must be a string. Provided type: ${typeof invalidName}`);
+        expect(DB.noChangesMade).resolves.toBe(true)
     })
 }
 
 for (const invalidEmail of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If signup fails if email is not a string. Testing: ${JSON.stringify(invalidEmail)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await UserController.signup(validName, invalidEmail, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`email must be a string. Provided type: ${typeof invalidEmail}`);
+        expect(DB.noChangesMade).resolves.toBe(true)
     })
 }
 
 for (const invalidPassword of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If signup fails if password is not a string. Testing: ${JSON.stringify(invalidPassword)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await UserController.signup(validName, validEmail, invalidPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`password must be a string. Provided type: ${typeof invalidPassword}`);
+        expect(DB.noChangesMade).resolves.toBe(true)
     })
 }
 
 test('If signup fails if name is an empty string', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signup('', validEmail, validPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Name input field cannot be empty!");
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 test('If signup fails if email is an empty string', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signup(validName, '', validPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Email input field cannot be empty!");
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 test('If signup fails if password is an empty string', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signup(validName, validEmail, '', validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Password input field cannot be empty!")
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 for (const invalidName of INVALID_NAMES) {
     test(`If signup fails when username is an invalid username. Testing: ${JSON.stringify(invalidName)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await UserController.signup(invalidName, validEmail, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
+        expect(DB.noChangesMade).resolves.toBe(true)
     })
 }
 
 for (const invalidEmail of TEST_CONSTANTS.INVALID_EMAILS) {
     test(`If signup fails when email is an invalid email. Testing: ${invalidEmail}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await UserController.signup(validName, invalidEmail, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe("Invalid email entered")
+        expect(DB.noChangesMade).resolves.toBe(true)
     })
 }
 
 test('If signup fails if password is less than 8 characters long', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signup(validName, validEmail, '6chars', validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Password is too short! Password must be 8 characters or longer")
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 test('if signup fails if name is longer than 20 characters', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signup('thisis21characters111', validEmail, validPassword, validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Username is too long! Please keep your username at 20 characters or less.")
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 test('if signup fails if password is longer than 17 characters (due to bcrypt limitations)', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await UserController.signup(validName, validEmail, 'this is 18 chars..', validIP, validDeviceName);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("Password is too long! Due to current limitations, please keep your password at 17 or less characters.")
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 test('if signup fails if a user with the same email already exists', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     const existingUserData = {
         _id: new mongoose.Types.ObjectId(),
@@ -189,6 +222,8 @@ test('if signup fails if a user with the same email already exists', async () =>
 
     await new User(existingUserData).save();
 
+    await DB.takeDBSnapshot();
+
     const returned = await UserController.signup(validName, existingUserData.email, validPassword, validIP, validDeviceName);
 
     const users = await User.find({}).lean();
@@ -196,10 +231,11 @@ test('if signup fails if a user with the same email already exists', async () =>
     expect(users).toHaveLength(1);
     expect(returned.statusCode).toBe(409);
     expect(returned.data.message).toBe("User with the provided email already exists.")
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 test('if signup fails if a user with the same name already exists', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     const existingUserData = {
         _id: new mongoose.Types.ObjectId(),
@@ -208,6 +244,8 @@ test('if signup fails if a user with the same name already exists', async () => 
 
     await new User(existingUserData).save();
 
+    await DB.takeDBSnapshot();
+
     const returned = await UserController.signup(existingUserData.name, validEmail, validPassword, validIP, validDeviceName);
 
     const users = await User.find({}).lean();
@@ -215,6 +253,7 @@ test('if signup fails if a user with the same name already exists', async () => 
     expect(users).toHaveLength(1);
     expect(returned.statusCode).toBe(409);
     expect(returned.data.message).toBe("User with the provided username already exists")
+    expect(DB.noChangesMade).resolves.toBe(true)
 })
 
 for (const validUserEmail of VALID_EMAILS) {
