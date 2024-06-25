@@ -10,7 +10,7 @@ const User = require('../../models/User');
 const UserController = require('../../controllers/User');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
-const {expect, beforeEach, afterEach} = require('@jest/globals');
+const {expect, beforeAll, afterEach, afterAll} = require('@jest/globals');
 const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 const RefreshToken = require('../../models/RefreshToken');
 const CONSTANTS = require('../../constants');
@@ -29,12 +29,16 @@ jest.setTimeout(20_000); //20 seconds per test
 
 const DB = new MockMongoDBServer();
 
-beforeEach(async () => {
-    await DB.startTest();
+beforeAll(async () => {
+  await DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.stopTest();
+    await DB.purgeData();
+})
+
+afterAll(async () => {
+  await DB.stopTest();
 })
 
 
