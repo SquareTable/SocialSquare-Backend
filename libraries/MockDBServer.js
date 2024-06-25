@@ -25,6 +25,10 @@ class MockMongoDBServer {
       return JSON.stringify(this.#snapshot) === JSON.stringify(await this.#createSnapshot())
     }
 
+    purgeData() {
+      return Promise.all(Object.values(models).map(model => model.deleteMany({})))
+    }
+
     #startServer() {
         return new Promise(async (resolve, reject) => {
             try {
