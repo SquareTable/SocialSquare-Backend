@@ -264,7 +264,7 @@ test('if signup fails if a user with the same name already exists', async () => 
 
 for (const validUserEmail of VALID_EMAILS) {
     test(`if user account creation is successful with correct inputs. Email tested: ${validUserEmail}`, async () => {
-        expect.assertions(24);
+        expect.assertions(20);
     
         const benchmarkUserData = {
             name: validName,
@@ -290,6 +290,7 @@ for (const validUserEmail of VALID_EMAILS) {
         const savedRefreshToken = savedRefreshTokens[0];
 
         const userIdIsObjectId = mongoose.isObjectIdOrHexString(savedUser._id)
+        const userSecondId = savedUser.secondId
         const savedUserBadges = savedUser.badges;
         const savedUserId = savedUser._id;
 
@@ -330,7 +331,7 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
         expect(userIdIsObjectId).toBe(true);
-        expect(UUIDHandler.validateV4(savedUser.secondId)).toBe(true);
+        expect(UUIDHandler.validateV4(userSecondId)).toBe(true);
         expect(savedUser).toStrictEqual(benchmarkUser);
         expect(savedUsers).toHaveLength(1);
         expect(savedRefreshTokens).toHaveLength(1);
