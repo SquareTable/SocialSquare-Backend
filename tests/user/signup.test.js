@@ -1,5 +1,6 @@
 require('dotenv').config({path: '../.env'})
 const MockMongoDBServer = require('../../libraries/MockDBServer');
+const UUIDLibrary = require('../../libraries/UUID')
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const {v4: uuidv4} = require('uuid');
@@ -28,6 +29,7 @@ const validDeviceName = "GitHub-Actions"
 jest.setTimeout(20_000); //20 seconds per test
 
 const DB = new MockMongoDBServer();
+const UUIDHandler = new UUIDLibrary();
 
 beforeAll(async () => {
   await DB.startTest();
@@ -288,7 +290,6 @@ for (const validUserEmail of VALID_EMAILS) {
         const savedRefreshToken = savedRefreshTokens[0];
 
         const userIdIsObjectId = mongoose.isObjectIdOrHexString(savedUser._id)
-        const splitSecondId = savedUser.secondId.split('-');
         const savedUserBadges = savedUser.badges;
         const savedUserId = savedUser._id;
 
@@ -329,14 +330,7 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
         expect(userIdIsObjectId).toBe(true);
-
-        //Make sure secondId (uuidv4) follows UUID format 8-4-4-4-12
-        expect(splitSecondId[0]).toHaveLength(8);
-        expect(splitSecondId[1]).toHaveLength(4);
-        expect(splitSecondId[2]).toHaveLength(4);
-        expect(splitSecondId[3]).toHaveLength(4);
-        expect(splitSecondId[4]).toHaveLength(12);
-
+        expect(UUIDHandler.validateV4(savedUser.secondId)).toBe(true);
         expect(savedUser).toStrictEqual(benchmarkUser);
         expect(savedUsers).toHaveLength(1);
         expect(savedRefreshTokens).toHaveLength(1);
