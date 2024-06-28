@@ -30,7 +30,7 @@ beforeAll(async () => {
 })
 
 afterEach(async () => {
-    await DB.purgeData();
+  await DB.purgeData();
 })
 
 afterAll(async () => {
