@@ -1236,9 +1236,10 @@ class TempController {
                         if (result.profileImageKey != "") {
                             //Remove previous profile image if the user already has one
                             try {
-                                await imageHandler.deleteImagePromiseByKey(result.profileImageKey);
+                                await imageHandler.deleteImagePromiseByKey(result.profileImageKey, true);
                             } catch (error) {
-                                imageHandler.deleteImageByKey(imageKey)
+                                console.error('An error occurred while deleting previous profile picture with key:', result.profileImageKey, '. The error was:', error)
+                                imageHandler.deleteImageByKey(imageKey, true)
                                 return resolve(HTTPWTHandler.serverError('An error occurred while deleting your previous profile picrture. Please try again.'))
                             }
                         }
@@ -1249,7 +1250,7 @@ class TempController {
                         })
                         .catch(err => {
                             console.error('An error occurred while updating user with id:', userId, ' profileImageKey to:', imageKey, '. The error was:', err)
-                            imageHandler.deleteImageByKey(imageKey)
+                            imageHandler.deleteImageByKey(imageKey, true)
                             return resolve(HTTPWTHandler.serverError('An error occurred while updating profile picture. Please try again.'))
                         });
                     }).catch(error => {

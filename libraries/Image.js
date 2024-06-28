@@ -41,8 +41,8 @@ class Image {
         If you need to know if the image was actually deleted or not, use deleteImagePromise
     */
 
-    deleteImageByKey(key) {
-        const filepath = process.env.TEMP_IMAGES_PATH + '/' + sanitizeFilename(key)
+    deleteImageByKey(key, notTemp) {
+        const filepath = (notTemp ? process.env.UPLOADED_PATH : process.env.TEMP_IMAGES_PATH) + '/' + sanitizeFilename(key)
         fs.unlink(filepath, (err) => {
             if (err) {
                 console.error('An error occured while deleting image with key:', key, ' and filepath:', filepath, '. The error was:', err)
@@ -50,8 +50,8 @@ class Image {
         })
     }
 
-    deleteImagePromiseByKey(key) {
-        const filepath = process.env.TEMP_IMAGES_PATH + '/' + sanitizeFilename(key)
+    deleteImagePromiseByKey(key, notTemp) {
+        const filepath = (notTemp ? process.env.UPLOADED_PATH : process.env.TEMP_IMAGES_PATH) + '/' + sanitizeFilename(key)
         return new Promise((resolve, reject) => {
             fs.unlink(filepath, (err) => {
                 if (err) reject(err)
