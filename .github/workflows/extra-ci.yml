@@ -20,11 +20,8 @@ jobs:
       - name: Install packages
         run: npm ci
 
-      - name: Install Jest
-        run: npm install --location=global jest
-
       - name: Calculate coverage
-        run: jest --coverage=true --runInBand
+        run: npx jest --coverage=true --runInBand
 
   extra-node-tests:
     runs-on: ${{ matrix.os }}
@@ -47,8 +44,5 @@ jobs:
       - name: Install packages
         run: npm ci
 
-      - name: Install Jest
-        run: npm install --location=global jest
-
       - name: Run tests
-        run: jest --runInBand
+        run: npx jest --runInBand
