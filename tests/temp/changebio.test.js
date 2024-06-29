@@ -8,11 +8,11 @@ const {beforeAll, afterEach, afterAll, test, expect} = require('@jest/globals');
 const DB = new MockMongoDBServer();
 
 beforeAll(async () => {
-  DB.startTest();
+  await DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.purgeData()
+  await DB.purgeData()
 })
 
 afterAll(async () => {
