@@ -16,6 +16,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
     await DB.purgeData()
+    console.log(await User.find({}))
 })
 
 afterAll(async () => {
