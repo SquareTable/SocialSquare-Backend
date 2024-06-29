@@ -4,18 +4,22 @@ const TempController = require('../../controllers/Temp')
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS')
 
-const {expect, beforeEach, afterEach, test} = require('@jest/globals');
+const {expect, afterEach, beforeAll, afterAll} = require('@jest/globals');
 
 jest.setTimeout(20_000)
 
 const DB = new MockMongoDBServer();
 
-beforeEach(async () => {
+beforeAll(async () => {
     await DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.stopTest();
+    await DB.purgeData()
+})
+
+afterAll(async () => {
+    await DB.stopTest()
 })
 
 const userGettingFollowedData = {
