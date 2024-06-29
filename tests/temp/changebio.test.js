@@ -146,7 +146,7 @@ test('If change does not interfere with other User documents', async () => {
         }
     })
 
-    await new User.insertMany(newUsers)
+    await User.insertMany(newUsers)
 
     await DB.takeDBSnapshot()
 
