@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const TempController = require('../../controllers/Temp');
 const User = require('../../models/User');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
-const {expect, describe, afterEach, beforeAll, afterAll} = require('@jest/globals');
+const {expect, afterEach, beforeAll, afterAll} = require('@jest/globals');
 const {v4: uuidv4} = require('uuid');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 
