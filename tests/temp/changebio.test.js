@@ -7,12 +7,16 @@ const {beforeEach, afterEach, test, expect} = require('@jest/globals');
 
 const DB = new MockMongoDBServer();
 
-beforeEach(async () => {
-    await DB.startTest();
+beforeAll(async () => {
+  DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.stopTest();
+    await DB.purgeData()
+})
+
+afterAll(async () => {
+  await DB.stopTest()
 })
 
 const validUser = {
