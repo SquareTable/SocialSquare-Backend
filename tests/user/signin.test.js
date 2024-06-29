@@ -291,7 +291,7 @@ describe('When Email 2FA is not enabled', () => {
     }
 
     test('if login works', async () => {
-        expect.assertions(3);
+        expect.assertions(12);
 
         await new User(userData).save();
 
