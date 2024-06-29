@@ -16,7 +16,6 @@ beforeAll(async () => {
 
 afterEach(async () => {
     await DB.purgeData()
-    console.log(await User.find({}))
 })
 
 afterAll(async () => {
@@ -175,6 +174,8 @@ test('If change is successful with correct inputs', async () => {
 
 test('that successful change of username does not interfere with other User documents', async () => {
     expect.assertions(3);
+
+    console.error('Users found:', await User.find({}))
 
     const users = [...new Array(10)].map((item, index) => {
         return {
