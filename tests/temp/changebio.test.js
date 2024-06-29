@@ -142,7 +142,8 @@ test('If change does not interfere with other User documents', async () => {
 
     const newUsers = [...new Array(10)].map((item, index) => {
         return {
-            bio: `Bio: ${index}`
+            bio: `Bio: ${index}`,
+            name: `name${index}`
         }
     })
 
