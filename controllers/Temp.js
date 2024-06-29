@@ -252,7 +252,7 @@ class TempController {
             }
 
             if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
 
             if (typeof currentPassword !== 'string') {
