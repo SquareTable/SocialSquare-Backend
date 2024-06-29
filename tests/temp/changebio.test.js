@@ -3,7 +3,7 @@ const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const TempController = require('../../controllers/Temp')
 
-const {beforeEach, afterEach, test, expect} = require('@jest/globals');
+const {beforeAll, afterEach, afterAll, test, expect} = require('@jest/globals');
 
 const DB = new MockMongoDBServer();
 
