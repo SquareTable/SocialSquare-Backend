@@ -229,7 +229,7 @@ test('that non-related User documents do not get modified when following a publi
 
     await User.insertMany([...new Array(10)].map((item, index) => {
         return {
-            name: `${index}`
+            name: `name${index}`
         }
     }))
 
@@ -249,8 +249,6 @@ test('that non-related User documents do not get modified when following a publi
 test('that non-related User documents do not get modified when following a private account', async () => {
     expect.assertions(5);
 
-    throw new Error(`Users found: ${JSON.stringify(await User.find({}))}`)
-
     const userGettingFollowed = {...userGettingFollowedData, privateAccount: true}
     
     await new User(userFollowingData).save();
@@ -258,7 +256,7 @@ test('that non-related User documents do not get modified when following a priva
 
     await User.insertMany([...new Array(10)].map((item, index) => {
         return {
-            name: `${index}`
+            name: `name${index}`
         }
     }))
 
