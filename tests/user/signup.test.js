@@ -264,7 +264,7 @@ test('if signup fails if a user with the same name already exists', async () => 
 
 for (const validUserEmail of VALID_EMAILS) {
     test(`if user account creation is successful with correct inputs. Email tested: ${validUserEmail}`, async () => {
-        expect.assertions(20);
+        expect.assertions(21);
     
         const benchmarkUserData = {
             name: validName,
@@ -280,6 +280,8 @@ for (const validUserEmail of VALID_EMAILS) {
     
         const benchmarkUser = await User.findOne({}).lean();
         await User.deleteMany({});
+
+        await DB.takeDBSnapshot();
     
         const returned = await UserController.signup(validName, validUserEmail, benchmarkUserData.password, validIP, validDeviceName);
     
@@ -343,11 +345,12 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(typeof returned.data.data.followers).toBe("number");
         expect(typeof returned.data.data.following).toBe("number");
         expect(typeof returned.data.data._id).toBe("string");
+        expect(await DB.changedCollections()).toStrictEqual(['User', 'RefreshToken'])
     })
 }
 
 test('user creation does not modify other users in the database', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     const users = [...new Array(10)].map((item, index) => {
         return {
@@ -362,10 +365,13 @@ test('user creation does not modify other users in the database', async () => {
 
     const dbUsers = await User.find({}).lean();
 
+    await DB.takeDBSnapshot()
+
     const returned = await UserController.signup(validName, validEmail, validPassword, validIP, validDeviceName);
 
     const savedUsers = await User.find({email: {$ne: validEmail}}).lean();
 
     expect(returned.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(savedUsers);
+    expect(await DB.changedCollections()).toStrictEqual(['User', 'RefreshToken'])
 })

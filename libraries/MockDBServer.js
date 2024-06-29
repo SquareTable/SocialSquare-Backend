@@ -25,6 +25,19 @@ class MockMongoDBServer {
       return JSON.stringify(this.#snapshot) === JSON.stringify(await this.#createSnapshot())
     }
 
+    async changedCollections() {
+      const currentSnapshot = this.#createSnapshot();
+      const changedCollections = [];
+
+      for (const modelName of Object.keys(models)) {
+        if (JSON.stringify(this.#snapshot[modelName]) !== JSON.stringify(currentSnapshot[modelName])) {
+          changedCollections.push(modelName)
+        }
+      }
+
+      return changedCollections;
+    }
+
     purgeData() {
       return Promise.all(Object.values(models).map(model => model.deleteMany({})))
     }
