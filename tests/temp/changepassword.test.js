@@ -509,6 +509,7 @@ test('if other User documents do not get affected from password change', async (
     const users = [...new Array(10)].map((item, index) => {
         return {
             _id: new mongoose.Types.ObjectId(),
+            name: `name${index}`,
             password: 'password' + index
         }
     })
