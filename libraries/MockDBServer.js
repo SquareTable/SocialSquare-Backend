@@ -26,7 +26,7 @@ class MockMongoDBServer {
     }
 
     async changedCollections() {
-      const currentSnapshot = this.#createSnapshot();
+      const currentSnapshot = await this.#createSnapshot();
       const changedCollections = [];
 
       for (const [index, modelName] of Object.keys(models).entries()) {
