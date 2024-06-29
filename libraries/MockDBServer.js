@@ -29,8 +29,8 @@ class MockMongoDBServer {
       const currentSnapshot = this.#createSnapshot();
       const changedCollections = [];
 
-      for (const modelName of Object.keys(models)) {
-        if (JSON.stringify(this.#snapshot[modelName]) !== JSON.stringify(currentSnapshot[modelName])) {
+      for (const [index, modelName] of Object.keys(models).entries()) {
+        if (JSON.stringify(this.#snapshot[index]) !== JSON.stringify(currentSnapshot[index])) {
           changedCollections.push(modelName)
         }
       }
