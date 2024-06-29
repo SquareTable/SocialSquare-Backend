@@ -345,7 +345,7 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(typeof returned.data.data.followers).toBe("number");
         expect(typeof returned.data.data.following).toBe("number");
         expect(typeof returned.data.data._id).toBe("string");
-        expect(await DB.changedCollections()).toStrictEqual(['User', 'RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['User', 'RefreshToken'])
     })
 }
 
@@ -373,5 +373,5 @@ test('user creation does not modify other users in the database', async () => {
 
     expect(returned.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(savedUsers);
-    expect(await DB.changedCollections()).toStrictEqual(['User', 'RefreshToken'])
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User', 'RefreshToken'])
 })

@@ -181,7 +181,7 @@ describe('When Email 2FA is enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(returned.data.data.email).toBe("jo**.s**li**n@g**il.com")
-        expect(await DB.changedCollections()).toStrictEqual(['EmailVerificationCode'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
     test('if fromAddress is the value of process.env.SMTP_EMAIL', async () => {
@@ -195,7 +195,7 @@ describe('When Email 2FA is enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(returned.data.data.fromAddress).toBe(process.env.SMTP_EMAIL)
-        expect(await DB.changedCollections()).toStrictEqual(['EmailVerificationCode'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
     test("if returned secondId is the same as the user's secondId", async () => {
@@ -209,7 +209,7 @@ describe('When Email 2FA is enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(returned.data.data.secondId).toBe(userData.secondId)
-        expect(await DB.changedCollections()).toStrictEqual(['EmailVerificationCode'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
     test('that email verification code gets created', async () => {
@@ -230,7 +230,7 @@ describe('When Email 2FA is enabled', () => {
         expect(String(verificationCode.userId)).toBe(String(userData._id))
         expect(typeof verificationCode.hashedVerificationCode).toBe('string');
         expect(new Date(verificationCode.createdAt).getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway
-        expect(await DB.changedCollections()).toStrictEqual(['EmailVerificationCode'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
     test('that login does not interfere with other email verification codes in the database', async () => {
@@ -257,7 +257,7 @@ describe('When Email 2FA is enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(codesInDatabase).toStrictEqual(codesToInsert);
-        expect(await DB.changedCollections()).toStrictEqual(['EmailVerificationCode'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
     test('that there can only be one EmailVerificationCode document per user and the document gets updated for each new code', async () => {
@@ -277,7 +277,7 @@ describe('When Email 2FA is enabled', () => {
         expect(codesOne).toHaveLength(1);
         expect(codesTwo).toHaveLength(1);
         expect(codesOne[0].createdAt !== codesTwo[0].createdAt).toBe(true);
-        expect(await DB.changedCollections()).toStrictEqual(['EmailVerificationCode'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 })
 
@@ -301,7 +301,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if refresh token gets created and is usable', async () => {
@@ -315,7 +315,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if encrypted refresh token gets created and can be decrypted back to refresh token', async () => {
@@ -334,7 +334,7 @@ describe('When Email 2FA is not enabled', () => {
         expect(returned.statusCode).toBe(200);
         expect(refreshTokens).toHaveLength(1);
         expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if RefreshToken document gets created and admin is set to false', async () => {
@@ -351,7 +351,7 @@ describe('When Email 2FA is not enabled', () => {
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.admin).toBe(false);
         expect(refreshToken.createdAt.getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway for test
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if IP is not added to the RefreshToken document when the user does not allow it', async () => {
@@ -377,7 +377,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.IP).toBe(undefined);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if IP is added to the RefreshToken document when the user allows it', async () => {
@@ -403,7 +403,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.IP).toBe(validIP);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if IP-derived location is not added to RefreshToken when the user does not allow it', async () => {
@@ -429,7 +429,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.location).toBe(undefined);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if IP-derived location is added to RefreshToken when the user allows it', async () => {
@@ -455,7 +455,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.location).toBeTruthy();
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if IP-derived location is set to "Unknown Location" when the location cannot be found', async () => {
@@ -481,7 +481,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.location).toBe("Unknown Location");
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if deviceType is not added to RefreshToken when the user does not allow it', async () => {
@@ -507,7 +507,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.deviceType).toBe(undefined);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if deviceType is not added to RefreshToken when the user does not allow it', async () => {
@@ -533,7 +533,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.deviceType).toBe(validDeviceName);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if correct user data gets returned', async () => {
@@ -571,7 +571,7 @@ describe('When Email 2FA is not enabled', () => {
         expect(typeof returned.data.data.followers).toBe("number");
         expect(typeof returned.data.data.following).toBe("number");
         expect(typeof returned.data.data._id).toBe("string");
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if already existing RefreshToken documents do not get modified', async () => {
@@ -603,7 +603,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshTokens).toStrictEqual(tokensToInsert);
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if already existing User documents do not get modified', async () => {
@@ -632,6 +632,6 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(beforeUsers).toStrictEqual(afterUsers)
-        expect(await DB.changedCollections()).toStrictEqual(['RefreshToken'])
+        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 })
