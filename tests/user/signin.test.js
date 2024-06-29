@@ -47,7 +47,7 @@ Test if signin fails if user with specified email could not be found
 Test if signin fails if password is wrong (testing if user/signin carries out correct authentication)
 
 Tests if email 2FA is enabled:
-    - Test if email gets blurred -- Done
+    - Test if email gets blurred
     - Test fromAddress is the value of process.env.SMTP_EMAIL
     - Test secondId is the user's secondId
     - Test EmailVerificationCode gets created
@@ -290,7 +290,7 @@ describe('When Email 2FA is not enabled', () => {
         _id: new mongoose.Types.ObjectId()
     }
 
-    test('if token gets created and is usable', async () => {
+    test('if login works', async () => {
         expect.assertions(3);
 
         await new User(userData).save();
@@ -300,57 +300,53 @@ describe('When Email 2FA is not enabled', () => {
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
         expect(returned.statusCode).toBe(200);
+        //Test if token gets created and is usable
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
-        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
-    })
 
-    test('if refresh token gets created and is usable', async () => {
-        expect.assertions(3);
-
-        await new User(userData).save();
-
-        await DB.takeDBSnapshot();
-
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        expect(returned.statusCode).toBe(200);
+        //Test if refresh token gets created and is usable
         expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
-        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
-    })
 
-    test('if encrypted refresh token gets created and can be decrypted back to refresh token', async () => {
-        expect.assertions(4);
-
-        await new User(userData).save();
-
-        await DB.takeDBSnapshot();
-
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
+        //Test if encrypted refresh token gets created and can be decrypted back to refresh token
         const refreshTokens = await RefreshToken.find({}).lean();
-
         const savedRefreshToken = refreshTokens[0];
-
-        expect(returned.statusCode).toBe(200);
         expect(refreshTokens).toHaveLength(1);
         expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
-        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
-    })
 
-    test('if RefreshToken document gets created and admin is set to false', async () => {
-        expect.assertions(4);
+        //Test if RefreshToken document admin is set to false
+        expect(savedRefreshToken.admin).toBe(false);
 
-        await new User(userData).save();
+        //Test if RefreshToken document createdAt is correct
+        expect(savedRefreshToken.createdAt.getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway for test
 
-        await DB.takeDBSnapshot();
+        //Start of test if correct user data gets returned
+        const notIncludedKeys = [
+          'notificationKeys',
+          'password',
+          'refreshTokens',
+          'algorithmData',
+          'accountFollowRequests',
+          'blockedAccounts',
+          'authenticationFactorsEnabled',
+          'MFAEmail'
+        ]
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        let includesNotIncludedKey = false;
+        const returnedUserDataKeys = Object.keys(returned.data.data);
 
-        const refreshToken = await RefreshToken.findOne({}).lean();
+        for (const key of notIncludedKeys) {
+            if (returnedUserDataKeys.includes(key)) {
+                includesNotIncludedKey = true;
+                break;
+            }
+        }
 
-        expect(returned.statusCode).toBe(200);
-        expect(refreshToken.admin).toBe(false);
-        expect(refreshToken.createdAt.getTime()).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second leeway for test
+        expect(includesNotIncludedKey).toBe(false);
+        expect(typeof returned.data.data.followers).toBe("number");
+        expect(typeof returned.data.data.following).toBe("number");
+        expect(typeof returned.data.data._id).toBe("string");
+        //End of test if correct user data gets returned
+
+
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
@@ -533,44 +529,6 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(returned.statusCode).toBe(200);
         expect(refreshToken.deviceType).toBe(validDeviceName);
-        expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
-    })
-
-    test('if correct user data gets returned', async () => {
-        expect.assertions(6);
-
-        await new User(userData).save();
-
-        await DB.takeDBSnapshot()
-
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
-
-        const notIncludedKeys = [
-            'notificationKeys',
-            'password',
-            'refreshTokens',
-            'algorithmData',
-            'accountFollowRequests',
-            'blockedAccounts',
-            'authenticationFactorsEnabled',
-            'MFAEmail'
-        ]
-
-        let includesNotIncludedKey = false;
-        const returnedUserDataKeys = Object.keys(returned.data.data);
-
-        for (const key of notIncludedKeys) {
-            if (returnedUserDataKeys.includes(key)) {
-                includesNotIncludedKey = true;
-                break;
-            }
-        }
-
-        expect(returned.statusCode).toBe(200);
-        expect(includesNotIncludedKey).toBe(false);
-        expect(typeof returned.data.data.followers).toBe("number");
-        expect(typeof returned.data.data.following).toBe("number");
-        expect(typeof returned.data.data._id).toBe("string");
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
