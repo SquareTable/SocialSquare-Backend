@@ -165,7 +165,7 @@ test('If change is successful with correct inputs', async () => {
 
     const afterUser = await User.findOne({}).lean();
 
-    afterUser.name = 'newname'
+    beforeUser.name = 'newname'
 
     expect(returned.statusCode).toBe(200);
     expect(afterUser).toStrictEqual(beforeUser)
