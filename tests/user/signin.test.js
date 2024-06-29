@@ -323,7 +323,7 @@ describe('When Email 2FA is not enabled', () => {
 
         await new User(userData).save();
 
-        await Db.takeDBSnapshot();
+        await DB.takeDBSnapshot();
 
         const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
 
