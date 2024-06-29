@@ -276,6 +276,8 @@ test('that non-related User documents do not get modified when following a priva
 test('Following yourself fails', async () => {
     expect.assertions(3);
 
+    throw new Error(`Users found: ${JSON.stringify(await User.find({}))}`)
+
     await new User(userFollowingData).save();
 
     const beforeUsers = await User.find({}).lean();
