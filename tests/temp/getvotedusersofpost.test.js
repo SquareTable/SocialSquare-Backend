@@ -97,70 +97,86 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
                     describe(`notString: ${JSON.stringify(notString)}`, () => {
                         test(`If request fails if userId is not a string.`, async () => {
-                            expect.assertions(2);
+                            expect.assertions(3);
+
+                            await DB.takeDBSnapshot()
                     
                             const returned = await TempController.getvotedusersofpost(notString, String(postData._id), postFormat, undefined, voteType);
             
                             expect(returned.statusCode).toBe(400);
                             expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+                            expect(await DB.noChangesMade()).toBe(true)
                         })
             
                         test(`If request fails if postId is not a string.`, async () => {
-                            expect.assertions(2);
+                            expect.assertions(3);
+
+                            await DB.takeDBSnapshot()
             
                             const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), notString, postFormat, undefined, voteType);
             
                             expect(returned.statusCode).toBe(400);
                             expect(returned.data.message).toBe(`postId must be a string. Type provided: ${typeof notString}`)
+                            expect(await DB.noChangesMade()).toBe(true)
                         })
             
                         if (notString !== undefined) {
                             test(`If request fails if lastItemId is not a string or undefined.`, async () => {
-                                expect.assertions(2);
+                                expect.assertions(3);
+
+                                await DB.takeDBSnapshot()
             
                                 const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, notString, voteType);
             
                                 expect(returned.statusCode).toBe(400);
                                 expect(returned.data.message).toBe('lastItemId must be either a string or undefined.')
+                                expect(await DB.noChangesMade()).toBe(true)
                             })
                         }
                     })
                 }
 
                 test('If request fails if user requesting cannot be found', async () => {
-                    expect.assertions(2);
+                    expect.assertions(3);
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
 
                     expect(returned.statusCode).toBe(404);
                     expect(returned.data.message).toBe('Could not find user with provided userId.')
+                    expect(await DB.noChangesMade()).toBe(true)
                 })
 
                 test('If request fails if post cannot be found', async () => {
-                    expect.assertions(2);
+                    expect.assertions(3);
 
                     await new User(userRequestingData).save();
+
+                    await DB.takeDBSnapshot()
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
 
                     expect(returned.statusCode).toBe(404);
                     expect(returned.data.message).toBe('Could not find post.')
+                    expect(await DB.noChangesMade()).toBe(true)
                 })
 
                 test('If request fails if post creator cannot be found', async () => {
-                    expect.assertions(2);
+                    expect.assertions(3);
 
                     await new User(userRequestingData).save();
                     await new POST_DATABASE_MODELS[postFormat](postData).save();
+
+                    await DB.takeDBSnapshot()
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
 
                     expect(returned.statusCode).toBe(404);
                     expect(returned.data.message).toBe('Could not find post creator')
+                    expect(await DB.noChangesMade()).toBe(true)
                 })
 
                 test('If request sends correct data with lastItemId undefined', async () => {
-                    expect.assertions(2);
+                    expect.assertions(3);
 
                     await new User(userRequestingData).save();
                     await new POST_DATABASE_MODELS[postFormat](postData).save();
@@ -183,6 +199,8 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                         }
                     }))
 
+                    await DB.takeDBSnapshot()
+
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
 
                     const votes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).lean();
@@ -199,10 +217,11 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data.items).toStrictEqual(expectedUserDocuments);
+                    expect(await DB.noChangesMade()).toBe(true)
                 })
 
                 test('If request sends correct data when lastItemId is a UUIDv4', async () => {
-                    expect.assertions(3);
+                    expect.assertions(4);
 
                     await new User(userRequestingData).save();
                     await new POST_DATABASE_MODELS[postFormat](postData).save();
@@ -227,6 +246,8 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await VOTE_DATABASE_MODELS[voteType].insertMany(rawVoteData)
 
+                    await DB.takeDBSnapshot()
+
                     const lastItemId = rawVoteData[89].secondId;
 
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, lastItemId, voteType);
@@ -246,10 +267,11 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     expect(returned.statusCode).toBe(200);
                     expect(returned.data.data.items).toStrictEqual(expectedUserDocuments);
                     expect(returned.data.data.noMoreItems).toBe(false);
+                    expect(await DB.noChangesMade()).toBe(true)
                 })
 
                 test('If request fails if user is blocked by post creator', async () => {
-                    expect.assertions(3);
+                    expect.assertions(4);
 
                     const postCreator = {
                         ...postCreatorData,
@@ -261,15 +283,18 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     await new POST_DATABASE_MODELS[postFormat](postData).save();
                     await new VOTE_DATABASE_MODELS[voteType]({_id: new mongoose.Types.ObjectId}).save();
 
+                    await DB.takeDBSnapshot()
+
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
 
                     expect(returned.statusCode).toBe(404);
                     expect(returned.data.message).toBe('Could not find post.')
                     expect(returned.data.data).toBe(undefined)
+                    expect(await DB.noChangesMade()).toBe(true)
                 })
 
                 test('If request fails if user is not following the post creator and the post creator account is private', async () => {
-                    expect.assertions(3);
+                    expect.assertions(4);
 
                     const postCreator = {
                         ...postCreatorData,
@@ -281,11 +306,14 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     await new POST_DATABASE_MODELS[postFormat](postData).save();
                     await new VOTE_DATABASE_MODELS[voteType]({_id: new mongoose.Types.ObjectId}).save();
 
+                    await DB.takeDBSnapshot()
+
                     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
 
                     expect(returned.statusCode).toBe(404);
                     expect(returned.data.message).toBe('Could not find post.')
                     expect(returned.data.data).toBe(undefined)
+                    expect(await DB.noChangesMade()).toBe(true)
                 })
             })
         }
@@ -293,46 +321,61 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 }
 
 test('If request fails if userId is not an ObjectId', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.getvotedusersofpost('i am not an objectid', String(postData._id), 'Image', undefined, 'Up');
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('userId must be an ObjectId.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If request fails if postId is not an ObjectId', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), 'i am not an objectid', 'Image', undefined, 'Up');
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('postId must be an ObjectId.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If request fails if postFormat is not supported in constants file', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'invalid', undefined, 'Up');
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If request fails if lastItemId is a string and not a UUIDv4', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'Image', 'i am not a UUIDv4', 'Up');
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('lastItemId must be a valid UUIDv4 if it is going to be a string.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If request fails if voteType is not supported in constants file', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'Image', undefined, 'Middle');
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe(`voteType must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`)
+    expect(await DB.noChangesMade()).toBe(true)
 })
