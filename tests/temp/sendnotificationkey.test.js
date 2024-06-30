@@ -162,10 +162,11 @@ test('If upload successfully modifies refresh token', async () => {
 test('If successful upload does not modify other refresh tokens in the database', async () => {
     expect.assertions(3);
 
-    const users = [...new Array(10)].map(() => {
+    const users = [...new Array(10)].map((item, index) => {
         return {
             _id: new mongoose.Types.ObjectId(),
-            __v: 0
+            __v: 0,
+            name: `name${index}`
         }
     })
 
