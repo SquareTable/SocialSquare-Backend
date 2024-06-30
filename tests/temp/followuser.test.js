@@ -24,12 +24,14 @@ afterAll(async () => {
 
 const userGettingFollowedData = {
     _id: '6592d55957dea9ccea3afe20',
-    secondId: '6e3147a2-0381-4bad-b89c-f5edfa767fc2'
+    secondId: '6e3147a2-0381-4bad-b89c-f5edfa767fc2',
+    name: 'userGettingFollowed'
 }
 
 const userFollowingData = {
     _id: '6592d56b1e5dac985aa2e919',
-    secondId: '367f3a1e-7ae0-4885-b9b9-2471f90faf53'
+    secondId: '367f3a1e-7ae0-4885-b9b9-2471f90faf53',
+    name: 'userFollowing'
 }
 
 /*
