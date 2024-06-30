@@ -11,7 +11,7 @@ jobs:
       matrix:
         node-version: [20.x]
         os: [ubuntu-22.04]
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout Repository
@@ -26,4 +26,4 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npx jest --shard=${{ matrix.shard }}/10 --runInBand
+        run: npx jest --shard=${{ matrix.shard }}/4

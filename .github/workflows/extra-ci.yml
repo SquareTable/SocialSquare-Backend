@@ -21,7 +21,7 @@ jobs:
         run: npm ci
 
       - name: Calculate coverage
-        run: npx jest --coverage=true --runInBand
+        run: npx jest --coverage=true
 
   extra-node-tests:
     runs-on: ${{ matrix.os }}
@@ -45,4 +45,4 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npx jest --runInBand
+        run: npx jest
