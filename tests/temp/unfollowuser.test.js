@@ -6,16 +6,20 @@ const uuid = require('uuid')
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
-const {beforeEach, afterEach, test, expect} = require('@jest/globals');
+const {beforeAll, afterEach, afterAll, test, expect} = require('@jest/globals');
 
 const DB = new MockMongoDBServer();
 
-beforeEach(async () => {
+beforeAll(async () => {
     await DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.stopTest();
+    await DB.purgeData()
+})
+
+afterAll(async () => {
+    await DB.stopTest()
 })
 
 const userUnfollowingData = {

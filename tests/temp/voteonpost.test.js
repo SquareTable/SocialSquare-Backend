@@ -10,7 +10,7 @@ const Comment = require('../../models/Comment');
 const Upvote = require('../../models/Upvote');
 const Downvote = require('../../models/Downvote');
 
-const {expect, beforeEach, afterEach} = require('@jest/globals');
+const {expect, beforeAll, afterEach, afterAll} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const POST_DATABASE_MODELS = {
@@ -29,12 +29,16 @@ jest.setTimeout(20_000); //20 seconds per test
 
 const DB = new MockMongoDBServer();
 
-beforeEach(async () => {
+beforeAll(async () => {
     await DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.stopTest();
+    await DB.purgeData()
+})
+
+afterAll(async () => {
+    await DB.stopTest()
 })
 
 /*

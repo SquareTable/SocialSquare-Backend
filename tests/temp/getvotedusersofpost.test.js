@@ -29,7 +29,7 @@ const VOTE_DATABASE_MODELS = {
     Down: Downvote
 }
 
-const {expect, test, beforeEach, afterEach} = require('@jest/globals')
+const {expect, test, beforeAll, afterEach, afterAll} = require('@jest/globals')
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS')
 const CONSTANTS = require('../../constants')
@@ -38,12 +38,16 @@ jest.setTimeout(20_000)
 
 const DB = new MockMongoDBServer()
 
-beforeEach(async () => {
-    await DB.startTest()
+beforeAll(async () => {
+  await DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.stopTest()
+  await DB.purgeData()
+})
+
+afterAll(async () => {
+  await DB.stopTest()
 })
 
 const userPublicIds = [...new Array(100)].map(() => uuidv4());
