@@ -55,71 +55,91 @@ Tests:
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If follow fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.followuser(notString, userGettingFollowedData.secondId);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 
     test(`Of fopllow fails if userPubId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.followuser(userFollowingData._id, notString);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userPubId must be a string. Type provided: ${typeof notString}`);
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 test('If follow fails if userId is not an ObjectId', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.followuser('i am not an objectid', userGettingFollowedData.secondId);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('userId must be an ObjectId.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If follow fails if userPubId is not a valid UUID v4', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.followuser(userFollowingData._id, 'i am not a UUID')
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('userPubId must be a valid version 4 UUID')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If follow fails if user following the account cannot be found', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(userGettingFollowedData).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user with provided userId.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If follow fails if account to be followed could not be found', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(userFollowingData).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If follow fails if user following is blocked by the account to be followed', async () => {
-    expect.assertions(8);
+    expect.assertions(9);
 
     const userGettingFollowed = {...userGettingFollowedData, blockedAccounts: [userFollowingData.secondId]}
 
     await new User(userFollowingData).save();
     await new User(userGettingFollowed).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
 
@@ -134,15 +154,18 @@ test('If follow fails if user following is blocked by the account to be followed
     expect(followingUserAfter.accountFollowRequests).toStrictEqual([])
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toHaveLength(0)
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If a private account gets followed, a follow request gets created (and not a follow)', async () => {
-    expect.assertions(8);
+    expect.assertions(9);
 
     const userGettingFollowed = {...userGettingFollowedData, privateAccount: true};
 
     await new User(userFollowingData).save();
     await new User(userGettingFollowed).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
 
@@ -157,15 +180,18 @@ test('If a private account gets followed, a follow request gets created (and not
     expect(followingUserAfter.accountFollowRequests).toStrictEqual([])
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toHaveLength(0)
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('that multiple account follow requests cannot be made from the same user', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     const userGettingFollowed = {...userGettingFollowedData, privateAccount: true};
 
     await new User(userFollowingData).save();
     await new User(userGettingFollowed).save();
+
+    await DB.takeDBSnapshot()
 
     for (let i = 0; i < 10; i++) {
         await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
@@ -178,13 +204,16 @@ test('that multiple account follow requests cannot be made from the same user', 
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Requested To Follow User')
     expect(followedUserAfter.accountFollowRequests).toStrictEqual([userFollowingData.secondId])
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('If a following a user works and updates both User documents and no account follow requests are made', async () => {
-    expect.assertions(8);
+    expect.assertions(9);
 
     await new User(userFollowingData).save();
     await new User(userGettingFollowedData).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
 
@@ -199,13 +228,16 @@ test('If a following a user works and updates both User documents and no account
     expect(followingUserAfter.accountFollowRequests).toStrictEqual([])
     expect(followedUserAfter.following).toHaveLength(0)
     expect(followingUserAfter.following).toStrictEqual([userGettingFollowedData.secondId])
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('If following a user multiple times does not create multiple follows', async () => {
-    expect.assertions(4);
+    expect.assertions(5);
 
     await new User(userFollowingData).save();
     await new User(userGettingFollowedData).save();
+
+    await DB.takeDBSnapshot()
 
     for (let i = 0; i < 10; i++) {
         await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
@@ -220,11 +252,12 @@ test('If following a user multiple times does not create multiple follows', asyn
     expect(returned.data.message).toBe('Followed User');
     expect(followingUserAfter.following).toStrictEqual([userGettingFollowedData.secondId])
     expect(followedUserAfter.followers).toStrictEqual([userFollowingData.secondId])
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 
 test('that non-related User documents do not get modified when following a public account', async () => {
-    expect.assertions(5);
+    expect.assertions(6);
     
     await new User(userFollowingData).save();
     await new User(userGettingFollowedData).save();
@@ -234,6 +267,8 @@ test('that non-related User documents do not get modified when following a publi
             name: `name${index}`
         }
     }))
+
+    await DB.takeDBSnapshot()
 
     const beforeNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowedData._id}}]}).lean()
 
@@ -246,10 +281,11 @@ test('that non-related User documents do not get modified when following a publi
     expect(afterNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('that non-related User documents do not get modified when following a private account', async () => {
-    expect.assertions(5);
+    expect.assertions(6);
 
     const userGettingFollowed = {...userGettingFollowedData, privateAccount: true}
     
@@ -262,6 +298,8 @@ test('that non-related User documents do not get modified when following a priva
         }
     }))
 
+    await DB.takeDBSnapshot()
+
     const beforeNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowed._id}}]}).lean()
 
     const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
@@ -273,12 +311,15 @@ test('that non-related User documents do not get modified when following a priva
     expect(afterNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('Following yourself fails', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     await new User(userFollowingData).save();
+
+    await DB.takeDBSnapshot()
 
     const beforeUsers = await User.find({}).lean();
 
@@ -289,4 +330,5 @@ test('Following yourself fails', async () => {
     expect(returned.statusCode).toBe(403);
     expect(returned.data.message).toBe('You cannot follow yourself.');
     expect(beforeUsers).toStrictEqual(afterUsers);
+    expect(await DB.noChangesMade()).toBe(true)
 })
