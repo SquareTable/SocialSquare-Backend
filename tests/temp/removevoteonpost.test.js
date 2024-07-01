@@ -224,14 +224,16 @@ for (const postFormat of formats) {
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
-                secondId: uuidv4()
+                secondId: uuidv4(),
+                name: 'voter'
             }
 
             const postCreatorData = {
                 _id: new mongoose.Types.ObjectId(),
                 secondId: uuidv4(),
                 privateAccount: false,
-                blockedAccounts: []
+                blockedAccounts: [],
+                name: 'postCreator'
             }
 
             const voteData = {
