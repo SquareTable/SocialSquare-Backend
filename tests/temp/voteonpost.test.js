@@ -79,12 +79,14 @@ for (const format of formats) {
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
-                privateAccount: false
+                privateAccount: false,
+                name: 'postcreator'
             };
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const postcreator = new User(postcreatorData)
@@ -165,12 +167,14 @@ for (const format of formats) {
                 privateAccount: true,
                 followers: [
                     "c709e918-f43a-4b90-a35a-36d8a6193431"
-                ]
+                ],
+                name: 'postcreator'
             };
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const postcreator = new User(postcreatorData)
@@ -276,12 +280,14 @@ for (const format of formats) {
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c197f",
                 blockedAccounts: ["c709e918-f43a-4b90-a35a-36d8a6193431"],
-                privateAccount: false
+                privateAccount: false,
+                name: 'postcreator'
             };
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const postcreator = new User(postcreatorData)
@@ -315,12 +321,14 @@ for (const format of formats) {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
                 privateAccount: true,
-                followers: []
+                followers: [],
+                name: 'postcreator'
             };
             
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const postcreator = new User(postcreatorData)
@@ -353,12 +361,14 @@ for (const format of formats) {
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
-                privateAccount: false
+                privateAccount: false,
+                name: 'postcreator'
             };
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const postcreator = new User(postcreatorData);
@@ -414,12 +424,14 @@ for (const format of formats) {
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
-                privateAccount: false
+                privateAccount: false,
+                name: 'postcreator'
             };
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const postcreator = new User(postcreatorData)
@@ -461,12 +473,14 @@ for (const format of formats) {
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
                 blockedAccounts: [],
-                privateAccount: false
+                privateAccount: false,
+                name: 'postcreator'
             };
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const postcreator = new User(postcreatorData)
