@@ -68,80 +68,101 @@ Tests:
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`Unfollow fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.unfollowuser(notString, userGettingUnfollowedData.secondId);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 
     test(`Unfollow fails if userPubId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.unfollowuser(userUnfollowingData._id, notString);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userPubId must be a string. Type provided: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 test('Unfollow fails if userId is not an ObjectId', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.unfollowuser('i am not an objectid', userGettingUnfollowedData.secondId);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('userId must be an ObjectId.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('Unfollow fails if userPubId is not a valid v4 UUID', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.unfollowuser(userUnfollowingData._id, 'i am not a valid v4 uuid')
 
     expect(returned.statusCode).toBe(400)
     expect(returned.data.message).toBe('userPubId must be a valid version 4 UUID')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('Unfollow fails if follower user cannot be found', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(userGettingUnfollowedData).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.unfollowuser(userUnfollowingData._id, userGettingUnfollowedData.secondId);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user with provided userId.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('Unfollow fails if account getting unfollowed cannot be found', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     await new User(userUnfollowingData).save();
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.unfollowuser(userUnfollowingData._id, userGettingUnfollowedData.secondId);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('Unfollow fails if follower is blocked', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     const userGettingUnfollowed = {...userGettingUnfollowedData, blockedAccounts: [userUnfollowingData.secondId]}
 
     await new User(userUnfollowingData).save();
     await new User(userGettingUnfollowed).save();
 
+    await DB.takeDBSnapshot()
+
     const returned = await TempController.unfollowuser(userUnfollowingData._id, userGettingUnfollowed.secondId);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('Could not find user.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('Unfollow removes follow request if account is private', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     const randomUUID = uuid.v4()
 
@@ -155,6 +176,8 @@ test('Unfollow removes follow request if account is private', async () => {
     await new User(userGettingUnfollowed).save();
     await new User(userUnfollowingData).save();
 
+    await DB.takeDBSnapshot()
+
     const beforeUser = await User.findOne({_id: {$eq: userGettingUnfollowed._id}}).lean();
 
     const returned = await TempController.unfollowuser(userUnfollowingData._id, userGettingUnfollowed.secondId);
@@ -166,10 +189,11 @@ test('Unfollow removes follow request if account is private', async () => {
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Removed Request To Follow User');
     expect(beforeUser).toStrictEqual(afterUser);
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('Unfollow removes follow and following if account is public', async () => {
-    expect.assertions(4);
+    expect.assertions(5);
 
     const randomUUID = uuid.v4();
 
@@ -186,6 +210,8 @@ test('Unfollow removes follow and following if account is public', async () => {
     await new User(userGettingUnfollowed).save();
     await new User(userUnfollowing).save();
 
+    await DB.takeDBSnapshot()
+
     const beforeUnfollowingUser = await User.findOne({_id: {$eq: userUnfollowingData._id}}).lean();
     const beforeUnfollowedUser = await User.findOne({_id: {$eq: userGettingUnfollowedData._id}}).lean();
 
@@ -201,10 +227,11 @@ test('Unfollow removes follow and following if account is public', async () => {
     expect(returned.data.message).toBe('UnFollowed user');
     expect(beforeUnfollowedUser).toStrictEqual(afterUnfollowedUser);
     expect(beforeUnfollowingUser).toStrictEqual(afterUnfollowingUser)
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('that non-related User documents do not get modified when removing an account follow request', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     await User.insertMany(randomTestUsers)
 
@@ -217,6 +244,8 @@ test('that non-related User documents do not get modified when removing an accou
     await new User(userGettingUnfollowed).save();
     await new User(userUnfollowingData).save();
 
+    await DB.takeDBSnapshot()
+
     const beforeTestUsers = await User.find({displayName: 'testuser'}).lean();
 
     const returned = await TempController.unfollowuser(userUnfollowingData._id, userGettingUnfollowedData.secondId);
@@ -226,10 +255,11 @@ test('that non-related User documents do not get modified when removing an accou
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Removed Request To Follow User');
     expect(beforeTestUsers).toStrictEqual(afterTestUsers);
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('that non-related User documents do not get modified when removing an account follow', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     await User.insertMany(randomTestUsers)
 
@@ -246,6 +276,8 @@ test('that non-related User documents do not get modified when removing an accou
     await new User(userGettingUnfollowed).save();
     await new User(userUnfollowing).save();
 
+    await DB.takeDBSnapshot()
+
     const beforeTestUsers = await User.find({displayName: 'testuser'}).lean();
 
     const returned = await TempController.unfollowuser(userUnfollowingData._id, userGettingUnfollowedData.secondId);
@@ -255,4 +287,5 @@ test('that non-related User documents do not get modified when removing an accou
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('UnFollowed user');
     expect(beforeTestUsers).toStrictEqual(afterTestUsers);
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
