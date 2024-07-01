@@ -75,13 +75,15 @@ for (const postFormat of formats) {
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId("653947b8cb8b8f978c670cd6"),
-                secondId: "68b7962e-75f3-4c1f-b457-a112cc62a182"
+                secondId: "68b7962e-75f3-4c1f-b457-a112cc62a182",
+                name: 'voter'
             }
 
             const postCreator = {
                 _id: new mongoose.Types.ObjectId("653947e4234a318b50cbde1a"),
                 privateAccount: false,
-                blockedAccounts: []
+                blockedAccounts: [],
+                name: 'postCreator'
             }
 
             const postData = {
