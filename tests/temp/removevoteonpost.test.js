@@ -118,7 +118,8 @@ for (const postFormat of formats) {
                 _id: new mongoose.Types.ObjectId("653a04087908fd746253de70"),
                 secondId: "8ca634f8-9948-4188-99c5-bb1c3bdf52be",
                 privateAccount: false,
-                blockedAccounts: []
+                blockedAccounts: [],
+                name: 'voter'
             }
 
             const postData = {
@@ -152,13 +153,15 @@ for (const postFormat of formats) {
             const voterData = {
                 _id: new mongoose.Types.ObjectId("653a08018cb8adba90f4f270"),
                 secondId: "d9f69b61-6f2f-4781-8802-47585b40b4da",
+                name: 'voter'
             };
 
             const postCreatorData = {
                 _id: new mongoose.Types.ObjectId("653a0869ea622e157144a667"),
                 privateAccount: true,
                 followers: [voterData.secondId],
-                blockedAccounts: []
+                blockedAccounts: [],
+                name: 'postCreator'
             }
 
             const postData = {
@@ -262,7 +265,8 @@ for (const postFormat of formats) {
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
-                secondId: uuidv4()
+                secondId: uuidv4(),
+                name: 'voter'
             }
 
             const postData = {
@@ -383,12 +387,14 @@ for (const postFormat of formats) {
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
-                secondId: uuidv4()
+                secondId: uuidv4(),
+                name: 'voter'
             }
 
             const postCreatorData = {
                 _id: new mongoose.Types.ObjectId(),
-                secondId: uuidv4()
+                secondId: uuidv4(),
+                name: 'postCreator'
             }
 
             const postData = {
