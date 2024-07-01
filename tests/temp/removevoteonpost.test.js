@@ -71,7 +71,7 @@ const votes = ["Up", "Down"]
 for (const postFormat of formats) {
     for (const voteType of votes) {
         test(`Removing ${voteType}vote on ${postFormat} post works for non-private accounts with no blocked accounts when voter is not the post creator`, async () => {
-            expect.assertions(2);
+            expect.assertions(3);
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId("653947b8cb8b8f978c670cd6"),
@@ -103,48 +103,15 @@ for (const postFormat of formats) {
             await new POST_DATABASE_MODELS[postFormat](postData).save();
             await new VOTE_DATABASE_MODELS[voteType](voteData).save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.removevoteonpost(String(voterData._id), String(postData._id), postFormat, voteType);
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(0)
-        })
-
-        test(`Removing ${voteType}vote on ${postFormat} post fails if the voter is the post creator`, async () => {
-            expect.assertions(3);
-
-            const voterData = {
-                _id: new mongoose.Types.ObjectId("653a04087908fd746253de70"),
-                secondId: "8ca634f8-9948-4188-99c5-bb1c3bdf52be",
-                privateAccount: false,
-                blockedAccounts: [],
-                name: 'voter'
-            }
-
-            const postData = {
-                _id: new mongoose.Types.ObjectId("653a04586cf2189ea9ec3a15"),
-                creatorId: voterData._id
-            }
-
-            const voteData = { //People should not be able to make votes on their own posts, but this is just to check that the API does terminate when the post creator tries to remove a vote from their own post and it doesn't delete any votes
-                postId: postData._id,
-                postFormat: postFormat,
-                interactionDate: Date.now(),
-                userPublicId: voterData.secondId
-            }
-
-            await new User(voterData).save();
-            await new POST_DATABASE_MODELS[postFormat](postData).save();
-            await new VOTE_DATABASE_MODELS[voteType](voteData).save();
-
-            const returned = await TempController.removevoteonpost(String(voterData._id), String(postData._id), postFormat, voteType);
-
-            const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
-
-            expect(returned.statusCode).toBe(403);
-            expect(returned.data.message).toBe("You cannot remove a vote on your own post.")
-            expect(votes).toHaveLength(1)
+            expect(await DB.changedCollections()).toIncludeSameMembers([`${voteType}vote`])
         })
 
         test(`Removing ${voteType}vote on ${postFormat} works for private accounts where the voter is following the private account`, async () => {

@@ -6233,7 +6233,6 @@ class TempController {
 
                 POST_DATABASE_MODELS[postFormat].findOne({_id: {$eq: postId}}).lean().then(postFound => {
                     if (!postFound) return resolve(HTTPWTHandler.notFound('Could not find post with postId.'))
-                    if (postFound.creatorId == userId) return resolve(HTTPWTHandler.forbidden('You cannot remove a vote on your own post.'))
 
                     User.findOne({_id: {$eq: postFound.creatorId}}).lean().then(postCreator => {
                         if (!postCreator) return resolve(HTTPWTHandler.notFound('Could not find post creator.'))
