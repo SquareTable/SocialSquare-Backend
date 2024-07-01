@@ -115,7 +115,7 @@ for (const postFormat of formats) {
         })
 
         test(`Removing ${voteType}vote on ${postFormat} works for private accounts where the voter is following the private account`, async () => {
-            expect.assertions(2);
+            expect.assertions(3);
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId("653a08018cb8adba90f4f270"),
@@ -148,16 +148,19 @@ for (const postFormat of formats) {
             await new POST_DATABASE_MODELS[postFormat](postData).save();
             await new VOTE_DATABASE_MODELS[voteType](voteData).save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.removevoteonpost(String(voterData._id), String(postData._id), postFormat, voteType);
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
 
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(0);
+            expect(await DB.changedCollections()).toIncludeSameMembers([`${voteType}vote`])
         })
 
         test(`Removing ${voteType}vote on ${postFormat} post fails if voter's account could not be found`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
         
             const postCreatorData = {
                 _id: new mongoose.Types.ObjectId("653a15bcc5114d375f7c3c7b"),
@@ -181,6 +184,8 @@ for (const postFormat of formats) {
             await new User(postCreatorData).save();
             await new POST_DATABASE_MODELS[postFormat](postData).save();
             await new VOTE_DATABASE_MODELS[voteType](voteData).save();
+
+            await DB.takeDBSnapshot()
         
             const returned = await TempController.removevoteonpost("653a170faba7fac4c14dad8d", String(postData._id), postFormat, voteType);
 
@@ -189,10 +194,11 @@ for (const postFormat of formats) {
             expect(votes).toHaveLength(1);
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find user with provided userId.")
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`If removing ${voteType}vote on ${postFormat} post fails if post could not be found`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
@@ -219,16 +225,20 @@ for (const postFormat of formats) {
             await new User(postCreatorData).save();
             await new VOTE_DATABASE_MODELS[voteType](voteData).save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.removevoteonpost(String(voterData._id), String(voteData.postId), postFormat, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
+            
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post with postId.");
             expect(votes).toHaveLength(1);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`If removing ${voteType}vote on ${postFormat} post fails if post creator could not be found`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
@@ -252,6 +262,8 @@ for (const postFormat of formats) {
             await new POST_DATABASE_MODELS[postFormat](postData).save();
             await new VOTE_DATABASE_MODELS[voteType](voteData).save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.removevoteonpost(String(voterData._id), String(postData._id), postFormat, voteType);
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -259,10 +271,11 @@ for (const postFormat of formats) {
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post creator.");
             expect(votes).toHaveLength(1);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`If removing ${voteType}vote on ${postFormat} post fails if the voter account is blocked by the post creator's account`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
@@ -295,6 +308,8 @@ for (const postFormat of formats) {
             await POST_DATABASE_MODELS[postFormat](postData).save();
             await VOTE_DATABASE_MODELS[voteType](voteData).save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.removevoteonpost(String(voterData._id), String(postData._id), postFormat, voteType);
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -302,11 +317,11 @@ for (const postFormat of formats) {
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Post could not be found.");
             expect(votes).toHaveLength(1);
-
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`If removing ${voteType}vote on ${postFormat} post fails if the post creator account is private and the voter is not following the post creator`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
@@ -339,6 +354,8 @@ for (const postFormat of formats) {
             await POST_DATABASE_MODELS[postFormat](postData).save();
             await VOTE_DATABASE_MODELS[voteType](voteData).save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.removevoteonpost(String(voterData._id), String(postData._id), postFormat, voteType);
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -346,11 +363,11 @@ for (const postFormat of formats) {
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Post could not be found.");
             expect(votes).toHaveLength(1);
-
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`If removing ${voteType}vote on ${postFormat} posts do not modify votes made by other users other than the voter`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: new mongoose.Types.ObjectId(),
@@ -398,6 +415,8 @@ for (const postFormat of formats) {
             await Downvote.insertMany(downvotesToInsert);
             await VOTE_DATABASE_MODELS[voteType](voteData).save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.removevoteonpost(String(voterData._id), String(postData._id), postFormat, voteType);
 
             const upvotes = await Upvote.find({}).lean();
@@ -406,68 +425,87 @@ for (const postFormat of formats) {
             expect(returned.statusCode).toBe(200);
             expect(upvotes).toStrictEqual(upvotesToInsert);
             expect(downvotes).toStrictEqual(downvotesToInsert);
+            expect(await DB.changedCollections()).toIncludeSameMembers([`${voteType}vote`])
         })
     }
 }
 
 for (const invalidUserId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`if removing votes fails if userId is not a string. Testing: ${JSON.stringify(invalidUserId)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.removevoteonpost(invalidUserId, undefined, undefined, undefined);
     
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userId must be a string. Provided type: ${typeof invalidUserId}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 test('if removing votes fails if userId is not an ObjectId', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.removevoteonpost('i am not an ObjectId', undefined, undefined, undefined);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("userId must be an ObjectId.")
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 for (const invalidPostId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`if removing votes fails if postId is not a string. Testing: ${JSON.stringify(invalidPostId)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.removevoteonpost("653a0ce6bae75d763b2ca607", invalidPostId, undefined, undefined)
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`postId must be a string. Provided type: ${typeof invalidPostId}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 test('if removing votes fails if postId is not an ObjectId', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.removevoteonpost("653a0ce6bae75d763b2ca607", 'i am not an ObjectId', undefined, undefined)
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("postId must be an ObjectId.")
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 for (const invalidFormat of invalidPostFormats) {
     test(`if removing votes fails if postFormat is invalid. Testing ${invalidFormat}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.removevoteonpost("653a0ce6bae75d763b2ca607", "653a0ce6bae75d763b2ca607", invalidFormat, undefined)
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`Invalid post format provided. Valid post formats: ${formats.join(', ')}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 for (const invalidVoteType of invalidVoteTypes) {
     test(`if removing votes fails if voteType is invalid. Testing ${invalidVoteType}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.removevoteonpost("653a0ce6bae75d763b2ca607", "653a0ce6bae75d763b2ca607", "Image", invalidVoteType)
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`Invalid vote type provided. Valid vote types: ${votes.join(', ')}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
