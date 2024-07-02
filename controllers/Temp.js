@@ -5560,8 +5560,7 @@ class TempController {
                                     return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
                                 })
                             ).then(comments => {
-                                const flattenedComments = comments.flat()
-                                const toSend = flattenedComments.concat(deletedComments)
+                                const toSend = comments.flat()
                                 return resolve(HTTPWTHandler.OK('Comments were found successfully', toSend))
                             }).catch(error => {
                                 console.error('An error occurred while processing comments:', error)
