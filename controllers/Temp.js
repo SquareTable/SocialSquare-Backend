@@ -4037,12 +4037,6 @@ class TempController {
                                                                                         deleteMany: {
                                                                                             filter: {commenterId: {$eq: userId}, replies: 0}
                                                                                         }
-                                                                                    },
-                                                                                    {
-                                                                                        updateMany: {
-                                                                                            filter: {commenterId: {$eq: userId}, replies: {$ne: 0}},
-                                                                                            update: {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}
-                                                                                        }
                                                                                     }
                                                                                 ];
 
