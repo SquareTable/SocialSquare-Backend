@@ -4009,7 +4009,7 @@ class TempController {
                                                                         if (imagePostIds.length > 0) {
                                                                             postReportsBulkWrite.push({
                                                                                 deleteMany: {
-                                                                                    filter: {postId: {$in: imagePostIds}}
+                                                                                    filter: {postId: {$in: imagePostIds}, format: {$eq: 'Image'}}
                                                                                 }
                                                                             })
                                                                         }
@@ -4017,7 +4017,7 @@ class TempController {
                                                                         if (pollPostIds.length > 0) {
                                                                             postReportsBulkWrite.push({
                                                                                 deleteMany: {
-                                                                                    filter: {postId: {$in: pollPostIds}}
+                                                                                    filter: {postId: {$in: pollPostIds}, format: {$eq: 'Poll'}}
                                                                                 }
                                                                             })
                                                                         }
@@ -4025,7 +4025,31 @@ class TempController {
                                                                         if (threadPostIds.length > 0) {
                                                                             postReportsBulkWrite.push({
                                                                                 deleteMany: {
-                                                                                    filter: {postId: {$in: threadPostIds}}
+                                                                                    filter: {postId: {$in: threadPostIds}, format: {$eq: 'Thread'}}
+                                                                                }
+                                                                            })
+                                                                        }
+
+                                                                        if (imageCommentIds.length > 0) {
+                                                                            postReportsBulkWrite.push({
+                                                                                deleteMany: {
+                                                                                    filter: {postId: {$in: imageCommentIds}, format: {$eq: 'Comment'}}
+                                                                                }
+                                                                            })
+                                                                        }
+            
+                                                                        if (pollCommentIds.length > 0) {
+                                                                            postReportsBulkWrite.push({
+                                                                                deleteMany: {
+                                                                                    filter: {postId: {$in: pollCommentIds}, format: {$eq: 'Comment'}}
+                                                                                }
+                                                                            })
+                                                                        }
+            
+                                                                        if (threadCommentIds.length > 0) {
+                                                                            postReportsBulkWrite.push({
+                                                                                deleteMany: {
+                                                                                    filter: {postId: {$in: threadCommentIds}, format: {$eq: 'Comment'}}
                                                                                 }
                                                                             })
                                                                         }
