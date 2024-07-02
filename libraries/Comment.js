@@ -23,7 +23,7 @@ class CommentLibrary {
                     isOwner: commentOwner._id.toString() === userRequesting._id.toString(),
                     interacted: !!isUpvoted || !!isDownvoted,
                     _id: String(comment._id),
-                    commenterId: String(comment.commenterId)
+                    commenterPubId: commentOwner.secondId
                 }
 
                 if (isUpvoted) {
