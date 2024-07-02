@@ -4561,29 +4561,6 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('Invalid post format supplied'))
             }
 
-            if (postFormat === 'Image') {
-                try {
-                    post = await ImagePost.findOne({_id: {$eq: postId}}).lean()
-                } catch (error) {
-                    console.error('An error occurred while finding one image post with id:', postId)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding one image post. Please try again.'))
-                }
-            } else if (postFormat === 'Poll') {
-                try {
-                    post = await Poll.findOne({_id: {$eq: postId}}).lean()
-                } catch(error) {
-                    console.error('An error occurred while finding one poll post with id:', postId)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll post. Please try again.'))
-                }
-            } else if (postFormat === 'Thread') {
-                try {
-                    post = await Thread.findOne({_id: {$eq: postId}}).lean()
-                } catch (error) {
-                    console.error('An error occurred while finding one thread post with id:', postId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding thread post. Please try again.'))
-                }
-            }
-
             try {
                 switch(postFormat) {
                     case 'Image':
