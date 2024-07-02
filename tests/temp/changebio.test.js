@@ -3,16 +3,20 @@ const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const TempController = require('../../controllers/Temp')
 
-const {beforeEach, afterEach, test, expect} = require('@jest/globals');
+const {beforeAll, afterEach, afterAll, test, expect} = require('@jest/globals');
 
 const DB = new MockMongoDBServer();
 
-beforeEach(async () => {
-    await DB.startTest();
+beforeAll(async () => {
+  await DB.startTest();
 })
 
 afterEach(async () => {
-    await DB.stopTest();
+  await DB.purgeData()
+})
+
+afterAll(async () => {
+  await DB.stopTest()
 })
 
 const validUser = {
@@ -36,44 +40,58 @@ Tests:
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If change fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.changebio(notString, VALID_BIO);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 
     test(`If change fails if bio is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
-        expect.assertions(2);
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.changebio(validUser._id, notString);
 
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`bio must be a string. Provided type: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 test('If change fails if userId is not an ObjectId', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.changebio('this is not an objectid', VALID_BIO);
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('userId must be an ObjectId.')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If change fails if bio is longer than 250 characters', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.changebio(validUser._id, new Array(252).join('a'));
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Bio must be 250 or less characters')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If change fails if bio has more than 4 lines', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.changebio(validUser._id, `
 
@@ -83,21 +101,27 @@ test('If change fails if bio has more than 4 lines', async () => {
 
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe('Bio must have 4 or less lines')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If change fails if user could not be found', async () => {
-    expect.assertions(2);
+    expect.assertions(3);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.changebio(validUser._id, VALID_BIO);
 
     expect(returned.statusCode).toBe(404);
     expect(returned.data.message).toBe('User with provided userId could not be found')
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If change is successful with correct inputs', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     await new User(validUser).save();
+
+    await DB.takeDBSnapshot()
 
     const beforeUser = await User.findOne({_id: validUser._id}).lean();
 
@@ -110,16 +134,22 @@ test('If change is successful with correct inputs', async () => {
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Change Successful');
     expect(beforeUser).toStrictEqual(afterUser)
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
 
 test('If change does not interfere with other User documents', async () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
-    const newUsers = [...new Array(10)].map((itme, index) => {
+    const newUsers = [...new Array(10)].map((item, index) => {
         return {
-            bio: `Bio: ${index}`
+            bio: `Bio: ${index}`,
+            name: `name${index}`
         }
     })
+
+    await User.insertMany(newUsers)
+
+    await DB.takeDBSnapshot()
 
     const beforeUsers = await User.find({}).lean();
 
@@ -132,4 +162,5 @@ test('If change does not interfere with other User documents', async () => {
     expect(returned.statusCode).toBe(200);
     expect(returned.data.message).toBe('Change Successful');
     expect(beforeUsers).toStrictEqual(afterUsers);
+    expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
