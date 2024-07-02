@@ -44,7 +44,7 @@ afterAll(async () => {
 /*
 API Tests:
 Test if votes work for non-private non-blocked accounts when voter is not the post creator
-Test if votes work when the post creator does not have a blockedAccounts array in their User document -- TODO
+Test if votes work when the post creator does not have a blockedAccounts array in their User document
 Test if voting fails if the voter is the post creator
 Test if votes work for private accounts where the voter is following the private account
 Test if voting fails if userId is not a string
@@ -74,7 +74,7 @@ for (const format of formats) {
         const oppositeVoteType = voteType === "Up" ? "Down" : "Up";
 
         test(`${voteType}vote on ${format} post is successful when post creator account is public and has no blocked accounts`, async () => {
-            expect.assertions(5);
+            expect.assertions(6);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -102,6 +102,8 @@ for (const format of formats) {
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -124,10 +126,11 @@ for (const format of formats) {
                 postFormat: format,
                 userPublicId: voter.secondId
             });
+            expect(await DB.changedCollections()).toIncludeSameMembers([`${voteType}vote`])
         })
 
         test(`${voteType}vote on ${format} post fails when the voter is the post creator`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -148,6 +151,8 @@ for (const format of formats) {
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -155,15 +160,15 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(403);
             expect(returned.data.message).toBe("You cannot vote on your own post.")
             expect(votes).toHaveLength(0);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
 
         test(`${voteType}vote on ${format} post is successful when post creator account has no blocked accounts and is private, but voter is following post creator account`, async () => {
-            expect.assertions(5);
+            expect.assertions(6);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
-                blockedAccounts: [],
                 privateAccount: true,
                 followers: [
                     "c709e918-f43a-4b90-a35a-36d8a6193431"
@@ -190,6 +195,8 @@ for (const format of formats) {
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -211,10 +218,13 @@ for (const format of formats) {
                 postFormat: format,
                 userPublicId: voter.secondId
             });
+            expect(await DB.changedCollections()).toIncludeSameMembers([`${voteType}vote`])
         })
 
         test(`${voteType}vote on ${format} post fails when voter account could not be found`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
+
+            await DB.takeDBSnapshot()
 
             const returned = await TempController.voteonpost("6537dd49d1866f60dbf58d1f", '6537f617a17d1f6a636e7d39', format, voteType)
 
@@ -223,10 +233,11 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find user with provided userId");
             expect(votes).toHaveLength(0);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`${voteType}vote on ${format} post fails if post could not be found`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
@@ -234,8 +245,9 @@ for (const format of formats) {
             };
 
             const voter = new User(voterData)
-
             await voter.save();
+
+            await DB.takeDBSnapshot()
 
             const returned = await TempController.voteonpost(voterData._id, "6537f617a17d1f6a636e7d39", format, voteType)
 
@@ -244,14 +256,16 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post");
             expect(votes).toHaveLength(0);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`${voteType}vote on ${format} post fails when post creator could not be found`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const voterData = {
                 _id: "6537dd49d1866f60dbf58d1f",
-                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431"
+                secondId: "c709e918-f43a-4b90-a35a-36d8a6193431",
+                name: 'voter'
             };
 
             const voter = new User(voterData)
@@ -266,16 +280,19 @@ for (const format of formats) {
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post creator");
             expect(votes).toHaveLength(0);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`${voteType}vote on ${format} post fails when the voter is blocked by the post creator`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c197f",
@@ -305,6 +322,8 @@ for (const format of formats) {
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -312,10 +331,11 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post");
             expect(votes).toHaveLength(0);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`${voteType}vote on ${format} post fails when the post creator has a private account and the voter is not following them`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -346,6 +366,8 @@ for (const format of formats) {
             const post = new POST_DATABASE_MODELS[format](postData)
             await post.save();
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -353,10 +375,11 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(404);
             expect(returned.data.message).toBe("Could not find post");
             expect(votes).toHaveLength(0);
+            expect(await DB.noChangesMade()).toBe(true)
         })
 
         test(`${voteType}votes on ${format} post do not get duplicated`, async () => {
-            expect.assertions(5);
+            expect.assertions(6);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -394,6 +417,8 @@ for (const format of formats) {
             const dbVote = new VOTE_DATABASE_MODELS[voteType](voteData)
             await dbVote.save()
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -416,10 +441,11 @@ for (const format of formats) {
                 postFormat: format,
                 userPublicId: voter.secondId
             })
+            expect(await DB.changedCollections()).toIncludeSameMembers([`${voteType}vote`])
         })
 
         test(`${oppositeVoteType}votes on ${format} post get deleted when making a ${voteType}vote`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -457,6 +483,8 @@ for (const format of formats) {
             const dbVote = new VOTE_DATABASE_MODELS[oppositeVoteType](voteData)
             await dbVote.save()
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const votes = await VOTE_DATABASE_MODELS[voteType].find({}).lean();
@@ -465,10 +493,11 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(200);
             expect(votes).toHaveLength(1);
             expect(oppositeVotes).toHaveLength(0);
+            expect(await DB.changedCollections()).toIncludeSameMembers(['Upvote', 'Downvote'])
         })
 
         test(`${voteType}vote on ${format} post does not modify other votes in the database`, async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const postcreatorData = {
                 _id: "6537d7c2519e591b466c198f",
@@ -553,6 +582,8 @@ for (const format of formats) {
             await Upvote.insertMany(upvotesToInsert)
             await Downvote.insertMany(downvotesToInsert)
 
+            await DB.takeDBSnapshot()
+
             const returned = await TempController.voteonpost(voterData._id, postData._id, format, voteType)
 
             const upvotes = await Upvote.find({interactionDate: {$lt: 100}}).sort({interactionDate: 1}).lean();
@@ -564,13 +595,16 @@ for (const format of formats) {
             expect(returned.statusCode).toBe(200);
             expect(objectIdStringifiedUpvotes).toStrictEqual(upvotesToInsert);
             expect(objectIdStringifiedDownvotes).toStrictEqual(downvotesToInsert);
+            expect(await DB.changedCollections()).toIncludeSameMembers([`${voteType}vote`])
         })
     }
 }
 
 for (const invalidUserId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`Vote on post should fail when userId is not a string. Testing: ${JSON.stringify(invalidUserId)}`, async () => {
-        expect.assertions(4);
+        expect.assertions(5);
+
+        await DB.takeDBSnapshot()
     
         const returned = await TempController.voteonpost(invalidUserId, '', '', '')
     
@@ -581,11 +615,14 @@ for (const invalidUserId of TEST_CONSTANTS.NOT_STRINGS) {
         expect(returned.data.message).toBe(`userId must be a string. Provided type: ${typeof invalidUserId}`)
         expect(downvotes).toHaveLength(0);
         expect(upvotes).toHaveLength(0);
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 test(`Vote on post should fail when userId is not an objectId`, async () => {
-    expect.assertions(4);
+    expect.assertions(5);
+
+    await DB.takeDBSnapshot()
     
     const returned = await TempController.voteonpost('i am not an objectId', '', '', '')
 
@@ -596,11 +633,14 @@ test(`Vote on post should fail when userId is not an objectId`, async () => {
     expect(returned.data.message).toBe(`userId must be an objectId`)
     expect(downvotes).toHaveLength(0);
     expect(upvotes).toHaveLength(0);
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 for (const invalidPostId of TEST_CONSTANTS.NOT_STRINGS) {
     test(`Vote on post should fail when postId is not a string. Testing: ${JSON.stringify(invalidPostId)}`, async () => {
-        expect.assertions(4);
+        expect.assertions(5);
+
+        await DB.takeDBSnapshot()
     
         const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", invalidPostId, '', '')
     
@@ -611,12 +651,15 @@ for (const invalidPostId of TEST_CONSTANTS.NOT_STRINGS) {
         expect(returned.data.message).toBe(`postId must be a string. Provided type: ${typeof invalidPostId}`)
         expect(downvotes).toHaveLength(0);
         expect(upvotes).toHaveLength(0);
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 
 test(`Vote on post should fail when postId is not an objectId`, async () => {
-    expect.assertions(4);
+    expect.assertions(5);
+
+    await DB.takeDBSnapshot()
 
     const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", "i am not an objectId", '', '')
 
@@ -627,11 +670,14 @@ test(`Vote on post should fail when postId is not an objectId`, async () => {
     expect(upvotes).toHaveLength(0);
     expect(returned.statusCode).toBe(400);
     expect(returned.data.message).toBe("postId must be an objectId");
+    expect(await DB.noChangesMade()).toBe(true)
 })
 
 for (const invalidFormat of invalidPostFormats) {
     test(`Vote on post should fail when postFormat is invalid. Invalid format: ${invalidFormat}`, async () => {
-        expect.assertions(4);
+        expect.assertions(5);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", "6537f617a17d1f6a636e7d39", invalidFormat, '')
 
@@ -642,12 +688,15 @@ for (const invalidFormat of invalidPostFormats) {
         expect(upvotes).toHaveLength(0);
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`postFormat is invalid. Valid post formats: ${formats.join(', ')}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
 
 for (const invalidVoteType of invalidVoteTypes) {
     test(`Vote on post should fail when voteType is invalid. Invalid type: ${invalidVoteType}`, async () => {
-        expect.assertions(4);
+        expect.assertions(5);
+
+        await DB.takeDBSnapshot()
 
         const returned = await TempController.voteonpost("6537f617a17d1f6a636e7d39", "6537f617a17d1f6a636e7d39", "Image", invalidVoteType)
 
@@ -658,5 +707,6 @@ for (const invalidVoteType of invalidVoteTypes) {
         expect(upvotes).toHaveLength(0);
         expect(returned.statusCode).toBe(400);
         expect(returned.data.message).toBe(`voteType is invalid. Valid vote types: ${votes.join(', ')}`)
+        expect(await DB.noChangesMade()).toBe(true)
     })
 }
