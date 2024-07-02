@@ -5265,24 +5265,19 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
             }
 
-            function deleteComment(parentCommentId) {
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with id.'))
+
                 mongoose.startSession().then(session => {
                     session.startTransaction();
 
                     Comment.deleteOne({_id: {$eq: commentId}}, {session}).then(() => {
                         Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
                             Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
-                                (parentCommentId ? Comment.findOneAndUpdate({_id: {$eq: parentCommentId}}, {$inc: {replies: -1}}, {session}) : Promise.resolve()).then(() => {
-                                    mongooseSessionHelper.commitTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.OK('Successfully deleted comment', {softDelete: false}))
-                                    }).catch(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while finding comment with id:', parentCommentId, 'and decrementing replies by 1. The error was:', error)
-                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while removing reply from parent comment. Please try again.'))
-                                    })
+                                mongooseSessionHelper.commitTransaction(session).then(() => {
+                                    return resolve(HTTPWTHandler.OK('Successfully deleted comment', {softDelete: false}))
+                                }).catch(() => {
+                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
                                 })
                             }).catch(error => {
                                 console.error('An error occurred while deleting all downvotes from comment with id:', commentId, '. The error was:', error)
@@ -5306,302 +5301,8 @@ class TempController {
                     console.error('An error occurred while starting Mongoose session. The error was:', error)
                     return resolve(HTTPWTHandler.serverError('An error occurred while starting to delete the comment. Please try again.'))
                 })
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-
-                Comment.findOne({_id: {$eq: commentId}}).lean().then(commentFound => {
-                    if (!commentFound) return resolve(HTTPWTHandler.OK('Comment is already deleted.', {softDelete: false}))
-                    if (String(commentFound.commenterId) !== userId) return resolve(HTTPWTHandler.unauthorized('You are not allowed to delete this comment.'))
-
-                    if (!commentFound.parentCommentId) {
-                        if (commentFound.replies === 0) return deleteComment()
-
-                        mongoose.startSession().then(session => {
-                            session.startTransaction();
-
-                            Comment.findOneAndUpdate({_id: {$eq: commentId}}, {$unset: {commenterId: "", text: ""}, $set: {deleted: true}}, {session}).then(() => {
-                                Upvote.deleteMany({postId: {$eq: commentId}, postFormat: "Comment"}, {session}).then(() => {
-                                    Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
-                                        mongooseSessionHelper.commitTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.OK('Successfully deleted comment', {softDelete: true}))
-                                        }).catch(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while deleting all downvotes from comment with id:', commentId, '. The error was:', error)
-                                        mongooseSessionHelper.abortTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment downvotes. Please try again.'))
-                                        })
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while deleting all upvotes from comment with id:', commentId, '. The error was:', error)
-                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment upvotes. Please try again.'))
-                                    })
-                                })
-                            }).catch(error => {
-                                console.error('An error occurred while soft deleting comment with id:', commentId, '. The error was:', error)
-                                mongooseSessionHelper.abortTransaction(session).then(() => {
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
-                                })
-                            })
-                        }).catch(error => {
-                            console.error('An error occurred while starting Mongoose session:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while starting to delete comment. Please try again.'))
-                        })
-                    } else {
-                        Comment.findOne({_id: commentFound.parentCommentId}).then(parentComment => {
-                            if (!parentComment) return deleteComment()
-                            if (!parentComment.deleted) return deleteComment(commentFound.parentCommentId)
-
-                            if (parentComment.replies <= 1) {
-                                mongoose.startSession().then(session => {
-                                    session.startTransaction();
-
-                                    Comment.deleteOne({_id: {$eq: commentFound.parentCommentId}}, {session}).then(() => {
-                                        Comment.deleteOne({_id: {$eq: commentId}}, {session}).then(() => {
-                                            Upvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
-                                                Downvote.deleteMany({postFormat: "Comment", postId: {$eq: commentId}}, {session}).then(() => {
-                                                    mongooseSessionHelper.commitTransaction(session).then(() => {
-                                                        return resolve(HTTPWTHandler.OK('Successfully deleted comment', {parentDeleted: true, softDelete: false}))
-                                                    }).catch(() => {
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
-                                                    })
-                                                }).catch(error => {
-                                                    console.error('An error occurred while deleting downvotes from comment with id:', commentId, '. The error was:', error)
-                                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment downvotes. Please try again.'))
-                                                    })
-                                                })
-                                            }).catch(error => {
-                                                console.error('An error occurred while deleting upvotes from comment with id:', commentId, '. The error was:', error)
-                                                mongooseSessionHelper.abortTransaction(session).then(() => {
-                                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment upvotes. Please try again.'))
-                                                })
-                                            })
-                                        }).catch(error => {
-                                            console.error('An error occurred while deleting comment with id:', commentId, '. The error was:', error)
-                                            mongooseSessionHelper.abortTransaction(session).then(() => {
-                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
-                                            })
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while deleting one comment with id:', commentFound.parentCommentId, '. The error was:', error)
-                                        mongooseSessionHelper.abortTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting parent comment. Please try again.'))
-                                        })
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while starting mongoose session:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting comment. Please try again.'))
-                                })
-                            } else {
-                                return deleteComment(commentFound.parentCommentId)
-                            }
-                        })
-                    }
-                }).catch(error => {
-                    console.error('An error occurred while finding comment with id:', commentId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while comment. Please try again later.'))
-                })
             }).catch(error => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again later.'))
-            })
-        })
-    }
-
-    static #getsinglecomment = (userId, commentId) => {
-        return new Promise(async resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
-            }
-
-            if (typeof commentId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(commentId)) {
-                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-
-                Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
-                    if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
-
-                    let commentOwner;
-
-                    try {
-                        commentOwner = commentFound.commenterId == userId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
-                    } catch (error) {
-                        console.log('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
-                    }
-
-                    const requesterIsBlockedByCommentOwner = commentOwner.blockedAccounts?.includes(userFound.secondId)
-                    if (requesterIsBlockedByCommentOwner) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
-
-                    const postDatabaseModel = POST_DATABASE_MODELS[commentFound.postFormat]
-                    postDatabaseModel.findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
-                        let postOwner;
-
-                        try {
-                            postOwner = postFound.creatorId == userId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean()
-                        } catch (error) {
-                            console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding user that owns the post that the comment was made on. Please try again.'))
-                        }
-
-                        const requesterIsBlockedByPostOwner = postOwner.blockedAccounts?.includes(userFound.secondId);
-                        if (requesterIsBlockedByPostOwner) return resolve(HTTPWTHandler.notFound('Comment not found.'))
-
-                        const postOwnerAccountIsPrivateAndRequesterDoesNotFollowAccount = postOwner.privateAccount === true && !postOwner.followers.includes(userFound.secondId)
-                        if (postOwnerAccountIsPrivateAndRequesterDoesNotFollowAccount) return resolve(HTTPWTHandler.notFound('Comment not found.'))
-
-                        commentHandler.processOneCommentFromOneOwner(commentOwner, commentFound, userFound).then(comment => {
-                            return resolve(HTTPWTHandler.OK('Successfully found comment', comment))
-                        }).catch(error => {
-                            console.error('An error occurred while processing comment data:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while getting comment data. Please try again.'))
-                        })
-                    }).catch(error => {
-                        console.error('An error occurred while finding', commentFound.postFormat, 'post with id:', commentFound.postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding the post that is associated with the comment. Please try again.'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
-    static #getcommentreplies = (userId, commentId) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
-            }
-
-            if (typeof commentId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Type provided: ${typeof commentId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(commentId)) {
-                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.badInput('User with provided userId could not be found.'))
-
-                Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
-                    if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
-
-                    if (!commentFound.deleted) {
-                        let commentOwner;
-
-                        try {
-                            commentOwner = userId == commentFound.commenterId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
-                        } catch (error) {
-                            console.error('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owner. Please try again.'))
-                        }
-
-                        if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Could not find comment'))
-                    }
-
-                    POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
-                        if (!postFound) {
-                            console.error('A comment was found with no corresponding post:', commentFound)
-                            return resolve(HTTPWTHandler.notFound('Post that associates with comment could not be found'))
-                        }
-
-                        let postOwner;
-
-                        try {
-                            postOwner = userId == postFound.creatorId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean()
-                        } catch (error) {
-                            console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding user that made the post that is associated with the comment. Please try again.'))
-                        }
-
-                        if (userId != postFound.creatorId && (
-                            postOwner.blockedAccounts?.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
-                        )) {
-                            return resolve(HTTPWTHandler.notFound('Could not find comment.'))
-                        }
-
-                        Comment.find({parentCommentId: {$eq: commentId}}).lean().then(commentsFound => {
-                            if (commentsFound.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comment replies', []))
-
-                            const deletedComments = [];
-                            const notDeletedComments = [];
-
-                            for (const comment of commentsFound) {
-                                if (comment.deleted) {
-                                    delete comment.__v;
-                                    comment.postId = String(comment.postId)
-                                    comment._id = String(comment._id)
-
-                                    deletedComments.push(comment)
-                                } else {
-                                    notDeletedComments.push(comment)
-                                }
-                            }
-
-                            const uniqueUsers = Array.from(new Set(notDeletedComments.map(comment => String(comment.commenterId))))
-
-                            User.find({_id: {$in: uniqueUsers}}).lean().then(commentOwners => {
-                                const {ownerPostPairs, postsWithNoOwners} = arrayHelper.returnOwnerPostPairs(notDeletedComments, commentOwners, 'commenterId');
-
-                                if (postsWithNoOwners.length > 0) {
-                                    console.error('Found comments without owners:', postsWithNoOwners)
-                                }
-
-                                Promise.all(
-                                    ownerPostPairs.map(pair => {
-                                        return commentHandler.processMultipleCommentsFromOneOwner(pair[0], pair[1], userFound)
-                                    })
-                                ).then(replies => {
-                                    const flattenedReplies = replies.flat()
-                                    const toSend = flattenedReplies.concat(deletedComments)
-                                    return resolve(HTTPWTHandler.OK('Successfully found comment replies', toSend))
-                                }).catch(error => {
-                                    console.error('An error occurred while processing comments:', error)
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment data. Please try again.'))
-                                })
-                            }).catch(error => {
-                                console.error('An error occurred while finding users with their ids in:', uniqueUsers, '. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while finding comment owners. Please try again.'))
-                            })
-                        }).catch(error => {
-                            console.error('An error occurred while finding comments with parentCommentId:', commentId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding comment replies. Please try again.'))
-                        })
-                    }).catch(error => {
-                        console.error('An error occurred while finding one', commentFound.postFormat, 'post with id:', commentFound.postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post that comment is associated with. Please try again.'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -5710,142 +5411,6 @@ class TempController {
                 })
             }).catch(error => {
                 console.error('An error occurred while finding user with id:', userId, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
-    static #replytocomment = (userId, comment, commentId) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
-            }
-
-            if (typeof comment !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`comment must be a string. Provided type: ${typeof comment}`))
-            }
-
-            if (typeof commentId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`commentId must be a string. Provided type: ${typeof commentId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(commentId)) {
-                return resolve(HTTPWTHandler.badInput('commentId must be an ObjectId.'))
-            }
-
-            comment = comment.trim();
-
-            if (comment.length == 0) {
-                return resolve(HTTPWTHandler.badInput('comment cannot be blank'))
-            }
-
-            if (comment.length > CONSTANTS.MAX_USER_COMMENT_LENGTH) {
-                return resolve(HTTPWTHandler.badInput(`comment cannot be more than ${CONSTANTS.MAX_USER_COMMENT_LENGTH} characters`))
-            }
-
-            if (!CONSTANTS.VALID_COMMENT_TEST.test(comment)) {
-                return resolve(HTTPWTHandler.badInput(`comment must have less than ${CONSTANTS.MAX_USER_COMMENT_LINES} lines`))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
-
-                Comment.findOne({_id: {$eq: commentId}}).lean().then(async commentFound => {
-                    if (!commentFound) return resolve(HTTPWTHandler.notFound('Could not find comment.'))
-
-                    let commentOwner;
-
-                    try {
-                        commentOwner = userId == commentFound.commenterId ? userFound : await User.findOne({_id: {$eq: commentFound.commenterId}}).lean()
-                    } catch (error) {
-                        console.error('An error occurred while finding one user with id:', commentFound.commenterId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                    }
-
-                    if (comment.search(`@${commentOwner.name} `) !== 0) return resolve(HTTPWTHandler.badInput('Comment must have an @ followed by the username of the user that made the comment that you are trying to reply too.'))
-
-                    if (userId != commentFound.commenterId && commentOwner.blockedAccounts?.includes(userFound.secondId)) return resolve(HTTPWTHandler.notFound('Comment could not be found.'))
-
-                    POST_DATABASE_MODELS[commentFound.postFormat].findOne({_id: {$eq: commentFound.postId}}).lean().then(async postFound => {
-                        if (!postFound) {
-                            console.error('Found a comment with no associated post:', commentFound)
-                            return resolve(HTTPWTHandler.notFound('Could not find post that comment associates with.'))
-                        }
-
-                        let postOwner;
-
-                        try {
-                            postOwner = userId == postFound.creatorId ? userFound : await User.findOne({_id: {$eq: postFound.creatorId}}).lean()
-                        } catch (error) {
-                            console.error('An error occurred while finding one user with id:', postFound.creatorId, '. The error was:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while finding the owner of the post that this comment associates with. Please try again.'))
-                        }
-
-                        if (userId != postFound.creatorId && (
-                            postOwner.blockedAccounts?.includes(userFound.secondId) || (postOwner.privateAccount && !postOwner.followers.includes(userFound.secondId))
-                        )) {
-                            return resolve(HTTPWTHandler.notFound('Comment could not be found'))
-                        }
-
-                        const commentReply = {
-                            commenterId: userId,
-                            text: comment,
-                            datePosted: Date.now(),
-                            parentCommentId: commentFound.parentCommentId || commentId,
-                            postId: commentFound.postId,
-                            postFormat: commentFound.postFormat
-                        }
-
-                        const newComment = new Comment(commentReply);
-
-                        mongoose.startSession().then(session => {
-                            session.startTransaction();
-
-                            newComment.save({session}).then(comment => {
-                                Comment.findOneAndUpdate({_id: {$eq: commentReply.parentCommentId}}, {$inc: {replies: 1}}, {session}).then(() => {
-                                    comment = comment.toObject();
-                                    commentHandler.processOneCommentFromOneOwner(userFound, comment, userFound).then(processedComment => {
-                                        mongooseSessionHelper.commitTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.OK('Successfully replied to comment', processedComment))
-                                        }).catch(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while creating comment reply. Please try again.'))
-                                        })
-                                    }).catch(error => {
-                                        console.error('An error occurred while processing one comment:', comment, 'from one owner:', userFound, '. The error was:', error)
-                                        mongooseSessionHelper.abortTransaction(session).then(() => {
-                                            return resolve(HTTPWTHandler.serverError('An error occurred while creating and getting comment reply. Please try again.'))
-                                        })
-                                    })
-                                }).catch(error => {
-                                    console.error('An error occurred while finding comment with id:', commentReply.parentCommentId, 'and incrementing replies by 1. The error was:', error)
-                                    mongooseSessionHelper.abortTransaction(session).then(() => {
-                                        return resolve(HTTPWTHandler.serverError('An error occurred while adding reply to parent comment. Please try again.'))
-                                    })
-                                })
-                            }).catch(error => {
-                                console.error('An error occurred while saving comment with data:', commentReply, '. The error was:', error)
-                                mongooseSessionHelper.abortTransaction(session).then(() => {
-                                    return resolve(HTTPWTHandler.serverError('An error occurred while saving comment. Please try again.'))
-                                })
-                            })
-                        }).catch(error => {
-                            console.error('An error occurred while starting Mongoose session:', error)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while beginning to start saving comment. Please try again.'))
-                        })
-                    }).catch(error => {
-                        console.error('An error occurred while finding', commentFound.postFormat, 'post with id:', commentFound.postId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding post that the comment associates with. Please try again'))
-                    })
-                }).catch(error => {
-                    console.error('An error occurred while finding one comment with id:', commentId, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding comment. Please try again.'))
-                })
-            }).catch(error => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
             })
         })
@@ -5984,28 +5549,13 @@ class TempController {
                         return resolve(HTTPWTHandler.notFound('Could not find post.'))
                     }
 
-                    Comment.find({postId: {$eq: postId}, postFormat: {$eq: postFormat}, parentCommentId: {$exists: false}}).lean().then(comments => {
+                    Comment.find({postId: {$eq: postId}, postFormat: {$eq: postFormat}}).lean().then(comments => {
                         if (comments.length === 0) return resolve(HTTPWTHandler.OK('Successfully found comments', []))
 
-                        const notDeletedComments = [];
-                        const deletedComments = [];
-
-                        for (const comment of comments) {
-                            if (comment.deleted) {
-                                delete comment.__v;
-                                comment.postId = String(comment.postId)
-                                comment._id = String(comment._id)
-
-                                deletedComments.push(comment)
-                            } else {
-                                notDeletedComments.push(comment)
-                            }
-                        }
-
-                        const uniqueUsers = Array.from(new Set(notDeletedComments.map(comment => String(comment.commenterId))));
+                        const uniqueUsers = Array.from(new Set(comments.map(comment => String(comment.commenterId))));
 
                         User.find({_id: {$in: uniqueUsers}}).lean().then(usersFromDatabase => {
-                            const {postsWithNoOwners, ownerPostPairs} = arrayHelper.returnOwnerPostPairs(notDeletedComments, usersFromDatabase, 'commenterId')
+                            const {postsWithNoOwners, ownerPostPairs} = arrayHelper.returnOwnerPostPairs(comments, usersFromDatabase, 'commenterId')
 
                             if (postsWithNoOwners.length > 0) {
                                 console.error('Found comments with no owners:', postsWithNoOwners)
@@ -6983,20 +6533,8 @@ class TempController {
         return await this.#deletecomment(userId, commentId);
     }
 
-    static getsinglecomment = async (userId, commentId) => {
-        return await this.#getsinglecomment(userId, commentId);
-    }
-
-    static getcommentreplies = async (userId, commentId) => {
-        return await this.#getcommentreplies(userId, commentId);
-    }
-
     static voteoncomment = async (userId, commentId, voteType) => {
         return await this.#voteoncomment(userId, commentId, voteType)
-    }
-
-    static replytocomment = async (userId, comment, commentId) => {
-        return await this.#replytocomment(userId, comment, commentId);
     }
 
     static postcomment = async (userId, comment,postId, postFormat) => {

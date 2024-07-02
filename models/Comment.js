@@ -5,11 +5,8 @@ const CommentSchema = new Schema({
     commenterId: mongoose.Schema.Types.ObjectId,
     text: String,
     datePosted: Number,
-    parentCommentId: mongoose.Schema.Types.ObjectId,
     postId: mongoose.Schema.Types.ObjectId,
-    postFormat: String,
-    deleted: Boolean,
-    replies: {type: Number, default: 0}
+    postFormat: String
 });
 
 const Comment = mongoose.model('Comment', CommentSchema);
