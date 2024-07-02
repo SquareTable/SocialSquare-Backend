@@ -6,7 +6,7 @@ const RefreshTokenSchema = new Schema({
     location: String,
     deviceType: String,
     IP: String,
-    createdAt: Date,
+    createdAt: {type: Date, expires: 15 * 60}, //RefreshTokens will get deleted 15 minutes after creation
     userId: mongoose.Schema.Types.ObjectId,
     admin: Boolean,
     notificationKey: String
