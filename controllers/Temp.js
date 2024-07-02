@@ -4102,10 +4102,21 @@ class TempController {
                                                                                             imageHandler.deleteImageByKey(imageKey)
                                                                                         }
 
-                                                                                        mongooseSessionHelper.commitTransaction(session).then(() => {
-                                                                                            return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
-                                                                                        }).catch(() => {
-                                                                                            return resolve(HTTPWTHandler.serverError('An error occurred while deleting your account and associated data. Please try again.'))
+                                                                                        Promise.all([
+                                                                                            ImagePost.updateMany({'viewedBy.pubId': {$eq: userFound.secondId}}, {$pull: {viewedBy: {pubId: userFound.secondId}}}, {session}),
+                                                                                            Poll.updateMany({'viewedBy.pubId': {$eq: userFound.secondId}}, {$pull: {viewedBy: {pubId: userFound.secondId}}}, {session}),
+                                                                                            Thread.updateMany({'viewedBy.pubId': {$eq: userFound.secondId}}, {$pull: {viewedBy: {pubId: userFound.secondId}}}, {session})
+                                                                                        ]).then(() => {
+                                                                                            mongooseSessionHelper.commitTransaction(session).then(() => {
+                                                                                                return resolve(HTTPWTHandler.OK('Successfully deleted account and all associated data.'))
+                                                                                            }).catch(() => {
+                                                                                                return resolve(HTTPWTHandler.serverError('An error occurred while deleting your account and associated data. Please try again.'))
+                                                                                            })
+                                                                                        }).catch(error => {
+                                                                                            console.error('An error occurred while removing viewedBy fields for user with pubId:', userFound.secondId, '. The error was:', error)
+                                                                                            mongooseSessionHelper.abortTransaction(session).then(() => {
+                                                                                                return resolve(HTTPWTHandler.serverError('An error occurred while removing data about posts you have viewed. Please try again.'))
+                                                                                            })
                                                                                         })
                                                                                     }).catch(error => {
                                                                                         console.error('An error occurred while deleting all CategoryMember documents with userId:', userId, '. The error was:', error)
