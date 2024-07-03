@@ -798,7 +798,6 @@ const rateLimiters = {
 
 
 router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'sendnotificationkey',
@@ -807,8 +806,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/sendnotificationkey controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -816,8 +814,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /sendnotificationkey:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -827,7 +824,6 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
 });
 
 router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changedisplayname',
@@ -836,8 +832,7 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/changedisplayname controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -845,8 +840,7 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /changedisplayname:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -856,7 +850,6 @@ router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res)
 });
 
 router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changedisplayname',
@@ -865,8 +858,7 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/changeemail controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -874,8 +866,7 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /changeemail:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -885,7 +876,6 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
 });
 
 router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changepassword',
@@ -894,8 +884,7 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/changepassword controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -903,8 +892,7 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /changeemail:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -914,7 +902,6 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
 });
 
 router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changeusername',
@@ -923,8 +910,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/changeusername controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -932,8 +918,7 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /changeusername:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -943,7 +928,6 @@ router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
 });
 
 router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changebio',
@@ -952,8 +936,7 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/changebio controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -961,8 +944,7 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /changebio:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -972,7 +954,6 @@ router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
 });
 
 router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpageusersearch',
@@ -981,8 +962,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/searchpageusersearch controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -990,8 +970,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /searchpageusersearch:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1001,7 +980,6 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
 });
 
 router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots} = req.body;
 
     const worker = new Worker(workerPath, {
@@ -1030,8 +1008,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/createpollpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1039,8 +1016,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /createpollpost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1050,7 +1026,6 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
 });
 
 router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollposts',
@@ -1059,8 +1034,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/searchforpollposts controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1068,8 +1042,7 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /searchforpollposts:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1079,7 +1052,6 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
 });
 
 router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'voteonpoll',
@@ -1088,8 +1060,7 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/voteonpoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1097,8 +1068,7 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /voteonpoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1108,7 +1078,6 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
 });
 
 router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'removevoteonpoll',
@@ -1117,8 +1086,7 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/removevoteonpoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1126,8 +1094,7 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /removevoteonpoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1137,7 +1104,6 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
 });
 
 router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpollpostsbyid',
@@ -1146,8 +1112,7 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/searchforpollpostsbyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1155,8 +1120,7 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /searchforpollpostsbyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1166,7 +1130,6 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
 });
 
 router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deletepoll',
@@ -1175,8 +1138,7 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/deletepoll controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1184,8 +1146,7 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /deletepoll:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1195,7 +1156,6 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
 });
 
 router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postImage',
@@ -1204,8 +1164,7 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/postImage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1213,8 +1172,7 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /postImage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1224,7 +1182,6 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
 });
 
 router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postProfileImage',
@@ -1233,8 +1190,7 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/postProfileImage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1242,8 +1198,7 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /postProfileImage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1253,7 +1208,6 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
 });
 
 router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getImagesFromProfile',
@@ -1262,8 +1216,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POSST temp/getImagesFromProfile controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1271,8 +1224,7 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getImagesFromProfile:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1282,7 +1234,6 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
 });
 
 router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getProfilePic',
@@ -1291,8 +1242,7 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/getProfilePic/:pubId controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1300,8 +1250,7 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /getProfilePic/:pubId:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1311,7 +1260,6 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
 });
 
 router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -1321,8 +1269,7 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/postcategorywithimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1330,8 +1277,7 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /postcategorywithimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1341,7 +1287,6 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
 });
 
 router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deleteimage',
@@ -1350,8 +1295,7 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/deleteimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1359,8 +1303,7 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /deleteimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1370,7 +1313,6 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
 });
 
 router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -1380,8 +1322,7 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/postcategorywithoutimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1389,8 +1330,7 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /postcategorywithoutimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1400,7 +1340,6 @@ router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage
 });
 
 router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcategories'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpagesearchcategories',
@@ -1409,8 +1348,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/searchpagesearchcategories controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1418,8 +1356,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /searchpagesearchcategories:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1429,7 +1366,6 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
 });
 
 router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getcategoryimage',
@@ -1438,8 +1374,7 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getcategoryimage  controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1447,8 +1382,7 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getcategoryimage:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1458,7 +1392,6 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
 });
 
 router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategorybyid',
@@ -1467,8 +1400,7 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/fimdcategorybyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1476,8 +1408,7 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /findcategorybyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1487,7 +1418,6 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
 });
 
 router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'findcategoryfromprofile',
@@ -1496,8 +1426,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/findcategoryfromprofile controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1505,8 +1434,7 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /findcategoryfromprofile:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1516,7 +1444,6 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
 });
 
 router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'joincategory',
@@ -1525,8 +1452,7 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/joincategory controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1534,8 +1460,7 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /joincategory:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1545,7 +1470,6 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
 });
 
 router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'leavecategory',
@@ -1554,8 +1478,7 @@ router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/leavecategory controller function returned data to be sent to the client but HTTP headers have already been sent! Data to be returned:', result)
@@ -1563,7 +1486,7 @@ router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /leavecategory:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1573,7 +1496,6 @@ router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
 });
 
 router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
 
     const worker = new Worker(workerPath, {
@@ -1584,8 +1506,7 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/posttextthread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1593,8 +1514,7 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /posttextthread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1604,7 +1524,6 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
 });
 
 router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single('image'), async (req, res) => {
-    let HTTPHeadersSent = false;
     let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -1614,8 +1533,7 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/postimagethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1623,8 +1541,7 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /postimagethread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1634,7 +1551,6 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
 });
 
 router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {categoryId} = req.body;
 
     const worker = new Worker(workerPath, {
@@ -1645,8 +1561,7 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getthreadsfromcategory controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1654,8 +1569,7 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getthreadsfromcategory:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1665,7 +1579,6 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
 });
 
 router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getthreadsfromprofile',
@@ -1674,8 +1587,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getthreadsfromprofile controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1683,8 +1595,7 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getthreadsfromprofile:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1694,7 +1605,6 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
 });
 
 router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getthreadbyid',
@@ -1703,8 +1613,7 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getthreadbyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1712,8 +1621,7 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getthreadbyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1723,7 +1631,6 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
 });
 
 router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deletethread',
@@ -1732,8 +1639,7 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/deletethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1741,8 +1647,7 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /deletethread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1752,7 +1657,6 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
 });
 
 router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'reloadUsersDetails',
@@ -1761,8 +1665,7 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/reloadUsersDetails controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1770,8 +1673,7 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /reloadUsersDetails:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1781,7 +1683,6 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
 });
 
 router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'earnSpecialBadge',
@@ -1790,8 +1691,7 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/earnSpecialBadge controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1799,8 +1699,7 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /earnSpecialBadge:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1810,7 +1709,6 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
 });
 
 router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getuserbyid',
@@ -1819,8 +1717,7 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getuserbyid controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1828,8 +1725,7 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getuserbyid:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1839,7 +1735,6 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
 });
 
 router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'makeaccountprivate',
@@ -1848,8 +1743,7 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/makeaccountprivate controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1857,8 +1751,7 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /makeaccountprivate:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1868,7 +1761,6 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
 });
 
 router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'makeaccountpublic',
@@ -1877,8 +1769,7 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/makeaccountpublic controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1886,8 +1777,7 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /makeaccountpublic:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1897,7 +1787,6 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
 });
 
 router.get('/followrequests/:skip', rateLimiters['/followrequests/:skip'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getfollowrequests',
@@ -1906,8 +1795,7 @@ router.get('/followrequests/:skip', rateLimiters['/followrequests/:skip'], (req,
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/followrequests/:skip controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1915,8 +1803,7 @@ router.get('/followrequests/:skip', rateLimiters['/followrequests/:skip'], (req,
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /followrequests/:skip:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1926,7 +1813,6 @@ router.get('/followrequests/:skip', rateLimiters['/followrequests/:skip'], (req,
 });
 
 router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'denyfollowrequest',
@@ -1935,8 +1821,7 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/denyfollowrequest controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1944,8 +1829,7 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /denyfollowrequest:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1955,7 +1839,6 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
 });
 
 router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'acceptfollowrequest',
@@ -1964,8 +1847,7 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/acceptfollowrequest controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -1973,8 +1855,7 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /acceptfollowrequest:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -1984,7 +1865,6 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
 });
 
 router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'removefollowerfromaccount',
@@ -1993,8 +1873,7 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/removefollowerfromaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2002,8 +1881,7 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /removefollowerfromaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2013,7 +1891,6 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
 });
 
 router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'blockaccount',
@@ -2022,8 +1899,7 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/blockaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2031,8 +1907,7 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /blockaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2042,7 +1917,6 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
 });
 
 router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getuserblockedaccounts',
@@ -2051,8 +1925,7 @@ router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getuserblockedaccounts controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2060,8 +1933,7 @@ router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getuserblockedaccounts:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2071,7 +1943,6 @@ router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], 
 });
 
 router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'unblockaccount',
@@ -2080,8 +1951,7 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/unblockaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2089,8 +1959,7 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /unblockaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2100,7 +1969,6 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
 });
 
 router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'enableAlgorithm',
@@ -2109,8 +1977,7 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/enableAlgorithm controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2118,8 +1985,7 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /enableAlgorithm:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2129,7 +1995,6 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
 });
 
 router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationFactorsEnabled'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getAuthenticationFactorsEnabled',
@@ -2138,8 +2003,7 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/getAuthenticationFactorsEnabled controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2147,8 +2011,7 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /getAuthenticationFactorsEnabled:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2158,7 +2021,6 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
 });
 
 router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'disableAlgorithm',
@@ -2167,8 +2029,7 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/disableAlgorithm controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2176,8 +2037,7 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /disableAlgorithm:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2187,7 +2047,6 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
 });
 
 router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'reloadProfileEssentials',
@@ -2196,8 +2055,7 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/reloadProfileEssentials controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2205,8 +2063,7 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /reloadProfileEssentials:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2216,7 +2073,6 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
 });
 
 router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmailMultiFactorAuthentication'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'turnOffEmailMultiFactorAuthentication',
@@ -2225,8 +2081,7 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/turnOffEmailMultiFactorAuthentication controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2234,8 +2089,7 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /turnOffEmailMultiFactorAuthentication:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2245,7 +2099,6 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
 });
 
 router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deleteaccount',
@@ -2254,8 +2107,7 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/deleteaccount controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2263,8 +2115,7 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /deleteaccount:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2274,7 +2125,6 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
 });
 
 router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'checkIfCategoryExists',
@@ -2283,8 +2133,7 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/checkIfCategoryExists controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2292,8 +2141,7 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /checkIfCategoryExists:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2303,7 +2151,6 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
 });
 
 router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'uploadNotificationsSettings',
@@ -2312,8 +2159,7 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/uploadNotificationsSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2321,8 +2167,7 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /uploadNotificationsSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2332,7 +2177,6 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
 });
 
 router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getUserNotificationSettings',
@@ -2341,8 +2185,7 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/getUserNotificationSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2350,8 +2193,7 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /getUserNotificationSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2361,7 +2203,6 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
 });
 
 router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {reportType, reporteePubId} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2371,8 +2212,7 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/reportUser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2380,8 +2220,7 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /reportUser:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2391,7 +2230,6 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
 });
 
 router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => {
-    let HTTPHeadersSent = false;
     let {skip, voteType, postFormat} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2401,8 +2239,7 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getUserActivity controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2410,8 +2247,7 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getUserActivity:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2421,7 +2257,6 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
 });
 
 router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
-    let HTTPHeadersSent = false;
     const {postId, postFormat, reason} = req.body
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2431,8 +2266,7 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/reportPost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2440,8 +2274,7 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /reportPost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2451,7 +2284,6 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
 });
 
 router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'userAlgorithmSettings',
@@ -2460,8 +2292,7 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/userAlgorithmSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2469,8 +2300,7 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /userAlgorithmSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2480,7 +2310,6 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
 });
 
 router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'uploadAlgorithmSettings',
@@ -2489,8 +2318,7 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/uploadAlgorithmSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2498,8 +2326,7 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /uploadAlgorithmSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2509,7 +2336,6 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
 });
 
 router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'privacySettings',
@@ -2518,8 +2344,7 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/privacySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2527,8 +2352,7 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /privacySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2538,7 +2362,6 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
 });
 
 router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'savePrivacySettings',
@@ -2547,8 +2370,7 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/savePrivacySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2556,8 +2378,7 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /savePrivacySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2567,7 +2388,6 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
 });
 
 router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getProfileStats',
@@ -2576,8 +2396,7 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getProfileStats controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2585,8 +2404,7 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getProfileStats:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2596,7 +2414,6 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
 });
 
 router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
-    let HTTPHeadersSent = false;
     const authRefreshTokenHeader = req.headers["auth-refresh-token"]
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2606,8 +2423,7 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/loginactivity controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2615,8 +2431,7 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /loginactivity:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2626,7 +2441,6 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
 });
 
 router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'logoutdevice',
@@ -2635,8 +2449,7 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/logoutdevice controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2644,8 +2457,7 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /logoutdevice:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2655,7 +2467,6 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
 });
 
 router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'logoutallotherdevices',
@@ -2664,8 +2475,7 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/logoutallotherdevices controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2673,8 +2483,7 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /logoutallotherdevices:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2684,7 +2493,6 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
 });
 
 router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'loginActivitySettings',
@@ -2693,8 +2501,7 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/loginActivitySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2702,8 +2509,7 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /loginActivitySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2713,7 +2519,6 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
 });
 
 router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'uploadLoginActivitySettings',
@@ -2722,8 +2527,7 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/uploadLoginActivitySettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2731,8 +2535,7 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /uploadLoginActivitySettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2742,7 +2545,6 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
 });
 
 router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginActivitySettingsOnSignup'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
-    let HTTPHeadersSent = false;
     const {newSettings, refreshTokenId} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
@@ -2752,8 +2554,7 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/updateLoginActivitySettingsOnSignup controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2761,8 +2562,7 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /updateLoginActivitySettingsOnSignup:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2772,7 +2572,6 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
 });
 
 router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSettings'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'followingFeedFilterSettings',
@@ -2781,8 +2580,7 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('GET temp/followingFeedFilterSettings controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2790,8 +2588,7 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for GET /followingFeedFilterSettings:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2801,7 +2598,6 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
 });
 
 router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'logoutuser',
@@ -2810,8 +2606,7 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/logoutuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2819,8 +2614,7 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /logoutuser:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2830,7 +2624,6 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
 });
 
 router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'deletecomment',
@@ -2839,8 +2632,7 @@ router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/deletecomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2848,8 +2640,7 @@ router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /deletecomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2859,7 +2650,6 @@ router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
 });
 
 router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getsinglecomment',
@@ -2868,8 +2658,7 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getsinglecomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2877,8 +2666,7 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getsinglecomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2888,7 +2676,6 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
 });
 
 router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getcommentreplies',
@@ -2897,8 +2684,7 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getcommentreplies controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2906,8 +2692,7 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getcommentreplies:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2917,7 +2702,6 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
 });
 
 router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'voteoncomment',
@@ -2926,8 +2710,7 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/voteoncomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2935,8 +2718,7 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /voteoncomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2946,7 +2728,6 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
 });
 
 router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'replytocomment',
@@ -2955,8 +2736,7 @@ router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/replytocomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2964,8 +2744,7 @@ router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /replytocomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -2975,7 +2754,6 @@ router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
 });
 
 router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postcomment',
@@ -2984,8 +2762,7 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/postcomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -2993,8 +2770,7 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /postcomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3004,7 +2780,6 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
 });
 
 router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchforpostcomments',
@@ -3013,8 +2788,7 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/searchforpostcomments controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3022,8 +2796,7 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /searchforpostcomments:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3033,7 +2806,6 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
 });
 
 router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'removevoteoncomment',
@@ -3042,8 +2814,7 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/removevoteoncomment controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3051,8 +2822,7 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /removevoteoncomment:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3062,7 +2832,6 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
 });
 
 router.post('/voteonpost', rateLimiters['/voteonpost'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'voteonpost',
@@ -3071,8 +2840,7 @@ router.post('/voteonpost', rateLimiters['/voteonpost'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/voteonpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3080,8 +2848,7 @@ router.post('/voteonpost', rateLimiters['/voteonpost'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /voteonpost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3091,7 +2858,6 @@ router.post('/voteonpost', rateLimiters['/voteonpost'], (req, res) => {
 });
 
 router.post('/removevoteonpost', rateLimiters['/removevoteonpost'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'removevoteonpost',
@@ -3100,8 +2866,7 @@ router.post('/removevoteonpost', rateLimiters['/removevoteonpost'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/removevoteonpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3109,8 +2874,7 @@ router.post('/removevoteonpost', rateLimiters['/removevoteonpost'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /removevoteonpost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3120,7 +2884,6 @@ router.post('/removevoteonpost', rateLimiters['/removevoteonpost'], (req, res) =
 });
 
 router.post('/followuser', rateLimiters['/followuser'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'followuser',
@@ -3129,8 +2892,7 @@ router.post('/followuser', rateLimiters['/followuser'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/followuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3138,8 +2900,7 @@ router.post('/followuser', rateLimiters['/followuser'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /followuser:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3149,7 +2910,6 @@ router.post('/followuser', rateLimiters['/followuser'], (req, res) => {
 });
 
 router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'unfollowuser',
@@ -3158,8 +2918,7 @@ router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/unfollowuser controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3167,8 +2926,7 @@ router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /unfollowuser:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3178,7 +2936,6 @@ router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
 });
 
 router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getvotedusersofpost',
@@ -3187,8 +2944,7 @@ router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, 
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getvotedusersofpost controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3196,8 +2952,7 @@ router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, 
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getvotedusersofpost:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3207,7 +2962,6 @@ router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, 
 });
 
 router.post('/getcategorymembers', rateLimiters['/getcategorymembers'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getcategorymembers',
@@ -3216,8 +2970,7 @@ router.post('/getcategorymembers', rateLimiters['/getcategorymembers'], (req, re
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getcategorymembers controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3225,8 +2978,7 @@ router.post('/getcategorymembers', rateLimiters['/getcategorymembers'], (req, re
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getcategorymembers:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
@@ -3236,7 +2988,6 @@ router.post('/getcategorymembers', rateLimiters['/getcategorymembers'], (req, re
 });
 
 router.post('/getpollvoteusers', rateLimiters['/getpollvoteusers'], (req, res) => {
-    let HTTPHeadersSent = false;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'getpollvoteusers',
@@ -3245,8 +2996,7 @@ router.post('/getpollvoteusers', rateLimiters['/getpollvoteusers'], (req, res) =
     })
 
     worker.on('message', (result) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
             console.error('POST temp/getpollvoteusers controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
@@ -3254,8 +3004,7 @@ router.post('/getpollvoteusers', rateLimiters['/getpollvoteusers'], (req, res) =
     })
 
     worker.on('error', (error) => {
-        if (!HTTPHeadersSent) {
-            HTTPHeadersSent = true;
+        if (!res.headersSent) {
             console.error('An error occurred from TempWorker for POST /getpollvoteusers:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
