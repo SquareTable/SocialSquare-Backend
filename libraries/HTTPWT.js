@@ -26,7 +26,7 @@ class HTTPWT {
             statusCode: 200,
             data: {
                 status: 'SUCCESS',
-                message: message || '',
+                message: message === undefined || message === null ? '' : message,
                 ...extras
             }
         }
