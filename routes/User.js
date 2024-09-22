@@ -116,7 +116,7 @@ router.post('/checkusernameavailability', rateLimiters['/checkusernameavailabili
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'checkusernameavailability',
-            functionArgs: [req.body.username]
+            functionArgs: [req.body]
         }
     })
 
