@@ -301,11 +301,7 @@ class UserController {
             }
         
             User.findOne({name: {$eq: username}}).lean().then(userFound => {
-                if (userFound) {
-                    return resolve(HTTPWTHandler.OK('Username is not available'))
-                } else {
-                    return resolve(HTTPWTHandler.OK('Username is available'))
-                }
+                return resolve(HTTPWTHandler.OK(!userFound))
             }).catch(err => {
                 console.error('An error occurred while finding one user with name:', username, '. The error was:', err)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user with username. Please try again.'))
