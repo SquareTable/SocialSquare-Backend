@@ -40,7 +40,7 @@ test('user/checkusernameavailability says available when username is available',
 
     const returned = await UserController.checkusernameavailability('seb')
 
-    expect(returned.data.message).toBe('Username is available')
+    expect(returned.data.message).toBe(true)
     expect(returned.statusCode).toBe(200)
     expect(await DB.noChangesMade()).toBe(true)
 })
@@ -56,7 +56,7 @@ test('user/checkusernameavailability says not available when username is not ava
 
     const returned = await UserController.checkusernameavailability('seb')
 
-    expect(returned.data.message).toBe('Username is not available')
+    expect(returned.data.message).toBe(false)
     expect(returned.statusCode).toBe(200)
     expect(await DB.noChangesMade()).toBe(true)
 })
