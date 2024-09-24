@@ -330,6 +330,11 @@ function appNotActiveTimeOutForDisconnect(socketIdOfTheUser, pubId) {
 // Get the objectID type
 var ObjectID = require('mongodb').ObjectID;
 
+//Remove this before release
+app.use(cors({
+    origin: '*'
+}))
+
 //For accepting post form data
 const bodyParser = require('express').json;
 app.use(bodyParser());
@@ -375,10 +380,6 @@ if (process.env.NO_HTTPS) {
         console.log(`Server running on port ${port}`);
     });
 }
-
-app.use(cors({
-    origin: '*'
-}))
 
 
 const handlePopularPosts = () => {
