@@ -5,7 +5,7 @@ const CONSTANTS = {
     MAX_USER_USERNAME_LENGTH: 20,
     VALID_EMAIL_TEST: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
     VALID_USERNAME_TEST: /^[a-z0-9]*$/,
-    VALID_USERNAME_TEST_READABLE_REQUIREMENTS: 'Your username must only contain lowercase a - z characters and numbers', //Update this when username test is updated
+    VALID_USERNAME_TEST_READABLE_REQUIREMENTS: 'Your username must only contain numbers and lowercase a - z characters', //Update this when username test is updated
     MAX_USER_DISPLAY_NAME_LENGTH: 20,
     VALID_DISPLAY_NAME_TEST: /^[A-Za-z]+$/,
     MAX_USER_BIO_LENGTH: 250,
