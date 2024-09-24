@@ -376,7 +376,7 @@ if (process.env.NO_HTTPS) {
     });
 }
 
-server.use(cors({
+app.use(cors({
     origin: '*'
 }))
 
