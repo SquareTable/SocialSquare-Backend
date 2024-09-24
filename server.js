@@ -9,6 +9,7 @@ require('./config/db').then(() => {
 });
 
 const app = require('express')();
+const cors = require('cors')
 const port = process.env.PORT || 3000;
 
 const UserRouter = require('./routes/User')
@@ -374,6 +375,10 @@ if (process.env.NO_HTTPS) {
         console.log(`Server running on port ${port}`);
     });
 }
+
+server.use(cors({
+    origin: '*'
+}))
 
 
 const handlePopularPosts = () => {
