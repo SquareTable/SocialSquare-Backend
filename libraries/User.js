@@ -33,7 +33,11 @@ class User {
             'authenticationFactorsEnabled',
             'MFAEmail',
             'followers',
-            'following'
+            'following',
+            '__v',
+            '_id',
+            'totalLikes',
+            'settings'
         ]
 
         const followers = userObject.followers.length;
