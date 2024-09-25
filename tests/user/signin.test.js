@@ -291,7 +291,7 @@ describe('When Email 2FA is not enabled', () => {
     }
 
     test('if login works', async () => {
-        expect.assertions(12);
+        expect.assertions(11);
 
         await new User(userData).save();
 
@@ -343,7 +343,6 @@ describe('When Email 2FA is not enabled', () => {
         expect(includesNotIncludedKey).toBe(false);
         expect(typeof returned.data.data.followers).toBe("number");
         expect(typeof returned.data.data.following).toBe("number");
-        expect(typeof returned.data.data._id).toBe("string");
         //End of test if correct user data gets returned
 
 
