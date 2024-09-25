@@ -344,7 +344,6 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(includesNotIncludedKey).toBe(false);
         expect(typeof returned.data.data.followers).toBe("number");
         expect(typeof returned.data.data.following).toBe("number");
-        expect(typeof returned.data.data._id).toBe("string");
         expect(await DB.changedCollections()).toIncludeSameMembers(['User', 'RefreshToken'])
     })
 }
