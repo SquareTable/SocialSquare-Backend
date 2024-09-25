@@ -264,7 +264,7 @@ test('if signup fails if a user with the same name already exists', async () => 
 
 for (const validUserEmail of VALID_EMAILS) {
     test(`if user account creation is successful with correct inputs. Email tested: ${validUserEmail}`, async () => {
-        expect.assertions(21);
+        expect.assertions(20);
     
         const benchmarkUserData = {
             name: validName,
