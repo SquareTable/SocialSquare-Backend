@@ -33,20 +33,20 @@ class User {
             'authenticationFactorsEnabled',
             'MFAEmail',
             'followers',
-            'following'
+            'following',
+            '__v',
+            '_id',
+            'totalLikes',
+            'settings'
         ]
 
         const followers = userObject.followers.length;
         const following = userObject.following.length;
 
-        console.log('Followers length:', followers, '   |   Followers Type:', typeof followers)
-
         notIncludedKeys.forEach(x => delete userObject[x])
 
         userObject.followers = followers
         userObject.following = following
-
-        userObject._id = userObject._id.toString()
 
         return userObject;
     }
