@@ -11,6 +11,7 @@ class PollPost {
             Promise.all(
                 posts.map(post => {
                     delete post.creatorId
+                    delete post.viewedBy
                     return new Promise((resolve, reject) => {
                         Promise.all([
                             Upvote.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"}),
