@@ -12,6 +12,7 @@ const RefreshToken = require('../models/RefreshToken');
 const Message = require('../models/Message');
 const Comment = require('../models/Comment');
 const CategoryMember = require('../models/CategoryMember');
+const Notification = require('../models/Notification');
 
 const HTTPWTLibrary = require('../libraries/HTTPWT');
 const CONSTANTS = require('../constants');
@@ -50,6 +51,9 @@ const categoryHelper = new CategoryLibrary();
 
 const UUIDLibrary = require('../libraries/UUID.js');
 const uuidHelper = new UUIDLibrary();
+
+const NotificationLibrary = require('../libraries/Notifications.js');
+const notificationHelper = new NotificationLibrary();
 
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
@@ -6258,6 +6262,123 @@ class TempController {
         })
     }
 
+    static #clearnotifications = (userId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                Notification.deleteMany({userId: {$eq: userId}}).then(() => {
+                    return resolve(HTTPWTHandler.OK('Successfully deleted all notifications.'))
+                }).catch(error => {
+                    console.error('An error occurred while deleting all notifications with userId:', userId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while deleting all notifications. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error);
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #deletenotification = (userId, notificationId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`));
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof notificationId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`notificationId must be a string. Provided type: ${typeof notificationId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(notificationId)) {
+                return resolve(HTTPWTHandler.badInput('notificationId must be an ObjectId.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                Notification.findOne({_id: {$eq: notificationId}}).then(notificationFound => {
+                    if (!notificationFound) return resolve(HTTPWTHandler.notFound('Could not find notification.'))
+
+                    if (String(notificationFound.userId) !== userId) return resolve(HTTPWTHandler.forbidden('You must be the notification owner to delete this notification.'))
+
+                    Notification.deleteOne({_id: {$eq: notificationId}}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Successfully deleted notification'))
+                    }).catch(error => {
+                        console.error('An error occurred while deleting one notification with id:', notificationId, '. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while deleting notification. Please try again.'))
+                    })
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
+    static #getnotifications = (userId, lastNotificationId) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof lastNotificationId !== 'string' && lastNotificationId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastNotificationId must be a string or undefined. Provided type: ${typeof lastNotificationId}`))
+            }
+
+            if (typeof lastNotificationId === 'string' && !mongoose.isObjectIdOrHexString(lastNotificationId)) {
+                return resolve(HTTPWTHandler.badInput('lastNotificationId must be an ObjectId or undefined.'))
+            }
+
+            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
+                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
+
+                const notificationQuery = {
+                    userId: {$eq: userId}
+                }
+
+                if (typeof lastNotificationId === 'string') {
+                    notificationQuery._id = {$lt: lastNotificationId}
+                }
+
+                Notification.find(notificationQuery).sort({_id: -1}).limit(CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL).lean().then(notifications => {
+                    if (notifications.length < 1) return resolve(HTTPWTHandler.OK('No notifications could be found', {notifications: [], noMoreNotifications: true}))
+
+                    const notificationData = notificationHelper.returnNotificationDataToSend(notifications);
+
+                    const toSend = {
+                        notifications: notificationData,
+                        noMoreNotifications: notifications.length < CONSTANTS.MAX_NOTIFICATIONS_PER_API_CALL
+                    }
+
+                    return resolve(HTTPWTHandler.OK('Found notifications', toSend));
+                }).catch(error => {
+                    console.error('An error occurred while finding notifications with database query:', notificationQuery, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding notifications. Please try again.'))
+                })
+            }).catch(error => {
+                console.error('An error occurred while finding one user with id:', userId, '. The error was:', error)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            })
+        })
+    }
+
     static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
         return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
@@ -6580,6 +6701,18 @@ class TempController {
 
     static getpollvoteusers = async (userId, pollId, pollOption, lastItemId) => {
         return await this.#getpollvoteusers(userId, pollId, pollOption, lastItemId)
+    }
+
+    static clearnotifications = async (userId) => {
+        return await this.#clearnotifications(userId);
+    }
+
+    static deletenotification = async (userId, notificationId) => {
+        return await this.#deletenotification(userId, notificationId);
+    }
+
+    static getnotifications = async (userId, lastNotificationId) => {
+        return await this.#getnotifications(userId, lastNotificationId);
     }
 }
 

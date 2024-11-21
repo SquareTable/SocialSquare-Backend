@@ -62,6 +62,7 @@ const CONSTANTS = {
         'deletePosts'
     ],
     MAX_ACCOUNT_FOLLOW_REQUESTS_PER_API_CALL: 10,
+    MAX_NOTIFICATIONS_PER_API_CALL: 10, //Used in temp/getnotifications
     VOTED_USERS_API_ALLOWED_POST_FORMATS: ['Image', 'Poll', 'Thread'],
     VOTED_USERS_MAX_USERS_TO_SEND_PER_API_CALL: 10,
     VOTED_USERS_API_ALLOWED_VOTE_TYPES: ["Up", "Down"],
