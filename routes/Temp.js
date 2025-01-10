@@ -45,15 +45,6 @@ const rateLimiters = {
         skipFailedRequests: true, // Request will not be counted if it fails
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/changedisplayname': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "The display name for this account has changed too many times today. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
     '/changeemail': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 2,
@@ -69,24 +60,6 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "The password for this account has been changed too many times today. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/changeusername': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 3,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "The username for this account has been changed more too many times today. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/changebio': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "The bio for this account has been changed too many times today. Please try again in 24 hours."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -794,6 +767,15 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
+    '/editprofiledetails': rateLimit({
+        windowMs: 1000 * 60 * 60 * 6, //6 hours
+        max: 10,
+        standardHeaders: false,
+        legacyHeaders: false,
+        message: {status: "FAILED", message: "The details for this account has been changed too many times in the past 6 hours. Please try again in 6 hours."},
+        skipFailedRequests: true,
+        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
+    }),
 }
 
 
@@ -819,32 +801,6 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/sendnotificationkey controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/changedisplayname', rateLimiters['/changedisplayname'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'changedisplayname',
-            functionArgs: [req.tokenData, req.body.desiredDisplayName]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!res.headersSent) {
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/changedisplayname controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!res.headersSent) {
-            console.error('An error occurred from TempWorker for POST /changedisplayname:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/changedisplayname controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -897,58 +853,6 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/changepassword controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/changeusername', rateLimiters['/changeusername'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'changeusername',
-            functionArgs: [req.tokenData, req.body.desiredUsername]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!res.headersSent) {
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/changeusername controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!res.headersSent) {
-            console.error('An error occurred from TempWorker for POST /changeusername:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/changeusername controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/changebio', rateLimiters['/changebio'], (req, res) => {
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'changebio',
-            functionArgs: [req.tokenData, req.body.bio]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!res.headersSent) {
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/changebio controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!res.headersSent) {
-            console.error('An error occurred from TempWorker for POST /changebio:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/changebio controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -3009,6 +2913,32 @@ router.post('/getpollvoteusers', rateLimiters['/getpollvoteusers'], (req, res) =
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/getpollvoteusers controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+        }
+    })
+});
+
+router.post('/editprofiledetails', rateLimiters['/editprofiledetails'], (req, res) => {
+    const worker = new Worker(workerPath, {
+        workerData: {
+            functionName: 'editprofiledetails',
+            functionArgs: [req.tokenData, req.body]
+        }
+    })
+
+    worker.on('message', (result) => {
+        if (!res.headersSent) {
+            res.status(result.statusCode).json(result.data)
+        } else {
+            console.error('POST temp/editprofiledetails controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+        }
+    })
+
+    worker.on('error', (error) => {
+        if (!res.headersSent) {
+            console.error('An error occurred from TempWorker for POST /editprofiledetails:', error)
+            HTTPHandler.serverError(res, String(error))
+        } else {
+            console.error('POST temp/editprofiledetails controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });

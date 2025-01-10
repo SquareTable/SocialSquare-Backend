@@ -67,7 +67,8 @@ const CONSTANTS = {
     VOTED_USERS_API_ALLOWED_VOTE_TYPES: ["Up", "Down"],
     MAX_CATEGORY_MEMBERS_PER_API_CALL: 10,
     POLL_OPTIONS: ["One", "Two", "Three", "Four", "Five", "Six"],
-    MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL: 10
+    MAX_POLL_OPTION_VOTED_USERS_TO_SEND_PER_API_CALL: 10,
+    ALLOWED_PROFILE_DETAIL_KEY_EDITS: ["name", "displayName", "bio"] //Used for temp/editprofiledetails - This specifies the properties that are allowed in the profiledetails object. All other properties will be deleted.
 }
 
 module.exports = CONSTANTS
