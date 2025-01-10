@@ -6189,7 +6189,7 @@ class TempController {
 
             User.findOneAndUpdate({_id: {$eq: userId}}, {$set: profileDetails}).lean().then(result => {
                 if (result === null) {
-                    if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'));
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'));
                 }
 
                 return resolve(HTTPWTHandler.OK('Profile details were successfully edited'))
