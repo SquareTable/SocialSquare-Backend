@@ -6194,8 +6194,17 @@ class TempController {
 
                 return resolve(HTTPWTHandler.OK('Profile details were successfully edited'))
             }).catch(error => {
-                console.error('An error occurred while updating user profiles. The user detail object was:', profileDetails, '. The error was:', error)
-                return resolve(HTTPWTHandler.serverError('An error occurred while updating profile details. Please try again.'))
+                if (error.codeName === 'DuplicateKey') {
+                    if (Object.keys(error.keyValue)[0] === 'name') {
+                        return resolve(HTTPWTHandler.conflict('Another SocialSquare user has the username you are trying to use. Please choose a different username.'))
+                    } else {
+                        console.error('An unknown key is giving a duplicate error while updating profile details. The error is:', error)
+                        return resolve(HTTPWTHandler.serverError('An unknown key cannot be duplicated.'))
+                    }
+                } else {
+                    console.error('An error occurred while updating user profiles. The user detail object was:', profileDetails, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while updating profile details. Please try again.'))
+                }
             })
         })
     }
