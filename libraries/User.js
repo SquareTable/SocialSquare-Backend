@@ -7,7 +7,7 @@ class User {
     }
 
     #generateRefreshToken(toSign) {
-        return jwt.sign({_id: toSign}, process.env.SECRET_FOR_REFRESH_TOKENS, {expiresIn: 900}) //900s is 15 minutes
+        return jwt.sign({_id: toSign}, process.env.SECRET_FOR_REFRESH_TOKENS, {expiresIn: '2y'}) //900s is 15 minutes
     }
 
     filterUserInformationToSend(userObject) {
