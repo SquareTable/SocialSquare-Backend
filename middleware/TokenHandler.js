@@ -5,7 +5,7 @@ const refreshTokenEncryptionKey = process.env.REFRESH_TOKEN_ENCRYPTION_KEY
 const IV_LENGTH = 16; // 16 for AES (this is the cryptographic nonce pretty much)
 
 function generateAuthJWT(toSign) { //to sign should be something like a user name or user id
-    return jwt.sign({_id: toSign}, process.env.SECRET_FOR_TOKENS, {expiresIn: "30s"}) //900s is 15 minutes
+    return jwt.sign({_id: toSign}, process.env.SECRET_FOR_TOKENS, {expiresIn: 60}) //900s is 15 minutes
 }
 
 // mongodb user model
