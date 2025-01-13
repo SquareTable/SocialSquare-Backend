@@ -144,7 +144,7 @@ function tokenValidation(req, res, next) {
     const refreshToken = refreshHeader && refreshHeader.split(" ")[1];
     console.log(token)
 
-    if (token == null) return res.sendStatus(401);
+    if (token == null) return res.status(403).json({logout: true});
 
     jwt.verify(token, process.env.SECRET_FOR_TOKENS, (err, decoded) => {
         if (err) {
