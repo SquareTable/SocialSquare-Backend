@@ -3,7 +3,7 @@ const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = requ
 
 class User {
     #generateAuthJWT(toSign) {
-        return jwt.sign({_id: toSign}, process.env.SECRET_FOR_TOKENS, {expiresIn: 30}) //30s
+        return jwt.sign({_id: toSign}, process.env.SECRET_FOR_TOKENS, {expiresIn: 60}) //30s
     }
 
     #generateRefreshToken(toSign) {
