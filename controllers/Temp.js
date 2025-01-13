@@ -130,47 +130,6 @@ class TempController {
         })
     }
 
-    static #changedisplayname  = (userId, desiredDisplayName) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput('userId must be an objectId.'))
-            }
-
-            if (typeof desiredDisplayName !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`desiredDisplayName must be a string. Provided type: ${typeof desiredDisplayName}`))
-            }
-
-            desiredDisplayName = desiredDisplayName.trim();
-
-            if (desiredDisplayName.length > CONSTANTS.MAX_USER_DISPLAY_NAME_LENGTH) {
-                return resolve(HTTPWTHandler.badInput('Desired display name must be 20 characters or less.'))
-            }
-
-            if (!CONSTANTS.VALID_DISPLAY_NAME_TEST.test(desiredDisplayName)) {
-                return resolve(HTTPWTHandler.badInput('Display name must only contain characters in the alphabet and must be a single line.'))
-            }
-
-            // Check if user exist
-            User.findOne({ _id: {$eq: userId} }).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'))
-
-                User.findOneAndUpdate({_id: {$eq: userId}}, {displayName: String(desiredDisplayName)}).then(function() {
-                    return resolve(HTTPWTHandler.OK('Display name changed successfully.'))
-                }).catch(err => {
-                    console.error('An error occurred while changing the display name of user with id:', userId, 'to:', desiredDisplayName, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while updating display name. Please try again.'))
-                })
-            }).catch(err => {
-                console.error('An error occurred while finding one user with id:', userId, '. The error was:', err)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding existing user. Plesae try again.'))
-            })
-        })
-    }
-
     static #changeemail = (userId, password, desiredEmail) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
@@ -382,99 +341,6 @@ class TempController {
             }).catch((error) => {
                 console.error('An error occured while finding user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user with id:', userId))
-            })
-        })
-    }
-
-    static #changeusername = (userId, desiredUsername) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
-            }
-
-            if (typeof desiredUsername !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`desiredUsername must be a string. Provided type: ${typeof desiredUsername}`))
-            }
-
-            if (!CONSTANTS.VALID_USERNAME_TEST.test(desiredUsername)) {
-                return resolve(HTTPWTHandler.badInput('Invalid username entered (username can only have numbers and lowercase a - z characters)'))
-            }
-
-            desiredUsername = desiredUsername.trim();
-
-            if (desiredUsername.length === 0) {
-                return resolve(HTTPWTHandler.badInput('Desired username cannot be blank.'))
-            }
-
-            if (desiredUsername.length > CONSTANTS.MAX_USER_USERNAME_LENGTH) {
-                return resolve(HTTPWTHandler.badInput('Your new username cannot be more than 20 characters.'))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
-                if (!userFound) return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'));
-
-                User.findOne({name: {$eq: desiredUsername}}).lean().then(result => {
-                    if (result) return resolve(HTTPWTHandler.conflict('User with the provided username already exists'))
-
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {name: String(desiredUsername)}).then(() => {
-                        return resolve(HTTPWTHandler.OK('Change Username Successful'))
-                    }).catch(err => {
-                        console.error('An error occured while updating user with id:', userId, ' to have a username:', desiredUsername, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while updating your username. Please try again.'))
-                    });
-                }).catch(error => {
-                    console.error('An error occured while finding one user with name:', desiredUsername, '. The error was:', error)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
-                })
-            }).catch(err => {
-                console.error('An error occured while checking for a user with id:', userId, '. The error was:', err)
-                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-            })
-        })
-    }
-
-    static #changebio = (userId, bio) => {
-        return new Promise(resolve => {
-            if (typeof userId !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
-            }
-
-            if (!mongoose.isObjectIdOrHexString(userId)) {
-                return resolve(HTTPWTHandler.badInput(`userId must be an ObjectId.`))
-            }
-
-            if (typeof bio !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`bio must be a string. Provided type: ${typeof bio}`))
-            }
-
-            if (bio.length > CONSTANTS.MAX_USER_BIO_LENGTH) {
-                return resolve(HTTPWTHandler.badInput(`Bio must be ${CONSTANTS.MAX_USER_BIO_LENGTH} or less characters`))
-            }
-
-            if (!CONSTANTS.VALID_BIO_TEST.test(bio)) {
-                return resolve(HTTPWTHandler.badInput(`Bio must have ${CONSTANTS.MAX_USER_BIO_LINES} or less lines`))
-            }
-
-            User.findOne({_id: {$eq: userId}}).lean().then((data) => {
-                if (data) {
-                    User.findOneAndUpdate({_id: {$eq: userId}}, {$set: {bio: String(bio)}}).then(function(){
-                        return resolve(HTTPWTHandler.OK('Change Successful'))
-                    })
-                    .catch(err => {
-                        console.error('An error occured while updating user with id:', userId, ' bio to:', bio, '. The error was:', err)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while updating bio. Please try again.'))
-                    });
-                } else {
-                    return resolve(HTTPWTHandler.notFound('User with provided userId could not be found'))
-                }
-            })
-            .catch(err => {
-                console.error('An error occured while finding user with id:', userId, '. The error was:', err)
-                return resolve(HTTPWTHandler.serverError('An error occurred while checking for existing user. Please try again.'))
             })
         })
     }
@@ -6258,12 +6124,93 @@ class TempController {
         })
     }
 
-    static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
-        return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
+    static #editprofiledetails = (userId, profileDetails) => {
+        return new Promise(resolve => {
+            if (typeof userId !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(userId)) {
+                return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
+            }
+
+            if (typeof profileDetails !== 'object' || Array.isArray(profileDetails) || profileDetails === null) {
+                return resolve(HTTPWTHandler.badInput('profileDetails must be an object.'))
+            }
+
+            for (const key of Object.keys(profileDetails)) {
+                if (!CONSTANTS.ALLOWED_PROFILE_DETAIL_KEY_EDITS.includes(key)) {
+                    delete profileDetails[key]
+                    continue
+                }
+
+                if (typeof profileDetails[key] !== 'string') {
+                    return resolve(HTTPWTHandler.badInput(`${key} must be a string.`))
+                }
+            }
+
+            if (Object.keys(profileDetails).length === 0) {
+                return resolve(HTTPWTHandler.badInput('No valid keys were provided for profileDetails.'))
+            }
+
+            if (profileDetails.name) {
+                if (!CONSTANTS.VALID_USERNAME_TEST.test(profileDetails.name)) {
+                    return resolve(HTTPWTHandler.badInput('Invalid username entered (username can only have numbers and lowercase a - z characters)'))
+                }
+    
+                if (profileDetails.name.length === 0) {
+                    return resolve(HTTPWTHandler.badInput('Your username cannot be blank.'))
+                }
+    
+                if (profileDetails.name.length > CONSTANTS.MAX_USER_USERNAME_LENGTH) {
+                    return resolve(HTTPWTHandler.badInput('Your new username cannot be more than 20 characters.'))
+                }
+            }
+
+            if (profileDetails.displayName) {
+                if (profileDetails.displayName.length > CONSTANTS.MAX_USER_DISPLAY_NAME_LENGTH) {
+                    return resolve(HTTPWTHandler.badInput('Display name must be 20 characters or less.'))
+                }
+
+                if (!CONSTANTS.VALID_DISPLAY_NAME_TEST.test(profileDetails.displayName)) {
+                    return resolve(HTTPWTHandler.badInput('Display name must only contain a-z lowercase and uppercase characters.'))
+                }
+            }
+
+            if (profileDetails.bio) {
+                if (profileDetails.bio.length > CONSTANTS.MAX_USER_BIO_LENGTH) {
+                    return resolve(HTTPWTHandler.badInput(`Bio must be ${CONSTANTS.MAX_USER_BIO_LENGTH} or less characters`))
+                }
+    
+                if (!CONSTANTS.VALID_BIO_TEST.test(profileDetails.bio)) {
+                    return resolve(HTTPWTHandler.badInput(`Bio must have ${CONSTANTS.MAX_USER_BIO_LINES} or less lines`))
+                }
+            }
+
+            User.findOneAndUpdate({_id: {$eq: userId}}, {$set: profileDetails}).lean().then(result => {
+                if (result === null) {
+                    return resolve(HTTPWTHandler.notFound('Could not find user with provided userId.'));
+                }
+
+                return resolve(HTTPWTHandler.OK('Profile details were successfully edited'))
+            }).catch(error => {
+                if (error.codeName === 'DuplicateKey') {
+                    if (Object.keys(error.keyValue)[0] === 'name') {
+                        return resolve(HTTPWTHandler.conflict('Another SocialSquare user has the username you are trying to use. Please choose a different username.'))
+                    } else {
+                        console.error('An unknown key is giving a duplicate error while updating profile details. The error is:', error)
+                        return resolve(HTTPWTHandler.serverError('An unknown key cannot be duplicated.'))
+                    }
+                } else {
+                    console.error('An error occurred while updating user profiles. The user detail object was:', profileDetails, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while updating profile details. Please try again.'))
+                }
+            })
+        })
     }
 
-    static changedisplayname = async (userId, desiredDisplayName) => {
-        return await this.#changedisplayname(userId, desiredDisplayName)
+    static sendnotificationkey = async (userId, notificationKey, refreshTokenId) => {
+        return await this.#sendnotificationkey(userId, notificationKey, refreshTokenId)
     }
 
     static changeemail = async (userId, password, desiredEmail) => {
@@ -6272,14 +6219,6 @@ class TempController {
 
     static changepassword = async (userId, currentPassword, newPassword, confirmNewPassword, IP, deviceType) => {
         return await this.#changepassword(userId, currentPassword, newPassword, confirmNewPassword, IP, deviceType)
-    }
-
-    static changeusername = async (userId, desiredUsername) => {
-        return await this.#changeusername(userId, desiredUsername)
-    }
-
-    static changebio = async (userId, bio) => {
-        return await this.#changebio(userId, bio)
     }
 
     static searchpageusersearch = async (userId, skip, val) => {
@@ -6580,6 +6519,10 @@ class TempController {
 
     static getpollvoteusers = async (userId, pollId, pollOption, lastItemId) => {
         return await this.#getpollvoteusers(userId, pollId, pollOption, lastItemId)
+    }
+
+    static editprofiledetails = async (userId, profileDetails) => {
+        return await this.#editprofiledetails(userId, profileDetails)
     }
 }
 
