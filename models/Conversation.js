@@ -13,7 +13,6 @@ const ConversationSchema = new Schema({
     dateCreated: Number,
     isEncrypted: Boolean,
     publicEncryptionKeys: Array,
-    allowScreenShots: Boolean,
     lastMessageViewed: Array
 });
 

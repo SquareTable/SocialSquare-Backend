@@ -11,7 +11,6 @@ const CategorySchema = new Schema({
     categoryOwnerId: mongoose.Schema.Types.ObjectId,
     categoryOriginalCreator: mongoose.Schema.Types.ObjectId,
     datePosted: Number,
-    allowScreenShots: Boolean,
     userVisits: Array,
     roles: Array // Object array with roles
 });

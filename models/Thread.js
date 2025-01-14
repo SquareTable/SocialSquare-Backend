@@ -14,7 +14,6 @@ const ThreadSchema = new Schema({
     threadNSFW: Boolean,
     threadNSFL: Boolean,
     datePosted: Number,
-    allowScreenShots: Boolean,
     viewedBy: Array
 });
 

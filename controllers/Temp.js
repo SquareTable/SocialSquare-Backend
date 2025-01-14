@@ -412,7 +412,7 @@ class TempController {
         })
     }
 
-    static #createpollpost = (userId, pollTitle, pollSubTitle, options, sentAllowScreenShots) => {
+    static #createpollpost = (userId, pollTitle, pollSubTitle, options) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -471,9 +471,6 @@ class TempController {
             if (pollSubTitle.length == 0) {
                 return resolve(HTTPWTHandler.badInput('pollSubTitle must not be blank'))
             }
-
-           
-            let allowScreenShots = sentAllowScreenShots === 'true' || sentAllowScreenShots === true ? true : false
           
             User.findOne({_id: {$eq: userId}}).lean().then(data => {
                 if (data) {
@@ -482,8 +479,7 @@ class TempController {
                         pollSubTitle,
                         options,
                         creatorId: userId,
-                        datePosted: Date.now(),
-                        allowScreenShots: allowScreenShots
+                        datePosted: Date.now()
                     }
 
                     const newPoll = new Poll(pollObject);
@@ -878,7 +874,7 @@ class TempController {
         })
     }
 
-    static #postImage = (creatorId, title, description, sentAllowScreenShots, file) => {
+    static #postImage = (creatorId, title, description, file) => {
         return new Promise(resolve => {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file was sent.'))
@@ -916,21 +912,6 @@ class TempController {
             console.log(creatorId)
             User.findOne({_id: creatorId}).lean().then(result => {
                 if (result) {
-                    //allowScreenShots set up
-                    console.log(sentAllowScreenShots)
-                    var allowScreenShots = sentAllowScreenShots
-                    if (sentAllowScreenShots == true || allowScreenShots == "true") {
-                        console.log("sent allow ss was true")
-                        allowScreenShots = true
-                    } else if (sentAllowScreenShots == false || allowScreenShots == "false") {
-                        console.log("sent allow ss was false")
-                        allowScreenShots = false
-                    } else {
-                        console.log("Sent allow ss wasnt true or false so set true")
-                        allowScreenShots = true
-                    }
-                    console.log(`allowScreenShots ${allowScreenShots}`)
-
                     imageHandler.compressImage(file.filename).then(imageKey => {
                         const newImagePostObject = {
                             imageKey,
@@ -938,8 +919,7 @@ class TempController {
                             imageDescription: description,
                             creatorId: creatorId,
                             comments: [],
-                            datePosted: Date.now(),
-                            allowScreenShots: allowScreenShots,
+                            datePosted: Date.now()
                         }
 
                         const newImage = new ImagePost(newImagePostObject);
@@ -1149,7 +1129,7 @@ class TempController {
         })
     }
 
-    static #postcategorywithimage = (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file) => {
+    static #postcategorywithimage = (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, file) => {
         return new Promise(resolve => {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file sent.'))
@@ -1194,11 +1174,6 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`categoryNSFL must be a boolean, "false", or "true"`))
             }
 
-            if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== 'false' && sentAllowScreenShots !== 'true') {
-                deleteFile()
-                return resolve(HTTPWTHandler.badInput(`sentAllowScreenShots must be a boolean, "false", or "true"`))
-            }
-
             if (categoryNSFW === "false") {
                 categoryNSFW = false;
             }
@@ -1213,14 +1188,6 @@ class TempController {
 
             if (categoryNSFL === "true") {
                 categoryNSFL = true;
-            }
-
-            if (sentAllowScreenShots === "false") {
-                sentAllowScreenShots = false;
-            }
-
-            if (sentAllowScreenShots === "true") {
-                sentAllowScreenShots = true;
             }
 
             categoryTitle = categoryTitle.trim()
@@ -1271,8 +1238,7 @@ class TempController {
                                     NSFL: categoryNSFL,
                                     categoryOwnerId: userId,
                                     categoryOriginalCreator: userId,
-                                    datePosted: Date.now(),
-                                    allowScreenShots: sentAllowScreenShots
+                                    datePosted: Date.now()
                                 };
 
                                 const newCategory = new Category(newCategoryObject);
@@ -1456,7 +1422,7 @@ class TempController {
         })
     }
 
-    static #postcategorywithoutimage = (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots) => {
+    static #postcategorywithoutimage = (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -1486,10 +1452,6 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('categoryNSFL must either be a boolean, "false" or "true"'))
             }
 
-            if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
-                return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false" or "true"'))
-            }
-
             if (categoryNSFW === "false") {
                 categoryNSFW = false;
             }
@@ -1504,14 +1466,6 @@ class TempController {
 
             if (categoryNSFL === "true") {
                 categoryNSFL = true;
-            }
-
-            if (sentAllowScreenShots === "false") {
-                sentAllowScreenShots = false;
-            }
-
-            if (sentAllowScreenShots === "true") {
-                sentAllowScreenShots = true;
             }
 
             categoryTitle = categoryTitle.trim()
@@ -1554,8 +1508,7 @@ class TempController {
                                 NSFL: categoryNSFL,
                                 categoryOwnerId: userId,
                                 categoryOriginalCreator: userId,
-                                datePosted: Date.now(),
-                                allowScreenShots: sentAllowScreenShots
+                                datePosted: Date.now()
                             }
 
                             const newCategory = new Category(newCategoryObject);
@@ -1667,7 +1620,6 @@ class TempController {
                                 NSFW: category.NSFW,
                                 NSFL: category.NSFL,
                                 datePosted: category.datePosted,
-                                allowScreenShots: category.allowScreenShots,
                                 categoryId: String(category._id)
                             }
                         })
@@ -1762,7 +1714,6 @@ class TempController {
                             NSFL: categoryFound.NSFL,
                             datePosted: categoryFound.datePosted,
                             inCategory: !!memberDocument,
-                            allowScreenShots: categoryFound.allowScreenShots,
                             categoryId: String(categoryFound._id),
                             permissions
                         }
@@ -1862,7 +1813,6 @@ class TempController {
                                             NSFL: category.NSFL,
                                             datePosted: category.datePosted,
                                             inCategory: true,
-                                            allowScreenShots: category.allowScreenShots,
                                             categoryId: String(category._id),
                                             permissions: userPermissions,
                                             memberId: String(categoryMember._id)
@@ -1982,7 +1932,7 @@ class TempController {
         })
     }
 
-    static #posttextthread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
+    static #posttextthread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -2020,10 +1970,6 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('threadNSFL must either be a boolean, "false", or "true"'))
             }
 
-            if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
-                return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false", or "true"'))
-            }
-
             if (threadNSFW === "false") {
                 threadNSFW = false;
             }
@@ -2038,14 +1984,6 @@ class TempController {
 
             if (threadNSFL === "true") {
                 threadNSFL = true;
-            }
-
-            if (sentAllowScreenShots === "false") {
-                sentAllowScreenShots = false;
-            }
-
-            if (sentAllowScreenShots === "true") {
-                sentAllowScreenShots = true;
             }
 
             threadBody = threadBody.trim();
@@ -2100,10 +2038,6 @@ class TempController {
                                 return resolve(HTTPWTHandler.forbidden('NSFL thread posts cannot be posted in non-NSFL categories.'))
                             }
 
-                            //allowScreenShots set up
-                            const allowScreenShots = data.allowScreenShots ? sentAllowScreenShots : false;
-                            console.log(`allowScreenShots ${allowScreenShots}`)
-
                             const newThreadObject = {
                                 threadType: "Text",
                                 comments: [],
@@ -2117,8 +2051,7 @@ class TempController {
                                 threadImageDescription: "",
                                 threadNSFW: threadNSFW,
                                 threadNSFL: threadNSFL,
-                                datePosted: Date.now(),
-                                allowScreenShots: allowScreenShots
+                                datePosted: Date.now()
                             };
 
                             const newThread = new Thread(newThreadObject);
@@ -2147,7 +2080,7 @@ class TempController {
         })
     }
 
-    static #postimagethread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
+    static #postimagethread = (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, file) => {
         return new Promise(resolve => {
             if (!file) {
                 return resolve(HTTPWTHandler.badInput('No file sent.'))
@@ -2203,11 +2136,6 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('threadNSFL must either be a boolean, "false", or "true"'))
             }
 
-            if (typeof sentAllowScreenShots !== 'boolean' && sentAllowScreenShots !== "false" && sentAllowScreenShots !== "true") {
-                deleteImage()
-                return resolve(HTTPWTHandler.badInput('sentAllowScreenShots must either be a boolean, "false", or "true"'))
-            }
-
             if (threadNSFW === "false") {
                 threadNSFW = false
             }
@@ -2222,14 +2150,6 @@ class TempController {
 
             if (threadNSFL === "true") {
                 threadNSFL = true
-            }
-
-            if (sentAllowScreenShots === "false") {
-                sentAllowScreenShots = false
-            }
-
-            if (sentAllowScreenShots === "true") {
-                sentAllowScreenShots = true
             }
 
             threadTitle = threadTitle.trim();
@@ -2311,8 +2231,7 @@ class TempController {
                                     threadImageDescription: threadImageDescription,
                                     threadNSFW: threadNSFW,
                                     threadNSFL: threadNSFL,
-                                    datePosted: Date.now(),
-                                    allowScreenShots: sentAllowScreenShots
+                                    datePosted: Date.now()
                                 };
 
                                 const newThread = new Thread(newThreadObject);
@@ -6118,8 +6037,8 @@ class TempController {
         return await this.#searchpageusersearch(userId, skip, val)
     }
 
-    static createpollpost = async (userId, pollTitle, pollSubTitle, options, sentAllowScreenShots) => {
-        return await this.#createpollpost(userId, pollTitle, pollSubTitle, options, sentAllowScreenShots)
+    static createpollpost = async (userId, pollTitle, pollSubTitle, options) => {
+        return await this.#createpollpost(userId, pollTitle, pollSubTitle, options)
     }
 
     static searchforpollposts = async (userId, pubId, lastItemId) => {
@@ -6142,8 +6061,8 @@ class TempController {
         return await this.#deletepoll(userId, pollId)
     }
 
-    static postImage = async (userId, title, description, sentAllowScreenShots, file) => {
-        return await this.#postImage(userId, title, description, sentAllowScreenShots, file)
+    static postImage = async (userId, title, description, file) => {
+        return await this.#postImage(userId, title, description, file)
     }
 
     static postProfileImage = async (userId, file) => {
@@ -6158,16 +6077,16 @@ class TempController {
         return await this.#getProfilePic(pubId)
     }
 
-    static postcategorywithimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file) => {
-        return await this.#postcategorywithimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, file)
+    static postcategorywithimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, file) => {
+        return await this.#postcategorywithimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, file)
     }
 
     static deleteimage = async (userId, postId) => {
         return await this.#deleteimage(userId, postId)
     }
 
-    static postcategorywithoutimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots) => {
-        return await this.#postcategorywithoutimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots)
+    static postcategorywithoutimage = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL) => {
+        return await this.#postcategorywithoutimage(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL)
     }
 
     static searchpagesearchcategories = async (userId, val, lastItemId) => {
@@ -6194,12 +6113,12 @@ class TempController {
         return await this.#leavecategory(userId, categoryId)
     }
 
-    static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots) => {
-        return await this.#posttextthread(userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots)
+    static posttextthread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL) => {
+        return await this.#posttextthread(userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL)
     }
 
-    static postimagethread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file) => {
-        return await this.#postimagethread(userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, file)
+    static postimagethread = async (userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, file) => {
+        return await this.#postimagethread(userId, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, file)
     }
 
     static getthreadsfromcategory = async (userId, categoryId) => {

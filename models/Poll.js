@@ -9,7 +9,6 @@ const PollSchema = new Schema({
     }],
     creatorId: mongoose.Schema.Types.ObjectId,
     datePosted: Number,
-    allowScreenShots: Boolean,
     viewedBy: Array
 });
 
