@@ -5,8 +5,7 @@ const PollSchema = new Schema({
     pollTitle: String, 
     pollSubTitle: String,
     options: [{
-        title: String,
-        color: String
+        title: String
     }],
     creatorId: mongoose.Schema.Types.ObjectId,
     comments: Array,

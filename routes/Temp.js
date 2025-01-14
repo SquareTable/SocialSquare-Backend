@@ -884,7 +884,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
 });
 
 router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
-    let {pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots} = req.body;
+    let {pollTitle, pollSubTitle, options, sentAllowScreenShots} = req.body;
 
     const worker = new Worker(workerPath, {
         workerData: {
@@ -893,19 +893,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
                 req.tokenData,
                 pollTitle,
                 pollSubTitle,
-                optionOne,
-                optionOnesColor,
-                optionTwo,
-                optionTwosColor,
-                optionThree,
-                optionThreesColor,
-                optionFour,
-                optionFoursColor,
-                optionFive,
-                optionFivesColor,
-                optionSix,
-                optionSixesColor,
-                totalNumberOfOptions,
+                options,
                 sentAllowScreenShots
             ]
         }

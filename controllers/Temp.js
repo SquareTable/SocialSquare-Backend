@@ -412,10 +412,8 @@ class TempController {
         })
     }
 
-    static #createpollpost = (userId, pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots) => {
+    static #createpollpost = (userId, pollTitle, pollSubTitle, options, sentAllowScreenShots) => {
         return new Promise(resolve => {
-            const allowedColors = ['Red', 'Orange', 'Yellow', 'Green', 'Purple']
-
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
             }
@@ -432,68 +430,39 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`pollSubTitle must be a string. Provided type: ${typeof pollSubTitle}`))
             }
 
-            if (typeof optionOne !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`optionOne must be a string. Provided type: ${typeof optionOne}`))
+            if (!Array.isArray(options)) {
+                return resolve(HTTPWTHandler.badInput(`options must be an array. Provided type: ${typeof options}`))
+            }
+           
+            if (options.length > 6 || options.length < 2) {
+                return resolve(HTTPWTHandler.badInput('A poll must have between 2 - 6 options.'))
             }
 
-            if (!allowedColors.includes(optionOnesColor) && optionOnesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionOnesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionOnesColor}`))
-            }
+            for (const option of options) {
+                if (typeof option !== 'object' || !Array.isArray(option) || option === null) {
+                    return resolve(HTTPWTHandler.badInput('Items in the options array must all be objects.'))
+                }
 
-            if (typeof optionTwo !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`optionTwo must be a string. Provied type: ${typeof optionTwo}`))
-            }
+                for (const key of Object.keys(option)) {
+                    if (!CONSTANTS.ALLOWED_POLL_OPTION_KEYS.includes(key)) {
+                        delete option[key]
+                    }
+                }
 
-            if (!allowedColors.includes(optionTwosColor) && optionTwosColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionTwosColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionTwosColor}`))
-            }
+                if (typeof option.title !== 'string') {
+                    return resolve(HTTPWTHandler.badInput('All option titles must be strings.'))
+                }
 
-            if (typeof optionThree !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`optionThree must be a string. Provied type: ${typeof optionThree}`))
-            }
+                if (option.title.length === 0) {
+                    return resolve(HTTPWTHandler.badInput('All option titles must not be empty strings.'))
+                }
 
-            if (!allowedColors.includes(optionThreesColor) && optionThreesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionThreesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionThreesColor}`))
+                option.title = option.title.trim()
             }
-
-            if (typeof optionFour !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`optionFour must be a string. Provied type: ${typeof optionFour}`))
-            }
-
-            if (!allowedColors.includes(optionFoursColor) && optionFoursColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionFoursColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionFoursColor}`))
-            }
-
-            if (typeof optionFive !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`optionFive must be a string. Provied type: ${typeof optionFive}`))
-            }
-
-            if (!allowedColors.includes(optionFivesColor) && optionFivesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionFivesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionFivesColor}`))
-            }
-
-            if (typeof optionSix !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`optionSix must be a string. Provied type: ${typeof optionSix}`))
-            }
-
-            if (!allowedColors.includes(optionSixesColor) && optionSixesColor !== 'Not Specified') {
-                return resolve(HTTPWTHandler.badInput(`optionSixesColor must be either ${allowedColors.join(', ')} or be "Not Specified". Type provided: ${optionSixesColor}`))
-            }
-
-            const allowedNumbersOfOptions = ['Two', 'Three', 'Four', 'Five', 'Six']
-
-            if (!allowedNumbersOfOptions.includes(totalNumberOfOptions)) {
-                return resolve(HTTPWTHandler.badInput(`allowedNumbersOfOptions must be either ${allowedNumbersOfOptions.join(', ')}`))
-            }
+            
 
             pollTitle = pollTitle.trim()
             pollSubTitle = pollSubTitle.trim()
-            optionOne = optionOne.trim()
-            optionTwo = optionTwo.trim()
-            optionThree = optionThree.trim()
-            optionFour = optionFour.trim()
-            optionFive = optionFive.trim()
-            optionSix = optionSix.trim()
 
             if (pollTitle.length == 0) {
                 return resolve(HTTPWTHandler.badInput('pollTitle must not be blank'))
@@ -503,96 +472,37 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('pollSubTitle must not be blank'))
             }
 
-            if (optionOne.length == 0) {
-                return resolve(HTTPWTHandler.badInput('optionOne must not be blank'))
-            }
-
-            if (optionTwo.length == 0) {
-                return resolve(HTTPWTHandler.badInput('optionTwo must not be blank'))
-            }
-
-            const pollOptions = allowedNumbersOfOptions.indexOf(totalNumberOfOptions) + 2
-
-            if (optionThree.length == 0 && pollOptions >= 3) {
-                return resolve(HTTPWTHandler.badInput('optionThree must not be blank'))
-            }
-
-            if (optionFour.length == 0 && pollOptions >= 4) {
-                return resolve(HTTPWTHandler.badInput('optionFour must not be blank'))
-            }
-
-            if (optionFive.length == 0 && pollOptions >= 5) {
-                return resolve(HTTPWTHandler.badInput('optionFive must not be blank'))
-            }
-
-            if (optionSix.length == 0 && pollOptions == 6) {
-                return resolve(HTTPWTHandler.badInput('optionSix must not be blank'))
-            }
-
-            //Create important ones
-            const comments = []
-            //
-            //allowScreenShots set up
-            console.log(sentAllowScreenShots)
-            var allowScreenShots = sentAllowScreenShots
-            if (sentAllowScreenShots == true) {
-                console.log("sent allow ss was true")
-                allowScreenShots = true
-            } else if (sentAllowScreenShots == false) {
-                console.log("sent allow ss was false")
-                allowScreenShots = false
-            } else {
-                console.log("Sent allow ss wasnt true or false so set true")
-                allowScreenShots = true
-            }
-            console.log(`allowScreenShots ${allowScreenShots}`)
-            //Check Input fields
-            if (pollTitle == "" || pollSubTitle == "" || optionOne == "" || optionTwo == "") {
-                return resolve(HTTPWTHandler.badInput('Empty input fields!'))
-            } else {
-                //Try to create a new post
-                User.findOne({_id: {$eq: userId}}).lean().then(data => {
-                    if (data) {
-                        const pollObject = {
-                            pollTitle,
-                            pollSubTitle,
-                            optionOne,
-                            optionOnesColor,
-                            optionTwo,
-                            optionTwosColor,
-                            optionThree,
-                            optionThreesColor,
-                            optionFour,
-                            optionFoursColor,
-                            optionFive,
-                            optionFivesColor,
-                            optionSix,
-                            optionSixesColor,
-                            totalNumberOfOptions,
-                            creatorId: userId,
-                            comments,
-                            datePosted: Date.now(),
-                            allowScreenShots: allowScreenShots
-                        }
-
-                        const newPoll = new Poll(pollObject);
-
-                        newPoll.save().then(() => {
-                            return resolve(HTTPWTHandler.OK('Poll creation successful'))
-                        })
-                        .catch(err => {
-                            console.error('An error occured while creating a new poll post:', pollObject, '. The error was:', err)
-                            return resolve(HTTPWTHandler.serverError('An error occurred while creating a poll'))
-                        })
-                    } else {
-                        return resolve(HTTPWTHandler.notFound('A user could not be found with provided userId'))
+           
+            let allowScreenShots = sentAllowScreenShots === 'true' || sentAllowScreenShots === true ? true : false
+          
+            User.findOne({_id: {$eq: userId}}).lean().then(data => {
+                if (data) {
+                    const pollObject = {
+                        pollTitle,
+                        pollSubTitle,
+                        options,
+                        creatorId: userId,
+                        datePosted: Date.now(),
+                        allowScreenShots: allowScreenShots
                     }
-                })
-                .catch(err => {
-                    console.error('An error occured while finding a user with _id:', userId, '. The error was:', err)
-                    return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
-                });
-            }
+
+                    const newPoll = new Poll(pollObject);
+
+                    newPoll.save().then(() => {
+                        return resolve(HTTPWTHandler.OK('Poll creation successful'))
+                    })
+                    .catch(err => {
+                        console.error('An error occured while creating a new poll post:', pollObject, '. The error was:', err)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while creating a poll'))
+                    })
+                } else {
+                    return resolve(HTTPWTHandler.notFound('A user could not be found with provided userId'))
+                }
+            })
+            .catch(err => {
+                console.error('An error occured while finding a user with _id:', userId, '. The error was:', err)
+                return resolve(HTTPWTHandler.serverError('An error occurred while finding user. Please try again.'))
+            });
         })
     }
 
@@ -6225,8 +6135,8 @@ class TempController {
         return await this.#searchpageusersearch(userId, skip, val)
     }
 
-    static createpollpost = async (userId, pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots) => {
-        return await this.#createpollpost(userId, pollTitle, pollSubTitle, optionOne, optionOnesColor, optionTwo, optionTwosColor, optionThree, optionThreesColor, optionFour, optionFoursColor, optionFive, optionFivesColor, optionSix, optionSixesColor, totalNumberOfOptions, sentAllowScreenShots)
+    static createpollpost = async (userId, pollTitle, pollSubTitle, options, sentAllowScreenShots) => {
+        return await this.#createpollpost(userId, pollTitle, pollSubTitle, options, sentAllowScreenShots)
     }
 
     static searchforpollposts = async (userId, pubId, lastItemId) => {
