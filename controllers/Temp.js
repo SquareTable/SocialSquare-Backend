@@ -599,68 +599,47 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
 
-            if (typeof optionSelected !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`optionSelected must be a string. Provided type: ${typeof optionSelected}`))
+            if (typeof optionSelected !== 'number') {
+                return resolve(HTTPWTHandler.badInput(`optionSelected must be a number. Provided type: ${typeof optionSelected}`))
             }
 
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
             }
 
-            const allowedOptionsToSelect = ['One', 'Two', 'Three', 'Four', 'Five', 'Six']
-            if (!allowedOptionsToSelect.includes(optionSelected)) {
-                return resolve(HTTPWTHandler.badInput(`optionSelected must be either ${allowedOptionsToSelect.join(', ')}`))
-            }
-
-            if (pollId.length == 0) {
-                return resolve(HTTPWTHandler.badInput('pollId cannot be an empty string'))
+            if (!mongoose.isObjectIdOrHexString(pollId)) {
+                return resolve(HTTPWTHandler.badInput('pollId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
-                if (result) {
-                    //User exists
-                    Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
-                        if (data) {
-                            if (data.creatorId == userId) {
-                                return resolve(HTTPWTHandler.forbidden('You cannot vote on your own poll'))
-                            }
-
-                            if (data.totalNumberOfOptions === "Two" && (allowedOptionsToSelect.slice(2).includes(optionSelected))) {
-                                //There are only two options and the optionSelected is Three or more
-                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
-                            }
-
-                            if (data.totalNumberOfOptions === "Three" && (allowedOptionsToSelect.slice(3).includes(optionSelected))) {
-                                //There are only two options and the optionSelected is Three or more
-                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
-                            }
-
-                            if (data.totalNumberOfOptions === "Four" && (allowedOptionsToSelect.slice(4).includes(optionSelected))) {
-                                //There are only two options and the optionSelected is Three or more
-                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
-                            }
-
-                            if (data.totalNumberOfOptions === "Five" && (allowedOptionsToSelect.slice(5).includes(optionSelected))) {
-                                //There are only two options and the optionSelected is Three or more
-                                return resolve(HTTPWTHandler.badInput('Invalid vote'))
-                            }
-
-                            PollVote.findOneAndUpdate({userId: {$eq: userId}, pollId: {$eq: pollId}}, {dateVoted: Date.now(), vote: optionSelected}, {upsert: true}).then(() => {
-                                return resolve(HTTPWTHandler.OK('Added poll vote'))
-                            }).catch(error => {
-                                console.error('An error occurred while finding one and updating PollVote with filter filtering by userId:', userId, 'and pollId:', pollId, 'and update query updating dateVoted to Date.now() and vote to:', optionSelected, 'and upserts are enabled. The error was:', error)
-                                return resolve(HTTPWTHandler.serverError('An error occurred while adding vote to the poll. Please try again.'))
-                            })
-                        } else {
-                            return resolve(HTTPWTHandler.notFound('Could not find poll'))
-                        }
-                    }).catch(error => {
-                        console.error('An error occured while finding poll with id:', pollId, '. The error was:', error)
-                        return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
-                    })
-                } else {
+                if (!result) {
                     return resolve(HTTPWTHandler.notFound('Could not find user with provided userId'))
                 }
+                
+                //User exists
+                Poll.findOne({_id: {$eq: pollId}}).lean().then(data => {
+                    if (!data) {
+                        return resolve(HTTPWTHandler.notFound('Could not find poll'))
+                    }
+                    
+                    if (data.creatorId == userId) {
+                        return resolve(HTTPWTHandler.forbidden('You cannot vote on your own poll'))
+                    }
+
+                    if (optionSelected > data.options.length - 1) {
+                        return resolve(HTTPWTHandler.badInput('Invalid vote'))
+                    }
+
+                    PollVote.findOneAndUpdate({userId: {$eq: userId}, pollId: {$eq: pollId}}, {dateVoted: Date.now(), vote: optionSelected}, {upsert: true}).then(() => {
+                        return resolve(HTTPWTHandler.OK('Added poll vote'))
+                    }).catch(error => {
+                        console.error('An error occurred while finding one and updating PollVote with filter filtering by userId:', userId, 'and pollId:', pollId, 'and update query updating dateVoted to Date.now() and vote to:', optionSelected, 'and upserts are enabled. The error was:', error)
+                        return resolve(HTTPWTHandler.serverError('An error occurred while adding vote to the poll. Please try again.'))
+                    })
+                }).catch(error => {
+                    console.error('An error occured while finding poll with id:', pollId, '. The error was:', error)
+                    return resolve(HTTPWTHandler.serverError('An error occurred while finding poll. Please try again.'))
+                })
             }).catch(error => {
                 console.error('An error occured while finding user with id:', userId, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding user with your id. Please try again.'))
@@ -680,6 +659,10 @@ class TempController {
 
             if (typeof pollId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`pollId must be a string. Provided type: ${typeof pollId}`))
+            }
+
+            if (!mongoose.isObjectIdOrHexString(pollId)) {
+                return resolve(HTTPWTHandler.badInput('pollId must be an ObjectId.'))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {

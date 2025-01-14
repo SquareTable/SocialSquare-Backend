@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const PollVoteSchema = new Schema({
     pollId: mongoose.Schema.Types.ObjectId,
     userId: mongoose.Schema.Types.ObjectId,
-    vote: String,
+    vote: Number, // 0-based vote index
     dateVoted: Number
 })
 
