@@ -18,7 +18,6 @@ const PollSchema = new Schema({
     optionSixesColor: String,
     totalNumberOfOptions: String,
     creatorId: mongoose.Schema.Types.ObjectId,
-    comments: Array,
     datePosted: Number,
     allowScreenShots: Boolean,
     viewedBy: Array

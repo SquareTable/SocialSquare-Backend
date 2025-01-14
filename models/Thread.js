@@ -3,7 +3,6 @@ const Schema = mongoose.Schema;
 
 const ThreadSchema = new Schema({
     threadType: String,
-    comments: Array,
     creatorId: mongoose.Schema.Types.ObjectId,
     threadTitle: String,
     threadSubtitle: String,
