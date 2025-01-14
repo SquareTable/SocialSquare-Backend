@@ -884,7 +884,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
 });
 
 router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
-    let {pollTitle, pollSubTitle, options, sentAllowScreenShots} = req.body;
+    let {pollTitle, pollSubTitle, options} = req.body;
 
     const worker = new Worker(workerPath, {
         workerData: {
@@ -893,8 +893,7 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
                 req.tokenData,
                 pollTitle,
                 pollSubTitle,
-                options,
-                sentAllowScreenShots
+                options
             ]
         }
     })
@@ -1051,7 +1050,7 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postImage',
-            functionArgs: [req.tokenData, req.body.title, req.body.description, req.body.sentAllowScreenShots, req.file]
+            functionArgs: [req.tokenData, req.body.title, req.body.description, req.file]
         }
     })
 
@@ -1152,11 +1151,11 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
 });
 
 router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], upload.single('image'), async (req, res) => {
-    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
+    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postcategorywithimage',
-            functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots, req.file]
+            functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, req.file]
         }
     })
 
@@ -1205,11 +1204,11 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
 });
 
 router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage'], (req, res) => {
-    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots} = req.body;
+    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postcategorywithoutimage',
-            functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, sentAllowScreenShots]
+            functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL]
         }
     })
 
@@ -1388,12 +1387,12 @@ router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
 });
 
 router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
-    let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
+    let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL} = req.body;
 
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'posttextthread',
-            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL, sentAllowScreenShots]
+            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL]
         }
     })
 
@@ -1416,11 +1415,11 @@ router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
 });
 
 router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single('image'), async (req, res) => {
-    let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots} = req.body;
+    let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postimagethread',
-            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, sentAllowScreenShots, req.file]
+            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, req.file]
         }
     })
 

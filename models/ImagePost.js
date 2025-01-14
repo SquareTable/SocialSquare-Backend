@@ -9,7 +9,6 @@ const ImageSchema = new Schema({
     downVotes: Array,
     creatorId: mongoose.Schema.Types.ObjectId,
     datePosted: Number,
-    allowScreenShots: Boolean,
     viewedBy: Array,
     tags: Array,
     uploadedFrom: {type: String, default: 'SocialSquare'}

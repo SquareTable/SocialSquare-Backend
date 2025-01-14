@@ -114,7 +114,6 @@ router.post("/create", (req,res)=> {
                 dateCreated: datetime,
                 lastMessage: "N/A",
                 lastMessageDate: "N/A",
-                allowScreenShots: true,
                 lastMessageViewed: []
             });
             newConversation.save().then(result => {
@@ -276,7 +275,6 @@ router.post("/createDirectMessage", (req,res)=> {
             conversationNSFW: false,
             conversationNSFL: false,
             dateCreated: datetime,
-            allowScreenShots: false,
             lastMessageViewed: []
         });
         newConversation.save().then(result => {
@@ -388,7 +386,7 @@ router.get("/getConvos", (req,res)=>{
                         //afterUnreads
                         const afterUnreads = (convoUnreadAmount, lastMessageDate) => {
                             if (result[index].isDirectMessage == false) {
-                                var toPush = {conversationId: result[index]._id, members: result[index].members.length, isDirectMessage: result[index].isDirectMessage, conversationImageKey: result[index].conversationImageKey, conversationTitle: result[index].conversationTitle, conversationDescription: result[index].conversationDescription, conversationNSFW: result[index].conversationNSFW, conversationNSFL: result[index].conversationNSFL, lastMessageDate: lastMessageDate, dateCreated: result[index].dateCreated, allowScreenShots: result[index].allowScreenShots, unreadsMessages: convoUnreadAmount, isEncrypted: result[index].isEncrypted}
+                                var toPush = {conversationId: result[index]._id, members: result[index].members.length, isDirectMessage: result[index].isDirectMessage, conversationImageKey: result[index].conversationImageKey, conversationTitle: result[index].conversationTitle, conversationDescription: result[index].conversationDescription, conversationNSFW: result[index].conversationNSFW, conversationNSFL: result[index].conversationNSFL, lastMessageDate: lastMessageDate, dateCreated: result[index].dateCreated, unreadsMessages: convoUnreadAmount, isEncrypted: result[index].isEncrypted}
                                 allConversationsFound.push(toPush)
                                 itemsProcessed++;
                                 if (itemsProcessed == result.length) {
@@ -409,7 +407,7 @@ router.get("/getConvos", (req,res)=>{
                                 }
                                 User.find({_id: {$eq: idOfOther}}).then(data => { 
                                     if (data.length) {
-                                        var toPush = {conversationId: result[index]._id, members: result[index].members.length, isDirectMessage: result[index].isDirectMessage, conversationImageKey: data[0].profileImageKey, conversationTitle: data[0].name, conversationDescription: result[index].conversationDescription, conversationNSFW: result[index].conversationNSFW, conversationNSFL: result[index].conversationNSFL, lastMessageDate: result[index].lastMessageDate, dateCreated: result[index].dateCreated, allowScreenShots: result[index].allowScreenShots, unreadsMessages: convoUnreadAmount, isEncrypted: result[index].isEncrypted}
+                                        var toPush = {conversationId: result[index]._id, members: result[index].members.length, isDirectMessage: result[index].isDirectMessage, conversationImageKey: data[0].profileImageKey, conversationTitle: data[0].name, conversationDescription: result[index].conversationDescription, conversationNSFW: result[index].conversationNSFW, conversationNSFL: result[index].conversationNSFL, lastMessageDate: result[index].lastMessageDate, dateCreated: result[index].dateCreated, unreadsMessages: convoUnreadAmount, isEncrypted: result[index].isEncrypted}
                                         allConversationsFound.push(toPush)
                                         itemsProcessed++;
                                         if (itemsProcessed == result.length) {
@@ -532,7 +530,7 @@ router.get("/singleDmWithName/:nameOfOther", (req,res)=>{
                                     }
                                     User.find({_id: {$eq: idOfOther}}).then(data => { 
                                         if (data.length) {
-                                            var toSend = {conversationId: result._id, members: result.members.length, isDirectMessage: result.isDirectMessage, conversationImageKey: data[0].profileImageKey, conversationTitle: data[0].name, conversationDescription: result.conversationDescription, conversationNSFW: result.conversationNSFW, conversationNSFL: result.conversationNSFL, lastMessage: result.lastMessage, lastMessageDate: result.lastMessageDate, dateCreated: result.dateCreated, allowScreenShots: result.allowScreenShots}
+                                            var toSend = {conversationId: result._id, members: result.members.length, isDirectMessage: result.isDirectMessage, conversationImageKey: data[0].profileImageKey, conversationTitle: data[0].name, conversationDescription: result.conversationDescription, conversationNSFW: result.conversationNSFW, conversationNSFL: result.conversationNSFL, lastMessage: result.lastMessage, lastMessageDate: result.lastMessageDate, dateCreated: result.dateCreated}
                                             res.json({
                                                 status: "SUCCESS",
                                                 message: "Conversations found.",
@@ -611,7 +609,7 @@ router.get("/singleConvoWithId/:idOfConvo", (req,res)=>{
                         })
                     } else {
                         if (result.isDirectMessage == false) {
-                            var toSend = {conversationId: result._id, members: result.members.length, isDirectMessage: result.isDirectMessage, conversationImageKey: result.conversationImageKey, conversationTitle: result.conversationTitle, conversationDescription: result.conversationDescription, conversationNSFW: result.conversationNSFW, conversationNSFL: result.conversationNSFL, lastMessage: result.lastMessage, lastMessageDate: result.lastMessageDate, dateCreated: result.dateCreated, allowScreenShots: result.allowScreenShots, isEncrypted: result.isEncrypted}
+                            var toSend = {conversationId: result._id, members: result.members.length, isDirectMessage: result.isDirectMessage, conversationImageKey: result.conversationImageKey, conversationTitle: result.conversationTitle, conversationDescription: result.conversationDescription, conversationNSFW: result.conversationNSFW, conversationNSFL: result.conversationNSFL, lastMessage: result.lastMessage, lastMessageDate: result.lastMessageDate, dateCreated: result.dateCreated, isEncrypted: result.isEncrypted}
                             res.json({
                                 status: "SUCCESS",
                                 message: "Conversations found.",
@@ -632,7 +630,7 @@ router.get("/singleConvoWithId/:idOfConvo", (req,res)=>{
                                         message: "No user user found."
                                     })
                                 } else {
-                                    var toSend = {conversationId: result._id, members: result.members.length, isDirectMessage: result.isDirectMessage, conversationImageKey: data.profileImageKey, conversationTitle: data.name, conversationDescription: result.conversationDescription, conversationNSFW: result.conversationNSFW, conversationNSFL: result.conversationNSFL, lastMessage: result.lastMessage, lastMessageDate: result.lastMessageDate, dateCreated: result.dateCreated, allowScreenShots: result.allowScreenShots, isEncrypted: result.isEncrypted}
+                                    var toSend = {conversationId: result._id, members: result.members.length, isDirectMessage: result.isDirectMessage, conversationImageKey: data.profileImageKey, conversationTitle: data.name, conversationDescription: result.conversationDescription, conversationNSFW: result.conversationNSFW, conversationNSFL: result.conversationNSFL, lastMessage: result.lastMessage, lastMessageDate: result.lastMessageDate, dateCreated: result.dateCreated, isEncrypted: result.isEncrypted}
                                     res.json({
                                         status: "SUCCESS",
                                         message: "Conversations found.",
@@ -985,61 +983,6 @@ router.get("/checkForEncryption/:conversationid", (req,res)=>{
                             res.json({
                                 status: "SUCCESS",
                                 message: "Chat is not encrypted"
-                            })
-                        }
-                    } else {
-                        res.json({
-                            status: "FAILED",
-                            message: "Error with conversation id passed"
-                        })
-                    }
-                }).catch(err => {
-                    console.log(err)
-                    res.json({
-                        status: "FAILED",
-                        message: "Error while finding conversation."
-                    })
-                })
-            } else {
-                res.json({
-                    status: "FAILED",
-                    message: "Error with user id passed"
-                })
-            }
-        }).catch(err => {
-            console.log(err)
-            res.json({
-                status: "FAILED",
-                message: "Error while finding user."
-            })
-        })
-    }
-})
-
-//search if encrypted and stuff
-
-router.get("/checkForScreenshotsAllowed/:conversationid", (req,res)=>{
-    const idSent = req.tokenData;
-    const conversationId = req.params.conversationid
-    if (idSent == "" || conversationId == "") {
-        res.json({
-            status: "FAILED",
-            message: "Error with params passed"
-        })
-    } else {           
-        User.find({_id: {$eq: idSent}}).then(userFoundResult => {
-            if (userFoundResult.length) {
-                Conversation.find({_id: {$eq: conversationId}}).then(convoFound => {
-                    if (convoFound.length) {
-                        if (convoFound[0].allowScreenShots == true) {
-                            res.json({
-                                status: "SUCCESS",
-                                message: "ScreenShots allowed."
-                            })
-                        } else {
-                            res.json({
-                                status: "SUCCESS",
-                                message: "ScreenShots not allowed."
                             })
                         }
                     } else {
