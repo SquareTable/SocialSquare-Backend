@@ -8,7 +8,6 @@ const ImageSchema = new Schema({
     upVotes: Array,
     downVotes: Array,
     creatorId: mongoose.Schema.Types.ObjectId,
-    comments: Array,
     datePosted: Number,
     allowScreenShots: Boolean,
     viewedBy: Array,
