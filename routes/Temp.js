@@ -167,7 +167,7 @@ const rateLimiters = {
         max: 2,
         standardHeaders: false,
         legacyHeaders: false,
-        message: {status: "FAILED", message: "You have created too many categories with images today. Please try again in 24 hours."},
+        message: {status: "FAILED", message: "You have created too many categories today. Please try again in 24 hours."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
