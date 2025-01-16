@@ -1229,8 +1229,8 @@ class TempController {
                             if (file) {
                                 try {
                                     imageKey = await imageHandler.compressImage(file.filename);
-                                } catch {
-                                    console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', error)
+                                } catch (e) {
+                                    console.error('An error was thrown from ImageLibrary.compressImage while compressing image with filename:', file.filename, '. The error was:', e)
                                     deleteFile()
                                     return resolve(HTTPWTHandler.serverError('Failed to compress image. Please try again.'))
                                 }
