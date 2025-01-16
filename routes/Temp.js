@@ -234,21 +234,12 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/posttextthread': rateLimit({
+    '/postthread': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 20,
         standardHeaders: false,
         legacyHeaders: false,
-        message: {status: "FAILED", message: "You have created too many text thread posts in the last 24 hours. Please try again in 24 hours."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/postimagethread': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 20,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have created too many image thread posts in the last 24 hours. Please try again in 24 hours."},
+        message: {status: "FAILED", message: "You have created too many thread posts in the last 24 hours. Please try again in 24 hours."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -1350,39 +1341,11 @@ router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
     })
 });
 
-router.post('/posttextthread', rateLimiters['/posttextthread'], (req, res) => {
-    let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL} = req.body;
-
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'posttextthread',
-            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadBody, threadNSFW, threadNSFL]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!res.headersSent) {
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/posttextthread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!res.headersSent) {
-            console.error('An error occurred from TempWorker for POST /posttextthread:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/posttextthread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single('image'), async (req, res) => {
+router.post('/postthread', rateLimiters['/postthread'], upload.single('image'), async (req, res) => {
     let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
-            functionName: 'postimagethread',
+            functionName: 'postthread',
             functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, req.file]
         }
     })
@@ -1391,16 +1354,16 @@ router.post('/postimagethread', rateLimiters['/postimagethread'], upload.single(
         if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('POST temp/postimagethread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+            console.error('POST temp/postthread controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
     worker.on('error', (error) => {
         if (!res.headersSent) {
-            console.error('An error occurred from TempWorker for POST /postimagethread:', error)
+            console.error('An error occurred from TempWorker for POST /postthread:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
-            console.error('POST temp/postimagethread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+            console.error('POST temp/postthread controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
