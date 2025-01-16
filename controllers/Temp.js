@@ -1832,7 +1832,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`threadCategoryId must be a string. Provided type: ${typeof threadCategoryId}`))
             }
 
-            if (typeof threadImageDescription !== 'string') {
+            if (file && typeof threadImageDescription !== 'string') {
                 deleteImage()
                 return resolve(HTTPWTHandler.badInput(`threadImageDescription must be a string. Provided type: ${typeof threadImageDescription}`))
             }
