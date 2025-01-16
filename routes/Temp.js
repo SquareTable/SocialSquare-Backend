@@ -162,12 +162,12 @@ const rateLimiters = {
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
-    '/postcategorywithimage': rateLimit({
+    '/postcategory': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
         max: 2,
         standardHeaders: false,
         legacyHeaders: false,
-        message: {status: "FAILED", message: "You have created too many categories with images today. Please try again in 24 hours."},
+        message: {status: "FAILED", message: "You have created too many categories today. Please try again in 24 hours."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -177,15 +177,6 @@ const rateLimiters = {
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have deleted too many image posts in the last minute. Please try again in 60 seconds."},
-        skipFailedRequests: true,
-        keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
-    }),
-    '/postcategorywithoutimage': rateLimit({
-        windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 2,
-        standardHeaders: false,
-        legacyHeaders: false,
-        message: {status: "FAILED", message: "You have created too many categories without images today. Please try again in 24 hours."},
         skipFailedRequests: true,
         keyGenerator: (req, res) => req.tokenData //Use req.tokenData (account _id in MongoDB) to identify clients and rate limit
     }),
@@ -1150,11 +1141,11 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
     })
 });
 
-router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], upload.single('image'), async (req, res) => {
+router.post('/postcategory', rateLimiters['/postcategory'], upload.single('image'), async (req, res) => {
     let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
-            functionName: 'postcategorywithimage',
+            functionName: 'postcategory',
             functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, req.file]
         }
     })
@@ -1163,16 +1154,16 @@ router.post('/postcategorywithimage', rateLimiters['/postcategorywithimage'], up
         if (!res.headersSent) {
             res.status(result.statusCode).json(result.data)
         } else {
-            console.error('POST temp/postcategorywithimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
+            console.error('POST temp/postcategory controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
         }
     })
 
     worker.on('error', (error) => {
         if (!res.headersSent) {
-            console.error('An error occurred from TempWorker for POST /postcategorywithimage:', error)
+            console.error('An error occurred from TempWorker for POST /postcategory:', error)
             HTTPHandler.serverError(res, String(error))
         } else {
-            console.error('POST temp/postcategorywithimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
+            console.error('POST temp/postcategory controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
@@ -1199,33 +1190,6 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
             HTTPHandler.serverError(res, String(error))
         } else {
             console.error('POST temp/deleteimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
-        }
-    })
-});
-
-router.post('/postcategorywithoutimage', rateLimiters['/postcategorywithoutimage'], (req, res) => {
-    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL} = req.body;
-    const worker = new Worker(workerPath, {
-        workerData: {
-            functionName: 'postcategorywithoutimage',
-            functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL]
-        }
-    })
-
-    worker.on('message', (result) => {
-        if (!res.headersSent) {
-            res.status(result.statusCode).json(result.data)
-        } else {
-            console.error('POST temp/postcategorywithoutimage controller function returned data to be sent to the client but HTTP headers have already been sent! Data attempted to send:', result)
-        }
-    })
-
-    worker.on('error', (error) => {
-        if (!res.headersSent) {
-            console.error('An error occurred from TempWorker for POST /postcategorywithoutimage:', error)
-            HTTPHandler.serverError(res, String(error))
-        } else {
-            console.error('POST temp/postcategorywithoutimage controller function encountered an error and tried to send it to the client but HTTP headers have already been sent! Error attempted to send:', error)
         }
     })
 });
