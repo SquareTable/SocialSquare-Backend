@@ -28,13 +28,13 @@ class ThreadPost {
                                 votes: upvotes - downvotes,
                                 creatorName: postOwner.name,
                                 creatorDisplayName: postOwner.displayName,
-                                creatorPfpKey: postOwner.profileImageKey,
+                                creatorImageKey: postOwner.profileImageKey,
                                 upvoted: !!isUpvoted,
                                 downvoted: !!isDownvoted,
                                 isOwner: postOwner._id.toString() === userRequesting._id.toString(),
                                 interacted: !!isUpvoted || !!isDownvoted,
                                 _id: String(post._id),
-                                threadCategory: category.categoryTitle,
+                                categoryTitle: category.categoryTitle,
                                 comments,
                                 creatorPublicId: postOwner.secondId,
                                 categoryImageKey: category.imageKey,
@@ -160,8 +160,8 @@ class ThreadPost {
                             Upvote.deleteMany({postId: {$eq: postId}, postFormat: "Thread"}),
                             Downvote.deleteMany({postId: {$eq: postId}, postFormat: "Thread"})
                         ]).then(() => {
-                            if (post.threadImageKey) {
-                                imageLib.deleteImageByKey(post.threadImageKey)
+                            if (post.imageKey) {
+                                imageLib.deleteImageByKey(post.imageKey)
                             }
                             resolve()
                         }).catch(error => {

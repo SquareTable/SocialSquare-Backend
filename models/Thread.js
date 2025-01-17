@@ -2,17 +2,16 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ThreadSchema = new Schema({
-    threadType: String,
     creatorId: mongoose.Schema.Types.ObjectId,
-    threadTitle: String,
-    threadSubtitle: String,
-    threadTags: String,
-    threadCategoryId: mongoose.Schema.Types.ObjectId,
-    threadBody: String,
-    threadImageKey: String,
-    threadImageDescription: String,
-    threadNSFW: Boolean,
-    threadNSFL: Boolean,
+    title: String,
+    subtitle: String,
+    tags: String,
+    categoryId: mongoose.Schema.Types.ObjectId,
+    body: String,
+    imageKey: String,
+    imageDescription: String,
+    NSFW: Boolean,
+    NSFL: Boolean,
     datePosted: Number,
     viewedBy: Array
 });
