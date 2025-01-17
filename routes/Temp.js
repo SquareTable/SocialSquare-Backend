@@ -1342,11 +1342,11 @@ router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
 });
 
 router.post('/postthread', rateLimiters['/postthread'], upload.single('image'), async (req, res) => {
-    let {threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL} = req.body;
+    let {title, subtitle, tags, categoryId, imageDescription, NSFW, NSFL} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postthread',
-            functionArgs: [req.tokenData, threadTitle, threadSubtitle, threadTags, threadCategoryId, threadImageDescription, threadNSFW, threadNSFL, req.file]
+            functionArgs: [req.tokenData, title, subtitle, tags, categoryId, imageDescription, NSFW, NSFL, req.file]
         }
     })
 

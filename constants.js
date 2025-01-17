@@ -23,19 +23,19 @@ const CONSTANTS = {
     MAX_CATEGORY_DESCRIPTION_LINES: 3, //Update this value to reflect the VALID_BIO_TEST above
     MAX_THREAD_TITLE_LENGTH: 30,
     VALID_THREAD_TITLE_TEST: /^([^\n]*\n){0}[^\n]*$/, //Tests to make sure threadTitle is single line only
-    THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE: 'threadTitle must only have one line', //Update this value to reflect the VALID_THREAD_TITLE_TEST above
+    THREAD_TITLE_FAILED_TEST_ERROR_MESSAGE: 'title must only have one line', //Update this value to reflect the VALID_THREAD_TITLE_TEST above
     MAX_THREAD_SUBTITLE_LENGTH: 30,
     VALID_THREAD_SUBTITLE_TEST: /^([^\n]*\n){0}[^\n]*$/, //Tests to make sure threadSubtitle is single line only
-    THREAD_SUBTITLE_FAILED_TEST_ERROR_MESSAGE: 'threadSubtitle must only have one line', //Update this value to reflect the VALID_THREAD_SUBTITLE_TEST
+    THREAD_SUBTITLE_FAILED_TEST_ERROR_MESSAGE: 'subtitle must only have one line', //Update this value to reflect the VALID_THREAD_SUBTITLE_TEST
     MAX_THREAD_BODY_LENGTH: 1000,
     VALID_THREAD_BODY_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure thread body has less than 10 lines
     MAX_THREAD_BODY_LINES: 10, //Update this value to reflect the VALID_THREAD_BODY_TEST above
     MAX_THREAD_TAGS_LENGTH: 100,
     VALID_THREAD_TAGS_TEST: /^([^\n]*\n){0}[^\n]*$/, //Tests to make sure threadTags is single line only
-    THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE: 'threadTags must only have one line', //Update this value to reflect the VALID_THREAD_TAGS_TEST above
+    THREAD_TAGS_FAILED_TEST_ERROR_MESSAGE: 'tags must only have one line', //Update this value to reflect the VALID_THREAD_TAGS_TEST above
     MAX_THREAD_IMAGE_DESCRIPTION_LENGTH: 1000,
     VALID_THREAD_IMAGE_DESCRIPTION_TEST: /^([^\n]*\n){0,9}[^\n]*$/, //Tests to make sure thread image description has less than 10 lines
-    THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE: 'threadImageDescription must have less than 10 lines', //Update this value to reflect the VALID_THREAD_IMAGE_DESCRIPTION_TEST above
+    THREAD_IMAGE_DESCRIPTION_FAILED_TEST_ERROR_MESSAGE: 'imageDescription must have less than 10 lines', //Update this value to reflect the VALID_THREAD_IMAGE_DESCRIPTION_TEST above
     GET_USER_ACTIVITY_API_LIMIT: 20, //This is the limit for the temp/getUserActivity API - Limits the amount of posts returns
     PRIVACY_SETTINGS_ALLOWED_VALUES: { //These are the allowed values for updating the users' privacy settings. Change these whenever a new privacy setting is added or an existing one is modified.
         viewFollowers: ['no-one', 'followers', 'everyone'],
