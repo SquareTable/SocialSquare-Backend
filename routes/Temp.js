@@ -766,7 +766,8 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
         workerData: {
             functionName: 'sendnotificationkey',
             functionArgs: [req.tokenData, req.body.keySent, req.body.refreshTokenId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -792,7 +793,8 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
         workerData: {
             functionName: 'changedisplayname',
             functionArgs: [req.tokenData, req.body.password, req.body.desiredEmail]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -818,7 +820,8 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
         workerData: {
             functionName: 'changepassword',
             functionArgs: [req.tokenData, req.body.currentPassword, req.body.newPassword, req.body.confirmNewPassword, req.ip, req.device.name]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -844,7 +847,8 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
         workerData: {
             functionName: 'searchpageusersearch',
             functionArgs: [req.tokenData, req.body.skip, req.body.val]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -877,7 +881,8 @@ router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
                 pollSubTitle,
                 options
             ]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -903,7 +908,8 @@ router.post('/searchforpollposts', rateLimiters['/searchforpollposts'], (req, re
         workerData: {
             functionName: 'searchforpollposts',
             functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -929,7 +935,8 @@ router.post('/voteonpoll', rateLimiters['/voteonpoll'], (req, res) => {
         workerData: {
             functionName: 'voteonpoll',
             functionArgs: [req.tokenData, req.body.optionSelected, req.body.pollId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -955,7 +962,8 @@ router.post('/removevoteonpoll', rateLimiters['/removevoteonpoll'], (req, res) =
         workerData: {
             functionName: 'removevoteonpoll',
             functionArgs: [req.tokenData, req.body.pollId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -981,7 +989,8 @@ router.post('/searchforpollpostsbyid', rateLimiters['/searchforpollpostsbyid'], 
         workerData: {
             functionName: 'searchforpollpostsbyid',
             functionArgs: [req.tokenData, req.body.pollId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1007,7 +1016,8 @@ router.post('/deletepoll', rateLimiters['/deletepoll'], (req, res) => {
         workerData: {
             functionName: 'deletepoll',
             functionArgs: [req.tokenData, req.body.pollId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1033,7 +1043,8 @@ router.post('/postImage', rateLimiters['/postImage'], upload.single('image'), as
         workerData: {
             functionName: 'postImage',
             functionArgs: [req.tokenData, req.body.title, req.body.description, req.file]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1059,7 +1070,8 @@ router.post('/postProfileImage', rateLimiters['/postProfileImage'], upload.singl
         workerData: {
             functionName: 'postProfileImage',
             functionArgs: [req.tokenData, req.file]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1085,7 +1097,8 @@ router.post('/getImagesFromProfile', rateLimiters['/getImagesFromProfile'], (req
         workerData: {
             functionName: 'getImagesFromProfile',
             functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1111,7 +1124,8 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
         workerData: {
             functionName: 'getProfilePic',
             functionArgs: [req.params.pubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1138,7 +1152,8 @@ router.post('/postcategory', rateLimiters['/postcategory'], upload.single('image
         workerData: {
             functionName: 'postcategory',
             functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, req.file]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1164,7 +1179,8 @@ router.post('/deleteimage', rateLimiters['/deleteimage'], (req, res) => {
         workerData: {
             functionName: 'deleteimage',
             functionArgs: [req.tokenData, req.body.postId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1190,7 +1206,8 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
         workerData: {
             functionName: 'searchpagesearchcategories',
             functionArgs: [req.tokenData, req.body.val, req.body.lastItemId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1216,7 +1233,8 @@ router.post('/getcategoryimage', rateLimiters['/getcategoryimage'], (req, res) =
         workerData: {
             functionName: 'getcategoryimage',
             functionArgs: [req.body.val]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1242,7 +1260,8 @@ router.post('/findcategorybyid', rateLimiters['/findcategorybyid'], (req, res) =
         workerData: {
             functionName: 'findcategorybyid',
             functionArgs: [req.tokenData, req.body.categoryId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1268,7 +1287,8 @@ router.post('/findcategoryfromprofile', rateLimiters['/findcategoryfromprofile']
         workerData: {
             functionName: 'findcategoryfromprofile',
             functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1294,7 +1314,8 @@ router.post('/joincategory', rateLimiters['/joincategory'], (req, res) => {
         workerData: {
             functionName: 'joincategory',
             functionArgs: [req.tokenData, req.body.categoryId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1320,7 +1341,8 @@ router.post('/leavecategory', rateLimiters['/leavecategory'], (req, res) => {
         workerData: {
             functionName: 'leavecategory',
             functionArgs: [req.tokenData, req.body.categoryId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1347,7 +1369,8 @@ router.post('/postthread', rateLimiters['/postthread'], upload.single('image'), 
         workerData: {
             functionName: 'postthread',
             functionArgs: [req.tokenData, title, subtitle, tags, categoryId, imageDescription, NSFW, NSFL, req.file]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1375,7 +1398,8 @@ router.post('/getthreadsfromcategory', rateLimiters['/getthreadsfromcategory'], 
         workerData: {
             functionName: 'getthreadsfromcategory',
             functionArgs: [req.tokenData, categoryId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1401,7 +1425,8 @@ router.post('/getthreadsfromprofile', rateLimiters['/getthreadsfromprofile'], (r
         workerData: {
             functionName: 'getthreadsfromprofile',
             functionArgs: [req.tokenData, req.body.pubId, req.body.lastItemId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1427,7 +1452,8 @@ router.post('/getthreadbyid', rateLimiters['/getthreadbyid'], (req, res) => {
         workerData: {
             functionName: 'getthreadbyid',
             functionArgs: [req.tokenData, req.body.threadId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1453,7 +1479,8 @@ router.post('/deletethread', rateLimiters['/deletethread'], (req, res) => {
         workerData: {
             functionName: 'deletethread',
             functionArgs: [req.tokenData, req.body.threadId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1479,7 +1506,8 @@ router.post('/reloadUsersDetails', rateLimiters['/reloadUsersDetails'], (req, re
         workerData: {
             functionName: 'reloadUsersDetails',
             functionArgs: [req.tokenData, req.body.usersPubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1505,7 +1533,8 @@ router.post('/earnSpecialBadge', rateLimiters['/earnSpecialBadge'], (req, res) =
         workerData: {
             functionName: 'earnSpecialBadge',
             functionArgs: [req.tokenData, req.body.badgeEarnt]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1531,7 +1560,8 @@ router.post('/getuserbyid', rateLimiters['/getuserbyid'], (req, res) => {
         workerData: {
             functionName: 'getuserbyid',
             functionArgs: [req.tokenData, req.body.pubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1557,7 +1587,8 @@ router.post('/makeaccountprivate', rateLimiters['/makeaccountprivate'], (req, re
         workerData: {
             functionName: 'makeaccountprivate',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1583,7 +1614,8 @@ router.post('/makeaccountpublic', rateLimiters['/makeaccountpublic'], (req, res)
         workerData: {
             functionName: 'makeaccountpublic',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1609,7 +1641,8 @@ router.get('/followrequests/:skip', rateLimiters['/followrequests/:skip'], (req,
         workerData: {
             functionName: 'getfollowrequests',
             functionArgs: [req.tokenData, req.params.skip]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1635,7 +1668,8 @@ router.post('/denyfollowrequest', rateLimiters['/denyfollowrequest'], (req, res)
         workerData: {
             functionName: 'denyfollowrequest',
             functionArgs: [req.tokenData, req.body.accountFollowRequestDeniedPubID]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1661,7 +1695,8 @@ router.post('/acceptfollowrequest', rateLimiters['/acceptfollowrequest'], (req, 
         workerData: {
             functionName: 'acceptfollowrequest',
             functionArgs: [req.tokenData, req.body.accountFollowRequestAcceptedPubID]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1687,7 +1722,8 @@ router.post('/removefollowerfromaccount', rateLimiters['/removefollowerfromaccou
         workerData: {
             functionName: 'removefollowerfromaccount',
             functionArgs: [req.tokenData, req.body.userToRemovePubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1713,7 +1749,8 @@ router.post('/blockaccount', rateLimiters['/blockaccount'], (req, res) => {
         workerData: {
             functionName: 'blockaccount',
             functionArgs: [req.tokenData, req.body.userToBlockPubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1739,7 +1776,8 @@ router.post('/getuserblockedaccounts', rateLimiters['/getuserblockedaccounts'], 
         workerData: {
             functionName: 'getuserblockedaccounts',
             functionArgs: [req.tokenData, req.body.skip]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1765,7 +1803,8 @@ router.post('/unblockaccount', rateLimiters['/unblockaccount'], (req, res) => {
         workerData: {
             functionName: 'unblockaccount',
             functionArgs: [req.tokenData, req.body.userToUnblockPubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1791,7 +1830,8 @@ router.post('/enableAlgorithm', rateLimiters['/enableAlgorithm'], (req, res) => 
         workerData: {
             functionName: 'enableAlgorithm',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1817,7 +1857,8 @@ router.get('/getAuthenticationFactorsEnabled', rateLimiters['/getAuthenticationF
         workerData: {
             functionName: 'getAuthenticationFactorsEnabled',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1843,7 +1884,8 @@ router.post('/disableAlgorithm', rateLimiters['/disableAlgorithm'], (req, res) =
         workerData: {
             functionName: 'disableAlgorithm',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1869,7 +1911,8 @@ router.post('/reloadProfileEssentials', rateLimiters['/reloadProfileEssentials']
         workerData: {
             functionName: 'reloadProfileEssentials',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1895,7 +1938,8 @@ router.post('/turnOffEmailMultiFactorAuthentication', rateLimiters['/turnOffEmai
         workerData: {
             functionName: 'turnOffEmailMultiFactorAuthentication',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1921,7 +1965,8 @@ router.post('/deleteaccount', rateLimiters['/deleteaccount'], (req, res) => {
         workerData: {
             functionName: 'deleteaccount',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1947,7 +1992,8 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
         workerData: {
             functionName: 'checkIfCategoryExists',
             functionArgs: [req.body.categoryTitle]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1973,7 +2019,8 @@ router.post('/uploadNotificationsSettings', rateLimiters['/uploadNotificationsSe
         workerData: {
             functionName: 'uploadNotificationsSettings',
             functionArgs: [req.tokenData, req.body.notificationSettings]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -1999,7 +2046,8 @@ router.get('/getUserNotificationSettings', rateLimiters['/getUserNotificationSet
         workerData: {
             functionName: 'getUserNotificationSettings',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2026,7 +2074,8 @@ router.post('/reportUser', rateLimiters['/reportUser'], (req, res) => {
         workerData: {
             functionName: 'reportUser',
             functionArgs: [req.tokenData, reportType, reporteePubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2053,7 +2102,8 @@ router.post('/getUserActivity', rateLimiters['/getUserActivity'], (req, res) => 
         workerData: {
             functionName: 'getUserActivity',
             functionArgs: [req.tokenData, skip, voteType, postFormat]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2080,7 +2130,8 @@ router.post('/reportPost', rateLimiters['/reportPost'], (req, res) => {
         workerData: {
             functionName: 'reportPost',
             functionArgs: [req.tokenData, postId, postFormat, reason]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2106,7 +2157,8 @@ router.get('/userAlgorithmSettings', rateLimiters['/userAlgorithmSettings'], (re
         workerData: {
             functionName: 'userAlgorithmSettings',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2132,7 +2184,8 @@ router.post('/uploadAlgorithmSettings', rateLimiters['/uploadAlgorithmSettings']
         workerData: {
             functionName: 'uploadAlgorithmSettings',
             functionArgs: [req.tokenData, req.body.algorithmSettings]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2158,7 +2211,8 @@ router.get('/privacySettings', rateLimiters['/privacySettings'], (req, res) => {
         workerData: {
             functionName: 'privacySettings',
             functionArgs: [req.tokenData, req.body.algorithmSettings]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2184,7 +2238,8 @@ router.post('/savePrivacySettings', rateLimiters['/savePrivacySettings'], (req, 
         workerData: {
             functionName: 'savePrivacySettings',
             functionArgs: [req.tokenData, req.body.settings]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2210,7 +2265,8 @@ router.post('/getProfileStats', rateLimiters['/getProfileStats'], (req, res) => 
         workerData: {
             functionName: 'getProfileStats',
             functionArgs: [req.tokenData, req.body.pubId, req.body.skip, req.body.stat]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2237,7 +2293,8 @@ router.get('/loginactivity', rateLimiters['/loginactivity'], (req, res) => {
         workerData: {
             functionName: 'loginactivity',
             functionArgs: [req.tokenData, authRefreshTokenHeader]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2263,7 +2320,8 @@ router.post('/logoutdevice', rateLimiters['/logoutdevice'], (req, res) => {
         workerData: {
             functionName: 'logoutdevice',
             functionArgs: [req.tokenData, req.body.tokenToLogout]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2289,7 +2347,8 @@ router.post('/logoutallotherdevices', rateLimiters['/logoutallotherdevices'], (r
         workerData: {
             functionName: 'logoutallotherdevices',
             functionArgs: [req.tokenData, req.body.tokenIdNotToLogout]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2315,7 +2374,8 @@ router.get('/loginActivitySettings', rateLimiters['/loginActivitySettings'], (re
         workerData: {
             functionName: 'loginActivitySettings',
             functionArgs: [req.tokenData, req.body.tokenIdNotToLogout]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2341,7 +2401,8 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
         workerData: {
             functionName: 'uploadLoginActivitySettings',
             functionArgs: [req.tokenData, req.body.newSettings]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2368,7 +2429,8 @@ router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginAc
         workerData: {
             functionName: 'updateLoginActivitySettingsOnSignup',
             functionArgs: [req.tokenData, newSettings, refreshTokenId, req.ip, req.device.name]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2394,7 +2456,8 @@ router.get('/followingFeedFilterSettings', rateLimiters['/followingFeedFilterSet
         workerData: {
             functionName: 'followingFeedFilterSettings',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2420,7 +2483,8 @@ router.post('/logoutuser', rateLimiters['/logoutuser'], (req, res) => {
         workerData: {
             functionName: 'logoutuser',
             functionArgs: [req.tokenData, req.body.refreshTokenId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2446,7 +2510,8 @@ router.post('/deletecomment', rateLimiters['/deletecomment'], (req, res) => {
         workerData: {
             functionName: 'deletecomment',
             functionArgs: [req.tokenData, req.body.commentId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2472,7 +2537,8 @@ router.post('/getsinglecomment', rateLimiters['/getsinglecomment'], (req, res) =
         workerData: {
             functionName: 'getsinglecomment',
             functionArgs: [req.tokenData, req.body.commentId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2498,7 +2564,8 @@ router.post('/getcommentreplies', rateLimiters['/getcommentreplies'], (req, res)
         workerData: {
             functionName: 'getcommentreplies',
             functionArgs: [req.tokenData, req.body.commentId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2524,7 +2591,8 @@ router.post('/voteoncomment', rateLimiters['/voteoncomment'], (req, res) => {
         workerData: {
             functionName: 'voteoncomment',
             functionArgs: [req.tokenData, req.body.commentId, req.body.voteType]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2550,7 +2618,8 @@ router.post('/replytocomment', rateLimiters['/replytocomment'], (req, res) => {
         workerData: {
             functionName: 'replytocomment',
             functionArgs: [req.tokenData, req.body.comment, req.body.commentId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2576,7 +2645,8 @@ router.post('/postcomment', rateLimiters['/postcomment'], (req, res) => {
         workerData: {
             functionName: 'postcomment',
             functionArgs: [req.tokenData, req.body.comment, req.body.postId, req.body.postFormat]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2602,7 +2672,8 @@ router.post('/searchforpostcomments', rateLimiters['/searchforpostcomments'], (r
         workerData: {
             functionName: 'searchforpostcomments',
             functionArgs: [req.tokenData, req.body.postId, req.body.postFormat]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2628,7 +2699,8 @@ router.post('/removevoteoncomment', rateLimiters['/removevoteoncomment'], (req, 
         workerData: {
             functionName: 'removevoteoncomment',
             functionArgs: [req.tokenData, req.body.commentId, req.body.voteType]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2654,7 +2726,8 @@ router.post('/voteonpost', rateLimiters['/voteonpost'], (req, res) => {
         workerData: {
             functionName: 'voteonpost',
             functionArgs: [req.tokenData, req.body.postId, req.body.postFormat, req.body.voteType]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2680,7 +2753,8 @@ router.post('/removevoteonpost', rateLimiters['/removevoteonpost'], (req, res) =
         workerData: {
             functionName: 'removevoteonpost',
             functionArgs: [req.tokenData, req.body.postId, req.body.postFormat, req.body.voteType]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2706,7 +2780,8 @@ router.post('/followuser', rateLimiters['/followuser'], (req, res) => {
         workerData: {
             functionName: 'followuser',
             functionArgs: [req.tokenData, req.body.userPubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2732,7 +2807,8 @@ router.post('/unfollowuser', rateLimiters['/unfollowuser'], (req, res) => {
         workerData: {
             functionName: 'unfollowuser',
             functionArgs: [req.tokenData, req.body.userPubId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2758,7 +2834,8 @@ router.post('/getvotedusersofpost', rateLimiters['/getvotedusersofpost'], (req, 
         workerData: {
             functionName: 'getvotedusersofpost',
             functionArgs: [req.tokenData, req.body.postId, req.body.postFormat, req.body.lastItemId, req.body.voteType]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2784,7 +2861,8 @@ router.post('/getcategorymembers', rateLimiters['/getcategorymembers'], (req, re
         workerData: {
             functionName: 'getcategorymembers',
             functionArgs: [req.tokenData, req.body.categoryId, req.body.lastItemId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2810,7 +2888,8 @@ router.post('/getpollvoteusers', rateLimiters['/getpollvoteusers'], (req, res) =
         workerData: {
             functionName: 'getpollvoteusers',
             functionArgs: [req.tokenData, req.body.pollId, req.body.pollOption, req.body.lastItemId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -2836,7 +2915,8 @@ router.post('/editprofiledetails', rateLimiters['/editprofiledetails'], (req, re
         workerData: {
             functionName: 'editprofiledetails',
             functionArgs: [req.tokenData, req.body]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {

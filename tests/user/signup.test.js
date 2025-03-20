@@ -1,4 +1,3 @@
-require('dotenv').config({path: '../.env'})
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const UUIDLibrary = require('../../libraries/UUID')
 const mongoose = require('mongoose');

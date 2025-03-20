@@ -1,16 +1,17 @@
-const mongoose = require('mongoose');
 const User = require('../../models/User');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
-const UserController = require('../../controllers/User')
 const CONSTANTS = require('../../constants.js');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS.js');
+const supertest = require('supertest')
+const server = require('../../server.js')
 
-const {test, beforeAll, afterEach, afterAll} = require('@jest/globals');
+const {test, beforeAll, afterEach, afterAll, expect} = require('@jest/globals');
 
 const DB = new MockMongoDBServer();
 
 beforeAll(async () => {
   await DB.startTest();
+  process.env.MONGODB_URI = DB.uri
 })
 
 afterEach(async () => {
@@ -38,10 +39,12 @@ test('user/checkusernameavailability says available when username is available',
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.checkusernameavailability('seb')
-
-    expect(returned.data.message).toBe(true)
-    expect(returned.statusCode).toBe(200)
+    const response = await supertest(server)
+    .post('/user/checkusernameavailability')
+    .send({username: 'seb'})
+    
+    expect(response.body.message).toBe(true)
+    expect(response.statusCode).toBe(200)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -54,10 +57,13 @@ test('user/checkusernameavailability says not available when username is not ava
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.checkusernameavailability('seb')
+    const response = await supertest(server)
+    .post('/user/checkusernameavailability')
+    .send({username: 'seb'})
 
-    expect(returned.data.message).toBe(false)
-    expect(returned.statusCode).toBe(200)
+
+    expect(response.body.message).toBe(false)
+    expect(response.statusCode).toBe(200)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -69,10 +75,12 @@ test('user/checkusernameavailability says not available when uppercase username 
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.checkusernameavailability('SEB')
-
-    expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
-    expect(returned.statusCode).toBe(400)
+    const response = await supertest(server)
+    .post('/user/checkusernameavailability')
+    .send({username: 'SEB'})
+    
+    expect(response.body.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
+    expect(response.statusCode).toBe(400)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -81,10 +89,12 @@ test('username is invalid if it is multicase', async () => {
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.checkusernameavailability('sebasTiAN')
-
-    expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
-    expect(returned.statusCode).toBe(400)
+    const response = await supertest(server)
+    .post('/user/checkusernameavailability')
+    .send({username: 'sebasTiAN'})
+    
+    expect(response.body.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
+    expect(response.statusCode).toBe(400)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -94,10 +104,12 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.checkusernameavailability(notString);
-
-        expect(returned.data.message).toBe(`username must be a string. Provided type: ${typeof notString}`);
-        expect(returned.statusCode).toBe(400);
+        const response = await supertest(server)
+        .post('/user/checkusernameavailability')
+        .send({username: notString})
+        
+        expect(response.body.message).toBe(`username must be a string. Provided type: ${typeof notString}`)
+        expect(response.statusCode).toBe(400)
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -107,10 +119,12 @@ test('user/checknameavailability says username cannot be blank when it is blank'
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.checkusernameavailability('');
-
-    expect(returned.data.message).toBe('Username cannot be blank');
-    expect(returned.statusCode).toBe(400);
+    const response = await supertest(server)
+    .post('/user/checkusernameavailability')
+    .send({username: ''})
+    
+    expect(response.body.message).toBe('Username cannot be blank')
+    expect(response.statusCode).toBe(400)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -119,10 +133,14 @@ test(`user/checknameavailability fails when username is over ${CONSTANTS.MAX_USE
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.checkusernameavailability(new Array(CONSTANTS.MAX_USER_USERNAME_LENGTH + 2).join('a'))
+    const username = new Array(CONSTANTS.MAX_USER_USERNAME_LENGTH + 2).join('a')
 
-    expect(returned.data.message).toBe(`Username must be ${CONSTANTS.MAX_USER_USERNAME_LENGTH} or less characters`)
-    expect(returned.statusCode).toBe(400)
+    const response = await supertest(server)
+    .post('/user/checkusernameavailability')
+    .send({username})
+    
+    expect(response.body.message).toBe(`Username must be ${CONSTANTS.MAX_USER_USERNAME_LENGTH} or less characters`)
+    expect(response.statusCode).toBe(400)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -132,10 +150,12 @@ for (const invalidUsername of failingUsernames) {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.checkusernameavailability(invalidUsername);
-
-        expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
-        expect(returned.statusCode).toBe(400)
+        const response = await supertest(server)
+        .post('/user/checkusernameavailability')
+        .send({username: invalidUsername})
+        
+        expect(response.body.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
+        expect(response.statusCode).toBe(400)
         expect(await DB.noChangesMade()).toBe(true)
     })
 }

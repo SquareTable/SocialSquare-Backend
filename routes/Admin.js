@@ -14,7 +14,8 @@ router.post('/login', (req, res) => {
         workerData: {
             functionName: 'login',
             functionArgs: [req.body.email, req.body.password]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -44,7 +45,8 @@ router.get('/assignReports', (req, res) => {
         workerData: {
             functionName: 'getAssignedReports',
             functionArgs: [req.tokenData]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -70,7 +72,8 @@ router.delete('/dismissPostReport', (req, res) => {
         workerData: {
             functionName: 'dismissPostReport',
             functionArgs: [req.tokenData, req.body.reportId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -96,7 +99,8 @@ router.delete('/postAndReport', (req, res) => {
         workerData: {
             functionName: 'deletePostAndReport',
             functionArgs: [req.tokenData, req.body.reportId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {

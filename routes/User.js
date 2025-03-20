@@ -59,13 +59,13 @@ const rateLimiters = {
     })
 }
 
-
 router.post('/signup', rateLimiters['/signup'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'signup',
             functionArgs: [req.body.name, req.body.email, req.body.password, req.ip, req.device.name]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -91,7 +91,8 @@ router.post('/signin', rateLimiters['/signin'], HTTPHandler.getDeviceTypeMiddlew
         workerData: {
             functionName: 'signin',
             functionArgs: [req.body.email, req.body.password, req.ip, req.device.name]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -117,7 +118,8 @@ router.post('/checkusernameavailability', rateLimiters['/checkusernameavailabili
         workerData: {
             functionName: 'checkusernameavailability',
             functionArgs: [req.body.username]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -145,7 +147,8 @@ router.post('/sendemailverificationcode', rateLimiters['/sendemailverificationco
         workerData: {
             functionName: 'sendemailverificationcode',
             functionArgs: [userID, task, getAccountMethod, username, email, secondId]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -173,7 +176,8 @@ router.post('/checkverificationcode', rateLimiters['/checkverificationcode'], HT
         workerData: {
             functionName: 'checkverificationcode',
             functionArgs: [username, verificationCode, task, getAccountMethod, userID, email, secondId, req.ip, req.device.name]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -201,7 +205,8 @@ router.post('/changepasswordwithverificationcode', rateLimiters['/changepassword
         workerData: {
             functionName: 'changepasswordwithverificationcode',
             functionArgs: [newPassword, confirmNewPassword, verificationCode, username]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {

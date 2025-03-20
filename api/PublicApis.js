@@ -7,7 +7,6 @@ var stringSimilarity = require("string-similarity");
 //const { v4: uuidv4 } = require('uuid');
 
 /*
-//require('dotenv').config();
 const fs = require('fs')
 const S3 = require('aws-sdk/clients/s3')
 
