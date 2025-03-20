@@ -11,7 +11,6 @@ const DB = new MockMongoDBServer();
 
 beforeAll(async () => {
   await DB.startTest();
-  process.env.MONGODB_URI = DB.uri
 })
 
 afterEach(async () => {

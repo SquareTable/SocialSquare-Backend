@@ -1,3 +1,5 @@
+const app = require('express')();
+
 // mongodb
 if (process.env.isInCI !== 'true') {
     require('dotenv').config();
@@ -9,9 +11,10 @@ if (process.env.isInCI !== 'true') {
         console.error('SERVER WILL EXIT WITH CODE 1 (FAIL)')
         process.exit(1)
     });
+} else {
+    app.set('trust proxy', true)
 }
 
-const app = require('express')();
 const cors = require('cors')
 
 const UserRouter = require('./routes/User')

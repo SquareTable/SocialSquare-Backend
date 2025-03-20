@@ -3,7 +3,7 @@ const HTTPLibrary = require('../libraries/HTTP')
 const HTTPHandler = new HTTPLibrary();
 const router = require('express').Router();
 const path = require('path')
-const rateLimit = require('express-rate-limit');
+const rateLimit = require('../libraries/RateLimit');
 
 const workerPath = path.resolve('workers', 'UserWorker.js')
 
