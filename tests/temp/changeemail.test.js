@@ -55,6 +55,13 @@ Test if change is successful when inputs are correct
 Test if change does not modify other User documents
 */
 
+async function validChangeEmail() {
+    return await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({desiredEmail: validEmail, password: validPassword})
+}
+
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If change fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
         expect.assertions(3);
@@ -251,10 +258,7 @@ test('If change is successful when inputs are correct', async () => {
 
     const beforeUser = await User.findOne({}).lean();
 
-    const response = await supertest(server)
-    .post('/tempRoute/changeemail')
-    .set('auth-web-token', validToken)
-    .send({desiredEmail: validEmail, password: validPassword})
+    const response = await validChangeEmail()
 
     const afterUser = await User.findOne({}).lean();
 
@@ -286,10 +290,7 @@ test('If change does not modify other User documents', async () => {
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changeemail')
-    .set('auth-web-token', validToken)
-    .send({desiredEmail: validEmail, password: validPassword})
+    const response = await validChangeEmail()
 
     const afterUsers = await User.find({_id: {$ne: userData._id}}).lean();
 
