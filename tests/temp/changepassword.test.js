@@ -6,7 +6,6 @@ const User = require('../../models/User');
 const RefreshToken = require('../../models/RefreshToken');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
-const TempController = require('../../controllers/Temp');
 const UserLibrary = require('../../libraries/User')
 const userLib = new UserLibrary();
 
@@ -33,7 +32,6 @@ afterAll(async () => {
 const validEmail = "john.sullivan@gmail.com";
 const validPassword = "securepassword";
 const validIP = "127.0.0.1";
-const validDeviceName = "GitHub-Actions";
 
 const newPassword = 'mynewpassword';
 
