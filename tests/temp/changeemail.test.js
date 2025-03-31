@@ -37,6 +37,9 @@ const userData = {
     password: validHashedPassword
 }
 
+const tokensData = userLib.generateNewAuthAndRefreshTokens(userData._id)
+const validToken = 'Bearer ' + tokensData.token
+
 /*
 Tests:
 Test if change fails if userId is not a string
@@ -67,7 +70,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const response = await supertest(server)
         .post('/tempRoute/changeemail')
         .set('auth-web-token', invalidToken)
-        .send({email: validEmail, password: validPassword})
+        .send({desiredEmail: validEmail, password: validPassword})
         
         expect(response.body.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
         expect(response.statusCode).toBe(400);
@@ -81,12 +84,10 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const {token} = userLib.generateNewAuthAndRefreshTokens(userData._id)
-
         const response = await supertest(server)
         .post('/tempRoute/changeemail')
-        .set('auth-web-token', 'Bearer ' + token)
-        .send({email: validEmail, password: notString})
+        .set('auth-web-token', validToken)
+        .send({desiredEmail: validEmail, password: notString})
 
         expect(response.statusCode).toBe(400);
         expect(response.body.message).toBe(`password must be a string. Type provided: ${typeof notString}`)
@@ -100,10 +101,13 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await TempController.changeemail(String(userData._id), validPassword, notString);
+        const response = await supertest(server)
+        .post('/tempRoute/changeemail')
+        .set('auth-web-token', validToken)
+        .send({desiredEmail: notString, password: validPassword})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`desiredEmail must be a string. Type provided: ${typeof notString}`)
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`desiredEmail must be a string. Type provided: ${typeof notString}`)
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -115,10 +119,16 @@ test('If change fails if userId is not an ObjectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.changeemail('i am not an ObjectId', validPassword, validEmail);
+    const {token} = userLib.generateNewAuthAndRefreshTokens('i am not an objectid')
+    const invalidToken = 'Bearer ' + token
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('userId must be an ObjectId.')
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', invalidToken)
+    .send({desiredEmail: validEmail, password: validPassword})
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('userId must be an ObjectId.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -129,10 +139,13 @@ test('If change fails if password is an empty string', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.changeemail(String(userData._id), '', validEmail);
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({password: '', desiredEmail: validEmail})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('Password cannot be blank.')
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('Password cannot be blank.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -143,10 +156,13 @@ test('if change fails if desiredEmail is an empty string', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.changeemail(String(userData._id), validPassword, '');
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({desiredEmail: '', password: validPassword})
     
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('Desired email cannot be blank.')
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('Desired email cannot be blank.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -158,10 +174,13 @@ for (const invalidEmail of TEST_CONSTANTS.INVALID_EMAILS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await TempController.changeemail(String(userData._id), validPassword, invalidEmail);
+        const response = await supertest(server)
+        .post('/tempRoute/changeemail')
+        .set('auth-web-token', validToken)
+        .send({desiredEmail: invalidEmail, password: validPassword})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe('Invalid desired email entered')
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe('Invalid desired email entered')
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -171,10 +190,13 @@ test('If change fails if user with userId cannot be found', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.changeemail(String(userData._id), validPassword, validEmail)
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({desiredEmail: validEmail, password: validPassword})
 
-    expect(returned.statusCode).toBe(404);
-    expect(returned.data.message).toBe('Could not find user with provided userId.')
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toBe('Could not find user with provided userId.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -194,10 +216,13 @@ test('If change fails if user with desired email already exists', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.changeemail(String(userData._id), validPassword, newUserData.email);
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({desiredEmail: newUserData.email, password: validPassword})
 
-    expect(returned.statusCode).toBe(403);
-    expect(returned.data.message).toBe('User with the desired email already exists')
+    expect(response.statusCode).toBe(403);
+    expect(response.body.message).toBe('User with the desired email already exists')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -208,10 +233,13 @@ test('if change fails if password is wrong', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.changeemail(String(userData._id), 'notmypassword', validEmail);
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({desiredEmail: validEmail, password: 'notmypassword'})
 
-    expect(returned.statusCode).toBe(401);
-    expect(returned.data.message).toBe('Wrong password entered!')
+    expect(response.statusCode).toBe(401);
+    expect(response.body.message).toBe('Wrong password entered!')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -224,13 +252,16 @@ test('If change is successful when inputs are correct', async () => {
 
     const beforeUser = await User.findOne({}).lean();
 
-    const returned = await TempController.changeemail(String(userData._id), validPassword, validEmail);
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({desiredEmail: validEmail, password: validPassword})
 
     const afterUser = await User.findOne({}).lean();
 
     beforeUser.email = validEmail
 
-    expect(returned.statusCode).toBe(200);
+    expect(response.statusCode).toBe(200);
     expect(afterUser).toStrictEqual(beforeUser)
     expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
@@ -256,11 +287,14 @@ test('If change does not modify other User documents', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.changeemail(String(userData._id), validPassword, validEmail);
+    const response = await supertest(server)
+    .post('/tempRoute/changeemail')
+    .set('auth-web-token', validToken)
+    .send({desiredEmail: validEmail, password: validPassword})
 
     const afterUsers = await User.find({_id: {$ne: userData._id}}).lean();
 
-    expect(returned.statusCode).toBe(200);
+    expect(response.statusCode).toBe(200);
     expect(beforeUsers).toStrictEqual(afterUsers);
     expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
