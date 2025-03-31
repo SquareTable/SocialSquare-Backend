@@ -790,7 +790,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
 router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
-            functionName: 'changedisplayname',
+            functionName: 'changeemail',
             functionArgs: [req.tokenData, req.body.password, req.body.desiredEmail]
         }
     })
