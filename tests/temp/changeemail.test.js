@@ -1,4 +1,3 @@
-const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const TempController = require('../../controllers/Temp');
 const User = require('../../models/User');
@@ -6,6 +5,10 @@ const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const {expect, afterEach, beforeAll, afterAll} = require('@jest/globals');
 const {v4: uuidv4} = require('uuid');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
+const server = require('../../server')
+const supertest = require('supertest')
+const UserLibrary = require('../../libraries/User')
+const userLib = new UserLibrary()
 
 const DB = new MockMongoDBServer();
 
@@ -58,10 +61,16 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await TempController.changeemail(notString, validPassword, validEmail);
+        const {token} = userLib.generateNewAuthAndRefreshTokens(notString)
+        const invalidToken = 'Bearer ' + token
+
+        const response = await supertest(server)
+        .post('/tempRoute/changeemail')
+        .set('auth-web-token', invalidToken)
+        .send({email: validEmail, password: validPassword})
         
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+        expect(response.body.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+        expect(response.statusCode).toBe(400);
         expect(await DB.noChangesMade()).toBe(true)
     })
 
@@ -72,10 +81,15 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await TempController.changeemail(String(userData._id), notString, validEmail);
+        const {token} = userLib.generateNewAuthAndRefreshTokens(userData._id)
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`password must be a string. Type provided: ${typeof notString}`)
+        const response = await supertest(server)
+        .post('/tempRoute/changeemail')
+        .set('auth-web-token', 'Bearer ' + token)
+        .send({email: validEmail, password: notString})
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`password must be a string. Type provided: ${typeof notString}`)
         expect(await DB.noChangesMade()).toBe(true)
     })
 
