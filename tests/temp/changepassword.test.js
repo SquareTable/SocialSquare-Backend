@@ -76,6 +76,13 @@ Test if other RefreshToken documents not related to the account are not affected
 Test if other User documents are not interfered with
 */
 
+async function validChangePassword() {
+    return await supertest(server)
+    .post('/tempRoute/changepassword')
+    .set('auth-web-token', validToken)
+    .send({currentPassword: validPassword, newPassword})
+}
+
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If change fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
         expect.assertions(3);
@@ -244,10 +251,7 @@ test('tokens', async () => {
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const refreshTokens = await RefreshToken.find({});
     const refreshToken = refreshTokens[0];
@@ -285,10 +289,7 @@ test('If IP is added to RefreshToken document if user allows it', async () => {
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const refreshToken = await RefreshToken.findOne({_id: {$eq: response.body.refreshTokenId}}).lean();
 
@@ -312,10 +313,7 @@ test('If IP is not added to RefreshToken document if user does not allow it', as
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const refreshToken = await RefreshToken.findOne({_id: {$eq: response.body.refreshTokenId}}).lean();
 
@@ -368,10 +366,7 @@ test('If IP-derived location is not added to RefreshToken document if the user d
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const refreshToken = await RefreshToken.findOne({}).lean();
 
@@ -395,10 +390,7 @@ test('If IP-derived location is "Unknown Location" if a location cannot be found
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const refreshToken = await RefreshToken.findOne({}).lean();
 
@@ -422,10 +414,7 @@ test('if deviceType is saved to RefreshToken document if the user allows it', as
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const refreshToken = await RefreshToken.findOne({}).lean();
 
@@ -449,10 +438,7 @@ test('if deviceType is not saved to RefreshToken document if the user does not a
     
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const refreshToken = await RefreshToken.findOne({}).lean();
 
@@ -469,10 +455,7 @@ test('If password change is successful with correct inputs', async () => {
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const afterUser = await User.findOne({}).lean();
 
@@ -498,10 +481,7 @@ test('If all RefreshTokens from the user get removed', async () => {
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const afterRefreshTokens = await RefreshToken.find({}).lean();
 
@@ -530,10 +510,7 @@ test('if other RefreshToken documents not related to the account are not affecte
 
     const beforeRefreshTokens = await RefreshToken.find({}).lean();
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const afterRefreshTokens = await RefreshToken.find({userId: {$ne: userData._id}}).lean();
 
@@ -561,10 +538,7 @@ test('if other User documents do not get affected from password change', async (
 
     await DB.takeDBSnapshot()
 
-    const response = await supertest(server)
-    .post('/tempRoute/changepassword')
-    .set('auth-web-token', validToken)
-    .send({currentPassword: validPassword, newPassword})
+    const response = await validChangePassword()
 
     const afterUsers = await User.find({_id: {$ne: userData._id}}).lean();
 
