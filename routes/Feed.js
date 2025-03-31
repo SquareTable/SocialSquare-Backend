@@ -15,7 +15,8 @@ router.post('/viewedPostInFeed', (req, res) => {
         workerData: {
             functionName: 'viewedPostInFeed',
             functionArgs: [req.tokenData, req.body.postId, req.body.postFormat]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -41,7 +42,8 @@ router.post('/followerFeed', (req, res) => {
         workerData: {
             functionName: 'followerFeed',
             functionArgs: [req.tokenData, req.body.alreadyOnCurrentFeed]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {
@@ -67,7 +69,8 @@ router.post('/forYouFeed', (req, res) => {
         workerData: {
             functionName: 'forYouFeed',
             functionArgs: [req.tokenData, req.body.alreadyOnCurrentFeed]
-        }
+        },
+        env: process.env
     })
 
     worker.on('message', (result) => {

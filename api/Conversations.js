@@ -6,7 +6,6 @@ const Conversation = require("../models/Conversation")
 const User = require('../models/User');
 const Message = require('../models/Message')
 
-//require('dotenv').config();
 const fs = require('fs')
 const S3 = require('aws-sdk/clients/s3')
 

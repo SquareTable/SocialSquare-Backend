@@ -1,4 +1,3 @@
 module.exports = {
-    setupFiles: ["<rootDir>/tests/setEnvVars.js"],
-    setupFilesAfterEnv: ["jest-extended/all"]
+    setupFilesAfterEnv: ["<rootDir>/tests/setEnvVars.js", "jest-extended/all"]
 };

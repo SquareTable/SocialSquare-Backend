@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const {v4: uuidv4} = require('uuid');
-const jwt = require('jsonwebtoken')
 const MockMongoDBServer = require('../../libraries/MockDBServer');
+const server = require('../../server')
+const supertest = require('supertest')
 
 const User = require('../../models/User');
 const RefreshToken = require('../../models/RefreshToken');
 const EmailVerificationCode = require('../../models/EmailVerificationCode');
-
-const UserController = require('../../controllers/User');
 
 const {expect, describe, afterEach, beforeAll, afterAll} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
@@ -16,8 +15,6 @@ const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 
 const validEmail = "john.sullivan@gmail.com";
 const validPassword = "securepassword";
-const validIP = "127.0.0.1";
-const validDeviceName = "GitHub-Actions";
 
 const validHashedPassword = "$2b$10$34gQut./qmo7HoG1aKkQeOQWeZzCjwwMMgk8nsLpwb3snlKK0wRKy";
 
@@ -81,10 +78,12 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signin(notString, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: notString, password: validPassword})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`email must be a string. Provided type: ${typeof notString}`)
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`email must be a string. Provided type: ${typeof notString}`)
         expect(await DB.noChangesMade()).toBe(true)
     })
 
@@ -93,10 +92,12 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signin(validEmail, notString, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: validEmail, password: notString})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`password must be a string. Provided type: ${typeof notString}`)
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`password must be a string. Provided type: ${typeof notString}`)
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -106,10 +107,12 @@ test(`If signin fails if email is an empty string`, async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signin('', validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signin')
+    .send({email: '', password: validPassword})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('Email cannot be blank')
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('Email cannot be blank')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -118,10 +121,12 @@ test('If signin fails if password is an empty string', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signin(validEmail, '', validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signin')
+    .send({email: validEmail, password: ''})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Password cannot be blank")
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Password cannot be blank")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -130,10 +135,12 @@ test('If signin fails if user with specified email could not be found', async ()
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signin(validEmail, validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signin')
+    .send({email: validEmail, password: validPassword})
 
-    expect(returned.statusCode).toBe(404);
-    expect(returned.data.message).toBe("A user with the specified email does not exist.")
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toBe("A user with the specified email does not exist.")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -149,14 +156,16 @@ test('If signin fails if password is wrong', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signin(userData.email, 'wrongpassword', validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signin')
+    .send({email: userData.email, password: 'wrongpassword'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Invalid password entered!");
-    expect(returned.data.data).toBe(undefined);
-    expect(returned.data.token).toBe(undefined);
-    expect(returned.data.refreshToken).toBe(undefined);
-    expect(returned.data.refreshTokenId).toBe(undefined);
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Invalid password entered!");
+    expect(response.body.data).toBe(undefined);
+    expect(response.body.token).toBe(undefined);
+    expect(response.body.refreshToken).toBe(undefined);
+    expect(response.body.refreshTokenId).toBe(undefined);
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -177,10 +186,12 @@ describe('When Email 2FA is enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
-        expect(returned.statusCode).toBe(200);
-        expect(returned.data.data.email).toBe("jo**.s**li**n@g**il.com")
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.email).toBe("jo**.s**li**n@g**il.com")
         expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
@@ -191,10 +202,12 @@ describe('When Email 2FA is enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
-        expect(returned.statusCode).toBe(200);
-        expect(returned.data.data.fromAddress).toBe(process.env.SMTP_EMAIL)
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.fromAddress).toBe(process.env.SMTP_EMAIL)
         expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
@@ -205,10 +218,12 @@ describe('When Email 2FA is enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
-        expect(returned.statusCode).toBe(200);
-        expect(returned.data.data.secondId).toBe(userData.secondId)
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.secondId).toBe(userData.secondId)
         expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
@@ -219,13 +234,15 @@ describe('When Email 2FA is enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const EmailVerificationCodes = await EmailVerificationCode.find({}).lean();
 
         const verificationCode = EmailVerificationCodes[0];
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(EmailVerificationCodes).toHaveLength(1);
         expect(String(verificationCode.userId)).toBe(String(userData._id))
         expect(typeof verificationCode.hashedVerificationCode).toBe('string');
@@ -251,11 +268,13 @@ describe('When Email 2FA is enabled', () => {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const codesInDatabase = await EmailVerificationCode.find({hashedVerificationCode: 'hashed'}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(codesInDatabase).toStrictEqual(codesToInsert);
         expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
@@ -267,13 +286,20 @@ describe('When Email 2FA is enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returnedOne = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const responseOne = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
+
         const codesOne = await EmailVerificationCode.find({}).lean();
-        const returnedTwo = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+
+        const responseTwo = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
+
         const codesTwo = await EmailVerificationCode.find({}).lean();
 
-        expect(returnedOne.statusCode).toBe(200);
-        expect(returnedTwo.statusCode).toBe(200);
+        expect(responseOne.statusCode).toBe(200);
+        expect(responseTwo.statusCode).toBe(200);
         expect(codesOne).toHaveLength(1);
         expect(codesTwo).toHaveLength(1);
         expect(codesOne[0].createdAt !== codesTwo[0].createdAt).toBe(true);
@@ -297,20 +323,22 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         //Test if token gets created and is usable
-        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, response.body.token.replace('Bearer ', ''))).resolves.toBe(true);
 
         //Test if refresh token gets created and is usable
-        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, response.body.refreshToken.replace('Bearer ', ''))).resolves.toBe(true);
 
         //Test if encrypted refresh token gets created and can be decrypted back to refresh token
         const refreshTokens = await RefreshToken.find({}).lean();
         const savedRefreshToken = refreshTokens[0];
         expect(refreshTokens).toHaveLength(1);
-        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
+        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(response.body.refreshToken.replace('Bearer ', ''))
 
         //Test if RefreshToken document admin is set to false
         expect(savedRefreshToken.admin).toBe(false);
@@ -331,7 +359,7 @@ describe('When Email 2FA is not enabled', () => {
         ]
 
         let includesNotIncludedKey = false;
-        const returnedUserDataKeys = Object.keys(returned.data.data);
+        const returnedUserDataKeys = Object.keys(response.body.data);
 
         for (const key of notIncludedKeys) {
             if (returnedUserDataKeys.includes(key)) {
@@ -341,8 +369,8 @@ describe('When Email 2FA is not enabled', () => {
         }
 
         expect(includesNotIncludedKey).toBe(false);
-        expect(typeof returned.data.data.followers).toBe("number");
-        expect(typeof returned.data.data.following).toBe("number");
+        expect(typeof response.body.data.followers).toBe("number");
+        expect(typeof response.body.data.following).toBe("number");
         //End of test if correct user data gets returned
 
 
@@ -366,11 +394,13 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(refreshToken.IP).toBe(undefined);
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
@@ -392,12 +422,14 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        expect(returned.statusCode).toBe(200);
-        expect(refreshToken.IP).toBe(validIP);
+        expect(response.statusCode).toBe(200);
+        expect(typeof refreshToken.IP).toBe('string')
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
@@ -418,17 +450,19 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(refreshToken.location).toBe(undefined);
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
     test('if IP-derived location is added to RefreshToken when the user allows it', async () => {
-        expect.assertions(3);
+        expect.assertions(4);
 
         const userData = {
             email: validEmail,
@@ -444,12 +478,16 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, '1.1.1.1', validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .set('X-Forwarded-For', '1.1.1.1')
+        .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(refreshToken.location).toBeTruthy();
+        expect(refreshToken.location !== 'Unknown Location').toBe(true)
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
@@ -470,11 +508,13 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, '127.0.0.1', validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(refreshToken.location).toBe("Unknown Location");
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
@@ -496,16 +536,18 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(refreshToken.deviceType).toBe(undefined);
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
-    test('if deviceType is not added to RefreshToken when the user does not allow it', async () => {
+    test('if deviceType is added to RefreshToken when the user allows it', async () => {
         expect.assertions(3);
 
         const userData = {
@@ -522,12 +564,14 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
-        expect(returned.statusCode).toBe(200);
-        expect(refreshToken.deviceType).toBe(validDeviceName);
+        expect(response.statusCode).toBe(200);
+        expect(refreshToken.deviceType).toBeTruthy();
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
@@ -554,11 +598,13 @@ describe('When Email 2FA is not enabled', () => {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
-        const refreshTokens = await RefreshToken.find({_id: {$ne: returned.data.refreshTokenId}}).lean();
+        const refreshTokens = await RefreshToken.find({_id: {$ne: response.body.refreshTokenId}}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(refreshTokens).toStrictEqual(tokensToInsert);
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
@@ -583,11 +629,13 @@ describe('When Email 2FA is not enabled', () => {
 
         const beforeUsers = await User.find({}).lean();
 
-        const returned = await UserController.signin(userData.email, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signin')
+        .send({email: userData.email, password: validPassword})
 
         const afterUsers = await User.find({}).lean();
 
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(beforeUsers).toStrictEqual(afterUsers)
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
