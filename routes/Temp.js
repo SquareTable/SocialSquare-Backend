@@ -819,7 +819,7 @@ router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getD
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changepassword',
-            functionArgs: [req.tokenData, req.body.currentPassword, req.body.newPassword, req.body.confirmNewPassword, req.ip, req.device.name]
+            functionArgs: [req.tokenData, req.body.currentPassword, req.body.newPassword, req.ip, req.device.name]
         },
         env: process.env
     })
