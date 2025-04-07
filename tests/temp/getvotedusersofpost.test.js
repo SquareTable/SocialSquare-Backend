@@ -94,7 +94,7 @@ const postData = {
     creatorId: postCreatorData._id
 }
 
-const validToken = 'Bearer ' + jwt.sign({_id: userData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
+const validToken = 'Bearer ' + jwt.sign({_id: userRequestingData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
 for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
     describe(`Vote type: ${voteType}`, () => {
