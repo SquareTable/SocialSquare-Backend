@@ -6,8 +6,7 @@ const User = require('../../models/User');
 const RefreshToken = require('../../models/RefreshToken');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
-const UserLibrary = require('../../libraries/User')
-const userLib = new UserLibrary();
+const jwt = require('jsonwebtoken')
 
 const {expect, afterEach, beforeAll, afterAll} = require('@jest/globals');
 const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
@@ -44,8 +43,7 @@ const userData = {
     password: validHashedPassword
 }
 
-const tokensData = userLib.generateNewAuthAndRefreshTokens(userData._id)
-const validToken = 'Bearer ' + tokensData.token
+const validToken = 'Bearer ' + jwt.sign({_id: userData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
 /*
 Tests:
@@ -89,9 +87,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-
-        const {token} = userLib.generateNewAuthAndRefreshTokens(notString)
-        const invalidToken = 'Bearer ' + token
+        const invalidToken = 'Bearer ' + jwt.sign({_id: notString}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
         const response = await supertest(server)
         .post('/tempRoute/changepassword')
@@ -139,8 +135,7 @@ test('If change fails if userId is not an ObjectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const {token} = userLib.generateNewAuthAndRefreshTokens('i am not an ObjectId')
-    const invalidToken = 'Bearer ' + token
+    const invalidToken = 'Bearer ' + jwt.sign({_id: 'notanobjectid'}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
     const response = await supertest(server)
     .post('/tempRoute/changepassword')

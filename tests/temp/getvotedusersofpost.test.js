@@ -17,6 +17,8 @@ const Downvote = require('../../models/Downvote');
 const ArrayLibrary = require('../../libraries/Array');
 const arrayHandler = new ArrayLibrary();
 
+const jwt = require('jsonwebtoken')
+
 const POST_DATABASE_MODELS = {
     Image: ImagePost,
     Poll,
@@ -92,8 +94,7 @@ const postData = {
     creatorId: postCreatorData._id
 }
 
-const tokensData = userLib.generateNewAuthAndRefreshTokens(userRequestingData._id)
-const validToken = 'Bearer ' + tokensData.token
+const validToken = 'Bearer ' + jwt.sign({_id: userData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
 for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
     describe(`Vote type: ${voteType}`, () => {
@@ -106,8 +107,7 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                             await DB.takeDBSnapshot()
 
-                            const {token} = userLib.generateNewAuthAndRefreshTokens(notString)
-                            const invalidToken = 'Bearer ' + token
+                            const invalidToken = 'Bearer ' + jwt.sign({_id: notString}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
                             const response = await supertest(server)
                             .post('/tempRoute/getvotedusersofpost')
@@ -369,8 +369,7 @@ test('If request fails if userId is not an ObjectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const {token} = userLib.generateNewAuthAndRefreshTokens('notanobjectid')
-    const invalidToken = 'Bearer ' + token
+    const invalidToken = 'Bearer ' + jwt.sign({_id: 'notanobjectid'}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
     const response = await supertest(server)
     .post('/tempRoute/getvotedusersofpost')

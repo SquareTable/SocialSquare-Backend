@@ -2,8 +2,7 @@ const User = require('../../models/User')
 const MockMongoDBServer = require('../../libraries/MockDBServer')
 const supertest = require('supertest')
 const server = require('../../server')
-const UserLibrary = require('../../libraries/User')
-const userLib = new UserLibrary();
+const jwt = require('jsonwebtoken')
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS')
 
@@ -37,8 +36,7 @@ const userFollowingData = {
     name: 'userFollowing'
 }
 
-const tokensData = userLib.generateNewAuthAndRefreshTokens(userFollowingData._id)
-const validToken = 'Bearer ' + tokensData.token
+const validToken = 'Bearer ' + jwt.sign({_id: userFollowingData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
 /*
 Tests:
@@ -72,8 +70,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const {token} = userLib.generateNewAuthAndRefreshTokens(notString)
-        const invalidToken = 'Bearer ' + token
+        const invalidToken = 'Bearer ' + jwt.sign({_id: notString}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
         const response = await supertest(server)
         .post('/tempRoute/followuser')
@@ -106,8 +103,7 @@ test('If follow fails if userId is not an ObjectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const {token} = userLib.generateNewAuthAndRefreshTokens('i am not an objectid')
-    const invalidToken = 'Bearer ' + token
+    const invalidToken = 'Bearer ' + jwt.sign({_id: 'notanobjectid'}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
     const response = await supertest(server)
     .post('/tempRoute/followuser')
