@@ -88,7 +88,6 @@ class User {
             followers: userObject.followers.length,
             following: userObject.following.length,
             totalLikes: userObject.totalLikes,
-            profileKey: userObject.profileImageKey,
             bio: userObject.bio
         };
     }
