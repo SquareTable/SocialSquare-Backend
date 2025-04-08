@@ -1,14 +1,13 @@
-require('dotenv').config({path: '../.env'})
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const UUIDLibrary = require('../../libraries/UUID')
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const {v4: uuidv4} = require('uuid');
-const jwt = require('jsonwebtoken');
+const server = require('../../server')
+const supertest = require('supertest')
 
 
 const User = require('../../models/User');
-const UserController = require('../../controllers/User');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
 const {expect, beforeAll, afterEach, afterAll} = require('@jest/globals');
@@ -16,15 +15,9 @@ const { refreshTokenDecryption } = require('../../middleware/TokenHandler');
 const RefreshToken = require('../../models/RefreshToken');
 const CONSTANTS = require('../../constants');
 
-const INVALID_NAMES = ["abc12!", "abc._.abc", "abc!@#$%^&*()", "(", ")", "$%^&*wegyf"]
-
-const VALID_EMAILS = ["john.sullivan@gmail.com", "john.sullivan@hotmail.com", "john.sullivan123@gmail.com", "mytestemail@gmail.com", "mytestemail@hotmail.com", "myyahooemail@yahoo.com"];
-
 const validName = "sebastian";
 const validEmail = "johnsullivan@gmail.com";
 const validPassword = "password";
-const validIP = "127.0.0.1";
-const validDeviceName = "GitHub-Actions"
 
 jest.setTimeout(20_000); //20 seconds per test
 
@@ -82,10 +75,12 @@ for (const invalidName of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot();
 
-        const returned = await UserController.signup(invalidName, validEmail, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signup')
+        .send({name: invalidName, email: validEmail, password: validPassword})
         
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`name must be a string. Provided type: ${typeof invalidName}`);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`name must be a string. Provided type: ${typeof invalidName}`);
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -96,10 +91,12 @@ for (const invalidEmail of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signup(validName, invalidEmail, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signup')
+        .send({name: validName, email: invalidEmail, password: validPassword})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`email must be a string. Provided type: ${typeof invalidEmail}`);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`email must be a string. Provided type: ${typeof invalidEmail}`);
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -110,10 +107,12 @@ for (const invalidPassword of TEST_CONSTANTS.NOT_STRINGS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signup(validName, validEmail, invalidPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signup')
+        .send({name: validName, email: validEmail, password: invalidPassword})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`password must be a string. Provided type: ${typeof invalidPassword}`);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`password must be a string. Provided type: ${typeof invalidPassword}`);
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -123,10 +122,12 @@ test('If signup fails if name is an empty string', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signup('', validEmail, validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: '', email: validEmail, password: validPassword})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Name input field cannot be empty!");
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Name input field cannot be empty!");
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -135,10 +136,12 @@ test('If signup fails if email is an empty string', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signup(validName, '', validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: validName, email: '', password: validPassword})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Email input field cannot be empty!");
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Email input field cannot be empty!");
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -147,23 +150,27 @@ test('If signup fails if password is an empty string', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signup(validName, validEmail, '', validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: validName, email: validEmail, password: ''})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Password input field cannot be empty!")
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Password input field cannot be empty!")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
-for (const invalidName of INVALID_NAMES) {
+for (const invalidName of TEST_CONSTANTS.INVALID_NAMES) {
     test(`If signup fails when username is an invalid username. Testing: ${JSON.stringify(invalidName)}`, async () => {
         expect.assertions(3);
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signup(invalidName, validEmail, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signup')
+        .send({name: invalidName, email: validEmail, password: validPassword})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(CONSTANTS.VALID_USERNAME_TEST_READABLE_REQUIREMENTS)
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -174,10 +181,12 @@ for (const invalidEmail of TEST_CONSTANTS.INVALID_EMAILS) {
 
         await DB.takeDBSnapshot()
 
-        const returned = await UserController.signup(validName, invalidEmail, validPassword, validIP, validDeviceName);
+        const response = await supertest(server)
+        .post('/user/signup')
+        .send({name: validName, email: invalidEmail, password: validPassword})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe("Invalid email entered")
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe("Invalid email entered")
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -187,10 +196,12 @@ test('If signup fails if password is less than 8 characters long', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signup(validName, validEmail, '6chars', validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: validName, email: validEmail, password: '6chars'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Password is too short! Password must be 8 characters or longer")
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Password is too short! Password must be 8 characters or longer")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -199,10 +210,12 @@ test('if signup fails if name is longer than 20 characters', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signup('thisis21characters111', validEmail, validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: 'thisis21characters111', email: validEmail, password: validPassword})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Username is too long! Please keep your username at 20 characters or less.")
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Username is too long! Please keep your username at 20 characters or less.")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -211,10 +224,12 @@ test('if signup fails if password is longer than 17 characters (due to bcrypt li
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signup(validName, validEmail, 'this is 18 chars..', validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: validName, email: validEmail, password: 'this is 18 chars..'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe("Password is too long! Due to current limitations, please keep your password at 17 or less characters.")
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe("Password is too long! Due to current limitations, please keep your password at 17 or less characters.")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -230,13 +245,15 @@ test('if signup fails if a user with the same email already exists', async () =>
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.signup(validName, existingUserData.email, validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: validName, email: existingUserData.email, password: validPassword})
 
     const users = await User.find({}).lean();
 
     expect(users).toHaveLength(1);
-    expect(returned.statusCode).toBe(409);
-    expect(returned.data.message).toBe("User with the provided email already exists.")
+    expect(response.statusCode).toBe(409);
+    expect(response.body.message).toBe("User with the provided email already exists.")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -252,17 +269,19 @@ test('if signup fails if a user with the same name already exists', async () => 
 
     await DB.takeDBSnapshot();
 
-    const returned = await UserController.signup(existingUserData.name, validEmail, validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: existingUserData.name, email: validEmail, password: validPassword})
 
     const users = await User.find({}).lean();
 
     expect(users).toHaveLength(1);
-    expect(returned.statusCode).toBe(409);
-    expect(returned.data.message).toBe("User with the provided username already exists")
+    expect(response.statusCode).toBe(409);
+    expect(response.body.message).toBe("User with the provided username already exists")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
-for (const validUserEmail of VALID_EMAILS) {
+for (const validUserEmail of TEST_CONSTANTS.VALID_EMAILS) {
     test(`if user account creation is successful with correct inputs. Email tested: ${validUserEmail}`, async () => {
         expect.assertions(20);
     
@@ -282,8 +301,10 @@ for (const validUserEmail of VALID_EMAILS) {
         await User.deleteMany({});
 
         await DB.takeDBSnapshot();
-    
-        const returned = await UserController.signup(validName, validUserEmail, benchmarkUserData.password, validIP, validDeviceName);
+
+        const response = await supertest(server)
+        .post('/user/signup')
+        .send({name: validName, email: validUserEmail, password: benchmarkUserData.password})
     
         const savedUsers = await User.find({}).lean();
         const savedRefreshTokens = await RefreshToken.find({}).lean();
@@ -316,7 +337,7 @@ for (const validUserEmail of VALID_EMAILS) {
             'MFAEmail'
         ]
         let includesNotIncludedKey = false;
-        const returnedUserDataKeys = Object.keys(returned.data.data)
+        const returnedUserDataKeys = Object.keys(response.body.data)
     
         for (const key of notIncludedKeys) {
             if (returnedUserDataKeys.includes(key)) {
@@ -325,13 +346,13 @@ for (const validUserEmail of VALID_EMAILS) {
             }
         }
     
-        expect(returned.statusCode).toBe(200);
+        expect(response.statusCode).toBe(200);
         expect(bcrypt.compareSync(benchmarkUserData.password, savedUser.password)).toBe(true);
         expect(savedUserBadges).toHaveLength(1);
         expect(savedUserBadges[0].badgeName).toBe("onSignUpBadge")
         expect(savedUserBadges[0].dateRecieved).toBeGreaterThan(Date.now() - 100_000) //Gives 100 second range for test
-        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, returned.data.token.replace('Bearer ', ''))).resolves.toBe(true);
-        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, returned.data.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_TOKENS, response.body.token.replace('Bearer ', ''))).resolves.toBe(true);
+        expect(TEST_CONSTANTS.JWTVerifier(process.env.SECRET_FOR_REFRESH_TOKENS, response.body.refreshToken.replace('Bearer ', ''))).resolves.toBe(true)
         expect(userIdIsObjectId).toBe(true);
         expect(UUIDHandler.validateV4(userSecondId)).toBe(true);
         expect(savedUser).toStrictEqual(benchmarkUser);
@@ -339,11 +360,11 @@ for (const validUserEmail of VALID_EMAILS) {
         expect(savedRefreshTokens).toHaveLength(1);
         expect(String(savedRefreshToken.userId)).toBe(String(savedUserId));
         expect(savedRefreshToken.admin).toBe(false)
-        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(returned.data.refreshToken.replace('Bearer ', ''))
-        expect(returned.data.refreshTokenId).toBe(String(savedRefreshToken._id))
+        expect(refreshTokenDecryption(savedRefreshToken.encryptedRefreshToken)).toBe(response.body.refreshToken.replace('Bearer ', ''))
+        expect(response.body.refreshTokenId).toBe(String(savedRefreshToken._id))
         expect(includesNotIncludedKey).toBe(false);
-        expect(typeof returned.data.data.followers).toBe("number");
-        expect(typeof returned.data.data.following).toBe("number");
+        expect(typeof response.body.data.followers).toBe("number");
+        expect(typeof response.body.data.following).toBe("number");
         expect(await DB.changedCollections()).toIncludeSameMembers(['User', 'RefreshToken'])
     })
 }
@@ -366,11 +387,13 @@ test('user creation does not modify other users in the database', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await UserController.signup(validName, validEmail, validPassword, validIP, validDeviceName);
+    const response = await supertest(server)
+    .post('/user/signup')
+    .send({name: validName, email: validEmail, password: validPassword})
 
     const savedUsers = await User.find({email: {$ne: validEmail}}).lean();
 
-    expect(returned.statusCode).toBe(200);
+    expect(response.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(savedUsers);
     expect(await DB.changedCollections()).toIncludeSameMembers(['User', 'RefreshToken'])
 })

@@ -9,6 +9,7 @@ class MockMongoDBServer {
     async startTest() {
         await this.#startServer();
         await mongoose.connect(this.uri)
+        process.env.MONGODB_URI = this.uri
     }
 
     async stopTest() {

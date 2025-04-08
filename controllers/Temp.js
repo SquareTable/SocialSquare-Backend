@@ -204,7 +204,7 @@ class TempController {
         })
     }
 
-    static #changepassword = (userId, currentPassword, newPassword, confirmNewPassword, IP, deviceType) => {
+    static #changepassword = (userId, currentPassword, newPassword, IP, deviceType) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`));
@@ -222,14 +222,9 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`newPassword must be a string. Provided type: ${typeof newPassword}`))
             }
 
-            if (typeof confirmNewPassword !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`confirmNewPassword must be a string. Provided type: ${typeof confirmNewPassword}`))
-            }
-
 
             currentPassword = currentPassword.trim()
             newPassword = newPassword.trim()
-            confirmNewPassword = confirmNewPassword.trim()
 
             if (currentPassword.length === 0) {
                 return resolve(HTTPWTHandler.badInput('Current password cannot be empty.'))
@@ -237,14 +232,6 @@ class TempController {
 
             if (newPassword.length === 0) {
                 return resolve(HTTPWTHandler.badInput('New password cannot be empty.'))
-            }
-
-            if (confirmNewPassword.length === 0) {
-                return resolve(HTTPWTHandler.badInput('Confirm new password cannot be empty.'))
-            }
-
-            if (newPassword !== confirmNewPassword) {
-                return resolve(HTTPWTHandler.badInput('Passwords do not match.'))
             }
 
             if (newPassword.length < CONSTANTS.MIN_USER_PASSWORD_LENGTH) {
@@ -5743,8 +5730,8 @@ class TempController {
         return await this.#changeemail(userId, password, desiredEmail)
     }
 
-    static changepassword = async (userId, currentPassword, newPassword, confirmNewPassword, IP, deviceType) => {
-        return await this.#changepassword(userId, currentPassword, newPassword, confirmNewPassword, IP, deviceType)
+    static changepassword = async (userId, currentPassword, newPassword, IP, deviceType) => {
+        return await this.#changepassword(userId, currentPassword, newPassword, IP, deviceType)
     }
 
     static searchpageusersearch = async (userId, skip, val) => {

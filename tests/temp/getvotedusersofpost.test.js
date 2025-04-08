@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 const {v4: uuidv4} = require('uuid')
 
-const TempController = require('../../controllers/Temp');
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 
 const User = require('../../models/User')
@@ -10,13 +9,15 @@ const Poll = require('../../models/Poll')
 const Thread = require('../../models/Thread')
 
 const UserLibrary = require('../../libraries/User')
-const userHandler = new UserLibrary();
+const userLib = new UserLibrary();
 
 const Upvote = require('../../models/Upvote');
 const Downvote = require('../../models/Downvote');
 
 const ArrayLibrary = require('../../libraries/Array');
 const arrayHandler = new ArrayLibrary();
+
+const jwt = require('jsonwebtoken')
 
 const POST_DATABASE_MODELS = {
     Image: ImagePost,
@@ -37,6 +38,9 @@ const CONSTANTS = require('../../constants')
 jest.setTimeout(20_000)
 
 const DB = new MockMongoDBServer()
+
+const server = require('../../server')
+const supertest = require('supertest')
 
 beforeAll(async () => {
   await DB.startTest();
@@ -90,6 +94,8 @@ const postData = {
     creatorId: postCreatorData._id
 }
 
+const validToken = 'Bearer ' + jwt.sign({_id: userRequestingData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
+
 for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
     describe(`Vote type: ${voteType}`, () => {
         for (const postFormat of CONSTANTS.VOTE_API_ALLOWED_POST_FORMATS) {
@@ -100,11 +106,16 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                             expect.assertions(3);
 
                             await DB.takeDBSnapshot()
-                    
-                            const returned = await TempController.getvotedusersofpost(notString, String(postData._id), postFormat, undefined, voteType);
+
+                            const invalidToken = 'Bearer ' + jwt.sign({_id: notString}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
+
+                            const response = await supertest(server)
+                            .post('/tempRoute/getvotedusersofpost')
+                            .set('auth-web-token', invalidToken)
+                            .send({postId: postData._id, postFormat, lastItemId: undefined, voteType})
             
-                            expect(returned.statusCode).toBe(400);
-                            expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+                            expect(response.body.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+                            expect(response.statusCode).toBe(400);
                             expect(await DB.noChangesMade()).toBe(true)
                         })
             
@@ -112,11 +123,14 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                             expect.assertions(3);
 
                             await DB.takeDBSnapshot()
+
+                            const response = await supertest(server)
+                            .post('/tempRoute/getvotedusersofpost')
+                            .set('auth-web-token', validToken)
+                            .send({postId: notString, postFormat, lastItemId: undefined, voteType})
             
-                            const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), notString, postFormat, undefined, voteType);
-            
-                            expect(returned.statusCode).toBe(400);
-                            expect(returned.data.message).toBe(`postId must be a string. Type provided: ${typeof notString}`)
+                            expect(response.statusCode).toBe(400);
+                            expect(response.body.message).toBe(`postId must be a string. Type provided: ${typeof notString}`)
                             expect(await DB.noChangesMade()).toBe(true)
                         })
             
@@ -125,11 +139,14 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                                 expect.assertions(3);
 
                                 await DB.takeDBSnapshot()
+
+                                const response = await supertest(server)
+                                .post('/tempRoute/getvotedusersofpost')
+                                .set('auth-web-token', validToken)
+                                .send({postId: postData._id, postFormat, lastItemId: notString, voteType})
             
-                                const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, notString, voteType);
-            
-                                expect(returned.statusCode).toBe(400);
-                                expect(returned.data.message).toBe('lastItemId must be either a string or undefined.')
+                                expect(response.body.message).toBe('lastItemId must be either a string or undefined.')
+                                expect(response.statusCode).toBe(400);
                                 expect(await DB.noChangesMade()).toBe(true)
                             })
                         }
@@ -139,10 +156,13 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                 test('If request fails if user requesting cannot be found', async () => {
                     expect.assertions(3);
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
+                    const response = await supertest(server)
+                    .post('/tempRoute/getvotedusersofpost')
+                    .set('auth-web-token', validToken)
+                    .send({postId: postData._id, postFormat, lastItemId: undefined, voteType})
 
-                    expect(returned.statusCode).toBe(404);
-                    expect(returned.data.message).toBe('Could not find user with provided userId.')
+                    expect(response.statusCode).toBe(404);
+                    expect(response.body.message).toBe('Could not find user with provided userId.')
                     expect(await DB.noChangesMade()).toBe(true)
                 })
 
@@ -153,10 +173,13 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await DB.takeDBSnapshot()
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
+                    const response = await supertest(server)
+                    .post('/tempRoute/getvotedusersofpost')
+                    .set('auth-web-token', validToken)
+                    .send({postId: postData._id, postFormat, lastItemId: undefined, voteType})
 
-                    expect(returned.statusCode).toBe(404);
-                    expect(returned.data.message).toBe('Could not find post.')
+                    expect(response.statusCode).toBe(404);
+                    expect(response.body.message).toBe('Could not find post.')
                     expect(await DB.noChangesMade()).toBe(true)
                 })
 
@@ -168,10 +191,13 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await DB.takeDBSnapshot()
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
+                    const response = await supertest(server)
+                    .post('/tempRoute/getvotedusersofpost')
+                    .set('auth-web-token', validToken)
+                    .send({postId: postData._id, postFormat, lastItemId: undefined, voteType})
 
-                    expect(returned.statusCode).toBe(404);
-                    expect(returned.data.message).toBe('Could not find post creator')
+                    expect(response.statusCode).toBe(404);
+                    expect(response.body.message).toBe('Could not find post creator')
                     expect(await DB.noChangesMade()).toBe(true)
                 })
 
@@ -185,7 +211,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     await User.insertMany(userPublicIds.map((pubId, index) => {
                         return {
                             secondId: pubId,
-                            name: `${index}name`
+                            name: `${index}name`,
+                            displayName: `${index}displayname`,
+                            profileImageKey: '',
+                            bio: 'bio'
                         }
                     }))
 
@@ -201,7 +230,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await DB.takeDBSnapshot()
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
+                    const response = await supertest(server)
+                    .post('/tempRoute/getvotedusersofpost')
+                    .set('auth-web-token', validToken)
+                    .send({postId: postData._id, postFormat, lastItemId: undefined, voteType})
 
                     const votes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: -1}).lean();
 
@@ -213,10 +245,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const userRequesting = await User.findOne({_id: userRequestingData._id}).lean();
 
-                    const expectedUserDocuments = foundDocuments.map(user => userHandler.returnPublicInformation(user, userRequesting))
+                    const expectedUserDocuments = foundDocuments.map(user => userLib.returnPublicInformation(user, userRequesting))
 
-                    expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data.items).toStrictEqual(expectedUserDocuments);
+                    expect(response.statusCode).toBe(200);
+                    expect(response.body.data.items).toStrictEqual(expectedUserDocuments);
                     expect(await DB.noChangesMade()).toBe(true)
                 })
 
@@ -230,7 +262,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
                     await User.insertMany(userPublicIds.map((pubId, index) => {
                         return {
                             secondId: pubId,
-                            name: `${index}name`
+                            name: `${index}name`,
+                            displayName: `${index}displayname`,
+                            profileImageKey: '',
+                            bio: 'bio'
                         }
                     }))
 
@@ -250,7 +285,10 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const lastItemId = rawVoteData[89].secondId;
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, lastItemId, voteType);
+                    const response = await supertest(server)
+                    .post('/tempRoute/getvotedusersofpost')
+                    .set('auth-web-token', validToken)
+                    .send({postId: postData._id, postFormat, lastItemId, voteType})
 
                     const allVotes = await VOTE_DATABASE_MODELS[voteType].find({}).sort({_id: 1}).lean();
 
@@ -262,11 +300,11 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     const userRequesting = await User.findOne({_id: userRequestingData._id}).lean();
 
-                    const expectedUserDocuments = foundDocuments.map(user => userHandler.returnPublicInformation(user, userRequesting))
+                    const expectedUserDocuments = foundDocuments.map(user => userLib.returnPublicInformation(user, userRequesting))
 
-                    expect(returned.statusCode).toBe(200);
-                    expect(returned.data.data.items).toStrictEqual(expectedUserDocuments);
-                    expect(returned.data.data.noMoreItems).toBe(false);
+                    expect(response.statusCode).toBe(200);
+                    expect(response.body.data.items).toStrictEqual(expectedUserDocuments);
+                    expect(response.body.data.noMoreItems).toBe(false);
                     expect(await DB.noChangesMade()).toBe(true)
                 })
 
@@ -285,11 +323,14 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await DB.takeDBSnapshot()
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
+                    const response = await supertest(server)
+                    .post('/tempRoute/getvotedusersofpost')
+                    .set('auth-web-token', validToken)
+                    .send({postId: postData._id, postFormat, lastItemId: undefined, voteType})
 
-                    expect(returned.statusCode).toBe(404);
-                    expect(returned.data.message).toBe('Could not find post.')
-                    expect(returned.data.data).toBe(undefined)
+                    expect(response.statusCode).toBe(404);
+                    expect(response.body.message).toBe('Could not find post.')
+                    expect(response.body.data).toBe(undefined)
                     expect(await DB.noChangesMade()).toBe(true)
                 })
 
@@ -308,11 +349,14 @@ for (const voteType of CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES) {
 
                     await DB.takeDBSnapshot()
 
-                    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), postFormat, undefined, voteType);
+                    const response = await supertest(server)
+                    .post('/tempRoute/getvotedusersofpost')
+                    .set('auth-web-token', validToken)
+                    .send({postId: postData._id, postFormat, lastItemId: undefined, voteType})
 
-                    expect(returned.statusCode).toBe(404);
-                    expect(returned.data.message).toBe('Could not find post.')
-                    expect(returned.data.data).toBe(undefined)
+                    expect(response.statusCode).toBe(404);
+                    expect(response.body.message).toBe('Could not find post.')
+                    expect(response.body.data).toBe(undefined)
                     expect(await DB.noChangesMade()).toBe(true)
                 })
             })
@@ -325,10 +369,15 @@ test('If request fails if userId is not an ObjectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.getvotedusersofpost('i am not an objectid', String(postData._id), 'Image', undefined, 'Up');
+    const invalidToken = 'Bearer ' + jwt.sign({_id: 'notanobjectid'}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('userId must be an ObjectId.')
+    const response = await supertest(server)
+    .post('/tempRoute/getvotedusersofpost')
+    .set('auth-web-token', invalidToken)
+    .send({postId: postData._id, postFormat: 'Image', lastItemId: undefined, voteType: 'Up'})
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('userId must be an ObjectId.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -337,10 +386,13 @@ test('If request fails if postId is not an ObjectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), 'i am not an objectid', 'Image', undefined, 'Up');
+    const response = await supertest(server)
+    .post('/tempRoute/getvotedusersofpost')
+    .set('auth-web-token', validToken)
+    .send({postId: 'notanobjectid', postFormat: 'Image', lastItemId: undefined, voteType: 'Up'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('postId must be an ObjectId.')
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('postId must be an ObjectId.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -349,10 +401,13 @@ test('If request fails if postFormat is not supported in constants file', async 
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'invalid', undefined, 'Up');
+    const response = await supertest(server)
+    .post('/tempRoute/getvotedusersofpost')
+    .set('auth-web-token', validToken)
+    .send({postId: postData._id, postFormat: 'invalid', lastItemId: undefined, voteType: 'Up'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`)
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe(`postFormat is invalid. Must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_POST_FORMATS.join(', ')}`)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -361,10 +416,13 @@ test('If request fails if lastItemId is a string and not a UUIDv4', async () => 
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'Image', 'i am not a UUIDv4', 'Up');
+    const response = await supertest(server)
+    .post('/tempRoute/getvotedusersofpost')
+    .set('auth-web-token', validToken)
+    .send({postId: postData._id, postFormat: 'Image', lastItemId: 'iamnotauuidv4', voteType: 'Up'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('lastItemId must be a valid UUIDv4 if it is going to be a string.')
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('lastItemId must be a valid UUIDv4 if it is going to be a string.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -373,9 +431,12 @@ test('If request fails if voteType is not supported in constants file', async ()
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.getvotedusersofpost(String(userRequestingData._id), String(postData._id), 'Image', undefined, 'Middle');
+    const response = await supertest(server)
+    .post('/tempRoute/getvotedusersofpost')
+    .set('auth-web-token', validToken)
+    .send({postId: postData._id, postFormat: 'Image', lastItemId: undefined, voteType: 'Middle'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe(`voteType must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`)
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe(`voteType must be one of these values: ${CONSTANTS.VOTED_USERS_API_ALLOWED_VOTE_TYPES.join(', ')}`)
     expect(await DB.noChangesMade()).toBe(true)
 })

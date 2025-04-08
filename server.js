@@ -1,16 +1,21 @@
-// mongodb
-require('./config/db').then(() => {
-    console.log("DB Connected");
-}).catch((err) => {
-    console.error('ERROR CONNECTING TO DATABASE:')
-    console.error(err)
-    console.error('SERVER WILL EXIT WITH CODE 1 (FAIL)')
-    process.exit(1)
-});
-
 const app = require('express')();
+
+// mongodb
+if (process.env.isInCI !== 'true') {
+    require('dotenv').config();
+    require('./config/db').then(() => {
+        console.log("DB Connected");
+    }).catch((err) => {
+        console.error('ERROR CONNECTING TO DATABASE:')
+        console.error(err)
+        console.error('SERVER WILL EXIT WITH CODE 1 (FAIL)')
+        process.exit(1)
+    });
+} else {
+    app.set('trust proxy', true)
+}
+
 const cors = require('cors')
-const port = process.env.PORT || 3000;
 
 const UserRouter = require('./routes/User')
 const TempRouter = require('./routes/Temp')
@@ -27,8 +32,6 @@ const swaggerDocument = require('./swagger.json'); //For API docs
 
 const ImageLibrary = require('./libraries/Image');
 const imageHandler = new ImageLibrary();
-
-require('dotenv').config();
 const fs = require('fs')
 const S3 = require('aws-sdk/clients/s3')
 
@@ -349,15 +352,14 @@ app.use('/admin', AdminRouter)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); //For API docs
 
 const https = require('https');
+const http = require('http')
 const e = require('express');
 const { tokenValidation } = require('./middleware/TokenHandler');
 
 let server;
 
 if (process.env.NO_HTTPS) {
-    server = app.listen(port, () =>  {
-        console.log(`Server running on port ${port}`);
-    })
+    server = http.createServer(app)
 } else {
     const options = {
         key: fs.readFileSync('./ssl/private.key'),
@@ -376,16 +378,14 @@ if (process.env.NO_HTTPS) {
         console.warn('SSL passphrase was not provided.')
     }
       
-    server = https.createServer(options, app).listen(port, () => {
-        console.log(`Server running on port ${port}`);
-    });
+    server = https.createServer(options, app)
 }
 
 
 const handlePopularPosts = () => {
     handlerStatus = popularPostHandler();
 }
-setInterval(handlePopularPosts, 60*60*1000+5); //5 milisceonds bc why not
+setInterval(handlePopularPosts, 60*60*1000+5).unref(); //5 milisceonds bc why not
 
 const io = require("socket.io")(server, {
     cors: { origin: "*" },
@@ -2106,3 +2106,5 @@ app.all('*', (req, res) => {
     message: "Unknown route or method"
   })
 })
+
+module.exports = server;

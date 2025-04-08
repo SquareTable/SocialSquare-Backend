@@ -1,6 +1,8 @@
 const User = require('../../models/User')
 const MockMongoDBServer = require('../../libraries/MockDBServer')
-const TempController = require('../../controllers/Temp')
+const supertest = require('supertest')
+const server = require('../../server')
+const jwt = require('jsonwebtoken')
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS')
 
@@ -34,6 +36,8 @@ const userFollowingData = {
     name: 'userFollowing'
 }
 
+const validToken = 'Bearer ' + jwt.sign({_id: userFollowingData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
+
 /*
 Tests:
 - Test if follow fails if userId is not a string
@@ -53,28 +57,43 @@ Tests:
 - Test following yourself fails
 */
 
+async function validFollow() {
+    return await supertest(server)
+    .post('/tempRoute/followuser')
+    .set('auth-web-token', validToken)
+    .send({userPubId: userGettingFollowedData.secondId})
+}
+
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
     test(`If follow fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
         expect.assertions(3);
 
         await DB.takeDBSnapshot()
 
-        const returned = await TempController.followuser(notString, userGettingFollowedData.secondId);
+        const invalidToken = 'Bearer ' + jwt.sign({_id: notString}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
+        const response = await supertest(server)
+        .post('/tempRoute/followuser')
+        .set('auth-web-token', invalidToken)
+        .send({userPubId: userGettingFollowedData.secondId})
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`userId must be a string. Type provided: ${typeof notString}`)
         expect(await DB.noChangesMade()).toBe(true)
     })
 
-    test(`Of fopllow fails if userPubId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
+    test(`If follow fails if userPubId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
         expect.assertions(3);
 
         await DB.takeDBSnapshot()
 
-        const returned = await TempController.followuser(userFollowingData._id, notString);
+        const response = await supertest(server)
+        .post('/tempRoute/followuser')
+        .set('auth-web-token', validToken)
+        .send({userPubId: notString})
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`userPubId must be a string. Type provided: ${typeof notString}`);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`userPubId must be a string. Type provided: ${typeof notString}`);
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -84,10 +103,15 @@ test('If follow fails if userId is not an ObjectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.followuser('i am not an objectid', userGettingFollowedData.secondId);
+    const invalidToken = 'Bearer ' + jwt.sign({_id: 'notanobjectid'}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('userId must be an ObjectId.')
+    const response = await supertest(server)
+    .post('/tempRoute/followuser')
+    .set('auth-web-token', invalidToken)
+    .send({userPubId: userGettingFollowedData.secondId})
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('userId must be an ObjectId.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -96,10 +120,13 @@ test('If follow fails if userPubId is not a valid UUID v4', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.followuser(userFollowingData._id, 'i am not a UUID')
+    const response = await supertest(server)
+    .post('/tempRoute/followuser')
+    .set('auth-web-token', validToken)
+    .send({userPubId: 'i am not a UUID'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe('userPubId must be a valid version 4 UUID')
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe('userPubId must be a valid version 4 UUID')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -110,10 +137,10 @@ test('If follow fails if user following the account cannot be found', async () =
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+    const response = await validFollow()
 
-    expect(returned.statusCode).toBe(404);
-    expect(returned.data.message).toBe('Could not find user with provided userId.')
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toBe('Could not find user with provided userId.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -124,10 +151,10 @@ test('If follow fails if account to be followed could not be found', async () =>
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+    const response = await validFollow()
 
-    expect(returned.statusCode).toBe(404);
-    expect(returned.data.message).toBe('Could not find user.')
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toBe('Could not find user.')
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -141,13 +168,13 @@ test('If follow fails if user following is blocked by the account to be followed
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+    const response = await validFollow()
 
     const followedUserAfter = await User.findOne({_id: userGettingFollowed._id}).lean();
     const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
 
-    expect(returned.statusCode).toBe(404);
-    expect(returned.data.message).toBe('Could not find user.')
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toBe('Could not find user.')
     expect(followedUserAfter.followers).toHaveLength(0)
     expect(followingUserAfter.followers).toHaveLength(0)
     expect(followedUserAfter.accountFollowRequests).toStrictEqual([])
@@ -167,13 +194,13 @@ test('If a private account gets followed, a follow request gets created (and not
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+    const response = await validFollow()
 
     const followedUserAfter = await User.findOne({_id: userGettingFollowed._id}).lean();
     const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
 
-    expect(returned.statusCode).toBe(200);
-    expect(returned.data.message).toBe('Requested To Follow User')
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toBe('Requested To Follow User')
     expect(followedUserAfter.followers).toHaveLength(0)
     expect(followingUserAfter.followers).toHaveLength(0)
     expect(followedUserAfter.accountFollowRequests).toStrictEqual([userFollowingData.secondId])
@@ -193,16 +220,15 @@ test('that multiple account follow requests cannot be made from the same user', 
 
     await DB.takeDBSnapshot()
 
-    for (let i = 0; i < 10; i++) {
-        await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
-    }
+    //First follow
+    await validFollow()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId)
+    const response = await validFollow()
 
     const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
 
-    expect(returned.statusCode).toBe(200);
-    expect(returned.data.message).toBe('Requested To Follow User')
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toBe('Requested To Follow User')
     expect(followedUserAfter.accountFollowRequests).toStrictEqual([userFollowingData.secondId])
     expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
 })
@@ -215,13 +241,13 @@ test('If a following a user works and updates both User documents and no account
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+    const response = await validFollow()
 
     const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
     const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
 
-    expect(returned.statusCode).toBe(200);
-    expect(returned.data.message).toBe('Followed User');
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toBe('Followed User');
     expect(followedUserAfter.followers).toStrictEqual([userFollowingData.secondId])
     expect(followingUserAfter.followers).toHaveLength(0)
     expect(followedUserAfter.accountFollowRequests).toStrictEqual([])
@@ -239,17 +265,15 @@ test('If following a user multiple times does not create multiple follows', asyn
 
     await DB.takeDBSnapshot()
 
-    for (let i = 0; i < 10; i++) {
-        await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
-    }
+    await validFollow()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+    const response = await validFollow()
     
     const followingUserAfter = await User.findOne({_id: userFollowingData._id}).lean();
     const followedUserAfter = await User.findOne({_id: userGettingFollowedData._id}).lean();
 
-    expect(returned.statusCode).toBe(200);
-    expect(returned.data.message).toBe('Followed User');
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toBe('Followed User');
     expect(followingUserAfter.following).toStrictEqual([userGettingFollowedData.secondId])
     expect(followedUserAfter.followers).toStrictEqual([userFollowingData.secondId])
     expect(await DB.changedCollections()).toIncludeSameMembers(['User'])
@@ -272,12 +296,12 @@ test('that non-related User documents do not get modified when following a publi
 
     const beforeNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowedData._id}}]}).lean()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowedData.secondId);
+    const response = await validFollow()
 
     const afterNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowedData._id}}]}).lean()
 
-    expect(returned.statusCode).toBe(200);
-    expect(returned.data.message).toBe('Followed User')
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toBe('Followed User')
     expect(afterNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
@@ -302,12 +326,12 @@ test('that non-related User documents do not get modified when following a priva
 
     const beforeNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowed._id}}]}).lean()
 
-    const returned = await TempController.followuser(userFollowingData._id, userGettingFollowed.secondId);
+    const response = await validFollow()
 
     const afterNotRelatedUsers = await User.find({$and: [{_id: {$ne: userFollowingData._id}}, {_id: {$ne: userGettingFollowed._id}}]}).lean()
 
-    expect(returned.statusCode).toBe(200);
-    expect(returned.data.message).toBe('Requested To Follow User')
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toBe('Requested To Follow User')
     expect(afterNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toHaveLength(10)
     expect(beforeNotRelatedUsers).toStrictEqual(afterNotRelatedUsers)
@@ -323,12 +347,15 @@ test('Following yourself fails', async () => {
 
     const beforeUsers = await User.find({}).lean();
 
-    const returned = await TempController.followuser(userFollowingData._id, userFollowingData.secondId);
+    const response = await supertest(server)
+    .post('/tempRoute/followuser')
+    .set('auth-web-token', validToken)
+    .send({userPubId: userFollowingData.secondId})
 
     const afterUsers = await User.find({}).lean();
 
-    expect(returned.statusCode).toBe(403);
-    expect(returned.data.message).toBe('You cannot follow yourself.');
+    expect(response.statusCode).toBe(403);
+    expect(response.body.message).toBe('You cannot follow yourself.');
     expect(beforeUsers).toStrictEqual(afterUsers);
     expect(await DB.noChangesMade()).toBe(true)
 })

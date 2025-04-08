@@ -1,12 +1,15 @@
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const mongoose = require('mongoose');
-const TempController = require('../../controllers/Temp');
 
 const User = require('../../models/User');
 const RefreshToken = require('../../models/RefreshToken');
 
 const {expect, beforeAll, afterEach, afterAll} = require('@jest/globals');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
+
+const supertest = require('supertest')
+const server = require('../../server')
+const jwt = require('jsonwebtoken')
 
 jest.setTimeout(20_000); //20 seconds per test
 
@@ -38,18 +41,72 @@ Test upload successfully modifies refresh token
 Test upload does not modify other refresh tokens
 */
 
-const validPushToken = "ExponentPushToken[ct-3_HBpE3wB69r5hdtxia]";
+const validPushToken = "ExponentPushToken[ct-3_HBpE3wB69r5hdtxib]";
 
-for (const invalidUserId of TEST_CONSTANTS.NOT_STRINGS) {
-    test (`If upload fails if userId is not a string. Testing: ${JSON.stringify(invalidUserId)}`, async () => {
+const userData = {
+    _id: String(new mongoose.Types.ObjectId())
+}
+
+const refreshTokenData = {
+    _id: String(new mongoose.Types.ObjectId()),
+    userId: userData._id,
+    __v: 0
+}
+
+const validToken = 'Bearer ' + jwt.sign({_id: userData._id}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
+
+async function validSend() {
+    return await supertest(server)
+    .post('/tempRoute/sendnotificationkey')
+    .set('auth-web-token', validToken)
+    .send({notificationKey: validPushToken, refreshTokenId: refreshTokenData._id})
+}
+
+for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
+    test (`If upload fails if userId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
         expect.assertions(3);
 
         await DB.takeDBSnapshot()
-        
-        const returned = await TempController.sendnotificationkey(invalidUserId, undefined, undefined);
 
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`userId must be a string. Provided type: ${typeof invalidUserId}`)
+        const invalidToken = 'Bearer ' + jwt.sign({_id: notString}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
+
+        const response = await supertest(server)
+        .post('/tempRoute/sendnotificationkey')
+        .set('auth-web-token', invalidToken)
+        .send({notificationKey: validPushToken, refreshTokenId: refreshTokenData._id})
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`userId must be a string. Provided type: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
+    })
+
+    test(`If upload fails if notificationKey is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
+
+        const response = await supertest(server)
+        .post('/tempRoute/sendnotificationkey')
+        .set('auth-web-token', validToken)
+        .send({notificationKey: notString, refreshTokenId: refreshTokenData._id})
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`notificationKey must be a string. Provided type: ${typeof notString}`)
+        expect(await DB.noChangesMade()).toBe(true)
+    })
+
+    test (`If upload fails if refreshTokenId is not a string. Testing: ${JSON.stringify(notString)}`, async () => {
+        expect.assertions(3);
+
+        await DB.takeDBSnapshot()
+
+        const response = await supertest(server)
+        .post('/tempRoute/sendnotificationkey')
+        .set('auth-web-token', validToken)
+        .send({notificationKey: validPushToken, refreshTokenId: notString})
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe(`refreshTokenId must be a string. Provided type: ${typeof notString}`)
         expect(await DB.noChangesMade()).toBe(true)
     })
 }
@@ -59,62 +116,45 @@ test ('If upload fails if userId is not an objectId', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.sendnotificationkey('i am not an objectid', undefined, undefined);
+    const invalidToken = 'Bearer ' + jwt.sign({_id: 'iamnotanobjectid'}, process.env.SECRET_FOR_TOKENS, {expiresIn: '2y'})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe(`userId must be an objectId.`)
+    const response = await supertest(server)
+    .post('/tempRoute/sendnotificationkey')
+    .set('auth-web-token', invalidToken)
+    .send({notificationKey: validPushToken, refreshTokenId: refreshTokenData._id})
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe(`userId must be an objectId.`)
     expect(await DB.noChangesMade()).toBe(true)
 })
-
-for (const invalidNotificationKey of TEST_CONSTANTS.NOT_STRINGS) {
-    test(`If upload fails if notificationKey is not a string. Testing: ${JSON.stringify(invalidNotificationKey)}`, async () => {
-        expect.assertions(3);
-
-        await DB.takeDBSnapshot()
-
-        const returned = await TempController.sendnotificationkey("653bcdd1ab9cf6186dde00cf", invalidNotificationKey, undefined);
-
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`notificationKey must be a string. Provided type: ${typeof invalidNotificationKey}`)
-        expect(await DB.noChangesMade()).toBe(true)
-    })
-}
 
 test ('If upload fails if notificationKey is not a valid Expo push token', async () => {
     expect.assertions(3);
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.sendnotificationkey("653bcdd1ab9cf6186dde00cf", 'i am not an expo push token', undefined);
+    const response = await supertest(server)
+    .post('/tempRoute/sendnotificationkey')
+    .set('auth-web-token', validToken)
+    .send({notificationKey: 'i am not an expo push token', refreshTokenId: refreshTokenData._id})
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe(`notificationKey must be a valid Expo push token.`)
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe(`notificationKey must be a valid Expo push token.`)
     expect(await DB.noChangesMade()).toBe(true)
 })
-
-for (const invalidRefreshTokenId of TEST_CONSTANTS.NOT_STRINGS) {
-    test (`If upload fails if refreshTokenId is not a string. Testing: ${JSON.stringify(invalidRefreshTokenId)}`, async () => {
-        expect.assertions(3);
-
-        await DB.takeDBSnapshot()
-        
-        const returned = await TempController.sendnotificationkey("653bcdd1ab9cf6186dde00cf", validPushToken, invalidRefreshTokenId);
-
-        expect(returned.statusCode).toBe(400);
-        expect(returned.data.message).toBe(`refreshTokenId must be a string. Provided type: ${typeof invalidRefreshTokenId}`)
-        expect(await DB.noChangesMade()).toBe(true)
-    })
-}
 
 test ('If upload fails if refreshTokenId is not an objectId.', async () => {
     expect.assertions(3);
 
     await DB.takeDBSnapshot()
-    
-    const returned = await TempController.sendnotificationkey("653bcdd1ab9cf6186dde00cf", validPushToken, 'i am not an objectid');
 
-    expect(returned.statusCode).toBe(400);
-    expect(returned.data.message).toBe(`refreshTokenId must be an objectId.`)
+    const response = await supertest(server)
+    .post('/tempRoute/sendnotificationkey')
+    .set('auth-web-token', validToken)
+    .send({notificationKey: validPushToken, refreshTokenId: 'iamnotanobjectid'})
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.message).toBe(`refreshTokenId must be an objectId.`)
     expect(await DB.noChangesMade()).toBe(true)
 })
 
@@ -123,67 +163,54 @@ test('If upload fails if user with userId could not be found', async () => {
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.sendnotificationkey("653bcdd1ab9cf6186dde00cf", validPushToken, "653bcdd1ab9cf6186dde00cf");
+    const response = await validSend()
 
-    expect(returned.statusCode).toBe(404);
-    expect(returned.data.message).toBe("Could not find user with provided userId.")
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toBe("Could not find user with provided userId.")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If upload fails if refresh token with refreshTokenId could not be found', async () => {
     expect.assertions(3);
 
-    const userData = {
-        _id: new mongoose.Types.ObjectId("653bcdd1ab9cf6186dde00cf")
-    }
-
     await new User(userData).save();
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, "653bcdd1ab9cf6186dde00cf");
+    const response = await validSend()
 
-    expect(returned.statusCode).toBe(404);
-    expect(returned.data.message).toBe("Could not find refresh token.")
+    expect(response.statusCode).toBe(404);
+    expect(response.body.message).toBe("Could not find refresh token.")
     expect(await DB.noChangesMade()).toBe(true)
 })
 
 test('If upload successfully modifies refresh token', async () => {
     expect.assertions(6);
 
-    const userData = {
-        _id: new mongoose.Types.ObjectId(),
-        __v: 0
-    }
-
-    const refreshTokenData = {
-        _id: new mongoose.Types.ObjectId(),
-        userId: userData._id,
-        __v: 0
-    }
-
     await new User(userData).save();
     await new RefreshToken(refreshTokenData).save();
 
     await DB.takeDBSnapshot()
 
-    const savedUser = await User.findOne({}).lean();
+    const beforeUsers = await User.find({}).lean();
+    const beforeTokens = await RefreshToken.find({}).lean();
 
-    const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, String(refreshTokenData._id));
+    const expectedTokens = [...beforeTokens];
+    expectedTokens[0].notificationKey = validPushToken
+
+    const response = await validSend()
+
+    const afterUsers = await User.find({}).lean();
+    const afterTokens = await RefreshToken.find({}).lean();
 
     const tokens = await RefreshToken.find({}).lean();
     const users = await User.find({}).lean();
 
-    const token = {...tokens[0]};
-    const user = {...users[0]};
-
-    refreshTokenData.notificationKey = validPushToken;
-
-    expect(returned.statusCode).toBe(200);
+    expect(response.statusCode).toBe(200);
     expect(tokens).toHaveLength(1);
     expect(users).toHaveLength(1);
-    expect(token).toStrictEqual(refreshTokenData);
-    expect(user).toStrictEqual(savedUser);
+    expect(afterUsers).toStrictEqual(beforeUsers);
+    expect(afterTokens).toStrictEqual(expectedTokens);
     expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
 })
 
@@ -208,18 +235,6 @@ test('If successful upload does not modify other refresh tokens in the database'
         }
     })
 
-    const userData = {
-        _id: new mongoose.Types.ObjectId(),
-        __v: 0
-    }
-
-    const refreshTokenData = {
-        _id: new mongoose.Types.ObjectId(),
-        userId: userData._id,
-        __v: 0,
-        createdAt: Date.now()
-    }
-
     await User.insertMany(users);
     await RefreshToken.insertMany(refreshTokens);
     await new User(userData).save();
@@ -231,12 +246,12 @@ test('If successful upload does not modify other refresh tokens in the database'
 
     await DB.takeDBSnapshot()
 
-    const returned = await TempController.sendnotificationkey(String(userData._id), validPushToken, String(refreshTokenData._id));
+    const response = await validSend()
 
     const dbUsers = await User.find({}).lean();
     const dbRefreshTokens = await RefreshToken.find({_id: {$ne: refreshTokenData._id}}).lean();
 
-    expect(returned.statusCode).toBe(200);
+    expect(response.statusCode).toBe(200);
     expect(dbUsers).toStrictEqual(savedUsers);
     expect(dbRefreshTokens).toStrictEqual(savedRefreshTokens);
     expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])

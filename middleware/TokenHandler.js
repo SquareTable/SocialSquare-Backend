@@ -1,4 +1,3 @@
-//require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const refreshTokenEncryptionKey = process.env.REFRESH_TOKEN_ENCRYPTION_KEY
