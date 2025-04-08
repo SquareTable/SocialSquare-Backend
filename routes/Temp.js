@@ -765,7 +765,7 @@ router.post('/sendnotificationkey', rateLimiters['/sendnotificationkey'], (req, 
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'sendnotificationkey',
-            functionArgs: [req.tokenData, req.body.keySent, req.body.refreshTokenId]
+            functionArgs: [req.tokenData, req.body.notificationKey, req.body.refreshTokenId]
         },
         env: process.env
     })

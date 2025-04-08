@@ -59,7 +59,7 @@ async function validSend() {
     return await supertest(server)
     .post('/tempRoute/sendnotificationkey')
     .set('auth-web-token', validToken)
-    .send({keySent: validPushToken, refreshTokenId: refreshTokenData._id})
+    .send({notificationKey: validPushToken, refreshTokenId: refreshTokenData._id})
 }
 
 for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
@@ -73,7 +73,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const response = await supertest(server)
         .post('/tempRoute/sendnotificationkey')
         .set('auth-web-token', invalidToken)
-        .send({keySent: validPushToken, refreshTokenId: refreshTokenData._id})
+        .send({notificationKey: validPushToken, refreshTokenId: refreshTokenData._id})
 
         expect(response.statusCode).toBe(400);
         expect(response.body.message).toBe(`userId must be a string. Provided type: ${typeof notString}`)
@@ -88,7 +88,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const response = await supertest(server)
         .post('/tempRoute/sendnotificationkey')
         .set('auth-web-token', validToken)
-        .send({keySent: notString, refreshTokenId: refreshTokenData._id})
+        .send({notificationKey: notString, refreshTokenId: refreshTokenData._id})
 
         expect(response.statusCode).toBe(400);
         expect(response.body.message).toBe(`notificationKey must be a string. Provided type: ${typeof notString}`)
@@ -103,7 +103,7 @@ for (const notString of TEST_CONSTANTS.NOT_STRINGS) {
         const response = await supertest(server)
         .post('/tempRoute/sendnotificationkey')
         .set('auth-web-token', validToken)
-        .send({keySent: validPushToken, refreshTokenId: notString})
+        .send({notificationKey: validPushToken, refreshTokenId: notString})
 
         expect(response.statusCode).toBe(400);
         expect(response.body.message).toBe(`refreshTokenId must be a string. Provided type: ${typeof notString}`)
@@ -121,7 +121,7 @@ test ('If upload fails if userId is not an objectId', async () => {
     const response = await supertest(server)
     .post('/tempRoute/sendnotificationkey')
     .set('auth-web-token', invalidToken)
-    .send({keySent: validPushToken, refreshTokenId: refreshTokenData._id})
+    .send({notificationKey: validPushToken, refreshTokenId: refreshTokenData._id})
 
     expect(response.statusCode).toBe(400);
     expect(response.body.message).toBe(`userId must be an objectId.`)
@@ -136,7 +136,7 @@ test ('If upload fails if notificationKey is not a valid Expo push token', async
     const response = await supertest(server)
     .post('/tempRoute/sendnotificationkey')
     .set('auth-web-token', validToken)
-    .send({keySent: 'i am not an expo push token', refreshTokenId: refreshTokenData._id})
+    .send({notificationKey: 'i am not an expo push token', refreshTokenId: refreshTokenData._id})
 
     expect(response.statusCode).toBe(400);
     expect(response.body.message).toBe(`notificationKey must be a valid Expo push token.`)
@@ -151,7 +151,7 @@ test ('If upload fails if refreshTokenId is not an objectId.', async () => {
     const response = await supertest(server)
     .post('/tempRoute/sendnotificationkey')
     .set('auth-web-token', validToken)
-    .send({keySent: validPushToken, refreshTokenId: 'iamnotanobjectid'})
+    .send({notificationKey: validPushToken, refreshTokenId: 'iamnotanobjectid'})
 
     expect(response.statusCode).toBe(400);
     expect(response.body.message).toBe(`refreshTokenId must be an objectId.`)
