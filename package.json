@@ -31,7 +31,7 @@
     "stream": "^0.0.2",
     "string-similarity": "^4.0.4",
     "supertest": "^7.1.0",
-    "swagger-ui-express": "^4.5.0",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
