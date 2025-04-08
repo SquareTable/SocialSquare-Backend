@@ -10,7 +10,7 @@ const workerPath = path.resolve('workers', 'UserWorker.js')
 const rateLimiters = {
     '/signup': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, // 1 day
-        max: 3, // Limit each IP to 3 requests per `window` (here 1 day)
+        limit: 3, // Limit each IP to 3 requests per `window` (here 1 day)
         standardHeaders: false, // Return rate limit info in the `RateLimit-*` headers
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers
         message: {status: "FAILED", message: 'The network you are on has made too many accounts in the last 24 hours. Please try again tomorrow.'}, // Message to send to client when they have been rate-limited
@@ -18,7 +18,7 @@ const rateLimiters = {
     }),
     '/signin': rateLimit({
         windowMs: 1000 * 60, // 1 minute
-        max: 1,
+        limit: 1,
         standardHeaders: false, // Return rate limit info in the `RateLimit-*` headers
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers
         message: {status: "FAILED", message: "This account has been logged into too many times in the past minute. Please wait 60 seconds and try again."},
@@ -27,7 +27,7 @@ const rateLimiters = {
     }),
     '/checkusernameavailability': rateLimit({
         windowMs: 1000 * 30, // 30 seconds
-        max: 90, //3 per second in 30 second window
+        limit: 90, //3 per second in 30 second window
         standardHeaders: false,
         legacyHeaders: false,
         skipFailedRequests: true,
@@ -35,7 +35,7 @@ const rateLimiters = {
     }),
     '/sendemailverificationcode': rateLimit({
         windowMs: 1000 * 60, // 1 minute
-        max: 12, // 1 per 5 seconds in minute window
+        limit: 12, // 1 per 5 seconds in minute window
         standardHeaders: false,
         legacyHeaders: false,
         skipFailedRequests: true,
@@ -43,7 +43,7 @@ const rateLimiters = {
     }),
     '/checkverificationcode': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 6, //1 per 10 seconds in minute window
+        limit: 6, //1 per 10 seconds in minute window
         standardHeaders: false,
         legacyHeaders: false,
         skipFailedRequests: true,
@@ -51,7 +51,7 @@ const rateLimiters = {
     }),
     '/changepasswordwithverificationcode': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 1, //1 per minute in minute window
+        limit: 1, //1 per minute in minute window
         standardHeaders: false,
         legacyHeaders: false,
         skipFailedRequests: true,

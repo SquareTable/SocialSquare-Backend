@@ -38,7 +38,7 @@ router.all("*", [tokenValidation]); // the * just makes it that it affects them 
 const rateLimiters = {
     '/sendnotificationkey': rateLimit({
         windowMs: 1000 * 60, // 1 minute
-        max: 2, // Limit each IP to 10 requests per `window` (here 1 minute)
+        limit: 2, // Limit each IP to 10 requests per `window` (here 1 minute)
         standardHeaders: false, // Return rate limit info in the `RateLimit-*` headers
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers
         message: {status: "FAILED", message: 'Too many notification keys have been sent in the last minute. Please try again in 60 seconds.'}, // Message to send to client when they have been rate-limited
@@ -47,7 +47,7 @@ const rateLimiters = {
     }),
     '/changeemail': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 2,
+        limit: 2,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: 'The email for this account has changed too many times today. Please try again in 24 hours.'},
@@ -56,7 +56,7 @@ const rateLimiters = {
     }),
     '/changepassword': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 3,
+        limit: 3,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "The password for this account has been changed too many times today. Please try again in 24 hours."},
@@ -65,7 +65,7 @@ const rateLimiters = {
     }),
     '/searchpageusersearch': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for users too many times in the past minute. Please try again in 60 seconds."},
@@ -74,7 +74,7 @@ const rateLimiters = {
     }),
     '/createpollpost': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have created too many poll posts in the last 24 hours. Please try again in 24 hours."},
@@ -83,7 +83,7 @@ const rateLimiters = {
     }),
     '/searchforpollposts': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many poll posts in the last minute. Please try again in 60 seconds."},
@@ -92,7 +92,7 @@ const rateLimiters = {
     }),
     '/voteonpoll': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have voted on too many poll posts in the last minute. Please try again in 60 seconds."},
@@ -101,7 +101,7 @@ const rateLimiters = {
     }),
     '/removevoteonpoll': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have removed your vote on too many poll posts in the last minute. Please try again in 60 seconds."},
@@ -110,7 +110,7 @@ const rateLimiters = {
     }),
     '/searchforpollpostsbyid': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many polls in the last minute. Please try again in 60 seconds."},
@@ -119,7 +119,7 @@ const rateLimiters = {
     }),
     '/deletepoll': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have deleted too many polls in the last minute. Please try again in 60 seconds."},
@@ -128,7 +128,7 @@ const rateLimiters = {
     }),
     '/postImage': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have created too many image posts in the last 24 hours. Please try again in 24 hours."},
@@ -137,7 +137,7 @@ const rateLimiters = {
     }),
     '/postProfileImage': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have changed your profile picture too many times in the last hour. Please try again in 60 minutes."},
@@ -146,7 +146,7 @@ const rateLimiters = {
     }),
     '/getImagesFromProfile': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many image posts in the last minute. Please try again in 60 seconds."},
@@ -155,7 +155,7 @@ const rateLimiters = {
     }),
     '/getProfilePic/:pubId': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 90,
+        limit: 90,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many profile pictures in the last minute. Please try again in 60 seconds."},
@@ -164,7 +164,7 @@ const rateLimiters = {
     }),
     '/postcategory': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 2,
+        limit: 2,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have created too many categories today. Please try again in 24 hours."},
@@ -173,7 +173,7 @@ const rateLimiters = {
     }),
     '/deleteimage': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have deleted too many image posts in the last minute. Please try again in 60 seconds."},
@@ -182,7 +182,7 @@ const rateLimiters = {
     }),
     '/searchpagesearchcategories': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many categories in the last minute. Please try again in 60 seconds."},
@@ -191,7 +191,7 @@ const rateLimiters = {
     }),
     '/getcategoryimage': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many categories' images in the last minute. Please try again in 60 seconds."},
@@ -200,7 +200,7 @@ const rateLimiters = {
     }),
     '/findcategorybyid': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many categories by id in the last minute. Please try again in 60 seconds."},
@@ -209,7 +209,7 @@ const rateLimiters = {
     }),
     '/findcategoryfromprofile': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many categories from profiles in the last minute. Please try again in 60 seconds."},
@@ -218,7 +218,7 @@ const rateLimiters = {
     }),
     '/joincategory': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 6,
+        limit: 6,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have joined too many categories in the last minute. Please try again in 60 seconds."},
@@ -227,7 +227,7 @@ const rateLimiters = {
     }),
     '/leavecategory': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 6,
+        limit: 6,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have left too many categories in the last minute. Please try again in 60 seconds."},
@@ -236,7 +236,7 @@ const rateLimiters = {
     }),
     '/postthread': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have created too many thread posts in the last 24 hours. Please try again in 24 hours."},
@@ -245,7 +245,7 @@ const rateLimiters = {
     }),
     '/getthreadsfromcategory': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many threads from a certain category in the last minute. Please try again in 60 seconds."},
@@ -254,7 +254,7 @@ const rateLimiters = {
     }),
     '/getthreadsfromprofile': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for too many threads from a certain user in the last minute. Please try again in 60 seconds."},
@@ -263,7 +263,7 @@ const rateLimiters = {
     }),
     '/getthreadbyid': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested too many threads in the last minute. Please try again in 60 seconds."},
@@ -272,7 +272,7 @@ const rateLimiters = {
     }),
     '/deletethread': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have deleted too many threads in the last minute. Please try again in 60 seconds."},
@@ -281,7 +281,7 @@ const rateLimiters = {
     }),
     '/reloadUsersDetails': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have reloaded user details too many times in the last minute. Please try again in 60 seconds."},
@@ -290,7 +290,7 @@ const rateLimiters = {
     }),
     '/earnSpecialBadge': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 3,
+        limit: 3,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You can only earn 3 special badges a day. Please try again in 24 hours."},
@@ -299,7 +299,7 @@ const rateLimiters = {
     }),
     '/getuserbyid': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested too many users by their id in the last minute. Please try again in 60 seconds."},
@@ -308,7 +308,7 @@ const rateLimiters = {
     }),
     '/makeaccountprivate': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have made your account private too many times in the last hour. Please try again in 60 minutes."},
@@ -317,7 +317,7 @@ const rateLimiters = {
     }),
     '/makeaccountpublic': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have made your account public too many times in the last hour. Please try again in 60 minutes."},
@@ -326,7 +326,7 @@ const rateLimiters = {
     }),
     '/followrequests/:skip': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested your follow requests too many times in the last minute. Please try again in 60 seconds."},
@@ -335,7 +335,7 @@ const rateLimiters = {
     }),
     '/denyfollowrequest': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have denied too many follow requests in the last minute. Please try again in 60 seconds."},
@@ -344,7 +344,7 @@ const rateLimiters = {
     }),
     '/acceptfollowrequest': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have accepted too many follow requests in the last minute. Please try again in 60 seconds."},
@@ -353,7 +353,7 @@ const rateLimiters = {
     }),
     '/removefollowerfromaccount': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have accepted too many follow requests in the last minute. Please try again in 60 seconds."},
@@ -362,7 +362,7 @@ const rateLimiters = {
     }),
     '/blockaccount': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have blocked too many accounts in the last minute. Please try again in 60 seconds."},
@@ -371,7 +371,7 @@ const rateLimiters = {
     }),
     '/getuserblockedaccounts': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested your blocked accounts too many times in the last minute. Please try again in 60 seconds."},
@@ -380,7 +380,7 @@ const rateLimiters = {
     }),
     '/unblockaccount': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have unblocked too many accounts in the last minute. Please try again in 60 seconds."},
@@ -389,7 +389,7 @@ const rateLimiters = {
     }),
     '/enableAlgorithm': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 3,
+        limit: 3,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have enabled the algorithm too many times in the last minute. Please try again in 60 seconds."},
@@ -398,7 +398,7 @@ const rateLimiters = {
     }),
     '/getAuthenticationFactorsEnabled': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested your authentication factors too many times in the last minute. Please try again in 60 seconds."},
@@ -407,7 +407,7 @@ const rateLimiters = {
     }),
     '/disableAlgorithm': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 3,
+        limit: 3,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have disabled the algorithm too many times in the last minute. Please try again in 60 seconds."},
@@ -416,7 +416,7 @@ const rateLimiters = {
     }),
     '/reloadProfileEssentials': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have refreshed your profile essentials too many times in the last minute. Please try again in 60 seconds."},
@@ -425,7 +425,7 @@ const rateLimiters = {
     }),
     '/turnOffEmailMultiFactorAuthentication': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 3,
+        limit: 3,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have turned off email multi-factor authentication too many times today. Please try again in 24 hours."},
@@ -434,7 +434,7 @@ const rateLimiters = {
     }),
     '/deleteaccount': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 1,
+        limit: 1,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have tried to delete your account too many times today. Please try again in 24 hours."},
@@ -443,7 +443,7 @@ const rateLimiters = {
     }),
     '/checkIfCategoryExists': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have checked if a certain category exists too many times in the last minute. Please try again in 60 seconds."},
@@ -452,7 +452,7 @@ const rateLimiters = {
     }),
     '/uploadNotificationsSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have updated your notifications settings too many times in the last minute. Please try again in 60 seconds."},
@@ -461,7 +461,7 @@ const rateLimiters = {
     }),
     '/getUserNotificationSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested notifications settings too many times in the last minute. Please try again in 60 seconds."},
@@ -470,7 +470,7 @@ const rateLimiters = {
     }),
     '/reportUser': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "The network you are connected to has sent too many report user requests in the last hour. Please wait 60 minutes before trying to report the user again."},
@@ -480,7 +480,7 @@ const rateLimiters = {
     }),
     '/getUserActivity': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested user activity too many times in the last minute. Please try again in 60 seconds."},
@@ -489,7 +489,7 @@ const rateLimiters = {
     }),
     '/reportPost': rateLimit({
         windowMs: 1000 * 60 * 60, //1 hour
-        max: 100,
+        limit: 100,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "The network you are connected to has sent too many report post requests in the last hour. Please wait 60 minutes before trying to report the post again."},
@@ -499,7 +499,7 @@ const rateLimiters = {
     }),
     '/userAlgorithmSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 4,
+        limit: 4,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested your algorithm settings too many times in the last minute. Please try again in 60 seconds."},
@@ -508,7 +508,7 @@ const rateLimiters = {
     }),
     '/uploadAlgorithmSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have changed your algorithm settings too many times in the last minute. Please try again in 60 seconds."},
@@ -517,7 +517,7 @@ const rateLimiters = {
     }),
     '/privacySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 4,
+        limit: 4,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested your privacy settings too many times in the last minute. Please try again in 60 seconds."},
@@ -526,7 +526,7 @@ const rateLimiters = {
     }),
     '/savePrivacySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have updated your privacy settings too many times in the last minute. Please try again in 60 seconds."},
@@ -535,7 +535,7 @@ const rateLimiters = {
     }),
     '/getProfileStats': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested profile stats too many times in the last minute. Please try again in 60 seconds."},
@@ -544,7 +544,7 @@ const rateLimiters = {
     }),
     '/loginactivity': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested login activity too many times in the last minute. Please try again in 60 seconds."},
@@ -553,7 +553,7 @@ const rateLimiters = {
     }),
     '/logoutdevice': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have logged devices out of your account too many times in the last minute. Please try again in 60 seconds."},
@@ -562,7 +562,7 @@ const rateLimiters = {
     }),
     '/logoutallotherdevices': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 3,
+        limit: 3,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have logged all other devices out of your account too many times in the last minute. Please try again in 60 seconds."},
@@ -571,7 +571,7 @@ const rateLimiters = {
     }),
     '/loginActivitySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested your login activity settings too many times in the last minute. Please try again in 60 seconds."},
@@ -580,7 +580,7 @@ const rateLimiters = {
     }),
     '/uploadLoginActivitySettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have changed your login activity settings too many times in the last minute. Please try again in 60 seconds."},
@@ -589,7 +589,7 @@ const rateLimiters = {
     }),
     '/updateLoginActivitySettingsOnSignup': rateLimit({
         windowMs: 1000 * 60 * 60 * 24, //1 day
-        max: 5, //Should only be doing this once for the whole lifetime of the account but will have this set to 5 just in case
+        limit: 5, //Should only be doing this once for the whole lifetime of the account but will have this set to 5 just in case
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have updated your login activity settings on signup too many times today. Please try again in 24 hours."},
@@ -598,7 +598,7 @@ const rateLimiters = {
     }),
     '/followingFeedFilterSettings': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested your following feed settings on signup too many times in the last minute. Please try again in 60 seconds."},
@@ -607,7 +607,7 @@ const rateLimiters = {
     }),
     '/logoutuser': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "Too many accounts have been logged out from this account in the last minute. Please try again in 60 seconds."},
@@ -616,7 +616,7 @@ const rateLimiters = {
     }),
     '/deletecomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have deleted too many comments in the last minute. Please try again in 60 seconds."},
@@ -625,7 +625,7 @@ const rateLimiters = {
     }),
     '/getsinglecomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested too many single comments in the last minute. Please try again in 60 seconds."},
@@ -634,7 +634,7 @@ const rateLimiters = {
     }),
     '/getcommentreplies': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have requested too many comment replies in the last minute. Please try again in 60 seconds."},
@@ -643,7 +643,7 @@ const rateLimiters = {
     }),
     '/voteoncomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have voted on too many comments in the last minute. Please try again in 60 seconds."},
@@ -652,7 +652,7 @@ const rateLimiters = {
     }),
     '/replytocomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have replied to comments too many times in the last minute. Please try again in 60 seconds."},
@@ -661,7 +661,7 @@ const rateLimiters = {
     }),
     '/postcomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 20,
+        limit: 20,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have commented too many times in the last minute. Please try again in 60 seconds."},
@@ -670,7 +670,7 @@ const rateLimiters = {
     }),
     '/searchforpostcomments': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 30,
+        limit: 30,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have searched for comments on posts too many times in the last minute. Please try again in 60 seconds."},
@@ -679,7 +679,7 @@ const rateLimiters = {
     }),
     '/removevoteoncomment': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have removed votes from comments too many times in the last minute. Please try again in 60 seconds."},
@@ -688,7 +688,7 @@ const rateLimiters = {
     }),
     '/voteonpost': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have voted on too many posts in the last minute. Please try again in 60 seconds."},
@@ -697,7 +697,7 @@ const rateLimiters = {
     }),
     '/removevoteonpost': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 60,
+        limit: 60,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have removed too many votes from posts in the last minute. Please try again in 60 seconds."},
@@ -706,7 +706,7 @@ const rateLimiters = {
     }),
     '/followuser': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 6,
+        limit: 6,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have followed too many accounts in the past minute. Please try again in 60 seconds."},
@@ -715,7 +715,7 @@ const rateLimiters = {
     }),
     '/unfollowuser': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 6,
+        limit: 6,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have unfollowed too many accounts in the past minute. Please try again in 60 seconds."},
@@ -724,7 +724,7 @@ const rateLimiters = {
     }),
     '/getvotedusersofpost': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 12,
+        limit: 12,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have retrieved the users that have voted on a certain post too many times in the last minute. Please try again in 60 seconds."},
@@ -733,7 +733,7 @@ const rateLimiters = {
     }),
     '/getcategorymembers': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have retrieved the members of a category too many times in the last minute. Please try again in 60 seconds."},
@@ -742,7 +742,7 @@ const rateLimiters = {
     }),
     '/getpollvoteusers': rateLimit({
         windowMs: 1000 * 60, //1 minute
-        max: 5,
+        limit: 5,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "You have retrieved the users that have voted on this poll too many times in the last minute. Please try again in 60 seconds."},
@@ -751,7 +751,7 @@ const rateLimiters = {
     }),
     '/editprofiledetails': rateLimit({
         windowMs: 1000 * 60 * 60 * 6, //6 hours
-        max: 10,
+        limit: 10,
         standardHeaders: false,
         legacyHeaders: false,
         message: {status: "FAILED", message: "The details for this account has been changed too many times in the past 6 hours. Please try again in 6 hours."},
