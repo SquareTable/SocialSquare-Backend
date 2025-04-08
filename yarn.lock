@@ -559,6 +559,11 @@
   dependencies:
     sparse-bitfield "^3.0.3"
 
+"@scarf/scarf@=1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@scarf/scarf/-/scarf-1.4.0.tgz#3bbb984085dbd6d982494538b523be1ce6562972"
+  integrity sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==
+
 "@sinclair/typebox@^0.27.8":
   version "0.27.8"
   resolved "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.27.8.tgz"
@@ -4032,17 +4037,19 @@ supports-preserve-symlinks-flag@^1.0.0:
   resolved "https://registry.npmjs.org/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
 
-swagger-ui-dist@>=4.11.0:
-  version "4.13.2"
-  resolved "https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-4.13.2.tgz"
-  integrity sha512-jHL6UyIYpvEI7NsuWd0R3hJaPQTg6Oo4qSBo+oVfOEkv6rrQm/475RGSMmZgV6ajp+Sgrp9CqrDjQYAgQqiv1A==
-
-swagger-ui-express@^4.5.0:
-  version "4.5.0"
-  resolved "https://registry.npmjs.org/swagger-ui-express/-/swagger-ui-express-4.5.0.tgz"
-  integrity sha512-DHk3zFvsxrkcnurGvQlAcLuTDacAVN1JHKDgcba/gr2NFRE4HGwP1YeHIXMiGznkWR4AeS7X5vEblNn4QljuNA==
+swagger-ui-dist@>=5.0.0:
+  version "5.20.7"
+  resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-5.20.7.tgz#f9d080773a32f4fe8fbdfe4938c6539e4df99e3f"
+  integrity sha512-gLpb1wrWinUwMFKfSvDYsIlCyGQSryftzi6uWc9Qo98zO3mFT6oHOqmDUu5OoahvepuS6HGTe/3MsGUCVtpLig==
   dependencies:
-    swagger-ui-dist ">=4.11.0"
+    "@scarf/scarf" "=1.4.0"
+
+swagger-ui-express@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/swagger-ui-express/-/swagger-ui-express-5.0.1.tgz#fb8c1b781d2793a6bd2f8a205a3f4bd6fa020dd8"
+  integrity sha512-SrNU3RiBGTLLmFU8GIJdOdanJTl4TOmT27tt3bWWHppqYmAZ6IDuEuBvMU6nZq0zLEe6b/1rACXCgLZqO6ZfrA==
+  dependencies:
+    swagger-ui-dist ">=5.0.0"
 
 tar-fs@^2.0.0, tar-fs@^2.1.1:
   version "2.1.1"
