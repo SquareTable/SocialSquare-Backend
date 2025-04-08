@@ -480,7 +480,7 @@ describe('When Email 2FA is not enabled', () => {
 
         const response = await supertest(server)
         .post('/user/signin')
-        .set('X-Forwarded-For', '1.1.1.1')
+        .set('X-Forwarded-For', '96.7.128.198')
         .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();

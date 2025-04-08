@@ -54,8 +54,6 @@ const uuidHelper = new UUIDLibrary();
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 
-const geoIPLite = require('geoip-lite')
-
 const { sendNotifications } = require("../notificationHandler");
 
 const { blurEmailFunction, mailTransporter } = require('../globalFunctions.js');
@@ -282,8 +280,7 @@ class TempController {
                 }
 
                 if (userFound?.settings?.loginActivitySettings?.getLocation) {
-                    const location = geoIPLite.lookup(formattedIP)
-                    newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                    newRefreshTokenObject.location = userHandler.getLocationFromIP(formattedIP)
                 }
 
                 if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
@@ -4539,8 +4536,7 @@ class TempController {
                     }
 
                     if (loginActivitySettingsToSet.getLocation) {
-                        const location = geoIPLite.lookup(IP)
-                        changesToMake.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                        changesToMake.location = userHandler.getLocationFromIP(formattedIP)
                     }
 
                     if (loginActivitySettingsToSet.getDeviceType) {

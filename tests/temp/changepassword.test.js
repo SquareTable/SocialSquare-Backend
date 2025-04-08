@@ -334,7 +334,7 @@ test('If IP-derived location is added to RefreshToken document if the user allow
 
     const response = await supertest(server)
     .post('/tempRoute/changepassword')
-    .set('X-Forwarded-For', '1.1.1.1')
+    .set('X-Forwarded-For', '96.7.128.198')
     .set('auth-web-token', validToken)
     .send({currentPassword: validPassword, newPassword})
 

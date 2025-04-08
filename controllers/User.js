@@ -3,7 +3,6 @@ const HTTPWTLibrary = require('../libraries/HTTPWT');
 const HTTPWTHandler = new HTTPWTLibrary();
 const HTTPLibrary = require('../libraries/HTTP');
 const HTTPHandler = new HTTPLibrary();
-const geoIPLite = require('geoip-lite')
 const UserLibrary = require('../libraries/User')
 const userHandler = new UserLibrary()
 const RandomLibrary = require('../libraries/Random');
@@ -125,8 +124,7 @@ class UserController {
                             }
 
                             if (result?.settings?.loginActivitySettings?.getLocation) {
-                                const location = geoIPLite.lookup(formattedIP)
-                                newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                                newRefreshTokenObject.location = userHandler.getLocationFromIP(formattedIP)
                             }
 
                             if (result?.settings?.loginActivitySettings?.getDeviceType) {
@@ -257,8 +255,7 @@ class UserController {
                     }
 
                     if (userFound?.settings?.loginActivitySettings?.getLocation) {
-                        const location = geoIPLite.lookup(formattedIP)
-                        newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                        newRefreshTokenObject.location = userHandler.getLocationFromIP(formattedIP)
                     }
 
                     if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
@@ -585,8 +582,7 @@ class UserController {
                                     }
     
                                     if (userFound?.settings?.loginActivitySettings?.getLocation) {
-                                        const location = geoIPLite.lookup(formattedIP)
-                                        newRefreshTokenObject.location = (!location?.city && !location?.country) ? 'Unknown Location' : (location.city + ', ' + location.country)
+                                        newRefreshTokenObject.location = userHandler.getLocationFromIP(formattedIP)
                                     }
     
                                     if (userFound?.settings?.loginActivitySettings?.getDeviceType) {
