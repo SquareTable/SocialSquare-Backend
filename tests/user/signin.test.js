@@ -266,16 +266,18 @@ describe('When Email 2FA is enabled', () => {
         await new User(userData).save();
         await EmailVerificationCode.insertMany(codesToInsert);
 
+        const beforeEmailCodes = await EmailVerificationCode.find({}).lean();
+
         await DB.takeDBSnapshot()
 
         const response = await supertest(server)
         .post('/user/signin')
         .send({email: userData.email, password: validPassword})
 
-        const codesInDatabase = await EmailVerificationCode.find({hashedVerificationCode: 'hashed'}).lean();
+        const afterEmailCodes = await EmailVerificationCode.find({hashedVerificationCode: 'hashed'}).lean();
 
         expect(response.statusCode).toBe(200);
-        expect(codesInDatabase).toStrictEqual(codesToInsert);
+        expect(afterEmailCodes).toStrictEqual(beforeEmailCodes);
         expect(await DB.changedCollections()).toIncludeSameMembers(['EmailVerificationCode'])
     })
 
@@ -587,14 +589,14 @@ describe('When Email 2FA is not enabled', () => {
                 createdAt: new Date(),
                 userId: new mongoose.Types.ObjectId(),
                 admin: Math.random() > 0.5,
-                notificationKey: 'notification key',
-                __v: 0,
-                _id: new mongoose.Types.ObjectId()
+                notificationKey: 'notification key'
             }
         })
 
         await new User(userData).save();
         await RefreshToken.insertMany(tokensToInsert);
+
+        const beforeTokens = await RefreshToken.find({}).lean();
 
         await DB.takeDBSnapshot()
 
@@ -602,10 +604,10 @@ describe('When Email 2FA is not enabled', () => {
         .post('/user/signin')
         .send({email: userData.email, password: validPassword})
 
-        const refreshTokens = await RefreshToken.find({_id: {$ne: response.body.refreshTokenId}}).lean();
+        const afterTokens = await RefreshToken.find({_id: {$ne: response.body.refreshTokenId}}).lean();
 
         expect(response.statusCode).toBe(200);
-        expect(refreshTokens).toStrictEqual(tokensToInsert);
+        expect(afterTokens).toStrictEqual(beforeTokens);
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
