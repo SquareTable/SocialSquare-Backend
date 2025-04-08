@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const geoIPLite = require('geoip-lite')
 const { tokenValidation, refreshTokenEncryption, refreshTokenDecryption } = require("../middleware/TokenHandler");
 
 class User {
@@ -98,6 +99,20 @@ class User {
         const encryptedRefreshToken = refreshTokenEncryption(refreshToken)
 
         return {token, refreshToken, encryptedRefreshToken}
+    }
+
+    getLocationFromIP(IP) {
+        const location = geoIPLite.lookup(IP)
+
+        if (location === null) {
+            return 'Unknown Location'
+        }
+
+        if (location.city || location.country) {
+            return `${location.city || 'Unknown City'}, ${location.country || 'Unknown Country'}`
+        }
+
+        return 'Unknown Location'
     }
 }
 
