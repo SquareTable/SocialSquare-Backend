@@ -487,7 +487,7 @@ describe('When Email 2FA is not enabled', () => {
 
         expect(response.statusCode).toBe(200);
         expect(refreshToken.location).toBeTruthy();
-        expect(refreshToken.location !== 'Unknown Location').toBe(true)
+        expect(refreshToken.location).not.toBe('Unknown Location')
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 

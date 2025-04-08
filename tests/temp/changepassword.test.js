@@ -342,7 +342,7 @@ test('If IP-derived location is added to RefreshToken document if the user allow
 
     expect(response.statusCode).toBe(200);
     expect(refreshToken.location).toBeTruthy();
-    expect(refreshToken.location !== 'Unknown Location').toBe(true)
+    expect(refreshToken.location).not.toBe('Unknown Location')
 
     expect(await DB.changedCollections()).toIncludeSameMembers(['User', 'RefreshToken'])
 })
