@@ -46,7 +46,7 @@ class MockMongoDBServer {
     #startServer() {
         return new Promise(async (resolve, reject) => {
             try {
-                const replSet = await MongoMemoryReplSet.create({ replSet: { count: 3 }, binary: { version: '6.0.21' } });
+                const replSet = await MongoMemoryReplSet.create({ replSet: { count: 3 }, binary: { version: '6.0.14' } });
 
                 this.#replicaSetServer = replSet;
                 this.uri = replSet.getUri();
