@@ -11,7 +11,7 @@ const Conversation = require('../models/Conversation');
 const { tokenValidation } = require("../middleware/TokenHandler");
 
 //UNCOMMENT THE LINE BELOW AFTER CHATS HAVE BEEN REMADE
-//router.all("*", [tokenValidation]); // the * just makes it that it affects them all it could be /whatever and it would affect that only
+//router.all("/{*splat}", [tokenValidation]); // the /{*splat} just makes it that it affects them all it could be /whatever and it would affect that only
 
 //load first 20 or 20 more messages of gc
 router.get("/loadmessages/:conversationId/:lastLoaded", (req,res)=>{

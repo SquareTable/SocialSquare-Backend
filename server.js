@@ -2100,7 +2100,7 @@ app.get('/checkIfRealSocialSquareServer', (req, res) => {
     })
 })
 
-app.all('*', (req, res) => {
+app.all('/{*splat}', (req, res) => {
   res.status(400).json({
     status: "FAILED",
     message: "Unknown route or method"

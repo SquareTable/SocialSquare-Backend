@@ -36,7 +36,7 @@ router.post('/login', (req, res) => {
     })
 });
 
-router.all("*", [tokenValidation]); // the * just makes it that it affects them all it could be /whatever and it would affect that only
+router.all("/{*splat}", [tokenValidation]); // the /{*splat} just makes it that it affects them all it could be /whatever and it would affect that only
 //All routes below this line will get JWT verification
 
 
