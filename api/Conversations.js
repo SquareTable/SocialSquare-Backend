@@ -40,7 +40,7 @@ var ObjectID = require('mongodb').ObjectID;
 const { tokenValidation } = require("../middleware/TokenHandler");
 
 //UNCOMMENT THE LINE BELOW AFTER CHATS HAVE BEEN REMADE
-//router.all("*", [tokenValidation]); // the * just makes it that it affects them all it could be /whatever and it would affect that only
+//router.all("/{*splat}", [tokenValidation]); // the /{*splat} just makes it that it affects them all it could be /whatever and it would affect that only
 
 //create conversation
 router.post("/create", (req,res)=> {

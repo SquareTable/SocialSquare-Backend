@@ -33,7 +33,7 @@ const upload = multer({ storage: storage })
 
 const { tokenValidation } = require("../middleware/TokenHandler");
 
-router.all("*", [tokenValidation]); // the * just makes it that it affects them all it could be /whatever and it would affect that only
+router.all("/{*splat}", [tokenValidation]); // the /{*splat} just makes it that it affects them all it could be /whatever and it would affect that only
 
 const rateLimiters = {
     '/sendnotificationkey': rateLimit({
