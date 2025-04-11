@@ -3,9 +3,9 @@ WORKDIR /server
 COPY  package*.json /server/
 RUN mkdir Local-Images
 RUN mkdir TEMP-IMAGES
-RUN yarn install --network-timeout 100000
+RUN npm ci
 COPY . /server/
-CMD ["yarn", "start"]
+CMD ["node", "index.js"]
 
 #FROM python:3.10 AS build
 
@@ -35,7 +35,7 @@ CMD ["yarn", "start"]
 #ENV NODE_ENV=container
 ##COPY  package*.json /server
 ##RUN mkdir Local-Images
-##RUN yarn install --network-timeout 100000
+##RUN npm ci
 ##COPY . /server
-##CMD ["yarn", "start"]
+##CMD ["node", "index.js"]
 #CMD ["npm", "run", "dev"]
