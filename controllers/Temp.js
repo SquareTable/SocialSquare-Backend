@@ -1113,7 +1113,7 @@ class TempController {
         })
     }
 
-    static #postcategory = (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, file) => {
+    static #postcategory = (userId, title, description, tags, NSFW, NSFL, file) => {
         return new Promise(resolve => {
             const deleteFile = () => {
                 if (file) {
@@ -1131,83 +1131,83 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
 
-            if (typeof categoryTitle !== 'string') {
+            if (typeof title !== 'string') {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput(`categoryTitle must be a string. Provided type: ${typeof categoryTitle}`))
+                return resolve(HTTPWTHandler.badInput(`title must be a string. Provided type: ${typeof title}`))
             }
 
-            if (typeof categoryDescription !== 'string') {
+            if (typeof description !== 'string') {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput(`categoryDescription must be a string. Provided type: ${typeof categoryDescription}`))
+                return resolve(HTTPWTHandler.badInput(`description must be a string. Provided type: ${typeof description}`))
             }
 
-            if (typeof categoryTags !== 'string') {
+            if (typeof tags !== 'string') {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput(`categoryTags must be a string. Provided type: ${typeof categoryTags}`))
+                return resolve(HTTPWTHandler.badInput(`tags must be a string. Provided type: ${typeof tags}`))
             }
 
-            if (typeof categoryNSFW !== 'boolean' && categoryNSFW !== 'false' && categoryNSFW !== 'true') {
+            if (typeof NSFW !== 'boolean' && NSFW !== 'false' && NSFW !== 'true') {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput(`categoryNSFW must be a boolean, "false", or "true"`))
+                return resolve(HTTPWTHandler.badInput(`NSFW must be a boolean, "false", or "true"`))
             }
 
-            if (typeof categoryNSFL !== 'boolean' && categoryNSFL !== 'false' && categoryNSFW !== 'true') {
+            if (typeof NSFL !== 'boolean' && NSFL !== 'false' && NSFW !== 'true') {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput(`categoryNSFL must be a boolean, "false", or "true"`))
+                return resolve(HTTPWTHandler.badInput(`NSFL must be a boolean, "false", or "true"`))
             }
 
-            if (categoryNSFW === "false") {
-                categoryNSFW = false;
+            if (NSFW === "false") {
+                NSFW = false;
             }
 
-            if (categoryNSFW === "true") {
-                categoryNSFW = true;
+            if (NSFW === "true") {
+                NSFW = true;
             }
 
-            if (categoryNSFL === "false") {
-                categoryNSFL = false;
+            if (NSFL === "false") {
+                NSFL = false;
             }
 
-            if (categoryNSFL === "true") {
-                categoryNSFL = true;
+            if (NSFL === "true") {
+                NSFL = true;
             }
 
-            categoryTitle = categoryTitle.trim()
-            categoryDescription = categoryDescription.trim()
+            title = title.trim()
+            description = description.trim()
 
-            if (categoryTitle.length == 0) {
+            if (title.length == 0) {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput('categoryTitle must not be an empty string.'))
+                return resolve(HTTPWTHandler.badInput('title must not be an empty string.'))
             }
 
-            if (categoryDescription.length == 0) {
+            if (description.length == 0) {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput('categoryDescription must not be an empty string.'))
+                return resolve(HTTPWTHandler.badInput('description must not be an empty string.'))
             }
 
-            if (categoryTitle.length > CONSTANTS.MAX_CATEGORY_TITLE_LENGTH) {
+            if (title.length > CONSTANTS.MAX_CATEGORY_TITLE_LENGTH) {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput(`categoryTitle cannot be more than ${CONSTANTS.MAX_CATEGORY_TITLE_LENGTH} characters long.`))
+                return resolve(HTTPWTHandler.badInput(`title cannot be more than ${CONSTANTS.MAX_CATEGORY_TITLE_LENGTH} characters long.`))
             }
 
-            if (categoryDescription.length > CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH) {
+            if (description.length > CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH) {
                 deleteFile()
-                return resolve(HTTPWTHandler.badInput(`categoryDescription cannot be more than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH} characters long.`))
+                return resolve(HTTPWTHandler.badInput(`description cannot be more than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LENGTH} characters long.`))
             }
 
-            if (!CONSTANTS.VALID_CATEGORY_TITLE_TEST.test(categoryTitle)) {
+            if (!CONSTANTS.VALID_CATEGORY_TITLE_TEST.test(title)) {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(CONSTANTS.CATEGORY_TITLE_FAILED_TEST_ERROR_MESSAGE))
             }
 
-            if (!CONSTANTS.VALID_CATEGORY_DESCRIPTION_TEST.test(categoryDescription)) {
+            if (!CONSTANTS.VALID_CATEGORY_DESCRIPTION_TEST.test(description)) {
                 deleteFile();
-                return resolve(HTTPWTHandler.badInput(`categoryDescription must have less than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LINES} lines.`))
+                return resolve(HTTPWTHandler.badInput(`description must have less than ${CONSTANTS.MAX_CATEGORY_DESCRIPTION_LINES} lines.`))
             }
 
             User.findOne({_id: {$eq: userId}}).lean().then(result => {
                 if (result) {
-                    Category.findOne({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).lean().then(async categoryFound => {
+                    Category.findOne({title: {'$regex': `^${title}$`, $options: 'i'}}).lean().then(async categoryFound => {
                         if (!categoryFound) { // category title not already used so allow it
                             let imageKey;
                             if (file) {
@@ -1221,11 +1221,11 @@ class TempController {
                             }
 
                             const newCategoryObject = {
-                                categoryTitle: categoryTitle,
-                                categoryDescription: categoryDescription,
-                                categoryTags: categoryTags,
-                                NSFW: categoryNSFW,
-                                NSFL: categoryNSFL,
+                                title: title,
+                                description: description,
+                                tags: tags,
+                                NSFW: NSFW,
+                                NSFL: NSFL,
                                 categoryOwnerId: userId,
                                 categoryOriginalCreator: userId,
                                 datePosted: Date.now()
@@ -1280,7 +1280,7 @@ class TempController {
                         }
                     }).catch(error => {
                         deleteFile()
-                        console.error('An error occured while seeing if a category title already exists or not. The title to be checked was:', categoryTitle, '. The error was:', error)
+                        console.error('An error occured while seeing if a category title already exists or not. The title to be checked was:', title, '. The error was:', error)
                         return resolve(HTTPWTHandler.serverError("An error occurred while checking if a category already has your desired category's title. Please try again."))
                     })
                 } else {
@@ -1443,7 +1443,7 @@ class TempController {
                 }
 
                 const dbQuery = {
-                    categoryTitle: {$regex: `^${val}`, $options: 'i'}
+                    title: {$regex: `^${val}`, $options: 'i'}
                 }
 
                 if (lastItemId !== undefined) {
@@ -1458,10 +1458,10 @@ class TempController {
                     ).then(memberCounts => {
                         const categories = data.map((category, index) => {
                             return {
-                                categoryTitle: category.categoryTitle,
-                                categoryDescription: category.categoryDescription,
+                                title: category.title,
+                                description: category.description,
                                 members: memberCounts[index],
-                                categoryTags: category.categoryTags,
+                                tags: category.tags,
                                 imageKey: category.imageKey,
                                 NSFW: category.NSFW,
                                 NSFL: category.NSFL,
@@ -1501,7 +1501,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('val cannot be an empty string.'))
             }
 
-            Category.findOne({categoryTitle: {$eq: val}}).lean().then(data =>{
+            Category.findOne({title: {$eq: val}}).lean().then(data =>{
                 if (data) {
                     var categoryImageKey = data.imageKey
                     console.log(categoryImageKey)
@@ -1514,7 +1514,7 @@ class TempController {
                     return resolve(HTTPWTHandler.notFound('Category could not be found'))
                 }
             }).catch(error => {
-                console.error('An error occurred while finding category with categoryTitle:', val, '. The error was:', error)
+                console.error('An error occurred while finding category with title:', val, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred while finding category. Please try again.'))
             })
         })
@@ -1551,10 +1551,10 @@ class TempController {
                         const permissions = memberDocument ? categoryHelper.returnPermissions(memberDocument, categoryFound) : {};
 
                         const categoryData = {
-                            categoryTitle: categoryFound.categoryTitle,
-                            categoryDescription: categoryFound.categoryDescription,
+                            title: categoryFound.title,
+                            description: categoryFound.description,
                             members: members,
-                            categoryTags: categoryFound.categoryTags,
+                            tags: categoryFound.tags,
                             imageKey: categoryFound.imageKey,
                             NSFW: categoryFound.NSFW,
                             NSFL: categoryFound.NSFL,
@@ -1650,10 +1650,10 @@ class TempController {
                                         const userPermissions = categoryHelper.returnPermissions(categoryMember, category);
 
                                         return {
-                                            categoryTitle: category.categoryTitle,
-                                            categoryDescription: category.categoryDescription,
+                                            title: category.title,
+                                            description: category.description,
                                             members: memberCounts[index],
-                                            categoryTags: category.categoryTags,
+                                            tags: category.tags,
                                             imageKey: category.imageKey,
                                             NSFW: category.NSFW,
                                             NSFL: category.NSFL,
@@ -1897,15 +1897,15 @@ class TempController {
                 if (result) {
                     Category.findOne({_id: {$eq: threadCategoryId}}).lean().then(async data => {
                         if (data) {
-                            const categoryNSFW = data.NSFW;
-                            const categoryNSFL = data.NSFL;
+                            const NSFW = data.NSFW;
+                            const NSFL = data.NSFL;
 
-                            if (NSFW && !categoryNSFW && !categoryNSFL) {
+                            if (NSFW && !NSFW && !NSFL) {
                                 deleteImage()
                                 return resolve(HTTPWTHandler.forbidden('NSFW thread posts cannot be posted in non-NSFW categories.'))
                             }
 
-                            if (NSFL && !categoryNSFL) {
+                            if (NSFL && !NSFL) {
                                 deleteImage()
                                 return resolve(HTTPWTHandler.forbidden('NSFL thread posts cannot be posted in non-NSFL categories.'))
                             }
@@ -3598,16 +3598,16 @@ class TempController {
         })
     }
 
-    static #checkIfCategoryExists = (categoryTitle) => {
+    static #checkIfCategoryExists = (title) => {
         return new Promise(resolve => {
-            Category.exists({categoryTitle: {'$regex': `^${categoryTitle}$`, $options: 'i'}}).then(category => {
+            Category.exists({title: {'$regex': `^${title}$`, $options: 'i'}}).then(category => {
                 if (category) {
                     return resolve(HTTPWTHandler.OK(true))
                 } else {
                     return resolve(HTTPWTHandler.OK(false))
                 }
             }).catch(error => {
-                console.error('An error occured while checking if a category existed with title:', categoryTitle, '. The error was:', error)
+                console.error('An error occured while checking if a category existed with title:', title, '. The error was:', error)
                 return resolve(HTTPWTHandler.serverError('An error occurred. Please try again.'))
             })
         })
@@ -5774,8 +5774,8 @@ class TempController {
         return await this.#getProfilePic(pubId)
     }
 
-    static postcategory = async (userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, file) => {
-        return await this.#postcategory(userId, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, file)
+    static postcategory = async (userId, title, description, tags, NSFW, NSFL, file) => {
+        return await this.#postcategory(userId, title, description, tags, NSFW, NSFL, file)
     }
 
     static deleteimage = async (userId, postId) => {
@@ -5898,8 +5898,8 @@ class TempController {
         return await this.#deleteaccount(userId)
     }
 
-    static checkIfCategoryExists = async (categoryTitle) => {
-        return await this.#checkIfCategoryExists(categoryTitle)
+    static checkIfCategoryExists = async (title) => {
+        return await this.#checkIfCategoryExists(title)
     }
 
     static uploadNotificationsSettings = async (userId, notificationSettings) => {
