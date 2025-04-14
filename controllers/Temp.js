@@ -423,7 +423,7 @@ class TempController {
             }
 
             for (const option of options) {
-                if (typeof option !== 'object' || !Array.isArray(option) || option === null) {
+                if (typeof option !== 'object' || Array.isArray(option) || option === null) {
                     return resolve(HTTPWTHandler.badInput('Items in the options array must all be objects.'))
                 }
 
