@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const PollSchema = new Schema({
-    pollTitle: String, 
-    pollSubTitle: String,
+    title: String, 
+    subtitle: String,
     options: [{
         title: String
     }],
