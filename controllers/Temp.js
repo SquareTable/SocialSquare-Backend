@@ -396,7 +396,7 @@ class TempController {
         })
     }
 
-    static #createpollpost = (userId, pollTitle, pollSubTitle, options) => {
+    static #createpollpost = (userId, title, subtitle, options) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -406,12 +406,12 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
 
-            if (typeof pollTitle !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`pollTitle must be a string. Provided type: ${typeof pollTitle}`))
+            if (typeof title !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`title must be a string. Provided type: ${typeof title}`))
             }
 
-            if (typeof pollSubTitle !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`pollSubTitle must be a string. Provided type: ${typeof pollSubTitle}`))
+            if (typeof subtitle !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`subtitle must be a string. Provided type: ${typeof subtitle}`))
             }
 
             if (!Array.isArray(options)) {
@@ -445,22 +445,22 @@ class TempController {
             }
             
 
-            pollTitle = pollTitle.trim()
-            pollSubTitle = pollSubTitle.trim()
+            title = title.trim()
+            subtitle = subtitle.trim()
 
-            if (pollTitle.length == 0) {
-                return resolve(HTTPWTHandler.badInput('pollTitle must not be blank'))
+            if (title.length == 0) {
+                return resolve(HTTPWTHandler.badInput('title must not be blank'))
             }
 
-            if (pollSubTitle.length == 0) {
-                return resolve(HTTPWTHandler.badInput('pollSubTitle must not be blank'))
+            if (subtitle.length == 0) {
+                return resolve(HTTPWTHandler.badInput('subtitle must not be blank'))
             }
           
             User.findOne({_id: {$eq: userId}}).lean().then(data => {
                 if (data) {
                     const pollObject = {
-                        pollTitle,
-                        pollSubTitle,
+                        title,
+                        subtitle,
                         options,
                         creatorId: userId,
                         datePosted: Date.now()
@@ -5734,8 +5734,8 @@ class TempController {
         return await this.#searchpageusersearch(userId, skip, val)
     }
 
-    static createpollpost = async (userId, pollTitle, pollSubTitle, options) => {
-        return await this.#createpollpost(userId, pollTitle, pollSubTitle, options)
+    static createpollpost = async (userId, title, subtitle, options) => {
+        return await this.#createpollpost(userId, title, subtitle, options)
     }
 
     static searchforpollposts = async (userId, pubId, lastItemId) => {

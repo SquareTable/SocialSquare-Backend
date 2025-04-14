@@ -870,15 +870,15 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
 });
 
 router.post('/createpollpost', rateLimiters['/createpollpost'], (req, res) => {
-    let {pollTitle, pollSubTitle, options} = req.body;
+    let {title, subtitle, options} = req.body;
 
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'createpollpost',
             functionArgs: [
                 req.tokenData,
-                pollTitle,
-                pollSubTitle,
+                title,
+                subtitle,
                 options
             ]
         },

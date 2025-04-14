@@ -186,7 +186,7 @@ class AdminClass {
                             from: process.env.SMTP_EMAIL,
                             to: creator.email,
                             subject: "Poll post removed",
-                            text: `Someone reported your post for "${report.reason}". SocialSquare staff have looked at the report and your post, and have found your post to not be fit to be on SocialSquare, and as such this post has been removed from SocialSquare.\n Post Title: "${postData.pollTitle}"\n Post SubTitle: "${postData.pollSubTitle}"\n Option One: "${postData.optionOne}\n Option Two: "${postData.optionTwo}" ${postData.optionThree ? `\n Option Three: "${postData.optionThree}"` : ''} ${postData.optionFour ? `\n Option Four: "${postData.optionFour}"` : ''} ${postData.optionFive ? `\n Option Five: "${postData.optionFive}"` : ''} ${postData.optionSix ? `\n Option Six: "${postData.optionSix}"` : ''}`
+                            text: `Someone reported your post for "${report.reason}". SocialSquare staff have looked at the report and your post, and have found your post to not be fit to be on SocialSquare, and as such this post has been removed from SocialSquare.\n Post Title: "${postData.title}"\n Post SubTitle: "${postData.subtitle}"\n Option One: "${postData.optionOne}\n Option Two: "${postData.optionTwo}" ${postData.optionThree ? `\n Option Three: "${postData.optionThree}"` : ''} ${postData.optionFour ? `\n Option Four: "${postData.optionFour}"` : ''} ${postData.optionFive ? `\n Option Five: "${postData.optionFive}"` : ''} ${postData.optionSix ? `\n Option Six: "${postData.optionSix}"` : ''}`
                         };
 
                         this.#sendEmail(emailData).then(() => {
