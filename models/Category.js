@@ -3,9 +3,9 @@ const Schema = mongoose.Schema;
 
 const CategorySchema = new Schema({
     imageKey: String,
-    categoryTitle: String, 
-    categoryDescription: String,
-    categoryTags: String,
+    title: String, 
+    description: String,
+    tags: String,
     NSFW: {type: Boolean, default: false},
     NSFL: {type: Boolean, default: false},
     categoryOwnerId: mongoose.Schema.Types.ObjectId,

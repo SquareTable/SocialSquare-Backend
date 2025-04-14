@@ -1147,11 +1147,11 @@ router.get('/getProfilePic/:pubId', rateLimiters['/getProfilePic/:pubId'], (req,
 });
 
 router.post('/postcategory', rateLimiters['/postcategory'], upload.single('image'), async (req, res) => {
-    let {categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL} = req.body;
+    let {title, description, tags, NSFW, NSFL} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'postcategory',
-            functionArgs: [req.tokenData, categoryTitle, categoryDescription, categoryTags, categoryNSFW, categoryNSFL, req.file]
+            functionArgs: [req.tokenData, title, description, tags, NSFW, NSFL, req.file]
         },
         env: process.env
     })
@@ -1991,7 +1991,7 @@ router.post('/checkIfCategoryExists', rateLimiters['/checkIfCategoryExists'], (r
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'checkIfCategoryExists',
-            functionArgs: [req.body.categoryTitle]
+            functionArgs: [req.body.title]
         },
         env: process.env
     })
