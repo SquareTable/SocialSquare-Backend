@@ -815,11 +815,11 @@ router.post('/changeemail', rateLimiters['/changeemail'], (req, res) => {
     })
 });
 
-router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
+router.post('/changepassword', rateLimiters['/changepassword'], HTTPHandler.getDeviceTypeMiddleware, (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'changepassword',
-            functionArgs: [req.tokenData, req.body.currentPassword, req.body.newPassword, req.ip, req.device.name]
+            functionArgs: [req.tokenData, req.body.currentPassword, req.body.newPassword, req.ip, req.device]
         },
         env: process.env
     })
@@ -2423,12 +2423,12 @@ router.post('/uploadLoginActivitySettings', rateLimiters['/uploadLoginActivitySe
     })
 });
 
-router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginActivitySettingsOnSignup'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
+router.post('/updateLoginActivitySettingsOnSignup', rateLimiters['/updateLoginActivitySettingsOnSignup'], HTTPHandler.getDeviceTypeMiddleware, (req, res) => {
     const {newSettings, refreshTokenId} = req.body;
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'updateLoginActivitySettingsOnSignup',
-            functionArgs: [req.tokenData, newSettings, refreshTokenId, req.ip, req.device.name]
+            functionArgs: [req.tokenData, newSettings, refreshTokenId, req.ip, req.device]
         },
         env: process.env
     })

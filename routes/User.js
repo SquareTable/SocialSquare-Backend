@@ -59,11 +59,11 @@ const rateLimiters = {
     })
 }
 
-router.post('/signup', rateLimiters['/signup'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
+router.post('/signup', rateLimiters['/signup'], HTTPHandler.getDeviceTypeMiddleware, (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'signup',
-            functionArgs: [req.body.name, req.body.email, req.body.password, req.ip, req.device.name]
+            functionArgs: [req.body.name, req.body.email, req.body.password, req.ip, req.device]
         },
         env: process.env
     })
@@ -86,11 +86,11 @@ router.post('/signup', rateLimiters['/signup'], HTTPHandler.getDeviceTypeMiddlew
     })
 });
 
-router.post('/signin', rateLimiters['/signin'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
+router.post('/signin', rateLimiters['/signin'], HTTPHandler.getDeviceTypeMiddleware, (req, res) => {
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'signin',
-            functionArgs: [req.body.email, req.body.password, req.ip, req.device.name]
+            functionArgs: [req.body.email, req.body.password, req.ip, req.device]
         },
         env: process.env
     })
@@ -169,13 +169,13 @@ router.post('/sendemailverificationcode', rateLimiters['/sendemailverificationco
     })
 })
 
-router.post('/checkverificationcode', rateLimiters['/checkverificationcode'], HTTPHandler.getDeviceTypeMiddleware(), (req, res) => {
+router.post('/checkverificationcode', rateLimiters['/checkverificationcode'], HTTPHandler.getDeviceTypeMiddleware, (req, res) => {
     let {username, verificationCode, task, getAccountMethod, userID, email, secondId} = req.body;
     
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'checkverificationcode',
-            functionArgs: [username, verificationCode, task, getAccountMethod, userID, email, secondId, req.ip, req.device.name]
+            functionArgs: [username, verificationCode, task, getAccountMethod, userID, email, secondId, req.ip, req.device]
         },
         env: process.env
     })

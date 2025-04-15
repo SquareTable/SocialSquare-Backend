@@ -1,4 +1,9 @@
-const expressDevice = require('express-device');
+const DeviceDetector = require('node-device-detector');
+const detector = new DeviceDetector({
+    clientIndexes: true,
+    deviceIndexes: true,
+    maxUserAgentSize: 500
+})
 
 class HTTP {
     serverError(res, error) {
@@ -85,12 +90,35 @@ class HTTP {
         return IP.replace("::ffff:", "");
     }
 
-    getDeviceTypeMiddleware() {
-        return expressDevice.capture({
-            parseUserAgent: true,
-            unknownUserAgentDeviceType: 'Unknown Device',
-            emptyUserAgentDeviceType: 'Unknown Device'
-        })
+    getDeviceTypeMiddleware(req, res, next) {
+        const useragent = req.headers["user-agent"]
+        if (!useragent) {
+            req.device = 'Unknown Device'
+            return next()
+        }
+
+        const detectedDevice = detector.detect(useragent)
+        const {brand, model, type} = detectedDevice.device;
+
+        const device = type || 'Device'
+
+        if (!brand && !model) {
+            req.device = `Unknown ${device}`
+            return next()
+        }
+
+        if (brand && !model) {
+            req.device = `Unknown ${device} from ${brand}`
+            return next()
+        }
+
+        if (!brand && model) {
+            req.device = `${model} ${device} from unknown brand`
+            return next()
+        }
+
+        req.device = `${brand} ${model} ${device}`
+        next()
     }
 }
 

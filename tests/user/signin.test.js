@@ -568,12 +568,13 @@ describe('When Email 2FA is not enabled', () => {
 
         const response = await supertest(server)
         .post('/user/signin')
+        .set('user-agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1')
         .send({email: userData.email, password: validPassword})
 
         const refreshToken = await RefreshToken.findOne({}).lean();
 
         expect(response.statusCode).toBe(200);
-        expect(refreshToken.deviceType).toBeTruthy();
+        expect(refreshToken.deviceType).toBe('Apple iPhone smartphone')
         expect(await DB.changedCollections()).toIncludeSameMembers(['RefreshToken'])
     })
 
