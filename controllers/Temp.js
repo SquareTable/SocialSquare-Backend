@@ -329,7 +329,7 @@ class TempController {
         })
     }
 
-    static #searchpageusersearch = (userId, skip, val) => {
+    static #searchpageusersearch = (userId, lastItemId, searchTerm) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Type provided: ${typeof userId}`))
@@ -341,32 +341,39 @@ class TempController {
 
             const limit = CONSTANTS.SEARCH_PAGE_USER_SEARCH_MAX_USERS_TO_RETURN;
 
-            if (typeof skip !== 'number') {
-                return resolve(HTTPWTHandler.badInput(`skip must be a number. Provided type: ${typeof skip}`))
+            if (typeof lastItemId !== 'string' && lastItemId !== undefined) {
+                return resolve(HTTPWTHandler.badInput(`lastItemId must be a string or undefined. Provided type: ${typeof lastItemId}`))
             }
 
-            if (typeof val !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
+
+            if (lastItemId && !mongoose.isObjectIdOrHexString(lastItemId)) {
+                return resolve(HTTPWTHandler.badInput('lastItemId must be an ObjectId.'))
             }
 
-            if (val.length === 0) {
+            if (typeof searchTerm !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`searchTerm must be a string. Provided type: ${typeof searchTerm}`))
+            }
+
+            if (searchTerm.length === 0) {
                 return resolve(HTTPWTHandler.badInput('Search box empty!'))
             }
 
-            function sendResponse(foundArray) {
-                if (foundArray.length < 1) {
-                    const message = skip > 0 ? 'No more results' : 'No results'
-                    return resolve(HTTPWTHandler.notFound(message))
-                }
-
-                return resolve(HTTPWTHandler.OK('Search successful', foundArray))
+            const searchDBQuery = {
+                $or: [
+                    { name: {$regex: `^${searchTerm}`, $options: 'i'} },
+                    { displayName: {$regex: `^${searchTerm}`, $options: 'i'} }
+                ]
             }
 
-            //Find User
-            var foundArray = []
+            if (lastItemId) {
+                searchDBQuery._id = {
+                    $gt: lastItemId
+                }
+            }
+
             User.findOne({_id: {$eq: userId}}).lean().then(userFound => {
                 if (userFound) {
-                    User.find({$or: [ { name: {$regex: `^${val}`, $options: 'i'}}, { displayName: {$regex: `^${val}`, $options: 'i'}} ]}).skip(skip).limit(limit).lean().then(data =>{
+                    User.find(searchDBQuery).sort({_id: -1}).limit(limit).lean().then(data =>{
                         const noMoreItems = data.length < limit;
 
                         if (data.length) {
@@ -383,7 +390,7 @@ class TempController {
                             return resolve(HTTPWTHandler.OK('Success', {items: [], noMoreItems}))
                         }
                     }).catch(err => {
-                        console.error('An error occured while finding users with names or displaynames similar to:', val, '. The error was:', err)
+                        console.error('An error occured while searching for users with DB query:', searchDBQuery, '. The error was:', err)
                         return resolve(HTTPWTHandler.serverError('An error occurred while finding users. Please try again.'))
                     });
                 } else {
@@ -5730,8 +5737,8 @@ class TempController {
         return await this.#changepassword(userId, currentPassword, newPassword, IP, deviceType)
     }
 
-    static searchpageusersearch = async (userId, skip, val) => {
-        return await this.#searchpageusersearch(userId, skip, val)
+    static searchpageusersearch = async (userId, lastItemId, searchTerm) => {
+        return await this.#searchpageusersearch(userId, lastItemId, searchTerm)
     }
 
     static createpollpost = async (userId, title, subtitle, options) => {
