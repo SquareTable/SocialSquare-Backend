@@ -846,7 +846,7 @@ router.post('/searchpageusersearch', rateLimiters['/searchpageusersearch'], (req
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpageusersearch',
-            functionArgs: [req.tokenData, req.body.skip, req.body.val]
+            functionArgs: [req.tokenData, req.body.lastItemId, req.body.searchTerm]
         },
         env: process.env
     })
