@@ -22,7 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.0",
     "multer": "^1.4.5-lts.2",
-    "node-device-detector": "^2.2.0",
+    "node-device-detector": "^2.2.1",
     "nodemailer": "^6.10.1",
     "sanitize-filename": "^1.6.3",
     "sharp": "^0.34.1",
