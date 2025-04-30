@@ -8,5 +8,7 @@ updates:
   - package-ecosystem: "npm" # See documentation for possible values
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "cron"
+      cronjob: 0 5 * * *
+      timezone: Asia/Dubai
     open-pull-requests-limit: 999
