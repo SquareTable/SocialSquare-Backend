@@ -1418,7 +1418,7 @@ class TempController {
         })
     }
 
-    static #searchpagesearchcategories = (userId, val, lastItemId) => {
+    static #searchpagesearchcategories = (userId, searchTerm, lastItemId) => {
         return new Promise(resolve => {
             if (typeof userId !== 'string') {
                 return resolve(HTTPWTHandler.badInput(`userId must be a string. Provided type: ${typeof userId}`))
@@ -1428,11 +1428,11 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput('userId must be an ObjectId.'))
             }
 
-            if (typeof val !== 'string') {
-                return resolve(HTTPWTHandler.badInput(`val must be a string. Provided type: ${typeof val}`))
+            if (typeof searchTerm !== 'string') {
+                return resolve(HTTPWTHandler.badInput(`searchTerm must be a string. Provided type: ${typeof searchTerm}`))
             }
 
-            if (val.length == 0) {
+            if (searchTerm.length == 0) {
                 return resolve(HTTPWTHandler.badInput('Search box cannot be empty!'))
             }
 
@@ -1450,7 +1450,7 @@ class TempController {
                 }
 
                 const dbQuery = {
-                    title: {$regex: `^${val}`, $options: 'i'}
+                    title: {$regex: `^${searchTerm}`, $options: 'i'}
                 }
 
                 if (lastItemId !== undefined) {

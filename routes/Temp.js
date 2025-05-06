@@ -1205,7 +1205,7 @@ router.post('/searchpagesearchcategories', rateLimiters['/searchpagesearchcatego
     const worker = new Worker(workerPath, {
         workerData: {
             functionName: 'searchpagesearchcategories',
-            functionArgs: [req.tokenData, req.body.val, req.body.lastItemId]
+            functionArgs: [req.tokenData, req.body.searchTerm, req.body.lastItemId]
         },
         env: process.env
     })
