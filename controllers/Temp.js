@@ -1473,7 +1473,7 @@ class TempController {
                                 NSFW: category.NSFW,
                                 NSFL: category.NSFL,
                                 datePosted: category.datePosted,
-                                categoryId: String(category._id)
+                                _id: String(category._id)
                             }
                         })
 
