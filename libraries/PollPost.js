@@ -19,12 +19,12 @@ class PollPost {
                             Upvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
                             Downvote.findOne({postId: {$eq: post._id}, postFormat: "Poll", userPublicId: userRequesting.secondId}).lean(),
                             PollVote.findOne({pollId: {$eq: post._id}, userId: {$eq: userRequesting._id}}, 'vote').lean(),
-                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'One'}),
-                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Two'}),
-                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Three'}),
-                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Four'}),
-                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Five'}),
-                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 'Six'}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 1}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 2}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 3}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 4}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 5}),
+                            PollVote.countDocuments({pollId: {$eq: post._id}, vote: 6}),
                             Comment.countDocuments({postId: {$eq: post._id}, postFormat: "Poll"})
                         ]).then(([upvotes, downvotes, isUpvoted, isDownvoted, pollVote, optionOnesVotes, optionTwosVotes, optionThreesVotes, optionFoursVotes, optionFivesVotes, optionSixesVotes, comments]) => {
                             const postObject = {
