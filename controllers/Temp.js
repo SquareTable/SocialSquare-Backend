@@ -1666,7 +1666,7 @@ class TempController {
                                             NSFL: category.NSFL,
                                             datePosted: category.datePosted,
                                             inCategory: true,
-                                            categoryId: String(category._id),
+                                            _id: String(category._id),
                                             permissions: userPermissions,
                                             memberId: String(categoryMember._id)
                                         }
