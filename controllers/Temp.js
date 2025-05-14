@@ -1158,7 +1158,7 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`NSFW must be a boolean, "false", or "true". Provided type: ${typeof NSFW}"`))
             }
 
-            if (typeof NSFL !== 'boolean' && NSFL !== 'false' && NSFW !== 'true') {
+            if (typeof NSFL !== 'boolean' && NSFL !== 'false' && NSFL !== 'true') {
                 deleteFile()
                 return resolve(HTTPWTHandler.badInput(`NSFL must be a boolean, "false", or "true". Provided type: ${typeof NSFL}`))
             }
