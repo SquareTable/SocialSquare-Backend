@@ -21,7 +21,7 @@
     "jest-extended": "^5.0.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1",
-    "multer": "^2.0.0",
+    "multer": "^2.0.1",
     "node-device-detector": "^2.2.2",
     "nodemailer": "^7.0.3",
     "sanitize-filename": "^1.6.3",
