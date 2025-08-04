@@ -1813,9 +1813,9 @@ class TempController {
                 return resolve(HTTPWTHandler.badInput(`subtitle must be a string. Provided type: ${typeof subtitle}`))
             }
 
-            if (typeof tags !== 'string') {
+            if (tags) {
                 deleteImage()
-                return resolve(HTTPWTHandler.badInput(`tags must be a string. Provided type: ${typeof tags}`))
+                return resolve(HTTPWTHandler.notImplemented('Tags have not been implemented yet.'))
             }
 
             if (typeof categoryId !== 'string') {
@@ -1932,7 +1932,7 @@ class TempController {
                                 creatorId: userId,
                                 title: title,
                                 subtitle: subtitle,
-                                tags: tags,
+                                //tags: tags,
                                 categoryId: categoryId,
                                 body: "",
                                 NSFW: NSFW,
