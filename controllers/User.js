@@ -11,7 +11,7 @@ const randomHandler = new RandomLibrary();
 const User = require('../models/User')
 const RefreshToken = require('../models/RefreshToken')
 const bcrypt = require('bcrypt')
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto')
 
 const mongoose = require('mongoose');
 
@@ -93,7 +93,7 @@ class UserController {
                             return resolve(HTTPWTHandler.serverError('An error occurred while hashing password. Please try again.'))
                         }
 
-                        const newUUID = uuidv4(); 
+                        const newUUID = crypto.randomUUID(); 
                         const newUser = new User({
                             secondId: newUUID,
                             name,

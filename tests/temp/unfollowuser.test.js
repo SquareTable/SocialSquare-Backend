@@ -3,8 +3,7 @@ const User = require('../../models/User');
 const server = require('../../server')
 const supertest = require('supertest')
 const jwt = require('jsonwebtoken')
-
-const uuid = require('uuid')
+const crypto = require('crypto')
 
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 
@@ -40,14 +39,14 @@ const randomTestUsers = [...new Array(20)].map((item, index) => {
     if (Math.random() > 0.5) {
         return {
             privateAccount: true,
-            accountFollowRequests: [...new Array(10)].map(() => uuid.v4()),
+            accountFollowRequests: [...new Array(10)].map(() => crypto.randomUUID()),
             name: `${index}name`,
             displayName: 'testuser'
         }
     }
 
     return {
-        followers: [...new Array(10)].map(() => uuid.v4()),
+        followers: [...new Array(10)].map(() => crypto.randomUUID()),
         name: `${index}name`,
         displayName: 'testuser'
     }
@@ -191,12 +190,12 @@ test('Unfollow fails if follower is blocked', async () => {
 test('Unfollow removes follow request if account is private', async () => {
     expect.assertions(4);
 
-    const randomUUID = uuid.v4()
+    const randomUUID = crypto.randomUUID()
 
     const userGettingUnfollowed = {
         ...userGettingUnfollowedData,
         privateAccount: true,
-        followers: [...new Array(10)].map(() => uuid.v4()),
+        followers: [...new Array(10)].map(() => crypto.randomUUID()),
         accountFollowRequests: [userUnfollowingData.secondId, randomUUID]
     }
 
@@ -222,7 +221,7 @@ test('Unfollow removes follow request if account is private', async () => {
 test('Unfollow removes follow and following if account is public', async () => {
     expect.assertions(5);
 
-    const randomUUID = uuid.v4();
+    const randomUUID = crypto.randomUUID();
 
     const userGettingUnfollowed = {
         ...userGettingUnfollowedData,

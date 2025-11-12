@@ -4,8 +4,6 @@ const mongoose = require('mongoose');
 
 var stringSimilarity = require("string-similarity");
 
-//const { v4: uuidv4 } = require('uuid');
-
 /*
 const fs = require('fs')
 const S3 = require('aws-sdk/clients/s3')

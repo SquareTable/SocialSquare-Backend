@@ -14,7 +14,7 @@ const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const server = require('../../server')
 const supertest = require('supertest')
 const jwt = require('jsonwebtoken');
-const { v4 } = require('uuid');
+const crypto = require('crypto')
 
 const POST_DATABASE_MODELS = {
     'Image': ImagePost,
@@ -412,7 +412,7 @@ for (const postFormat of formats) {
                 return {
                     postFormat,
                     interactionDate: 1,
-                    userPublicId: v4(),
+                    userPublicId: crypto.randomUUID(),
                     postId: postData._id
                 }
             })

@@ -46,7 +46,7 @@ const s3 = new S3 ({
     secretAccessKey
 })
 
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto')
 
 const util = require('util')
 const unlinkFile = util.promisify(fs.unlink)
@@ -64,7 +64,7 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         let extName = path.extname(file.originalname)
         if (extName == ".png" || extName == ".jpg" || extName == ".jpeg") {
-            var newUUID = uuidv4(); 
+            var newUUID = crypto.randomUUID(); 
             cb(null, newUUID + extName); 
         } else {
             cb("Invalid file format")
@@ -703,7 +703,6 @@ io.on("connection", (socket) => {
                     })
                     socket.on('start-file-upload', (data) => {
                         //will have queued uploads kinda like wha discord got
-                        var newUUID = uuidv4(); 
                         const thisUsersClient = clients.clientList.find(x => x.socketId == socket.id);
                         if (!thisUsersClient) {
                             socket.disconnect();// if their socket isn't found trigger a disconnect to prompt a reopen to the socket connection as the socket should have been found.

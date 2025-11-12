@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const {v4: uuidv4} = require('uuid')
+const crypto = require('crypto')
 
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 
@@ -54,7 +54,7 @@ afterAll(async () => {
   await DB.stopTest()
 })
 
-const userPublicIds = [...new Array(100)].map(() => uuidv4());
+const userPublicIds = [...new Array(100)].map(() => crypto.randomUUID());
 
 /*
 Tests:
@@ -77,14 +77,14 @@ Tests:
 
 const userRequestingData = {
     _id: '65a14de87774de8535a9f535',
-    secondId: uuidv4(),
+    secondId: crypto.randomUUID(),
     name: 'requester',
     displayName: 'requester'
 }
 
 const postCreatorData = {
     _id: '65a14e0efc86634068900719',
-    secondId: uuidv4(),
+    secondId: crypto.randomUUID(),
     name: 'creator',
     displayName: 'creator'
 }

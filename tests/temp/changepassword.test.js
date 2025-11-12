@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const {v4: uuidv4} = require('uuid');
+const crypto = require('crypto')
 
 const User = require('../../models/User');
 const RefreshToken = require('../../models/RefreshToken');
@@ -38,7 +38,7 @@ const validHashedPassword = "$2b$10$34gQut./qmo7HoG1aKkQeOQWeZzCjwwMMgk8nsLpwb3s
 
 const userData = {
     _id: new mongoose.Types.ObjectId(),
-    secondId: uuidv4(),
+    secondId: crypto.randomUUID(),
     email: validEmail,
     password: validHashedPassword
 }

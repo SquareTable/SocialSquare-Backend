@@ -30,7 +30,7 @@ const upload = multer({ dest: 'uploads/' })
 
 const { uploadFile, getFileStream } = require('../s3')
 
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto')
 
 // Get the objectID type
 var ObjectID = require('mongodb').ObjectID;
@@ -1034,7 +1034,7 @@ router.post('/sendpublicencryptionkey', (req,res) => {
                                                 message: "Encryption key sent appears to be in use, generate new keys and try again?"
                                             })
                                         } else if (userHasKey !== -1) {
-                                            var newUUID = uuidv4(); 
+                                            var newUUID = crypto.randomUUID(); 
                                             const toPush = {
                                                 userIdIfKeyInUse: userFoundResult[0]._id,
                                                 keysUniqueId: newUUID,
@@ -1063,7 +1063,7 @@ router.post('/sendpublicencryptionkey', (req,res) => {
                                                 })
                                             })
                                         } else {
-                                            var newUUID = uuidv4(); 
+                                            var newUUID = crypto.randomUUID(); 
                                             const toPush = {
                                                 userIdIfKeyInUse: userFoundResult[0]._id,
                                                 keysUniqueId: newUUID,
@@ -1085,7 +1085,7 @@ router.post('/sendpublicencryptionkey', (req,res) => {
                                             })
                                         }
                                     } else {
-                                        var newUUID = uuidv4(); 
+                                        var newUUID = crypto.randomUUID(); 
                                         const toPush = {
                                             userIdIfKeyInUse: userFoundResult[0]._id,
                                             keysUniqueId: newUUID,

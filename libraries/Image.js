@@ -1,6 +1,6 @@
 const path = require('path')
 const sharp = require('sharp')
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto')
 const fs = require('fs')
 const sanitizeFilename = require('sanitize-filename');
 const CONSTANTS = require('../constants');
@@ -13,7 +13,7 @@ class Image {
                 const sanitizedFilename = sanitizeFilename(filename)
                 const sanitizedFilepath = path.resolve(process.env.TEMP_IMAGES_PATH, sanitizedFilename)
 
-                const newUUID = uuidv4();
+                const newUUID = crypto.randomUUID();
                 const newFileName = newUUID + '.jpg'
                 const newPath = process.env.UPLOADED_PATH + '/' + newFileName
                 console.log('Compressing image with original path:', sanitizedFilepath)

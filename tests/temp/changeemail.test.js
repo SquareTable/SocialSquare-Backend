@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../../models/User');
 const TEST_CONSTANTS = require('../TEST_CONSTANTS');
 const {expect, afterEach, beforeAll, afterAll} = require('@jest/globals');
-const {v4: uuidv4} = require('uuid');
+const crypto = require('crypto')
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const server = require('../../server')
 const supertest = require('supertest')
@@ -28,7 +28,7 @@ const validHashedPassword = '$2b$10$ozCqAdz.IJrSpmEQ8FLn6e3JNytSmfMmU8sU9nk.Whob
 
 const userData = {
     _id: new mongoose.Types.ObjectId(),
-    secondId: uuidv4(),
+    secondId: crypto.randomUUID(),
     name: 'sebastian',
     displayName: 'Sebastian',
     email: 'myemail@gmail.com',
@@ -207,7 +207,7 @@ test('If change fails if user with desired email already exists', async () => {
 
     const newUserData = {
         _id: new mongoose.Types.ObjectId(),
-        secondId: uuidv4(),
+        secondId: crypto.randomUUID(),
         name: 'sebastian2',
         displayName: 'SebastianTwo',
         email: 'alreadytaken@gmail.com'
@@ -271,7 +271,7 @@ test('If change does not modify other User documents', async () => {
     const usersToInsert = [...new Array(10)].map((item, index) => {
         return {
             _id: new mongoose.Types.ObjectId(),
-            secondId: uuidv4(),
+            secondId: crypto.randomUUID(),
             name: 'name' + index,
             displayName: 'displayname' + index,
             email: `email${index}@gmail.com`
