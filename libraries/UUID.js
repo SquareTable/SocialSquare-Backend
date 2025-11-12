@@ -1,8 +1,7 @@
-const {validate, version} = require('uuid')
-
 class UUIDLibrary {
     validateV4(uuid) {
-        return validate(uuid) && version(uuid) === 4
+        if (uuid.length !== 36) return false
+        return /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(uuid)
     }
 }
 
