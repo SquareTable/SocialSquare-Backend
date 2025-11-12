@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const {v4: uuidv4} = require('uuid');
+const crypto = require('crypto')
 const MockMongoDBServer = require('../../libraries/MockDBServer');
 const server = require('../../server')
 const supertest = require('supertest')
@@ -174,7 +174,7 @@ describe('When Email 2FA is enabled', () => {
         email: validEmail,
         password: validHashedPassword,
         authenticationFactorsEnabled: ["Email"],
-        secondId: uuidv4(),
+        secondId: crypto.randomUUID(),
         _id: new mongoose.Types.ObjectId(),
         MFAEmail: validEmail
     }
@@ -314,7 +314,7 @@ describe('When Email 2FA is not enabled', () => {
         email: validEmail,
         password: validHashedPassword,
         authenticationFactorsEnabled: [],
-        secondId: uuidv4(),
+        secondId: crypto.randomUUID(),
         _id: new mongoose.Types.ObjectId()
     }
 
@@ -618,7 +618,7 @@ describe('When Email 2FA is not enabled', () => {
         const usersToInsert = [...new Array(10)].map((itme, index) => {
             return {
                 _id: new mongoose.Types.ObjectId(),
-                secondId: uuidv4(),
+                secondId: crypto.randomUUID(),
                 name: `sebastian${index}`,
                 displayName: 'Sebastian',
                 __v: 0

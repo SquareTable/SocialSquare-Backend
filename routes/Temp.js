@@ -10,7 +10,7 @@ const workerPath = path.resolve('workers', 'TempWorker.js')
 //Image post
 const multer  = require('multer')
 const CONSTANTS = require('../constants');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto')
 
 
 const storage = multer.diskStorage({
@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         let extName = path.extname(file.originalname)
         if (extName === ".png" || extName === ".jpg" || extName === ".jpeg") {
-            const newUUID = uuidv4(); 
+            const newUUID = crypto.randomUUID(); 
             cb(null, newUUID + extName); 
         } else {
             cb("Invalid file format")

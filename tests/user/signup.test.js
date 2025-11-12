@@ -2,7 +2,7 @@ const MockMongoDBServer = require('../../libraries/MockDBServer');
 const UUIDLibrary = require('../../libraries/UUID')
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const {v4: uuidv4} = require('uuid');
+const crypto = require('crypto')
 const server = require('../../server')
 const supertest = require('supertest')
 
@@ -377,7 +377,7 @@ test('user creation does not modify other users in the database', async () => {
             _id: new mongoose.Types.ObjectId(),
             name: 'name' + index,
             displayName: 'displayname' + index,
-            secondId: uuidv4()
+            secondId: crypto.randomUUID()
         }
     })
 

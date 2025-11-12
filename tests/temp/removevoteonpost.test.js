@@ -9,7 +9,7 @@ const Comment = require('../../models/Comment');
 const Upvote = require('../../models/Upvote');
 const Downvote = require('../../models/Downvote');
 
-const {v4: uuidv4} = require('uuid');
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const supertest = require('supertest')
 const server = require('../../server')
@@ -283,7 +283,7 @@ for (const postFormat of formats) {
                     postId: postData._id,
                     postFormat,
                     interactionDate: Date.now(),
-                    userPublicId: uuidv4()
+                    userPublicId: crypto.randomUUID()
                 }
             })
 
