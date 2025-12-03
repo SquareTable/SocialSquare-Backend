@@ -15,7 +15,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "expo-server-sdk": "^4.0.0",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "geoip-lite": "^1.4.10",
     "jest-extended": "^7.0.0",
