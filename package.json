@@ -20,7 +20,7 @@
     "geoip-lite": "^1.4.10",
     "jest-extended": "^7.0.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.0.0",
+    "mongoose": "^9.0.1",
     "multer": "^2.0.2",
     "node-device-detector": "^2.2.4",
     "nodemailer": "^7.0.11",
