@@ -23,7 +23,7 @@
     "mongoose": "^9.0.1",
     "multer": "^2.0.2",
     "node-device-detector": "^2.2.5",
-    "nodemailer": "^7.0.11",
+    "nodemailer": "^7.0.12",
     "sanitize-filename": "^1.6.3",
     "sharp": "^0.34.5",
     "socket.io": "^4.8.3",
