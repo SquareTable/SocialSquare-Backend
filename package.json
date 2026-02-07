@@ -14,7 +14,7 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
-    "expo-server-sdk": "^4.0.0",
+    "expo-server-sdk": "^5.0.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "geoip-lite": "^1.4.10",
