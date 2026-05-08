@@ -33,7 +33,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "jest": "^30.3.0",
+    "jest": "^30.4.0",
     "mongodb-memory-server": "^11.1.0"
   }
 }
