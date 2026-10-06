@@ -29,7 +29,7 @@
     "socket.io": "^4.8.4",
     "stream": "^0.0.3",
     "string-similarity": "^4.0.4",
-    "supertest": "^7.3.0",
+    "supertest": "^7.3.1",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
