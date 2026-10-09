@@ -16,7 +16,7 @@
     "dotenv": "^18.0.5",
     "expo-server-sdk": "^7.2.0",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.7.0",
+    "express-rate-limit": "^8.7.1",
     "geoip-lite": "^2.0.3",
     "jest-extended": "^7.0.0",
     "jsonwebtoken": "^9.0.3",
